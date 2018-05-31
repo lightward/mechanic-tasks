@@ -1,0 +1,12 @@
+{
+  "action": {
+    "type": "email",
+    "options": {
+      "to": {{ order.email | json }},
+      "subject": {{ options.subject__required | json }},
+      "body": {{ options.body__multiline_required | strip | newline_to_br | json }},
+      "reply_to": {{ shop.customer_email | json }},
+      "from_display_name": {{ shop.name | json }}
+    }
+  }
+}
