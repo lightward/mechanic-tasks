@@ -1,0 +1,93 @@
+{% if event.preview %}
+  {
+    "action": {
+      "type": "shopify",
+      "options": [
+        "update",
+        ["product", 12345],
+        {
+          "published": true
+        }
+      ]
+    }
+  }
+
+  {% if options.email_notification_recipient__email != blank %}
+    {% capture email_subject %}
+      Back in stock: Short Sleeve T-shirt
+    {% endcapture %}
+
+    {% capture email_body %}
+      Hi there,
+
+      Your product is back in stock!
+
+      Visit https://{{ shop.domain }}/admin/products/12345 to manage this product.
+
+      Thanks,
+      - Mechanic, for {{ shop.name }}
+    {% endcapture %}
+
+    {
+      "action": {
+        "type": "email",
+        "options": {
+          "to": {{ options.email_notification_recipient__email | json }},
+          "subject": {{ email_subject | unindent | strip | json }},
+          "body": {{ email_body | unindent | strip | newline_to_br | json }}
+        }
+      }
+    }
+  {% endif %}
+{% else %}
+  {% assign product = inventory_level.variant.product %}
+
+  {% if product.published_at == blank %}
+    {% assign aggregate_inventory_level = 0 %}
+
+    {% for variant in product.variants %}
+      {% for inventory_level in variant.inventory_levels %}
+        {% assign aggregate_inventory_level = aggregate_inventory_level | plus: inventory_level.available %}
+      {% endfor %}
+    {% endfor %}
+
+    {% if aggregate_inventory_level >= options.back_in_stock_inventory_quantity__number_required %}
+      {
+        "action": {
+          "type": "shopify",
+          "options": [
+            "update",
+            ["product", {{ product.id }}],
+            {
+              "published": true
+            }
+          ]
+        }
+      }
+
+      {% if options.email_notification_recipient__email != blank %}
+        {% capture email_subject %}
+          Back in stock: {{ product.title }}
+        {% endcapture %}
+
+        {% capture email_body %}
+          Visit https://{{ shop.domain }}/admin/products/{{ product.id }} to manage this product.
+
+          Thanks,
+          - Mechanic, for {{ shop.name }}
+        {% endcapture %}
+
+        {
+          "action": {
+            "type": "email",
+            "options": {
+              "to": {{ options.email_notification_recipient__email | json }},
+              "subject": {{ email_subject | unindent | strip | json }},
+              "body": {{ email_body | unindent | strip | newline_to_br | json }}
+            }
+          }
+        }
+      {% endif %}
+    {% endif %}
+  {% endif %}
+{% endif %}
