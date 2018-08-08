@@ -1,0 +1,27 @@
+{% assign verb = event.topic | split: "/" | last %}
+
+{% capture email_subject %}Product {{ product.id }} {{ verb }}d{% endcapture %}
+
+{% capture email_body %}
+Hello,
+
+A product was just {{ verb }}d. Here's what we know:
+
+{{ product | json }}
+
+Thanks,
+
+-Mechanic (for {{ shop.name }})
+{% endcapture %}
+
+{
+  "action": {
+    "type": "email",
+    "options": {
+      "to": {{ options.recipient_email__required_email | json }},
+      "subject": {{ email_subject | json }},
+      "body": {{ email_body | strip | newline_to_br | json }},
+      "from_display_name": {{ shop.name | json }}
+    }
+  }
+}
