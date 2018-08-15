@@ -1,0 +1,155 @@
+{% capture newline %}
+{% endcapture %}
+
+{% if event.topic == "mechanic/user/text" %}
+  {% if event.preview %}
+    {
+      "action": {
+        "type": "shopify",
+        "options": [
+          "update",
+          [
+            "order",
+            12345
+          ],
+          {
+            "note": {{ options.order_note_to_add__required | json }}
+          }
+        ]
+      }
+    }
+
+    {
+      "action": {
+        "type": "event",
+        "options": {
+          "topic": "user/orders/remove_note",
+          "data": {
+            "order_id": 12345,
+            "order_note_content_to_remove": {{ options.order_note_to_add__required | json }}
+          }
+        }
+      }
+    }
+  {% else %}
+    {% assign order_numbers = event.data | strip | split: newline %}
+    {% assign order_ids = "" %}
+
+    {% comment %}
+      going to do this twice: once for authorized orders, and once for paid orders
+    {% endcomment %}
+
+    {% for order in shop.orders.any.authorized %}
+      {% capture order_number_string %}{{ order.order_number }}{% endcapture %}
+      {% if order_numbers contains order_number_string %}
+        {% capture order_note_to_save %}{% if order.note != blank %}{{ order.note }}{{ newline }}{{ newline }}{% endif %}{{ options.order_note_to_add__required }}{% endcapture %}
+
+        {% capture order_ids %}{% if order_ids != blank %}{{ order_ids }},{% endif %}{{ order.id }}{% endcapture %}
+
+        {
+          "action": {
+            "type": "shopify",
+            "options": [
+              "update",
+              [
+                "order",
+                {{ order.id | json }}
+              ],
+              {
+                "note": {{ order_note_to_save | json }}
+              }
+            ]
+          }
+        }
+      {% endif %}
+    {% endfor %}
+
+    {% for order in shop.orders.any.paid %}
+      {% capture order_number_string %}{{ order.order_number }}{% endcapture %}
+      {% if order_numbers contains order_number_string %}
+        {% capture order_note_to_save %}{% if order.note != blank %}{{ order.note }}{{ newline }}{{ newline }}{% endif %}{{ options.order_note_to_add__required }}{% endcapture %}
+
+        {% capture order_ids %}{% if order_ids != blank %}{{ order_ids }},{% endif %}{{ order.id }}{% endcapture %}
+
+        {
+          "action": {
+            "type": "shopify",
+            "options": [
+              "update",
+              [
+                "order",
+                {{ order.id | json }}
+              ],
+              {
+                "note": {{ order_note_to_save | json }}
+              }
+            ]
+          }
+        }
+      {% endif %}
+    {% endfor %}
+
+    {% assign order_ids = order_ids | split: "," %}
+    {% if order_ids.size > 0 %}
+      {
+        "action": {
+          "type": "event",
+          "options": {
+            "topic": "user/orders/remove_note",
+            "data": {
+              "order_ids": {{ order_ids | json }},
+              "order_note_content_to_remove": {{ options.order_note_to_add__required | json }}
+            }
+          }
+        }
+      }
+    {% endif %}
+  {% endif %}
+{% elsif event.topic == "user/orders/remove_note" %}
+  {% if event.preview %}
+    {
+      "action": {
+        "type": "shopify",
+        "options": [
+          "update",
+          [
+            "order",
+            12345
+          ],
+          {
+            "note": ""
+          }
+        ]
+      }
+    }
+  {% else %}
+    {% for order_id in event.data.order_ids %}
+      {% assign order = shop.orders[order_id] %}
+      {% assign order_note_parts = order.note | split: newline %}
+      {% assign order_note_to_save = "" %}
+      {% for order_note_part in order_note_parts %}
+        {% unless order_note_part == options.order_note_to_add__required %}
+          {% capture order_note_to_save %}{% if order_note_to_save != blank %}{{ order_note_to_save }}{{ newline }}{% endif %}{{ order_note_part }}{% endcapture %}
+        {% endunless %}
+      {% endfor %}
+
+      {% assign order_note_to_save = order_note_to_save | strip %}
+
+      {
+        "action": {
+          "type": "shopify",
+          "options": [
+            "update",
+            [
+              "order",
+              {{ order.id | json }}
+            ],
+            {
+              "note": {{ order_note_to_save | json }}
+            }
+          ]
+        }
+      }
+    {% endfor %}
+  {% endif %}
+{% endif %}
