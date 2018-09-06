@@ -1,5 +1,6 @@
 # Task index
 
+*   [Abandoned cart emails](./abandoned-cart-emails)
 *   [Add new customers to GetResponse](./add-new-customers-to-getresponse)
 *   [Archive free orders on fulfillment](./archive-free-orders-on-fulfillment)
 *   [Bulk capture orders by order number](./bulk-capture-by-order-number)
