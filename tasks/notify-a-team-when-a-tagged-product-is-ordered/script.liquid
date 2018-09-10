@@ -1,0 +1,23 @@
+{% assign order_qualifies = false %}
+{% assign order_product_tags = order.line_items | map: "product" | map: "tags" | join: ", " | split: ", " | sort | uniq %}
+{% if order_product_tags contains options.required_product_tag__required %}
+  {% assign order_qualifies = true %}
+{% endif %}
+
+{% if event.preview or order_qualifies %}
+  {
+    "action": {
+      "type": "email",
+      "options": {
+        "to": {{ options.team_email__required | json }},
+        "subject": {{ options.email_subject__required | json }},
+        "body": {{ options.email_body__multiline_required | strip | newline_to_br | json }},
+        "reply_to": {{ shop.customer_email | json }},
+        "from_display_name": {{ shop.name | json }}
+      }
+    }
+  }
+{% elsif order_qualifies == false %}
+  {% capture log_message %}Order tags did not include {{ options.required_product_tag__required | json }} (found {{ order_product_tags | json }}){% endcapture %}
+  {"log": {{ log_message }}}
+{% endif %}
