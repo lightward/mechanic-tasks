@@ -3,6 +3,7 @@
 *   [Abandoned cart emails](./abandoned-cart-emails)
 *   [Add new customers to GetResponse](./add-new-customers-to-getresponse)
 *   [Archive free orders on fulfillment](./archive-free-orders-on-fulfillment)
+*   [Backfill customer names from order addresses](./backfill-customer-names-from-order)
 *   [Bulk capture orders by order number](./bulk-capture-by-order-number)
 *   [Catalog update email](./catalog-update-email)
 *   [Email customer when their order is paid](./email-customer-when-order-paid)
