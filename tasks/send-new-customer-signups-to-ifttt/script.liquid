@@ -1,0 +1,14 @@
+{
+  "action": {
+    "type": "http",
+    "options": {
+      "method": "post",
+      "url": "https://maker.ifttt.com/trigger/{{ options.ifttt_event__required }}/with/key/{{ options.ifttt_key__required }}",
+      "body": {
+        "value1": {{ options.value1__required | json }},
+        "value2": {{ options.value2 | json }},
+        "value3": {{ options.value3 | json }}
+      }
+    }
+  }
+}
