@@ -1,0 +1,100 @@
+{% comment %}
+  Hello, developer friend! :) Here's the PayPal IPN variable reference:
+
+  https://developer.paypal.com/docs/classic/ipn/integration-guide/IPNandPDTVariables
+
+  ... and here's their IPN payload simulator:
+
+  https://developer.paypal.com/developer/ipnSimulator/
+
+  Their default payment_date value doesn't even meet *their* standard, so change it to
+  something like "22:03:27 Sep 28, 2018 PDT" if you need to test that value. <3
+{% endcomment %}
+
+{% comment %}
+  Decide if this IPN payload is something we should import as
+  an actual order.
+{% endcomment %}
+{% assign import_order = false %}
+{% assign allowed_txn_types = "cart,express_checkout,masspay,merch_pmt,mp_cancel,payout,pro_hosted,recurring_payment,send_money,subscr_payment,virtual_terminal,web_accept" | split: "," %}
+{% if event.data.payment_status == "Completed" and allowed_txn_types contains event.data.txn_type %}
+  {% assign import_order = true %}
+{% endif %}
+
+{% if event.preview or import_order %}
+  {% comment %}
+    PayPal's date format is non-standard: `HH:MM:SS Mmm DD, YYYY PDT`, per their docs.
+    We reformat it here, to ensure that Liquid can parse it for Shopify-ready formatting.
+  {% endcomment %}
+  {% assign date_parts = event.data.payment_date | replace: ",", "" | split: " " %}
+  {% capture sane_payment_date %}{{ date_parts[3] }} {{ date_parts[1] }} {{ date_parts[2] }} {{ date_parts[0] }} {{ date_parts[4] }}{% endcapture %}
+
+  {
+    "action": {
+      "type": "shopify",
+      "options": [
+        "create",
+        "order",
+        {
+          "email": {{ event.data.payer_email | json }},
+          "send_receipt": {{ options.send_receipt__boolean | json }},
+          "processed_at": {{ sane_payment_date | date: "%Y-%m-%dT%H:%M:%S.%L%z" | json }},
+          "financial_status": "paid",
+          "currency": {{ event.data.mc_currency | json }},
+          "line_items": [
+            {
+              "title": {{ event.data.memo | default: options.default_memo | default: "(no memo given)" | json }},
+              "price": {{ event.data.mc_gross | divided_by: 1.0 | json }},
+              "requires_shipping": {{ options.order_requires_shipping__boolean | json }},
+              "quantity": 1,
+              "taxable": false
+            }
+          ],
+          "fulfillment_status": {% if options.mark_as_fulfilled__boolean %}"fulfilled"{% else %}null{% endif %},
+          "send_fulfillment_receipt": {{ options.send_fulfillment_receipt__boolean | json }},
+          "transactions": [
+            {
+              "kind": "sale",
+              "status": "success",
+              "amount": {{ event.data.mc_gross | divided_by: 1.0 | json }}
+            }
+          ],
+          "customer": {
+            "id": {{ shop.customers[event.data.payer_email].id | json }}
+          },
+          "billing_address": {
+            "first_name": {{ event.data.first_name | json }},
+            "last_name": {{ event.data.last_name | json }},
+            "address1": {{ event.data.address_street | json }},
+            "city": {{ event.data.address_city | json }},
+            "province": {{ event.data.address_state | json }},
+            "country": {{ event.data.address_country | json }},
+            "zip": {{ event.data.address_zip | json }}
+          },
+          "note_attributes": [
+            {
+              "name": "PayPal protection eligibility",
+              "value": {{ event.data.protection_eligibility | json }}
+            },
+            {
+              "name": "PayPal payer ID",
+              "value": {{ event.data.payer_id | json }}
+            },
+            {
+              "name": "PayPal transaction ID",
+              "value": {{ event.data.txn_id | json }}
+            },
+            {
+              "name": "PayPal receiver ID",
+              "value": {{ event.data.receiver_id | json }}
+            },
+            {
+              "name": "PayPal transaction type",
+              "value": {{ event.data.txn_type | json }}
+            }
+          ]
+        }
+      ]
+    }
+  }
+{% endif %}
