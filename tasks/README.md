@@ -7,6 +7,7 @@
 *   [Bulk capture orders by order number](./bulk-capture-by-order-number)
 *   [Catalog update email](./catalog-update-email)
 *   [Email customer when their order is paid](./email-customer-when-order-paid)
+*   [Email customers when created](./email-customers-when-created)
 *   [Email your customers after a quiet period of no orders](./email-your-customers-after-a-quiet-period-of-no-orders)
 *   [Import PayPal transactions as Shopify orders](./import-paypal-transactions-as-shopify-orders)
 *   [Notify a team when a tagged product is ordered](./notify-a-team-when-a-tagged-product-is-ordered)
