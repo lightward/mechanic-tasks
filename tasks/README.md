@@ -11,6 +11,7 @@
 *   [Import PayPal transactions as Shopify orders](./import-paypal-transactions-as-shopify-orders)
 *   [Notify a team when a tagged product is ordered](./notify-a-team-when-a-tagged-product-is-ordered)
 *   [Publish back-in-stock products](./publish-back-in-stock-products)
+*   [Reset inventory levels daily](./reset-inventory-levels-daily)
 *   [Save Locksmith passcodes to the customer's notes](./save-locksmith-passcode-to-customer-notes)
 *   [Send new customer signups to IFTTT](./send-new-customer-signups-to-ifttt)
 *   [Temporarily add an order note](./temporarily-add-an-order-note)

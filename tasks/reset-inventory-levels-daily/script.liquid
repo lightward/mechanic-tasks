@@ -1,0 +1,66 @@
+{% if event.preview %}
+  {
+    "action": {
+      "type": "shopify",
+      "options": [
+        "post",
+        "/admin/inventory_levels/set.json",
+        {
+          "inventory_item_id": 1234567890,
+          "location_id": {{ shop.primary_location_id | json }},
+          "available": {{ options.inventory_level_to_apply__number_required | round | json }}
+        }
+      ]
+    }
+  }
+{% else %}
+  {% assign collection_id = options.collection_id__number_required | round %}
+  {% assign collection = shop.collections[collection_id] %}
+
+  {% unless collection %}
+    {% capture message %}No collection found with ID #{{ collection_id | json }}.{% endcapture %}
+    {"log": {{ message | json }}}
+  {% endunless %}
+
+  {% if collection.products.count == 0 %}
+    {% capture message %}No products in collection #{{ collection_id | json }}.{% endcapture %}
+    {"log": {{ message | json }}}
+  {% endif %}
+
+  {% for product in collection.products %}
+    {% for variant in product.variants %}
+      {% if variant.inventory_management != "shopify" %}
+        {% capture message %}Inventory management policy is {{ variant.inventory_management | json }}, skipping inventory update for {{ variant.title }} on {{ product.title }}{% endcapture %}
+        {"log": {{ message | json }}}
+        {% continue %}
+      {% endif %}
+
+      {% for inventory_level in variant.inventory_levels %}
+        {% if inventory_level.location_id != shop.primary_location_id %}
+          {% continue %}
+        {% endif %}
+
+        {% if inventory_level.available == options.inventory_level_to_apply__number_required %}
+          {% capture message %}Inventory level is already {{ inventory_level.available | json }}, skipping inventory update for {{ variant.title }} on {{ product.title }}{% endcapture %}
+          {"log": {{ message | json }}}
+          {% continue %}
+        {% endif %}
+
+        {
+          "action": {
+            "type": "shopify",
+            "options": [
+              "post",
+              "/admin/inventory_levels/set.json",
+              {
+                "inventory_item_id": {{ inventory_level.inventory_item_id | json }},
+                "location_id": {{ inventory_level.location_id | json }},
+                "available": {{ options.inventory_level_to_apply__number_required | round | json }}
+              }
+            ]
+          }
+        }
+      {% endfor %}
+    {% endfor %}
+  {% endfor %}
+{% endif %}
