@@ -1,6 +1,7 @@
 # Task index
 
 *   [Abandoned cart emails](./abandoned-cart-emails)
+*   [Activate a discount when ISS passes overhead](./activate-a-discount-when-iss-passes-overhead)
 *   [Add new customers to GetResponse](./add-new-customers-to-getresponse)
 *   [Archive free orders on fulfillment](./archive-free-orders-on-fulfillment)
 *   [Backfill customer names from order addresses](./backfill-customer-names-from-order)

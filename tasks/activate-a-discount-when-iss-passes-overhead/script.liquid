@@ -1,0 +1,122 @@
+{% assign discount_code_code = options.discount_code__required %}
+{% assign discount_code = shop.discount_codes[discount_code_code] %}
+{% assign price_rule = discount_code.price_rule %}
+
+{% if event.data._sync and event.preview != true %}
+  {% if discount_code == nil %}
+    {% if price_rule == nil %}
+      {% for some_price_rule in shop.price_rules %}
+        {% if some_price_rule.title == discount_code_code %}
+          {% assign price_rule = some_price_rule %}
+          {% break %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+
+    {% if price_rule != nil %}
+      {
+        "action": {
+          "type": "shopify",
+          "options": [
+            "create",
+            ["price_rule", {{ price_rule.id | json }}, "discount_code"],
+            {
+              "code": {{ discount_code_code | json }}
+            }
+          ]
+        }
+      }
+    {% else %}
+      {"log": "Failed to find price rule; can't create discount code."}
+    {% endif %}
+  {% endif %}
+{% else %}
+  {% assign starts_at = "now" %}
+  {% assign ends_at = "now" | date: "%s" | plus: event.data.duration_seconds %}
+
+  {% assign starts_at_day = starts_at | date: "%d %b" %}
+  {% assign ends_at_day = ends_at | date: "%d %b" %}
+  {% assign ends_same_day = true %}
+  {% if starts_at_day != ends_at_day %}
+    {% assign ends_same_day = false %}
+  {% endif %}
+
+  {% assign minutes = event.data.duration_seconds | divided_by: 60 | floor %}
+  {% assign seconds = minutes | times: 60 | minus: event.data.duration_seconds | times: -1 %}
+
+  {% if options.notification_email_address__email != blank %}
+    {% capture email_subject %}The ISS has arrived! Discount {{ discount_code_code }} is now active{% endcapture %}
+    {% capture email_body %}
+      Hello,
+
+      Mechanic has just activated the discount code <b>{{ discount_code_code }}</b> (for {{ options.discount_percentage__number_required }}% off), to celebrate the International Space Station arriving <a href="{{ event.data.location_map_url }}">at your store</a>!
+
+      The ISS will be overhead for {{ minutes }}m{{ seconds }}s, so the discount will be active from {% if ends_same_day %}{{ starts_at | date: "%l:%M %p" }} to {{ ends_at | date: "%l:%M %p" }} ({{ "now" | date: "%d %b" }}){% else %}{{ starts_at | date: "%d %b %Y at %l:%M %p" }}, to {{ ends_at | date: "%d %b %Y at %l:%M %p" }}{% endif %}. You can manage it from <a href="https://{{ shop.domain }}/admin/discounts?query={{ discount_code_code }}">your Shopify admin area</a>.
+
+      Thanks,
+      Mechanic, for {{ shop.name }}
+    {% endcapture %}
+
+    {
+      "action": {
+        "type": "email",
+        "options": {
+          "to": {{ options.notification_email_address__email | json }},
+          "subject": {{ email_subject | json }},
+          "body": {{ email_body | unindent | strip | newline_to_br | json }},
+          "reply_to": {{ shop.customer_email | json }},
+          "from_display_name": {{ shop.name | json }}
+        }
+      }
+    }
+  {% endif %}
+
+  {% if price_rule == blank %}
+    {
+      "action": {
+        "type": "shopify",
+        "options": [
+          "create",
+          "price_rule",
+          {
+            "title": {{ discount_code_code | json }},
+            "target_type": "line_item",
+            "target_selection": "all",
+            "allocation_method": "across",
+            "value_type": "percentage",
+            "value": "-{{ options.discount_percentage__number_required }}",
+            "customer_selection": "all",
+            "starts_at": {{ starts_at | date: "%FT%T%:z" | json }},
+            "ends_at": {{ ends_at | date: "%FT%T%:z" | json }}
+          }
+        ]
+      }
+    }
+
+    {
+      "action": {
+        "type": "event",
+        "options": {
+          "topic": "user/space/iss",
+          "data": {
+            "_sync": true
+          }
+        }
+      }
+    }
+  {% else %}
+    {
+      "action": {
+        "type": "shopify",
+        "options": [
+          "update",
+          ["price_rule", {{ price_rule.id | json }}],
+          {
+            "starts_at": {{ starts_at | date: "%FT%T%:z" | json }},
+            "ends_at": {{ ends_at | date: "%FT%T%:z" | json }}
+          }
+        ]
+      }
+    }
+  {% endif %}
+{% endif %}
