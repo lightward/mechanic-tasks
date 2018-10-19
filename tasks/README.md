@@ -17,3 +17,4 @@
 *   [Save Locksmith passcodes to the customer's notes](./save-locksmith-passcode-to-customer-notes)
 *   [Send new customer signups to IFTTT](./send-new-customer-signups-to-ifttt)
 *   [Temporarily add an order note](./temporarily-add-an-order-note)
+*   [Unpublish a certain collection, daily](./unpublish-a-certain-collection-daily)
