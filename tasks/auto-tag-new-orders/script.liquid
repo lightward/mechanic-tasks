@@ -1,0 +1,15 @@
+{
+  "action": {
+    "type": "shopify",
+    "options": [
+      "update",
+      [
+        "order",
+        {{ order.id }}
+      ],
+      {
+        "tags": {{ order.tags | add_tags: options.comma_separated_tags_to_add__required | json }}
+      }
+    ]
+  }
+}
