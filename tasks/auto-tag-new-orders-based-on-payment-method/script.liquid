@@ -1,0 +1,30 @@
+{% assign order_qualifies = false %}
+{% if order.payment_gateway_names contains options.payment_gateway_name__required %}
+  {% assign order_qualifies = true %}
+{% endif %}
+
+{% if event.preview or order_qualifies %}
+  {
+    "action": {
+      "type": "shopify",
+      "options": [
+        "update",
+        [
+          "order",
+          {{ order.id }}
+        ],
+        {
+          "tags": {{ order.tags | add_tags: options.comma_separated_tags_to_add__required | json }}
+        }
+      ]
+    }
+  }
+{% endif %}
+
+{% if event.preview != true and order_qualifies != true %}
+  {% capture log_message %}
+    The order did not qualify for auto-tagging. This task is configured to look for {{ options.payment_gateway_name__required | json }}; this order was paid using {{ order.payment_gateway_names | json }}.
+  {% endcapture %}
+
+  { "log": {{ log_message | strip | json }} }
+{% endif %}

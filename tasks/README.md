@@ -5,6 +5,7 @@
 *   [Add new customers to GetResponse](./add-new-customers-to-getresponse)
 *   [Archive free orders on fulfillment](./archive-free-orders-on-fulfillment)
 *   [Auto-tag new orders](./auto-tag-new-orders)
+*   [Auto-tag new orders based on payment method](./auto-tag-new-orders-based-on-payment-method)
 *   [Auto-update inventory policy based on a "preorder" tag](./auto-update-inventory-policy-based-on-a-preorder-tag)
 *   [Backfill customer names from order addresses](./backfill-customer-names-from-order)
 *   [Bulk capture orders by order number](./bulk-capture-by-order-number)
