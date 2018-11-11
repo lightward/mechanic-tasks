@@ -1,0 +1,31 @@
+{% assign order_qualifies = false %}
+{% assign order = fulfillment_event.order %}
+
+{% if order.closed_at == blank %}
+  {% if order.fulfillment_status == "fulfilled" %}
+    {% assign shipment_statuses = order.fulfillments | map: "shipment_status" | uniq %}
+
+    {% if shipment_statuses.size == 1 and shipment_statuses.first == "delivered" %}
+      {% assign order_qualifies = true %}
+    {% else %}
+      {"log": {{ shipment_statuses | join: ", " | prepend: "Order is not fully delivered. Status(es) found: " | json }}}
+    {% endif %}
+  {% else %}
+    {"log": {{ "Order is not fulfilled; status is " | append: order.fulfillment_status | json }}}
+  {% endif %}
+{% else %}
+  {"log": "Order is already closed."}
+{% endif %}
+
+{% if order_qualifies or event.preview %}
+  {
+    "action": {
+      "type": "shopify",
+      "options": [
+        "post",
+        "/admin/orders/{{ order.id | default: "0000" }}/close.json",
+        {}
+      ]
+    }
+  }
+{% endif %}

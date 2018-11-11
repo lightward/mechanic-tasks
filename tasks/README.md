@@ -4,6 +4,7 @@
 *   [Activate a discount when ISS passes overhead](./activate-a-discount-when-iss-passes-overhead)
 *   [Add new customers to GetResponse](./add-new-customers-to-getresponse)
 *   [Archive free orders on fulfillment](./archive-free-orders-on-fulfillment)
+*   [Archive orders on delivery](./archive-orders-on-delivery)
 *   [Auto-tag new orders](./auto-tag-new-orders)
 *   [Auto-tag new orders based on payment method](./auto-tag-new-orders-based-on-payment-method)
 *   [Auto-update inventory policy based on a "preorder" tag](./auto-update-inventory-policy-based-on-a-preorder-tag)
