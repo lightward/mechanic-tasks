@@ -15,6 +15,7 @@
 *   [Email customer when their order is paid](./email-customer-when-order-paid)
 *   [Email customers when created](./email-customers-when-created)
 *   [Email your customers after a quiet period of no orders](./email-your-customers-after-a-quiet-period-of-no-orders)
+*   [Get email alerts for FBA failures](./get-email-alerts-for-fba-failures)
 *   [Import PayPal transactions as Shopify orders](./import-paypal-transactions-as-shopify-orders)
 *   [Notify a team when a tagged product is ordered](./notify-a-team-when-a-tagged-product-is-ordered)
 *   [Publish a certain collection, daily](./publish-a-certain-collection-daily)
