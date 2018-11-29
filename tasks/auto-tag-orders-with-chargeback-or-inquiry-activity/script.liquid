@@ -1,0 +1,54 @@
+{% if event.preview %}
+  {% assign preview_tag = options.tag_for_any | default: options.tag_for_open | default: options.tag_for_submitted | default: options.tag_for_won | default: options.tag_for_lost %}
+
+  {
+    "action": {
+      "type": "shopify",
+      "options": [
+        "update",
+        [
+          "order",
+          12345
+        ],
+        {
+          "tags": {{ preview_tag | json }}
+        }
+      ]
+    }
+  }
+{% else %}
+  {% assign statuses = "open,submitted,won,lost,any" | split: "," %}
+
+  {% for status in statuses %}
+    {% assign option_key = "tag_for_" | append: status %}
+
+    {% assign chargeback_filter_key = "chargeback_" | append: status %}
+    {% for order in shop.orders[chargeback_filter_key] %}
+      {% assign tags_to_save = order.tags | add_tag: options[option_tag_key] %}
+
+      {% if status == "submitted" %}
+        {% assign tags_to_save = tags_to_save | remove_tag: options.tag_for_open %}
+      {% elsif status == "won" or status == "lost" %}
+        {% assign tags_to_save = tags_to_save | remove_tag: options.tag_for_open | remove_tag: options.tag_for_submitted %}
+      {% endif %}
+
+      {% if tags_to_save != order.tags %}
+        {
+          "action": {
+            "type": "shopify",
+            "options": [
+              "update",
+              [
+                "order",
+                {{ order.id | json }}
+              ],
+              {
+                "tags": {{ tags_to_save | json }}
+              }
+            ]
+          }
+        }
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+{% endif %}
