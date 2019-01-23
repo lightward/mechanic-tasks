@@ -1,0 +1,61 @@
+{% if event.preview %}
+  {
+    "action": {
+      "type": "shopify",
+      "options": [
+        "post",
+        "/admin/inventory_levels/connect.json",
+        {
+          "inventory_item_id": 1234567890,
+          "location_id": 1234567890,
+          "relocate_if_necessary": false
+        }
+      ]
+    }
+  }
+{% else %}
+  {% for variant in product.variants %}
+    {% for location in shop.locations %}
+      {
+        "action": {
+          "type": "shopify",
+          "options": [
+            "post",
+            "/admin/inventory_levels/connect.json",
+            {
+              "inventory_item_id": {{ variant.inventory_item_id | json }},
+              "location_id": {{ location.id | json }},
+              "relocate_if_necessary": false
+            }
+          ]
+        }
+      }
+    {% endfor %}
+  {% endfor %}
+{% endif %}
+
+{% if event.preview or options.track_inventory_using_shopify__boolean or options.allow_orders_for_out_of_stock_products__boolean %}
+  {
+    "action": {
+      "type": "shopify",
+      "options": [
+        "update",
+        [
+          "product",
+          {{ product.id | json }}
+        ],
+        {
+          "variants": [
+            {% for variant in product.variants %}
+              {
+                "id": {{ variant.id | json }},
+                "inventory_management": {% if options.track_inventory_using_shopify__boolean %}"shopify"{% else %}null{% endif %},
+                "inventory_policy": {% if options.allow_orders_for_out_of_stock_products__boolean %}"continue"{% else %}"deny"{% endif %}
+              }{% unless forloop.last %},{% endunless %}
+            {% endfor %}
+          ]
+        }
+      ]
+    }
+  }
+{% endif %}
