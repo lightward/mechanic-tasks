@@ -15,6 +15,7 @@
 *   [Backfill customer names from order addresses](./backfill-customer-names-from-order)
 *   [Bulk capture orders by order number](./bulk-capture-by-order-number)
 *   [Catalog update email](./catalog-update-email)
+*   [Delete cancelled orders after 48 hours](./delete-cancelled-orders-after-48-hours)
 *   [Email customer when their order is paid](./email-customer-when-order-paid)
 *   [Email customers when created](./email-customers-when-created)
 *   [Email your customers after a quiet period of no orders](./email-your-customers-after-a-quiet-period-of-no-orders)
