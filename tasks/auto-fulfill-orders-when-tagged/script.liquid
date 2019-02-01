@@ -1,0 +1,27 @@
+{% assign order_qualifies = false %}
+
+{% if order.fulfillment_status == nil or order.fulfillment_status == "partial" %}
+  {% assign order_tags = order.tags | split: ", " %}
+  {% if order_tags contains options.order_tag__required %}
+    {% assign order_qualifies = true %}
+  {% endif %}
+{% endif %}
+
+{% if event.preview or order_qualifies %}
+  {
+    "action": {
+      "type": "shopify",
+      "options": [
+        "post",
+        "/admin/orders/{{ order.id }}/fulfillments.json",
+        {
+          "fulfillment": {
+            "location_id": {{ shop.primary_location_id | json }},
+            "notify_customer": {{ options.notify_customer_on_fulfillment__boolean | json }},
+            "status": "success"
+          }
+        }
+      ]
+    }
+  }
+{% endif %}
