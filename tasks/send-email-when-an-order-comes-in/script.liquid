@@ -1,0 +1,24 @@
+{% assign order_qualifies = false %}
+{% if options.only_for_orders_including_this_product_tag == blank %}
+  {% assign order_qualifies = true %}
+{% else %}
+  {% assign order_product_tags = order.line_items | map: "product" | map: "tags" | join: ", " | split: ", " | sort | uniq %}
+  {% if order_product_tags contains options.only_for_orders_including_this_product_tag %}
+    {% assign order_qualifies = true %}
+  {% endif %}
+{% endif %}
+
+{% if event.preview or order_qualifies %}
+  {
+    "action": {
+      "type": "email",
+      "options": {
+        "to": {{ options.email_recipients__required | json }},
+        "subject": {{ options.email_subject__required | strip | json }},
+        "body": {{ options.email_body__required_multiline | newline_to_br | strip | json }},
+        "reply_to": {{ shop.customer_email | json }},
+        "from_display_name": {{ shop.name | json }}
+      }
+    }
+  }
+{% endif %}
