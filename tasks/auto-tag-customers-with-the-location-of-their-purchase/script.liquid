@@ -1,0 +1,77 @@
+{% if event.preview %}
+  {
+    "action": {
+      "type": "shopify",
+      "options": [
+        "update",
+        [
+          "customer",
+          1234567890
+        ],
+        {
+          "tags": "Ontario HQ"
+        }
+      ]
+    }
+  }
+{% elsif event.topic contains "shopify/orders/" %}
+  {% assign customer = order.customer.reload %}
+
+  {% if order.location_id == blank and options.tag_for_online_orders != blank %}
+    {% assign order_location = options.tag_for_online_orders %}
+  {% elsif order.location %}
+    {% assign order_location = order.location.name %}
+  {% endif %}
+
+  {% assign customer_tags_to_save = customer.tags | add_tag: order_location %}
+
+  {% if customer_tags_to_save != customer.tags %}
+    {
+      "action": {
+        "type": "shopify",
+        "options": [
+          "update",
+          [
+            "customer",
+            {{ customer.id | json }}
+          ],
+          {
+            "tags": {{ customer_tags_to_save | json }}
+          }
+        ]
+      }
+    }
+  {% endif %}
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% for customer in shop.customers %}
+    {% assign customer_tags_to_save = customer.tags %}
+
+    {% for order in customer.orders.any %}
+      {% if order.location_id == blank and options.tag_for_online_orders != blank %}
+        {% assign order_location = options.tag_for_online_orders %}
+      {% elsif order.location %}
+        {% assign order_location = order.location.name %}
+      {% endif %}
+
+      {% assign customer_tags_to_save = customer_tags_to_save | add_tag: order_location %}
+    {% endfor %}
+
+    {% if customer_tags_to_save != customer.tags %}
+      {
+        "action": {
+          "type": "shopify",
+          "options": [
+            "update",
+            [
+              "customer",
+              {{ customer.id | json }}
+            ],
+            {
+              "tags": {{ customer_tags_to_save | json }}
+            }
+          ]
+        }
+      }
+    {% endif %}
+  {% endfor %}
+{% endif %}
