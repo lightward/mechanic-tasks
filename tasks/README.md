@@ -2,6 +2,7 @@
 
 *   [Abandoned cart emails](./abandoned-cart-emails)
 *   [Activate a discount when ISS passes overhead](./activate-a-discount-when-iss-passes-overhead)
+*   [Add Locksmith passcodes to order notes](./add-locksmith-passcodes-to-order-notes)
 *   [Add new customers to GetResponse](./add-new-customers-to-getresponse)
 *   [Archive free orders on fulfillment](./archive-free-orders-on-fulfillment)
 *   [Archive orders on delivery](./archive-orders-on-delivery)
