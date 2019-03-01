@@ -6,6 +6,7 @@
 *   [Add new customers to GetResponse](./add-new-customers-to-getresponse)
 *   [Archive free orders on fulfillment](./archive-free-orders-on-fulfillment)
 *   [Archive orders on delivery](./archive-orders-on-delivery)
+*   [Archive orders when fulfilled](./archive-orders-when-fulfilled)
 *   [Auto-connect new products to all locations](./auto-connect-new-products-to-all-locations)
 *   [Auto-fulfill orders when tagged](./auto-fulfill-orders-when-tagged)
 *   [Auto-publish products tagged with the current day](./auto-publish-products-tagged-with-the-current-day)
