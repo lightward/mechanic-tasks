@@ -10,6 +10,7 @@
 *   [Auto-connect new products to all locations](./auto-connect-new-products-to-all-locations)
 *   [Auto-fulfill orders when tagged](./auto-fulfill-orders-when-tagged)
 *   [Auto-publish products tagged with the current day](./auto-publish-products-tagged-with-the-current-day)
+*   [Auto-tag customers having a rolling minimum total spend](./auto-tag-customers-having-a-rolling-minimum-total-spend)
 *   [Auto-tag customers who purchase an item on sale](./auto-tag-customers-who-purchase-an-item-on-sale)
 *   [Auto-tag customers with the location of their purchase](./auto-tag-customers-with-the-location-of-their-purchase)
 *   [Auto-tag customers with vendors after ordering](./auto-tag-customers-with-vendors-after-ordering)

@@ -1,0 +1,99 @@
+{% comment %}
+  express a preference for which option appears first
+  {{ options.minimum_total_spent__number_required }}
+  {{ options.customer_tag__required }}
+  {{ options.days_of_order_history_to_consider__number_required }}
+{% endcomment %}
+
+{% assign acceptable_order_financial_statuses = "paid partially_paid partially_refunded" | split: " " %}
+{% assign acceptable_transaction_kinds = "sale capture refund" | split: " " %}
+
+{% assign days_in_seconds = options.days_of_order_history_to_consider__number_required | times: 24 | times: 60 | times: 60 %}
+{% assign min_created_at = "now" | date: "%s" | times: 1 | minus: days_in_seconds %}
+
+{% if event.preview %}
+  {
+    "action": {
+      "type": "shopify",
+      "options": [
+        "update",
+        [
+          "customer",
+          1234567890
+        ],
+        {
+          "tags": {{ options.customer_tag__required | json }}
+        }
+      ]
+    }
+  }
+{% else %}
+  {% for customer in shop.customers %}
+    {% if event.topic contains "shopify/orders" and event.topic != "shopify/orders/delete" and customer.id != order.customer.id %}
+      {% continue %}
+    {% endif %}
+
+    {% assign customer_total = 0.0 %}
+    {% assign customer_orders_count = 0 %}
+
+    {% for customer_order in customer.orders.any %}
+      {% assign customer_order_created_at_in_seconds = customer_order.created_at | date: "%s" | times: 1 %}
+      {% if customer_order_created_at_in_seconds < min_created_at %}
+        {% break %}
+      {% endif %}
+
+      {% unless acceptable_order_financial_statuses contains customer_order.financial_status %}
+        {% continue %}
+      {% endunless %}
+
+      {% for transaction in customer_order.transactions %}
+        {% if transaction.status != "success" %}
+          {% continue %}
+        {% endif %}
+
+        {% unless acceptable_transaction_kinds contains transaction.kind %}
+          {% continue %}
+        {% endunless %}
+
+        {% if transaction.kind == "refund" %}
+          {% assign customer_total = customer_total | minus: transaction.amount %}
+        {% else %}
+          {% assign customer_total = customer_total | plus: transaction.amount %}
+        {% endif %}
+      {% endfor %}
+
+      {% assign customer_orders_count = customer_orders_count | plus: 1 %}
+    {% endfor %}
+
+    {% assign tags_to_save = customer.tags | remove_tag: options.customer_tag__required %}
+    {% assign log_line_prefix = customer.email | default: customer.id | append: " spent " | append: customer_total | append: " across " | append: customer_orders_count | append: " orders, " %}
+    {% if customer_total >= options.minimum_total_spent__number_required %}
+      {"log": {{ log_line_prefix | append: "qualifying them for the tag" | json }}}
+      {% assign tags_to_save = customer.tags | add_tag: options.customer_tag__required %}
+    {% else %}
+      {"log": {{ log_line_prefix | append: "and did not qualify for the tag" | json }}}
+    {% endif %}
+
+    {% if tags_to_save != customer.tags %}
+      {
+        "action": {
+          "type": "shopify",
+          "options": [
+            "update",
+            [
+              "customer",
+              {{ customer.id | json }}
+            ],
+            {
+              "tags": {{ tags_to_save | json }}
+            }
+          ]
+        }
+      }
+    {% endif %}
+
+    {% if event.topic contains "shopify/orders" and event.topic != "shopify/orders/delete" and customer.id == order.customer.id %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
