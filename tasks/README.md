@@ -28,6 +28,7 @@
 *   [Email customer when their order is paid](./email-customer-when-order-paid)
 *   [Email customers when created](./email-customers-when-created)
 *   [Email your customers after a quiet period of no orders](./email-your-customers-after-a-quiet-period-of-no-orders)
+*   [Generate a product discount when a voucher product is purchased](./generate-a-product-discount-when-a-voucher-product-is-purchased)
 *   [Get email alerts for FBA failures](./get-email-alerts-for-fba-failures)
 *   [Import PayPal transactions as Shopify orders](./import-paypal-transactions-as-shopify-orders)
 *   [Manage annual memberships based on order minimums](./manage-annual-memberships-based-on-order-minimums)
