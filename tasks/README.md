@@ -33,6 +33,7 @@
 *   [Notify a team when a tagged product is ordered](./notify-a-team-when-a-tagged-product-is-ordered)
 *   [Publish a certain collection, daily](./publish-a-certain-collection-daily)
 *   [Publish back-in-stock products](./publish-back-in-stock-products)
+*   [Raise the price of a product after every sale](./raise-the-price-of-a-product-after-every-sale)
 *   [Reset inventory levels daily](./reset-inventory-levels-daily)
 *   [Save Locksmith passcodes to the customer's notes](./save-locksmith-passcode-to-customer-notes)
 *   [Send email when an order comes in](./send-email-when-an-order-comes-in)
