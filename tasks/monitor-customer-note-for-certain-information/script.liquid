@@ -1,0 +1,83 @@
+{% comment %}
+  Express an opinion about option order:
+
+  {{ options.text_to_watch_for_in_the_customer_note__required }}
+  {{ options.require_a_case_sensitive_match__boolean }}
+  {{ options.customer_tag_to_apply__required }}
+  {{ options.staff_notification_email_recipient__email }}
+{% endcomment %}
+
+{% assign match_text = options.text_to_watch_for_in_the_customer_note__required | strip %}
+
+{% assign customer_qualifies = false %}
+{% assign customer_tags = customer.tags | split: ", " %}
+
+{% assign case_sensitive = options.require_a_case_sensitive_match__boolean %}
+
+{% unless customer_tags contains options.customer_tag_to_apply__required %}
+  {% if options.require_a_case_sensitive_match__boolean %}
+    {% if customer.note contains match_text %}
+      {% assign customer_qualifies = true %}
+    {% endif %}
+  {% else %}
+    {% assign customer_note_downcased = customer.note | downcase %}
+    {% assign match_text_downcased = match_text | downcase %}
+    {% if customer_note_downcased contains match_text_downcased %}
+      {% assign customer_qualifies = true %}
+    {% endif %}
+  {% endif %}
+{% endunless %}
+
+{% if event.preview or customer_qualifies %}
+  {% if options.staff_notification_email_recipient__email != blank %}
+    {% capture email_subject %}
+      [{{ shop.name }}] Customer {{ customer.email }} has {{ match_text | json }} in their note
+    {% endcapture %}
+
+    {% assign replacement = "<b>" | append: match_text | append: "</b>" %}
+
+    {% capture email_body %}
+      Hi there,
+
+      The customer note for {{ customer.email }} was found to contain some matching text:
+
+      <blockquote>{{ customer.note | replace: match_text, replacement | default: "(preview of customer note)" }}</blockquote>
+
+      View this customer's details:
+
+      https://{{ shop.domain }}/admin/customers/{{ customer.id }}
+
+      Thanks,
+      Mechanic (for {{ shop.name }})
+    {% endcapture %}
+
+    {
+      "action": {
+        "type": "email",
+        "options": {
+          "to": {{ options.staff_notification_email_recipient__email | json }},
+          "subject": {{ email_subject | strip | json }},
+          "body": {{ email_body | unindent | strip | newline_to_br | json }},
+          "reply_to": {{ shop.customer_email | json }},
+          "from_display_name": {{ shop.name | json }}
+        }
+      }
+    }
+  {% endif %}
+
+  {
+    "action": {
+      "type": "shopify",
+      "options": [
+        "update",
+        [
+          "customer",
+          {{ customer.id | json }}
+        ],
+        {
+          "tags": {{ customer.tags | add_tag: options.customer_tag_to_apply__required | json }}
+        }
+      ]
+    }
+  }
+{% endif %}

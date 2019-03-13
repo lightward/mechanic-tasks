@@ -32,6 +32,7 @@
 *   [Get email alerts for FBA failures](./get-email-alerts-for-fba-failures)
 *   [Import PayPal transactions as Shopify orders](./import-paypal-transactions-as-shopify-orders)
 *   [Manage annual memberships based on order minimums](./manage-annual-memberships-based-on-order-minimums)
+*   [Monitor customer note for certain information](./monitor-customer-note-for-certain-information)
 *   [Notify a team when a tagged product is ordered](./notify-a-team-when-a-tagged-product-is-ordered)
 *   [Publish a certain collection, daily](./publish-a-certain-collection-daily)
 *   [Publish back-in-stock products](./publish-back-in-stock-products)
