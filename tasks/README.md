@@ -46,5 +46,6 @@
 *   [Send follow-up emails after sending a draft order invoice](./send-follow-up-emails-after-sending-a-draft-order-invoice)
 *   [Send new customer signups to IFTTT](./send-new-customer-signups-to-ifttt)
 *   [Set a default tracking number for new fulfillments](./set-a-default-tracking-number-for-new-fulfillments)
+*   [Sync inventory levels to variant metafields](./sync-inventory-levels-to-variant-metafields)
 *   [Temporarily add an order note](./temporarily-add-an-order-note)
 *   [Unpublish a certain collection, daily](./unpublish-a-certain-collection-daily)

@@ -1,0 +1,75 @@
+{% assign metafield_namespace = options.metafield_namespace__required | strip %}
+
+{% if event.preview %}
+  {
+    "action": {
+      "type": "shopify",
+      "options": [
+        "post",
+        "/admin/products/1234567890/variants/1234567890/metafields.json",
+        {
+          "metafield": {
+            "namespace": {{ metafield_namespace | json }},
+            "key": {{ options.location_ids_and_metafield_keys__keyval_required.first.last | json }},
+            "value_type": "integer",
+            "value": 10
+          }
+        }
+      ]
+    }
+  }
+{% elsif event.topic contains "shopify/inventory_levels/" %}
+  {% assign inventory_level_string = inventory_level.location_id | append: "" %}
+
+  {% assign metafield_namespace = options.metafield_namespace__required | strip %}
+  {% assign metafield_key = options.location_ids_and_metafield_keys__keyval_required[inventory_level_string] %}
+
+  {% if metafield_key != blank %}
+    {
+      "action": {
+        "type": "shopify",
+        "options": [
+          "post",
+          "/admin/products/{{ inventory_level.variant.product_id }}/variants/{{ inventory_level.variant.id }}/metafields.json",
+          {
+            "metafield": {
+              "namespace": {{ metafield_namespace | json }},
+              "key": {{ metafield_key | json }},
+              "value_type": "integer",
+              "value": {{ inventory_level.available | json }}
+            }
+          }
+        ]
+      }
+    }
+  {% endif %}
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% for variant in shop.variants %}
+    {% for inventory_level in variant.inventory_levels %}
+      {% assign inventory_level_string = inventory_level.location_id | append: "" %}
+
+      {% assign metafield_namespace = options.metafield_namespace__required | strip %}
+      {% assign metafield_key = options.location_ids_and_metafield_keys__keyval_required[inventory_level_string] %}
+
+      {% if metafield_key != blank and inventory_level.available != blank %}
+        {
+          "action": {
+            "type": "shopify",
+            "options": [
+              "post",
+              "/admin/products/{{ variant.product_id }}/variants/{{ variant.id }}/metafields.json",
+              {
+                "metafield": {
+                  "namespace": {{ metafield_namespace | json }},
+                  "key": {{ metafield_key | json }},
+                  "value_type": "integer",
+                  "value": {{ inventory_level.available | json }}
+                }
+              }
+            ]
+          }
+        }
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+{% endif %}
