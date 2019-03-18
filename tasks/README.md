@@ -8,6 +8,7 @@
 *   [Archive orders on delivery](./archive-orders-on-delivery)
 *   [Archive orders when fulfilled](./archive-orders-when-fulfilled)
 *   [Auto-connect new products to all locations](./auto-connect-new-products-to-all-locations)
+*   [Auto-copy notes from customers to their orders](./auto-copy-notes-from-customers-to-their-orders)
 *   [Auto-fulfill orders when tagged](./auto-fulfill-orders-when-tagged)
 *   [Auto-publish products tagged with the current day](./auto-publish-products-tagged-with-the-current-day)
 *   [Auto-tag customers having a rolling minimum total spend](./auto-tag-customers-having-a-rolling-minimum-total-spend)

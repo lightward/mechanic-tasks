@@ -1,0 +1,63 @@
+{% capture newline %}
+{% endcapture %}
+
+{% if event.preview %}
+  {
+    "action": {
+      "type": "shopify",
+      "options": [
+        "update",
+        [
+          "order",
+          12345
+        ],
+        {
+          "note": "(Note copied from customer)"
+        }
+      ]
+    }
+  }
+{% elsif event.topic == "shopify/orders/create" %}
+  {% if order.customer.note == blank %}
+    {"log": "No note on file for this customer; skipping order update"}
+  {% else %}
+    {
+      "action": {
+        "type": "shopify",
+        "options": [
+          "update",
+          [
+            "order",
+            {{ order.id | json }}
+          ],
+          {
+            "note": {{ order.note | append: newline | append: newline | append: order.customer.note | strip | json }}
+          }
+        ]
+      }
+    }
+  {% endif %}
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% for order in shop.orders.open %}
+    {% assign order_note_downcased = order.note | downcase %}
+    {% assign customer_note_downcased = order.customer.note | downcase %}
+
+    {% unless customer_note_downcased == blank or order_note_downcased contains customer_note_downcased %}
+      {
+        "action": {
+          "type": "shopify",
+          "options": [
+            "update",
+            [
+              "order",
+              {{ order.id | json }}
+            ],
+            {
+              "note": {{ order.note | append: newline | append: newline | append: order.customer.note | strip | json }}
+            }
+          ]
+        }
+      }
+    {% endunless %}
+  {% endfor %}
+{% endif %}
