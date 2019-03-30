@@ -17,6 +17,7 @@
 *   [Auto-tag customers with vendors after ordering](./auto-tag-customers-with-vendors-after-ordering)
 *   [Auto-tag new orders](./auto-tag-new-orders)
 *   [Auto-tag new orders based on payment method](./auto-tag-new-orders-based-on-payment-method)
+*   [Auto-tag orders by shipment status](./auto-tag-orders-by-shipment-status)
 *   [Auto-tag orders that contain bundles](./auto-tag-orders-that-contain-bundles)
 *   [Auto-tag orders with chargeback or inquiry activity](./auto-tag-orders-with-chargeback-or-inquiry-activity)
 *   [Auto-update inventory policy based on a "preorder" tag](./auto-update-inventory-policy-based-on-a-preorder-tag)
