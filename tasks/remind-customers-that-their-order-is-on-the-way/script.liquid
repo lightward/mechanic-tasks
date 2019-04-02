@@ -1,0 +1,31 @@
+{% assign order = order.reload %}
+
+{% if event.preview %}
+  {
+    "action": {
+      "type": "email",
+      "options": {
+        "to": {{ order.email | json }},
+        "subject": {{ options.email_subject__required | strip | json }},
+        "body": {{ options.email_body__multiline_required | strip | newline_to_br | json }},
+        "reply_to": {{ shop.customer_email | json }},
+        "from_display_name": {{ shop.name | json }}
+      }
+    }
+  }
+{% elsif order.cancelled_at == blank and order.financial_status == "paid" %}
+  {% if order.fulfillment_status == blank or order.fulfillment_status == "partial" %}
+    {
+      "action": {
+        "type": "email",
+        "options": {
+          "to": {{ order.email | json }},
+          "subject": {{ options.email_subject__required | strip | json }},
+          "body": {{ options.email_body__multiline_required | strip | newline_to_br | json }},
+          "reply_to": {{ shop.customer_email | json }},
+          "from_display_name": {{ shop.name | json }}
+        }
+      }
+    }
+  {% endif %}
+{% endif %}
