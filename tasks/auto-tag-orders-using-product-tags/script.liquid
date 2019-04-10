@@ -1,0 +1,44 @@
+{% assign order_product_tags = order.line_items | map: "product" | map: "tags" | join: ", " %}
+{% assign order_tags_to_save = order.tags %}
+
+{% if options.copy_these_tags__array == blank and options.copy_tags_having_this_prefix == blank %}
+  {% assign order_tags_to_save = order.tags | add_tags: order_product_tags %}
+{% else %}
+  {% assign order_product_tags_array = order_product_tags | split: ", " | uniq %}
+
+  {% if options.copy_these_tags__array != blank %}
+    {% for order_product_tag in order_product_tags_array %}
+      {% if options.copy_these_tags__array contains order_product_tag %}
+        {% assign order_tags_to_save = order_tags_to_save | add_tag: order_product_tag %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
+  {% if options.copy_tags_having_this_prefix != blank %}
+    {% assign prefix_length = options.copy_tags_having_this_prefix.size %}
+    {% for order_product_tag in order_product_tags_array %}
+      {% assign order_product_tag_substr = order_product_tag | slice: 0, prefix_length %}
+      {% if order_product_tag_substr == options.copy_tags_having_this_prefix %}
+        {% assign order_tags_to_save = order_tags_to_save | add_tag: order_product_tag %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+{% endif %}
+
+{% if event.preview or order_tags_to_save != order.tags %}
+  {
+    "action": {
+      "type": "shopify",
+      "options": [
+        "update",
+        [
+          "order",
+          {{ order.id | json }}
+        ],
+        {
+          "tags": {{ order_tags_to_save | json }}
+        }
+      ]
+    }
+  }
+{% endif %}

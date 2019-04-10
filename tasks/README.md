@@ -20,6 +20,7 @@
 *   [Auto-tag orders based on cart attributes](./auto-tag-orders-based-on-cart-attributes)
 *   [Auto-tag orders by shipment status](./auto-tag-orders-by-shipment-status)
 *   [Auto-tag orders that contain bundles](./auto-tag-orders-that-contain-bundles)
+*   [Auto-tag orders using product tags](./auto-tag-orders-using-product-tags)
 *   [Auto-tag orders with chargeback or inquiry activity](./auto-tag-orders-with-chargeback-or-inquiry-activity)
 *   [Auto-update inventory policy based on a "preorder" tag](./auto-update-inventory-policy-based-on-a-preorder-tag)
 *   [Automatically send account invite to new customers](./automatically-send-account-invite-to-new-customers)
