@@ -43,6 +43,7 @@
 *   [Raise the price of a product after every sale](./raise-the-price-of-a-product-after-every-sale)
 *   [Remind customers that their order is on the way](./remind-customers-that-their-order-is-on-the-way)
 *   [Reset inventory levels daily](./reset-inventory-levels-daily)
+*   [Rotate products through a featured collection](./rotate-products-through-a-featured-collection)
 *   [Save Locksmith passcodes to the customer's notes](./save-locksmith-passcode-to-customer-notes)
 *   [Send account invites to all customers in bulk](./send-account-invites-to-all-customers-in-bulk)
 *   [Send email when an order comes in](./send-email-when-an-order-comes-in)
