@@ -1,0 +1,72 @@
+{% if event.preview %}
+  {
+    "action": {
+      "type": "shopify",
+      "options": [
+        "post",
+        "/admin/inventory_levels/set.json",
+        {
+          "location_id": 123467890,
+          "inventory_item_id": 123467890,
+          "available": 30
+        }
+      ]
+    }
+  }
+
+  {
+    "action": {
+      "type": "cache",
+      "options": {
+        "setex": {
+          "key": "product-inventory-level-1234567890",
+          "value": true,
+          "ttl": 60
+        }
+      }
+    }
+  }
+{% else %}
+  {% if options.filter_by_these_location_names__array == blank or options.filter_by_these_location_names__array contains inventory_level.location.name %}
+    {% if options.filter_by_these_product_types__array == blank or options.filter_by_these_product_types__array contains inventory_level.variant.product.product_type %}
+      {% assign cache_key = "product-inventory-level-" | append: inventory_level.variant.product.id %}
+      {% if cache[cache_key] == blank %}
+        {% for other_variant in inventory_level.variant.product.variants %}
+          {% for other_inventory_level in other_variant.inventory_levels %}
+            {% if other_inventory_level.available != inventory_level.available %}
+              {% if options.filter_by_these_location_names__array == blank or options.filter_by_these_location_names__array contains other_inventory_level.location.name %}
+                {
+                  "action": {
+                    "type": "shopify",
+                    "options": [
+                      "post",
+                      "/admin/inventory_levels/set.json",
+                      {
+                        "location_id": {{ other_inventory_level.location_id | json }},
+                        "inventory_item_id": {{ other_inventory_level.inventory_item_id | json }},
+                        "available": {{ inventory_level.available | json }}
+                      }
+                    ]
+                  }
+                }
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+
+        {
+          "action": {
+            "type": "cache",
+            "options": {
+              "setex": {
+                "key": {{ cache_key | json }},
+                "value": true,
+                "ttl": 60
+              }
+            }
+          }
+        }
+      {% endif %}
+    {% endif %}
+  {% endif %}
+{% endif %}

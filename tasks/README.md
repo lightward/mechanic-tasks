@@ -35,6 +35,7 @@
 *   [Generate a product discount when a voucher product is purchased](./generate-a-product-discount-when-a-voucher-product-is-purchased)
 *   [Get email alerts for FBA failures](./get-email-alerts-for-fba-failures)
 *   [Import PayPal transactions as Shopify orders](./import-paypal-transactions-as-shopify-orders)
+*   [Keep inventory levels in sync within products](./keep-inventory-levels-in-sync-within-products)
 *   [Manage annual memberships based on order minimums](./manage-annual-memberships-based-on-order-minimums)
 *   [Monitor customer note for certain information](./monitor-customer-note-for-certain-information)
 *   [Notify a team when a tagged product is ordered](./notify-a-team-when-a-tagged-product-is-ordered)
