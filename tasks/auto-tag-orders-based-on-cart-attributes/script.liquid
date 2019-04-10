@@ -1,0 +1,46 @@
+{% comment %}
+  Preferred order of options:
+
+  {{ options.cart_attribute_to_monitor__required }}
+  {{ options.cart_attribute_values_and_tags_to_add__keyval_required }}
+{% endcomment %}
+
+{% if event.preview %}
+  {
+    "action": {
+      "type": "shopify",
+      "options": [
+        "update",
+        [
+          "order",
+          1234567890
+        ],
+        {
+          "tags": {{ options.cart_attribute_values_and_tags_to_add__keyval_required.first.first | json }}
+        }
+      ]
+    }
+  }
+{% else %}
+  {% assign attribute_name = options.cart_attribute_to_monitor__required %}
+  {% assign attribute_value = order.note_attributes[attribute_name] %}
+  {% assign tag = options.cart_attribute_values_and_tags_to_add__keyval_required[attribute_value] %}
+
+  {% if tag != blank %}
+    {
+      "action": {
+        "type": "shopify",
+        "options": [
+          "update",
+          [
+            "order",
+            {{ order.id | json }}
+          ],
+          {
+            "tags": {{ order.tags | add_tag: tag | json }}
+          }
+        ]
+      }
+    }
+  {% endif %}
+{% endif %}
