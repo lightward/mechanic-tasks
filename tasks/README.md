@@ -48,6 +48,7 @@
 *   [Rotate products through a featured collection](./rotate-products-through-a-featured-collection)
 *   [Save Locksmith passcodes to the customer's notes](./save-locksmith-passcode-to-customer-notes)
 *   [Send account invites to all customers in bulk](./send-account-invites-to-all-customers-in-bulk)
+*   [Send customers a reorder link X days after ordering](./send-customers-a-reorder-link-x-days-after-ordering)
 *   [Send email when an order comes in](./send-email-when-an-order-comes-in)
 *   [Send email when an order is tagged](./send-email-when-an-order-is-tagged)
 *   [Send follow-up emails after sending a draft order invoice](./send-follow-up-emails-after-sending-a-draft-order-invoice)
