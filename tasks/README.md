@@ -59,4 +59,5 @@
 *   [Set product templates based on product tags](./set-product-templates-based-on-product-tags)
 *   [Sync inventory levels to variant metafields](./sync-inventory-levels-to-variant-metafields)
 *   [Temporarily add an order note](./temporarily-add-an-order-note)
+*   [Track incoming donations in a store metafield](./track-incoming-donations-in-a-store-metafield)
 *   [Unpublish a certain collection, daily](./unpublish-a-certain-collection-daily)

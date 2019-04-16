@@ -1,0 +1,75 @@
+{% if event.preview %}
+  {
+    "action": {
+      "type": "shopify",
+      "options": [
+        "create",
+        "metafield",
+        {
+          "namespace": {{ options.metafield_namespace__required | json }},
+          "key": {{ options.metafield_key__required | json }},
+          "value_type": "string",
+          "value": "5.5"
+        }
+      ]
+    }
+  }
+{% elsif event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% assign donation_total = 0 %}
+
+  {% for order in shop.orders.any.paid %}
+    {% for line_item in order.line_items %}
+      {% if line_item.product.handle != options.donation_product_handle__required %}
+        {% continue %}
+      {% endif %}
+
+      {% assign donation_total = donation_total | plus: line_item.price | minus: line_item.total_discount %}
+    {% endfor %}
+  {% endfor %}
+
+  {
+    "action": {
+      "type": "shopify",
+      "options": [
+        "create",
+        "metafield",
+        {
+          "namespace": {{ options.metafield_namespace__required | json }},
+          "key": {{ options.metafield_key__required | json }},
+          "value_type": "string",
+          "value": {{ donation_total | append: "" | json }}
+        }
+      ]
+    }
+  }
+{% elsif event.topic == "shopify/orders/create" or event.topic == "shopify/orders/paid" %}
+  {% if order.financial_status == "paid" %}
+    {% assign current_donation = 0 %}
+
+    {% for line_item in order.line_items %}
+      {% if line_item.product.handle != options.donation_product_handle__required %}
+        {% continue %}
+      {% endif %}
+
+      {% assign current_donation = current_donation | plus: line_item.price | minus: line_item.total_discount %}
+    {% endfor %}
+
+    {% if current_donation > 0 %}
+      {
+        "action": {
+          "type": "shopify",
+          "options": [
+            "create",
+            "metafield",
+            {
+              "namespace": {{ options.metafield_namespace__required | json }},
+              "key": {{ options.metafield_key__required | json }},
+              "value_type": "string",
+              "value": {{ shop.metafields[options.metafield_namespace__required][options.metafield_key__required] | plus: current_donation | append: "" | json }}
+            }
+          ]
+        }
+      }
+    {% endif %}
+  {% endif %}
+{% endif %}
