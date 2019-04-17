@@ -1,0 +1,96 @@
+{% if options.sample_order_total__number_required <= 0 %}
+  {"error": "The order value must be a positive number."}
+{% endif %}
+
+{% assign order_qualifies = true %}
+
+{% if order.financial_status != "paid" %}
+  {% assign order_qualifies = false %}
+  {"log": "Order is not paid."}
+{% endif %}
+
+{% assign order_total_price_number = order.total_price | times: 1 %}
+{% if order_total_price_number != options.sample_order_total__number_required %}
+  {% assign order_qualifies = false %}
+  {"log": "Order has a different price than {{ options.sample_order_total__number_required }}."}
+{% endif %}
+
+{% if order.customer == nil %}
+  {% assign order_qualifies = false %}
+  {"log": "Order does not have a customer record."}
+{% endif %}
+
+{% if event.preview or order_qualifies %}
+  {% assign discount_code = order.id | split: "" | reverse | join: "" | slice: 0, 4 | append: order.order_number | base64 | replace: "=", "" | upcase %}
+
+  {% capture graphql_query %}
+    mutation {
+      priceRuleCreate(
+        priceRule: {
+          allocationMethod: ACROSS
+          customerSelection: {
+            customerIdsToAdd: [{{ order.customer.reload.admin_graphql_api_id | json }}]
+          }
+          target: LINE_ITEM
+          title: {{ discount_code | json }}
+          usageLimit: 1
+          validityPeriod: {
+            start: {{ "now" | date: "%FT%T%:z" | json }}
+            {% if options.number_of_days_before_discounts_expire__number != blank %}
+              {% assign expiry_days_s = 60 | times: 60 | times: 24 | times: options.number_of_days_before_discounts_expire__number %}
+              end: {{ "now" | date: "%s" | plus: expiry_days_s | date: "%FT%T%:z" | json }}
+            {% endif %}
+          }
+          value: {
+            fixedAmountValue: {{ options.sample_order_total__number_required | times: -1 | json }}
+          }
+          prerequisiteSubtotalRange: {
+            greaterThanOrEqualTo: {{ options.sample_order_total__number_required | json }}
+          }
+          itemEntitlements: {
+            targetAllLineItems: true
+          }
+        }
+        priceRuleDiscountCode: {
+          code: {{ discount_code | json }}
+        }
+      ) {
+        priceRule {
+          id
+        }
+        priceRuleUserErrors {
+          code
+          field
+          message
+        }
+        priceRuleDiscountCode {
+          code
+          id
+        }
+      }
+    }
+  {% endcapture %}
+
+  {
+    "action": {
+      "type": "shopify",
+      "options": {{ graphql_query | json }}
+    }
+  }
+
+  {% assign email_subject = options.email_subject__required | replace: 'DISCOUNT_CODE', discount_code %}
+  {% assign email_body = options.email_body__multiline_required | replace: 'DISCOUNT_CODE', discount_code %}
+
+  {
+    "action": {
+      "type": "email",
+      "options": {
+        "to": {{ order.email | json }},
+        "subject": {{ email_subject | strip | json }},
+        "body": {{ email_body | newline_to_br | json }},
+        "reply_to": {{ shop.customer_email | json }},
+        "from_display_name": {{ shop.name | json }}
+      }
+    }
+  }
+{% endif %}
