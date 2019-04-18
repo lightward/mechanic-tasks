@@ -35,6 +35,7 @@
 *   [Delete variants having a metafield date that has passed](./delete-variants-having-a-metafield-date-that-has-passed)
 *   [Email customer when their order is paid](./email-customer-when-order-paid)
 *   [Email customers when created](./email-customers-when-created)
+*   [Email someone when a certain variant is purchased](./email-when-variant-purchased)
 *   [Email your customers after a quiet period of no orders](./email-your-customers-after-a-quiet-period-of-no-orders)
 *   [Generate a product discount when a voucher product is purchased](./generate-a-product-discount-when-a-voucher-product-is-purchased)
 *   [Get email alerts for FBA failures](./get-email-alerts-for-fba-failures)
