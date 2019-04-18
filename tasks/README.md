@@ -28,6 +28,7 @@
 *   [Bulk capture orders by order number](./bulk-capture-by-order-number)
 *   [Cancel fulfillments when an order is fully refunded](./cancel-fulfillments-when-an-order-is-fully-refunded)
 *   [Catalog update email](./catalog-update-email)
+*   [Clean up draft orders](./clean-up-draft-orders)
 *   [Credit customers for sample orders](./credit-customers-for-sample-orders)
 *   [Delete cancelled orders after 48 hours](./delete-cancelled-orders-after-48-hours)
 *   [Delete draft orders](./delete-draft-orders)
