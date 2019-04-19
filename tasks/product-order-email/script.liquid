@@ -1,0 +1,25 @@
+{% capture email_action %}
+  {
+    "action": {
+      "type": "email",
+      "options": {
+        "to": {{ order.email | json }},
+        "subject": {{ options.email_subject__required | json }},
+        "body": {{ options.email_body__multiline_required | strip | newline_to_br | json }},
+        "reply_to": {{ shop.customer_email | json }},
+        "from_display_name": {{ shop.name | json }}
+      }
+    }
+  }
+{% endcapture %}
+
+{% if event.preview %}
+  {{ email_action }}
+{% else %}
+  {% for line_item in order.line_items %}
+    {% if line_item.sku == options.product_sku__required %}
+      {{ email_action }}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
