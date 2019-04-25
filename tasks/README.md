@@ -7,6 +7,7 @@
 *   [Archive free orders on fulfillment](./archive-free-orders-on-fulfillment)
 *   [Archive orders on delivery](./archive-orders-on-delivery)
 *   [Archive orders when fulfilled](./archive-orders-when-fulfilled)
+*   [Auto-add an order note for returning customers](./auto-add-an-order-note-for-returning-customers)
 *   [Auto-connect new products to all locations](./auto-connect-new-products-to-all-locations)
 *   [Auto-copy notes from customers to their orders](./auto-copy-notes-from-customers-to-their-orders)
 *   [Auto-fulfill orders when tagged](./auto-fulfill-orders-when-tagged)
