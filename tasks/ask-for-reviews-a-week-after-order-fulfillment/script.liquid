@@ -1,0 +1,26 @@
+{% assign has_product = false %}
+{% for line_item in order.line_items %}
+  {% if line_item.product_exists %}
+    {% assign has_product = true %}
+  {% endif %}
+{% endfor %}
+
+{% assign send_email = false %}
+{% if has_product and order.email %}
+  {% assign send_email = true %}
+{% endif %}
+
+{% if send_email or event.preview %}
+  {
+    "action": {
+      "type": "email",
+      "options": {
+        "to": {{ order.email | json }},
+        "subject": {{ options.email_subject__required | json }},
+        "body": {{ options.email_body__multiline_required | strip | newline_to_br | json }},
+        "reply_to": {{ shop.customer_email | json }},
+        "from_display_name": {{ shop.name | json }}
+      }
+    }
+  }
+{% endif %}
