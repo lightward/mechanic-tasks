@@ -1,0 +1,27 @@
+var redirects = {{ options.redirects_and_codes__keyval_multiline | json }};
+var codesToRedirects = {};
+
+Object.getOwnPropertyNames(redirects).forEach(function (redirect) {
+  redirects[redirect].split("\n").map(function (code) {
+    {% if options.require_case_sensitive_codes__boolean %}
+      return code.toLowerCase().trim();
+    {% else %}
+      return code.trim();
+    {% endif %}
+  }).forEach(function (code) {
+    codesToRedirects[code] = redirect;
+  });
+});
+
+window.attemptRedirectByCode = function (code) {
+  {% unless options.require_case_sensitive_codes__boolean %}code = code.toLowerCase();{% endunless %}
+  code = code.trim();
+  
+  if (codesToRedirects[code]) {
+    window.location.href = codesToRedirects[code];
+    return true;
+  } else {
+    alert({{ options.invalid_code_message__required | json }});
+    return false;
+  }
+};
