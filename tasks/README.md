@@ -25,6 +25,7 @@
 *   [Auto-tag orders using product tags](./auto-tag-orders-using-product-tags)
 *   [Auto-tag orders with chargeback or inquiry activity](./auto-tag-orders-with-chargeback-or-inquiry-activity)
 *   [Auto-update inventory policy based on a "preorder" tag](./auto-update-inventory-policy-based-on-a-preorder-tag)
+*   [Automatically publish and unpublish on a monthly cycle](./automatically-publish-and-unpublish-on-a-monthly-cycle)
 *   [Automatically send account invite to new customers](./automatically-send-account-invite-to-new-customers)
 *   [Backfill customer names from order addresses](./backfill-customer-names-from-order)
 *   [Bulk capture orders by order number](./bulk-capture-by-order-number)
