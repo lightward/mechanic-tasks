@@ -57,6 +57,7 @@
 *   [Reset inventory levels daily](./reset-inventory-levels-daily)
 *   [Rotate products through a featured collection](./rotate-products-through-a-featured-collection)
 *   [Save Locksmith passcodes to the customer's notes](./save-locksmith-passcode-to-customer-notes)
+*   [Schedule customer auto-tagging after a purchase](./schedule-customer-auto-tagging-after-a-purchase)
 *   [Send account invites to all customers in bulk](./send-account-invites-to-all-customers-in-bulk)
 *   [Send customers a reorder link X days after ordering](./send-customers-a-reorder-link-x-days-after-ordering)
 *   [Send email when an order comes in](./send-email-when-an-order-comes-in)
