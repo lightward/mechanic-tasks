@@ -39,6 +39,7 @@
 *   [Email customer when their order is paid](./email-customer-when-order-paid)
 *   [Email customers after purchasing a certain product](./product-order-email)
 *   [Email customers when created](./email-customers-when-created)
+*   [Email customers when tagged](./email-customers-when-tagged)
 *   [Email someone when a certain variant is purchased](./email-when-variant-purchased)
 *   [Email your customers after a quiet period of no orders](./email-your-customers-after-a-quiet-period-of-no-orders)
 *   [Generate a product discount when a voucher product is purchased](./generate-a-product-discount-when-a-voucher-product-is-purchased)
