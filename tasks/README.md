@@ -48,6 +48,7 @@
 *   [Keep inventory levels in sync within products](./keep-inventory-levels-in-sync-within-products)
 *   [Maintain a collection of new products](./maintain-a-collection-of-new-products)
 *   [Manage annual memberships based on order minimums](./manage-annual-memberships-based-on-order-minimums)
+*   [Manage fulfillment status using order tags](./manage-fulfillment-status-using-order-tags)
 *   [Monitor customer note for certain information](./monitor-customer-note-for-certain-information)
 *   [Notify a team when a tagged product is ordered](./notify-a-team-when-a-tagged-product-is-ordered)
 *   [Publish a certain collection, daily](./publish-a-certain-collection-daily)
