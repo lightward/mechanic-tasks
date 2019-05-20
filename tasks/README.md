@@ -44,6 +44,7 @@
 *   [Email your customers after a quiet period of no orders](./email-your-customers-after-a-quiet-period-of-no-orders)
 *   [Generate a product discount when a voucher product is purchased](./generate-a-product-discount-when-a-voucher-product-is-purchased)
 *   [Get email alerts for FBA failures](./get-email-alerts-for-fba-failures)
+*   [Get email alerts for out of stock products](./get-email-alerts-for-out-of-stock-products)
 *   [Import PayPal transactions as Shopify orders](./import-paypal-transactions-as-shopify-orders)
 *   [Keep inventory levels in sync within products](./keep-inventory-levels-in-sync-within-products)
 *   [Maintain a collection of new products](./maintain-a-collection-of-new-products)
