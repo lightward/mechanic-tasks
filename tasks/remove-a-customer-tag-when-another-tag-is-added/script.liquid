@@ -1,0 +1,36 @@
+{% assign customer_tags = customer.tags | split: ", " %}
+{% assign tag_to_match = options.customer_tag_to_watch_for__required %}
+{% assign tag_to_remove = options.customer_tag_to_remove__required %}
+
+{% if options.ignore_tag_case__boolean %}
+  {% assign customer_tags = customer.tags | downcase | split: ", " %}
+  {% assign tag_to_match = options.customer_tag_to_watch_for__required | downcase %}
+{% endif %}
+
+{% assign customer_qualifies = false %}
+{% if customer_tags contains tag_to_match and customer_tags contains tag_to_remove %}
+  {% assign customer_qualifies = true %}
+{% endif %}
+
+{% assign customer_id = customer.reload.admin_graphql_api_id %}
+{% if event.preview %}
+  {% assign customer_id = "gid://shopify/Customer/1234567890" %}
+{% endif %}
+
+{% if event.preview or customer_qualifies %}
+  {% capture query %}
+    mutation {
+      tagsRemove(
+        id: {{ customer_id | json }}
+        tags: {{ tag_to_remove | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" query %}
+{% endif %}
