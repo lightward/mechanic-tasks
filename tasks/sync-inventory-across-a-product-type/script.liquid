@@ -1,0 +1,197 @@
+{% if event.preview %}
+  {% capture inventory_query %}
+    {
+      productVariants(first: 1, query: "product_type:Shirt") {
+        edges {
+          node {
+            inventoryQuantity
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign inventory_query_result = inventory_query | shopify %}
+
+  {% action "cache" %}
+    {"set": {"key": {{ "inventory_by_product_type:Shirt" | sha256 | json }}, "value": 500}}
+  {% endaction %}
+
+  {% capture primary_location_query %}
+    {
+      location {
+        id
+      }
+    }
+  {% endcapture %}
+
+  {% assign primary_location_query_result = primary_location_query | shopify %}
+
+  {% capture adjustment_query %}
+    mutation {
+      inventoryBulkAdjustQuantityAtLocation(
+        inventoryItemAdjustments: []
+        locationId: "gid://shopify/Location/1234567890"
+      ) {
+        inventoryLevels {
+          id
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" adjustment_query %}
+{% else %}
+  {% assign product_types = options.product_types_to_monitor__array_required %}
+
+  {% if event.topic == "mechanic/user/trigger" %}
+    {% for product_type in product_types %}
+      {% assign inventory_list = array %}
+      {% assign cursor = nil %}
+
+      {% for n in (0..100) %}
+        {% capture inventory_query %}
+          {
+            productVariants(
+              first: 250
+              query: {{ "product_type:" | append: product_type | json }}
+              after: {{ cursor | json }}
+            ) {
+              pageInfo {
+                hasNextPage
+              }
+              edges {
+                node {
+                  inventoryQuantity
+                }
+              }
+            }
+          }
+        {% endcapture %}
+
+        {% assign inventory_query_result = inventory_query | shopify %}
+        {% assign inventory_list = inventory_query_result.data.productVariants.edges | map: "node" | map: "inventoryQuantity" | concat: inventory_list %}
+
+        {% if inventory_query_result.data.productVariants.pageInfo.hasNextPage %}
+          {% assign cursor = inventory_query_result.data.productVariants.edges.last.cursor %}
+          {% continue %}
+        {% endif %}
+
+        {% break %}
+      {% endfor %}
+
+      {% assign inventory_total = inventory_list | sum %}
+      {% assign expected_inventory_total = inventory_list.first | times: inventory_list.size %}
+      {% if inventory_total != expected_inventory_total %}
+        {"error": {{ product_type | append: ": Not all inventory levels are in sync. Manually ensure everything is at the same level, and try again." | json }}}
+      {% else %}
+        {% assign cache_key = "inventory_by_product_type:" | append: product_type | sha256 %}
+        {% action "cache" %}
+          {"set": {"key": {{ cache_key | json }}, "value": {{ inventory_list.first | json }}}}
+        {% endaction %}
+      {% endif %}
+    {% endfor %}
+  {% elsif event.topic contains "mechanic/scheduler/" %}
+    {% capture primary_location_query %}
+      {
+        location {
+          id
+        }
+      }
+    {% endcapture %}
+
+    {% assign primary_location_query_result = primary_location_query | shopify %}
+
+    {% assign primary_location_id = primary_location_query_result.data.location.id %}
+
+    {% for product_type in product_types %}
+      {% assign cache_key = "inventory_by_product_type:" | append: product_type | sha256 %}
+      {% assign starting_inventory = cache[cache_key] %}
+      {% assign new_inventory = starting_inventory %}
+      {% assign cursor = nil %}
+
+      {% assign variants = array %}
+
+      {% for n in (0..100) %}
+        {% capture inventory_query %}
+          {
+            productVariants(
+              first: 250
+              query: {{ "product_type:" | append: product_type | json }}
+              after: {{ cursor | json }}
+            ) {
+              pageInfo {
+                hasNextPage
+              }
+              edges {
+                node {
+                  inventoryQuantity
+                  inventoryItem {
+                    id
+                  }
+                }
+                cursor
+              }
+            }
+          }
+        {% endcapture %}
+
+        {% assign inventory_query_result = inventory_query | shopify %}
+        {% assign inventory_list = inventory_query_result.data.productVariants.edges | map: "node" | map: "inventoryQuantity" %}
+        {% assign inventory_total = inventory_list | sum %}
+        {% assign inventory_diff = starting_inventory | times: inventory_list.size | minus: inventory_total %}
+        {% assign new_inventory = new_inventory | minus: inventory_diff %}
+
+        {% assign variants = inventory_query_result.data.productVariants.edges | map: "node" | concat: variants %}
+
+        {% if inventory_query_result.data.productVariants.pageInfo.hasNextPage %}
+          {% assign cursor = inventory_query_result.data.productVariants.edges.last.cursor %}
+          {% continue %}
+        {% endif %}
+
+        {% break %}
+      {% endfor %}
+
+      {% if new_inventory == starting_inventory %}
+        {"log": {{ product_type | append: ": No inventory adjustments needed." | json }}}
+      {% else %}
+        {% action "cache" %}
+          {"set": {"key": {{ cache_key | json }}, "value": {{ new_inventory | json }}}}
+        {% endaction %}
+
+        {% assign inventory_item_adjustments = array %}
+
+        {% for variant in variants %}
+          {% assign adjustment = hash %}
+          {% assign adjustment["inventoryItemId"] = variant.inventoryItem.id %}
+          {% assign adjustment["availableDelta"] = new_inventory | minus: variant.inventoryQuantity %}
+          {% assign index = inventory_item_adjustments.size %}
+          {% assign inventory_item_adjustments[index] = adjustment %}
+        {% endfor %}
+
+        {% capture adjustment_query %}
+          mutation {
+            inventoryBulkAdjustQuantityAtLocation(
+              inventoryItemAdjustments: {{ inventory_item_adjustments | json | replace: '"inventoryItemId"', "inventoryItemId" | replace: '"availableDelta"', "availableDelta" }}
+              locationId: {{ primary_location_id | json }}
+            ) {
+              inventoryLevels {
+                id
+              }
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endcapture %}
+
+        {% action "shopify" adjustment_query %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+{% endif %}

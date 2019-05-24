@@ -73,6 +73,7 @@
 *   [Send new customer signups to IFTTT](./send-new-customer-signups-to-ifttt)
 *   [Set a default tracking number for new fulfillments](./set-a-default-tracking-number-for-new-fulfillments)
 *   [Set product templates based on product tags](./set-product-templates-based-on-product-tags)
+*   [Sync inventory across a product type](./sync-inventory-across-a-product-type)
 *   [Sync inventory levels to variant metafields](./sync-inventory-levels-to-variant-metafields)
 *   [Temporarily add an order note](./temporarily-add-an-order-note)
 *   [Temporarily enable tax-exempt status when a customer is tagged](./temporarily-enable-tax-exempt-status-when-a-customer-is-tagged)
