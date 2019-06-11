@@ -20,6 +20,7 @@
 *   [Auto-tag customers with vendors after ordering](./auto-tag-customers-with-vendors-after-ordering)
 *   [Auto-tag new orders](./auto-tag-new-orders)
 *   [Auto-tag new orders based on payment method](./auto-tag-new-orders-based-on-payment-method)
+*   [Auto-tag new orders by staff member](./auto-tag-new-orders-by-staff-member)
 *   [Auto-tag orders based on cart attributes](./auto-tag-orders-based-on-cart-attributes)
 *   [Auto-tag orders by shipment status](./auto-tag-orders-by-shipment-status)
 *   [Auto-tag orders that contain bundles](./auto-tag-orders-that-contain-bundles)
