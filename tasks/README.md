@@ -9,6 +9,7 @@
 *   [Archive orders when fulfilled](./archive-orders-when-fulfilled)
 *   [Ask for reviews a week after order fulfillment](./ask-for-reviews-a-week-after-order-fulfillment)
 *   [Auto-add an order note for returning customers](./auto-add-an-order-note-for-returning-customers)
+*   [Auto-capture order payment based on shipping method](./auto-capture-order-payment-based-on-shipping-method)
 *   [Auto-connect new products to all locations](./auto-connect-new-products-to-all-locations)
 *   [Auto-copy notes from customers to their orders](./auto-copy-notes-from-customers-to-their-orders)
 *   [Auto-fulfill orders when tagged](./auto-fulfill-orders-when-tagged)

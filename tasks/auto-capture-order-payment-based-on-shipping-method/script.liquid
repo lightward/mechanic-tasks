@@ -1,0 +1,18 @@
+{% assign order_qualifies = false %}
+
+{% if options.allowed_shipping_methods__required_array contains order.shipping_lines.first.title and order.financial_status == "authorized" %}
+  {% assign order_qualifies = true %}
+{% endif %}
+
+{% if event.preview or order_qualifies %}
+  {
+    "action": {
+      "type": "shopify",
+      "options": [
+        "post",
+        "/admin/orders/{{ order.id }}/transactions.json",
+        { "transaction": { "kind": "capture" } }
+      ]
+    }
+  }
+{% endif %}
