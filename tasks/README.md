@@ -12,6 +12,7 @@
 *   [Auto-connect new products to all locations](./auto-connect-new-products-to-all-locations)
 *   [Auto-copy notes from customers to their orders](./auto-copy-notes-from-customers-to-their-orders)
 *   [Auto-fulfill orders when tagged](./auto-fulfill-orders-when-tagged)
+*   [Auto-generate SKUs](./auto-generate-skus)
 *   [Auto-publish products tagged with the current day](./auto-publish-products-tagged-with-the-current-day)
 *   [Auto-tag customers based on their orders count](./auto-tag-customers-based-on-their-orders-count)
 *   [Auto-tag customers having a rolling minimum total spend](./auto-tag-customers-having-a-rolling-minimum-total-spend)
