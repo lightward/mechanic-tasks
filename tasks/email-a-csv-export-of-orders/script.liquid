@@ -1,0 +1,279 @@
+{% assign cursor = nil %}
+{% assign order_ids = array %}
+
+{% for n in (0..100) %}
+  {% capture query %}
+    query {
+      orders(
+        first: 250
+        query: {{ options.search_query_for_orders | default: "" | json }}
+        after: {{ cursor | json }}
+      ) {
+        pageInfo {
+          hasNextPage
+        }
+        edges {
+          cursor
+          node {
+            id
+            tags
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% for edge in result.data.orders.edges %}
+    {% if options.ignore_orders_with_this_tag != blank and edge.node.tags contains options.ignore_orders_with_this_tag %}
+      {% continue %}
+    {% endif %}
+
+    {% assign order_ids[order_ids.size] = edge.node.id %}
+  {% endfor %}
+
+  {% if result.data.orders.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.orders.edges.last.cursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% assign csv = array %}
+{% assign csv[0] = "Customer ID,First Order Date,Customer E-mail,Shipping First Name,Shipping Last Name,Shipping Address 1,Shipping Address 2,Shipping City,Shipping Province,Shipping Country,Shipping Zip,Shipping Phone,Billing First Name,Billing Last Name,Billing Address 1,Billing Address 2,Billing City,Billing Province,Billing Country,Billing Zip,Billing Phone,Current Purchase Date,Product ID,Product Title,Variant ID,Variant Title,Tags,Quantity,Price,SKU,Shipping Code,Shipping Name" | split: "," %}
+
+{% for order_id in order_ids %}
+  {% capture query %}
+    query {
+      order(id: {{ order_id | json }}) {
+        id
+        tags
+        name
+        processedAt
+        shippingAddress {
+          firstName
+          lastName
+          address1
+          address2
+          city
+          province
+          country
+          zip
+          phone
+        }
+        billingAddress {
+          firstName
+          lastName
+          address1
+          address2
+          city
+          province
+          country
+          zip
+          phone
+        }
+        customer {
+          legacyResourceId
+          email
+          orders(
+            first: 1
+            sortKey: PROCESSED_AT
+          ) {
+            edges {
+              node {
+                processedAt
+              }
+            }
+          }
+        }
+        lineItems(first: 150) {
+          edges {
+            node {
+              product {
+                legacyResourceId
+                title
+                tags
+              }
+              variant {
+                legacyResourceId
+                title
+              }
+              customAttributes {
+                key
+                value
+              }
+              quantity
+              discountedTotalSet {
+                shopMoney {
+                  amount
+                  currencyCode
+                }
+              }
+              sku
+            }
+          }
+        }
+        shippingLine {
+          title
+          shippingRateHandle
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+  {% assign order = result.data.order %}
+
+  {% for lineItemEdge in order.lineItems.edges %}
+    {% assign row = array %}
+
+    {% assign lineItem = lineItemEdge.node %}
+
+    {% comment %}Customer ID{% endcomment %}
+    {% assign row[row.size] = order.customer.legacyResourceId %}
+
+    {% comment %}First Order Date{% endcomment %}
+    {% assign row[row.size] = order.customer.orders.edges[0].node.processedAt %}
+
+    {% comment %}Customer E-mail{% endcomment %}
+    {% assign row[row.size] = order.customer.email %}
+
+    {% comment %}Shipping First Name{% endcomment %}
+    {% assign row[row.size] = order.shippingAddress.firstName %}
+
+    {% comment %}Shipping Last Name{% endcomment %}
+    {% assign row[row.size] = order.shippingAddress.lastName %}
+
+    {% comment %}Shipping Address 1{% endcomment %}
+    {% assign row[row.size] = order.shippingAddress.address1 %}
+
+    {% comment %}Shipping Address 2{% endcomment %}
+    {% assign row[row.size] = order.shippingAddress.address2 %}
+
+    {% comment %}Shipping City{% endcomment %}
+    {% assign row[row.size] = order.shippingAddress.city %}
+
+    {% comment %}Shipping Province{% endcomment %}
+    {% assign row[row.size] = order.shippingAddress.province %}
+
+    {% comment %}Shipping Country{% endcomment %}
+    {% assign row[row.size] = order.shippingAddress.country %}
+
+    {% comment %}Shipping Zip{% endcomment %}
+    {% assign row[row.size] = order.shippingAddress.zip %}
+
+    {% comment %}Shipping Phone{% endcomment %}
+    {% assign row[row.size] = order.shippingAddress.phone %}
+
+    {% comment %}Billing First Name{% endcomment %}
+    {% assign row[row.size] = order.billingAddress.firstName %}
+
+    {% comment %}Billing Last Name{% endcomment %}
+    {% assign row[row.size] = order.billingAddress.lastName %}
+
+    {% comment %}Billing Address 1{% endcomment %}
+    {% assign row[row.size] = order.billingAddress.address1 %}
+
+    {% comment %}Billing Address 2{% endcomment %}
+    {% assign row[row.size] = order.billingAddress.address2 %}
+
+    {% comment %}Billing City{% endcomment %}
+    {% assign row[row.size] = order.billingAddress.city %}
+
+    {% comment %}Billing Province{% endcomment %}
+    {% assign row[row.size] = order.billingAddress.province %}
+
+    {% comment %}Billing Country{% endcomment %}
+    {% assign row[row.size] = order.billingAddress.country %}
+
+    {% comment %}Billing Zip{% endcomment %}
+    {% assign row[row.size] = order.billingAddress.zip %}
+
+    {% comment %}Billing Phone{% endcomment %}
+    {% assign row[row.size] = order.billingAddress.phone %}
+
+    {% comment %}Current Purchase Date{% endcomment %}
+    {% assign row[row.size] = order.processedAt %}
+
+    {% comment %}Product ID{% endcomment %}
+    {% assign row[row.size] = lineItem.product.legacyResourceId %}
+
+    {% comment %}Product Title{% endcomment %}
+    {% assign row[row.size] = lineItem.product.title %}
+
+    {% comment %}Variant ID{% endcomment %}
+    {% assign row[row.size] = lineItem.variant.legacyResourceId %}
+
+    {% comment %}Variant Title{% endcomment %}
+    {% assign row[row.size] = lineItem.variant.title %}
+
+    {% comment %}Tags{% endcomment %}
+    {% assign row[row.size] = lineItem.product.tags | join: ", " %}
+
+    {% comment %}Quantity{% endcomment %}
+    {% assign row[row.size] = lineItem.quantity %}
+
+    {% comment %}Price{% endcomment %}
+    {% assign row[row.size] = lineItem.discountedTotalSet.shopMoney.amount %}
+
+    {% comment %}SKU{% endcomment %}
+    {% assign row[row.size] = lineItem.sku %}
+
+    {% comment %}Shipping Code{% endcomment %}
+    {% assign row[row.size] = order.shippingLine.shippingRateHandle %}
+
+    {% comment %}Shipping Name{% endcomment %}
+    {% assign row[row.size] = order.shippingLine.title %}
+
+    {% assign csv[csv.size] = row %}
+
+    {% if options.add_this_tag_after_export != blank %}
+      {% action "shopify" %}
+        mutation {
+          tagsAdd(
+            id: {{ order_id | json }}
+            tags: {{ options.add_this_tag_after_export | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endif %}
+  {% endfor %}
+{% endfor %}
+
+{% if event.preview or csv.size > 1 %}
+  {% action "email" %}
+    {
+      "from_display_name": {{ shop.name | json }},
+      "to": {{ options.export_email_recipient__email_required | json }},
+      "subject": {{ options.export_email_subject__required | json }},
+      "body": {{ options.export_email_body__required_multiline | strip | newline_to_br | json }},
+      "attachments": {
+        {{ options.export_csv_filename__required | append: ".csv" | json }}: {{ csv | csv | json }}
+      }
+    }
+  {% endaction %}
+{% endif %}
+
+{% if event.preview %}
+  {% if options.add_this_tag_after_export != blank %}
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: "gid://shopify/Order/1234567890"
+          tags: {{ options.add_this_tag_after_export | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endif %}

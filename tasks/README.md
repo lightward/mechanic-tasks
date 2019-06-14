@@ -41,6 +41,7 @@
 *   [Delete cancelled orders after 48 hours](./delete-cancelled-orders-after-48-hours)
 *   [Delete draft orders](./delete-draft-orders)
 *   [Delete variants having a metafield date that has passed](./delete-variants-having-a-metafield-date-that-has-passed)
+*   [Email a CSV export of orders](./email-a-csv-export-of-orders)
 *   [Email customer when their order is paid](./email-customer-when-order-paid)
 *   [Email customers after purchasing a certain product](./product-order-email)
 *   [Email customers when created](./email-customers-when-created)
