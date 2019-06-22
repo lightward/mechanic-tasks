@@ -36,6 +36,7 @@
 *   [Backfill customer names from order addresses](./backfill-customer-names-from-order)
 *   [Bulk capture orders by order number](./bulk-capture-by-order-number)
 *   [Cancel fulfillments when an order is fully refunded](./cancel-fulfillments-when-an-order-is-fully-refunded)
+*   [Capture all authorized payments](./capture-all-authorized-payments)
 *   [Catalog update email](./catalog-update-email)
 *   [Clean up draft orders](./clean-up-draft-orders)
 *   [Credit customers for sample orders](./credit-customers-for-sample-orders)
