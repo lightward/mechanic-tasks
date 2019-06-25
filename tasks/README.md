@@ -50,6 +50,7 @@
 *   [Email customers when tagged](./email-customers-when-tagged)
 *   [Email someone when a certain variant is purchased](./email-when-variant-purchased)
 *   [Email your customers after a quiet period of no orders](./email-your-customers-after-a-quiet-period-of-no-orders)
+*   [Export a CSV of order shipping addresses](./export-a-csv-of-order-shipping-addresses)
 *   [Generate a product discount when a voucher product is purchased](./generate-a-product-discount-when-a-voucher-product-is-purchased)
 *   [Get email alerts for FBA failures](./get-email-alerts-for-fba-failures)
 *   [Get email alerts for out of stock products](./get-email-alerts-for-out-of-stock-products)
