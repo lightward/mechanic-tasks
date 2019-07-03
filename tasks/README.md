@@ -48,6 +48,7 @@
 *   [Email customers after purchasing a certain product](./product-order-email)
 *   [Email customers when created](./email-customers-when-created)
 *   [Email customers when tagged](./email-customers-when-tagged)
+*   [Email someone specific based on a new order's customer tags](./email-someone-specific-based-on-a-new-orders-customer-tags)
 *   [Email someone when a certain variant is purchased](./email-when-variant-purchased)
 *   [Email your customers after a quiet period of no orders](./email-your-customers-after-a-quiet-period-of-no-orders)
 *   [Export a CSV of order shipping addresses](./export-a-csv-of-order-shipping-addresses)
