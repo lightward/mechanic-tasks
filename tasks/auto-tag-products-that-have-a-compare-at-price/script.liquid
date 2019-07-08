@@ -1,0 +1,87 @@
+{% if options.tag_for_sale_products == blank and options.tag_for_all_other_products == blank %}
+  {"error": "Please fill in at least one of the two tag options."}
+{% endif %}
+
+{% if event.topic contains "shopify/products/" %}
+  {% assign products = array %}
+  {% assign products[0] = product %}
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% assign products = shop.products %}
+{% endif %}
+
+{% for product in products %}
+  {% assign has_compare_at = false %}
+  {% for variant in product.variants %}
+    {% if variant.compare_at_price != nil %}
+      {% assign has_compare_at = true %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% assign product_tags = product.tags | split: ", " %}
+
+  {% assign tag_to_add = nil %}
+  {% assign tag_to_remove = nil %}
+
+  {% if has_compare_at %}
+    {% unless product_tags contains options.tag_for_sale_products %}
+      {% assign tag_to_add =        options.tag_for_sale_products %}
+    {% endunless %}
+
+    {% if product_tags contains options.tag_for_all_other_products %}
+      {% assign tag_to_remove = options.tag_for_all_other_products %}
+    {% endif %}
+  {% else %}
+    {% if product_tags contains options.tag_for_sale_products %}
+      {% assign tag_to_remove = options.tag_for_sale_products %}
+    {% endif %}
+
+    {% unless product_tags contains options.tag_for_all_other_products %}
+      {% assign tag_to_add =        options.tag_for_all_other_products %}
+    {% endunless %}
+  {% endif %}
+
+  {% if event.preview %}
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: "gid://shopify/Product/1234567890"
+          tags: {{ options.tag_for_sale_products | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% elsif tag_to_add or tag_to_remove %}
+    {% action "shopify" %}
+      mutation {
+        {% if tag_to_add %}
+          tagsAdd(
+            id: {{ product.admin_graphql_api_id | json }}
+            tags: {{ tag_to_add | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        {% endif %}
+
+        {% if tag_to_remove %}
+          tagsRemove(
+            id: {{ product.admin_graphql_api_id | json }}
+            tags: {{ tag_to_remove | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        {% endif %}
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}
