@@ -77,6 +77,7 @@
 *   [Schedule a storefront banner](./schedule-a-storefront-banner)
 *   [Schedule customer auto-tagging after a purchase](./schedule-customer-auto-tagging-after-a-purchase)
 *   [Send account invites to all customers in bulk](./send-account-invites-to-all-customers-in-bulk)
+*   [Send an email alert when a customer changes state](./send-an-email-alert-when-a-customer-changes-state)
 *   [Send an email when a purchase is made from a certain collection](./send-an-email-when-a-purchase-is-made-from-a-certain-collection)
 *   [Send customers a reorder link X days after ordering](./send-customers-a-reorder-link-x-days-after-ordering)
 *   [Send email when an order comes in](./send-email-when-an-order-comes-in)
