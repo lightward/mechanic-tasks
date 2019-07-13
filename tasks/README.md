@@ -18,6 +18,7 @@
 *   [Auto-invite customers when tagged](./auto-invite-customers-when-tagged)
 *   [Auto-publish products tagged with the current day](./auto-publish-products-tagged-with-the-current-day)
 *   [Auto-recurring draft orders](./auto-recurring-draft-orders)
+*   [Auto-tag cancelled orders](./auto-tag-cancelled-orders)
 *   [Auto-tag customers based on their orders count](./auto-tag-customers-based-on-their-orders-count)
 *   [Auto-tag customers having a rolling minimum total spend](./auto-tag-customers-having-a-rolling-minimum-total-spend)
 *   [Auto-tag customers who purchase an item on sale](./auto-tag-customers-who-purchase-an-item-on-sale)
