@@ -44,6 +44,7 @@
 *   [Capture all authorized payments](./capture-all-authorized-payments)
 *   [Catalog update email](./catalog-update-email)
 *   [Clean up draft orders](./clean-up-draft-orders)
+*   [Create a product inventory feed](./create-a-product-inventory-feed)
 *   [Credit customers for sample orders](./credit-customers-for-sample-orders)
 *   [Delete cancelled orders after 48 hours](./delete-cancelled-orders-after-48-hours)
 *   [Delete draft orders](./delete-draft-orders)
