@@ -1,0 +1,37 @@
+{% assign orders = array %}
+{% if event.preview or event.topic contains "shopify/orders/" %}
+  {% assign orders[0] = order %}
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% assign orders = shop.orders.open %}
+{% endif %}
+
+{% for order in orders %}
+  {% assign order_tags = order.tags | downcase | split: ", " %}
+  {% assign tag_to_match = options.required_tag__required | downcase | strip %}
+
+  {% assign order_qualifies = false %}
+  {% if order.closed_at == blank and order_tags contains tag_to_match %}
+    {% assign order_qualifies = true %}
+  {% endif %}
+
+  {% if event.preview or order_qualifies %}
+    {% action "shopify" %}
+      mutation {
+        orderClose(
+          input: {
+            id: {{ order.admin_graphql_api_id | json }}
+          }
+        ) {
+          order {
+            closed
+            closedAt
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}

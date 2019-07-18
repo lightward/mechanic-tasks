@@ -7,6 +7,7 @@
 *   [Archive free orders on fulfillment](./archive-free-orders-on-fulfillment)
 *   [Archive orders on delivery](./archive-orders-on-delivery)
 *   [Archive orders when fulfilled](./archive-orders-when-fulfilled)
+*   [Archive orders when tagged](./archive-orders-when-tagged)
 *   [Ask for reviews a week after order fulfillment](./ask-for-reviews-a-week-after-order-fulfillment)
 *   [Auto-add an order note for returning customers](./auto-add-an-order-note-for-returning-customers)
 *   [Auto-capture order payment based on shipping method](./auto-capture-order-payment-based-on-shipping-method)
