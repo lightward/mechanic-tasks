@@ -1,0 +1,314 @@
+{% comment %}
+  Options order:
+
+  {{ options.maximum_daily_orders__number_required }}
+  {{ options.only_clear_inventory_for_products_with_this_tag }}
+  {{ options.restore_inventory_levels_the_next_day__boolean }}
+  {{ options.restore_inventory_levels_on_demand__boolean }}
+{% endcomment %}
+
+{% if event.topic contains "shopify/orders" %}
+  {% if event.preview %}
+    {% capture query %}
+      query {
+        orders(
+          first: 250
+          after: {{ cursor | json }}
+          query: "created_at:>=\"0000-00-00\" -status:cancelled"
+        ) {
+          pageInfo {
+            hasNextPage
+          }
+          edges {
+            cursor
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% capture query %}
+      query {
+        inventoryItems(
+          first: 65
+        ) {
+          pageInfo {
+            hasNextPage
+          }
+          edges {
+            cursor
+            node {
+              variant {
+                product {
+                  tags
+                }
+              }
+              inventoryLevels(
+                first: 10
+              ) {
+                edges {
+                  node {
+                    id
+                    available
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% action "shopify" %}
+      mutation {
+        inventoryAdjustQuantity(
+          input: {
+            inventoryLevelId: "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890"
+            availableDelta: -50
+          }
+        ) {
+          inventoryLevel {
+            available
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+
+    {% if options.restore_inventory_levels_the_next_day__boolean or options.restore_inventory_levels_on_demand__boolean %}
+      {% action "cache" %}
+        {
+          "set": {
+            "key": "inventory_to_restore:0000-00-00",
+            "value": {
+              "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890": 50
+            }
+          }
+        }
+      {% endaction %}
+    {% endif %}
+  {% else %}
+    {% assign cursor = nil %}
+    {% assign orders_today = 0 %}
+    {% assign previous_midnight = "now" | date: "%Y-%m-%dT00:00:00%z" %}
+    {% assign cache_key = "inventory_to_restore:" | append: previous_midnight %}
+    {% assign inventory_levels_to_zero = cache[cache_key] | default: hash %}
+
+    {% for n in (0..100) %}
+      {% capture query %}
+        query {
+          orders(
+            first: 250
+            after: {{ cursor | json }}
+            query: "created_at:>=\"{{ previous_midnight }}\" -status:cancelled"
+          ) {
+            pageInfo {
+              hasNextPage
+            }
+            edges {
+              cursor
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = query | shopify %}
+
+      {% assign orders_today = orders_today | plus: result.data.orders.edges.size %}
+
+      {% if result.data.orders.pageInfo.hasNextPage %}
+        {% assign cursor = result.data.orders.edges.last.cursor %}
+      {% else %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+
+    {"log": "Orders today thus far: {{ orders_today }}"}
+
+    {% if orders_today == options.maximum_daily_orders__number_required %}
+      {% assign cursor = nil %}
+
+      {% for n in (0..100) %}
+        {% capture query %}
+          query {
+            inventoryItems(
+              first: 65
+              after: {{ cursor | json }}
+            ) {
+              pageInfo {
+                hasNextPage
+              }
+              edges {
+                cursor
+                node {
+                  variant {
+                    product {
+                      tags
+                    }
+                  }
+                  inventoryLevels(
+                    first: 10
+                  ) {
+                    edges {
+                      node {
+                        id
+                        available
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        {% endcapture %}
+
+        {% assign result = query | shopify %}
+
+        {% for inventoryItem_edge in result.data.inventoryItems.edges %}
+          {% if options.only_clear_inventory_for_products_with_this_tag != blank %}
+            {% unless inventoryItem_edge.node.variant.product.tags contains options.only_clear_inventory_for_products_with_this_tag %}
+              {% continue %}
+            {% endunless %}
+          {% endif %}
+
+          {% for inventoryLevel_edge in inventoryItem_edge.node.inventoryLevels.edges %}
+            {% if inventoryLevel_edge.node.available <= 0 %}
+              {% continue %}
+            {% endif %}
+
+            {% assign inventory_levels_to_zero[inventoryLevel_edge.node.id] = inventoryLevel_edge.node.available %}
+          {% endfor %}
+        {% endfor %}
+
+        {% if result.data.inventoryItems.pageInfo.hasNextPage %}
+          {% assign cursor = result.data.inventoryItems.edges.last.cursor %}
+        {% else %}
+          {% break %}
+        {% endif %}
+      {% endfor %}
+
+      {% if inventory_levels_to_zero.size > 0 %}
+        {% for keyval in inventory_levels_to_zero %}
+          {% assign inventory_level_id = keyval[0] %}
+          {% assign inventory_level_available = keyval[1] %}
+
+          {% action "shopify" %}
+            mutation {
+              inventoryAdjustQuantity(
+                input: {
+                  inventoryLevelId: {{ inventory_level_id | json }}
+                  availableDelta: {{ inventory_level_available | times: -1 | json }}
+                }
+              ) {
+                inventoryLevel {
+                  available
+                }
+                userErrors {
+                  field
+                  message
+                }
+              }
+            }
+          {% endaction %}
+        {% endfor %}
+
+        {% if options.restore_inventory_levels_the_next_day__boolean or options.restore_inventory_levels_on_demand__boolean %}
+          {% action "cache" %}
+            {
+              "set": {
+                "key": {{ "inventory_to_restore:" | append: previous_midnight | json }},
+                "value": {{ inventory_levels_to_zero | json }}
+              }
+            }
+          {% endaction %}
+        {% endif %}
+      {% endif %}
+    {% endif %}
+  {% endif %}
+{% elsif event.topic contains "mechanic/" %}
+  {% assign proceed = false %}
+  {% if event.topic == "mechanic/scheduler/daily" and options.restore_inventory_levels_the_next_day__boolean %}
+    {% assign proceed = true %}
+  {% elsif event.topic == "mechanic/user/trigger" and options.restore_inventory_levels_on_demand__boolean %}
+    {% assign proceed = true %}
+  {% endif %}
+
+  {% if proceed %}
+    {% if event.preview %}
+      {% action "shopify" %}
+        mutation {
+          inventoryAdjustQuantity(
+            input: {
+              inventoryLevelId: "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890"
+              availableDelta: 50
+            }
+          ) {
+            inventoryLevel {
+              available
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+
+      {% action "cache" %}
+        {
+          "del": {
+            "key": "inventory_to_restore:0000-00-00"
+          }
+        }
+      {% endaction %}
+    {% else %}
+      {% assign day_in_s = 60 | times: 60 | times: 24 %}
+      {% assign yesterday_midnight = "now" | date: "%s" | minus: day_in_s | date: "%Y-%m-%dT00:00:00%z" %}
+      {% assign cache_key = "inventory_to_restore:" | append: yesterday_midnight %}
+
+      {% assign inventory_levels_to_restore = cache[cache_key] | default: hash %}
+
+      {"log": {{ "Found " | append: inventory_levels_to_restore.size | append: " inventory levels to restore, for " | append: yesterday_midnight | json }}}
+       
+      {% for keyval in inventory_levels_to_restore %}
+        {% assign inventory_level_id = keyval[0] %}
+        {% assign inventory_level_available = keyval[1] %}
+
+        {% action "shopify" %}
+          mutation {
+            inventoryAdjustQuantity(
+              input: {
+                inventoryLevelId: {{ inventory_level_id | json }}
+                availableDelta: {{ inventory_level_available | json }}
+              }
+            ) {
+              inventoryLevel {
+                available
+              }
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+      {% endfor %}
+
+      {% if cache[cache_key] %}
+        {% action "cache" %}
+          {
+            "del": {
+              "key": {{ cache_key | json }}
+            }
+          }
+        {% endaction %}
+      {% endif %}
+    {% endif %}
+  {% endif %}
+{% endif %}

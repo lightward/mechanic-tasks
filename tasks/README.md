@@ -1,6 +1,7 @@
 # Task index
 
 *   [Abandoned cart emails](./abandoned-cart-emails)
+*   [Accept a maximum number of orders per day](./accept-a-maximum-number-of-orders-per-day)
 *   [Activate a discount when ISS passes overhead](./activate-a-discount-when-iss-passes-overhead)
 *   [Add Locksmith passcodes to order notes](./add-locksmith-passcodes-to-order-notes)
 *   [Add new customers to GetResponse](./add-new-customers-to-getresponse)
