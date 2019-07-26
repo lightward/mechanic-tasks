@@ -33,6 +33,7 @@
 *   [Auto-tag orders based on cart attributes](./auto-tag-orders-based-on-cart-attributes)
 *   [Auto-tag orders by product collections](./auto-tag-orders-by-product-collections)
 *   [Auto-tag orders by shipment status](./auto-tag-orders-by-shipment-status)
+*   [Auto-tag orders created from drafts](./auto-tag-orders-created-from-drafts)
 *   [Auto-tag orders that contain bundles](./auto-tag-orders-that-contain-bundles)
 *   [Auto-tag orders using product tags](./auto-tag-orders-using-product-tags)
 *   [Auto-tag orders with chargeback or inquiry activity](./auto-tag-orders-with-chargeback-or-inquiry-activity)
