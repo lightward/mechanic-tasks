@@ -50,6 +50,7 @@
 *   [Clean up draft orders](./clean-up-draft-orders)
 *   [Create a product inventory feed](./create-a-product-inventory-feed)
 *   [Credit customers for sample orders](./credit-customers-for-sample-orders)
+*   [Delete all products](./delete-all-products)
 *   [Delete cancelled orders after 48 hours](./delete-cancelled-orders-after-48-hours)
 *   [Delete draft orders](./delete-draft-orders)
 *   [Delete variants having a metafield date that has passed](./delete-variants-having-a-metafield-date-that-has-passed)
