@@ -88,6 +88,7 @@
 *   [Save Locksmith passcodes to the customer's notes](./save-locksmith-passcode-to-customer-notes)
 *   [Schedule a storefront banner](./schedule-a-storefront-banner)
 *   [Schedule customer auto-tagging after a purchase](./schedule-customer-auto-tagging-after-a-purchase)
+*   [Send a follow-up email to customers after purchasing from a certain vendor](./send-a-follow-up-email-to-customers-after-purchasing-from-a-certain-vendor)
 *   [Send account invites to all customers in bulk](./send-account-invites-to-all-customers-in-bulk)
 *   [Send an email alert when a customer changes state](./send-an-email-alert-when-a-customer-changes-state)
 *   [Send an email when a purchase is made from a certain collection](./send-an-email-when-a-purchase-is-made-from-a-certain-collection)
