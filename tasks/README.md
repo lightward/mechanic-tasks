@@ -62,6 +62,7 @@
 *   [Email customers when tagged](./email-customers-when-tagged)
 *   [Email someone specific based on a new order's customer tags](./email-someone-specific-based-on-a-new-orders-customer-tags)
 *   [Email someone when a certain variant is purchased](./email-when-variant-purchased)
+*   [Email vendors when their products are ordered](./email-vendors-when-their-products-are-ordered)
 *   [Email your customers after a quiet period of no orders](./email-your-customers-after-a-quiet-period-of-no-orders)
 *   [Export a CSV of order shipping addresses](./export-a-csv-of-order-shipping-addresses)
 *   [Generate a discount code when a certain product is purchased](./generate-a-discount-code-when-a-certain-product-is-purchased)

@@ -1,0 +1,40 @@
+{% if event.topic contains "shopify/orders/" %}
+  {% if event.preview %}
+    {% assign order_vendors = array %}
+    {% assign order_vendors[0] = options.vendors_and_email_addresses__keyval_required.first.first %}
+  {% else %}
+    {% assign order_vendors = order.line_items | map: "vendor" | uniq %}
+  {% endif %}
+
+  {% for vendor in order_vendors %}
+    {% assign vendor_email = options.vendors_and_email_addresses__keyval_required[vendor] %}
+    {% if vendor_email == blank %}
+      {"log": {{ "No email address found for vendor " | append: vendor | json }}}
+      {% continue %}
+    {% endif %}
+
+    {% assign vendor_line_items = order.line_items | where: "vendor", vendor %}
+
+    {% action "event" %}
+      {
+        "topic": "user/orders/send_vendor_email",
+        "task_id": {{ task.id | json }},
+        "data": {
+          "vendor": {{ vendor | json }},
+          "vendor_email": {{ vendor_email | json }},
+          "order": {{ order | json }}
+        }
+      }
+    {% endaction %}
+  {% endfor %}
+{% elsif event.topic == "user/orders/send_vendor_email" %}
+  {% action "email" %}
+    {
+      "to": {{ event.data.vendor_email | json }},
+      "subject": {{ options.email_subject__required | json }},
+      "body": {{ options.email_body__required_multiline | json }},
+      "reply_to": {{ shop.customer_email | json }},
+      "from_display_name": {{ shop.name | json }}
+    }
+  {% endaction %}
+{% endif %}
