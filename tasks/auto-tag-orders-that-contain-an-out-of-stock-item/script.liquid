@@ -1,0 +1,67 @@
+{% assign cursor = nil %}
+{% assign out_of_stock_purchase = false %}
+
+{% for n in (0..100) %}
+  {% capture query %}
+    query {
+      order(id: {{ order.admin_graphql_api_id | json }}) {
+        tags
+        lineItems(
+          first: 250
+          after: {{ cursor | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+          }
+          edges {
+            cursor
+            node {
+              name
+              variant {
+                inventoryQuantity
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if result.data.order.tags contains options.apply_this_order_tag__required %}
+    {"log": "This order is already tagged."}
+    {% break %}
+  {% endif %}
+
+  {% for lineItem_edge in result.data.order.lineItems.edges %}
+    {% assign variant = lineItem_edge.node.variant %}
+    {% if variant and variant.inventoryQuantity <= 0 %}
+      {"log": {{ lineItem_edge.node.name | append: " was purchased while at stock level " | append: variant.inventoryQuantity | json }}}
+      {% assign out_of_stock_purchase = true %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% if result.data.order.lineItems.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.order.lineItems.edges.last.cursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% if event.preview or out_of_stock_purchase %}
+  {% action "shopify" %}
+    mutation {
+      tagsAdd(
+        id: {% if event.preview %}"gid://shopify/Order/1234567890"{% else %}{{ order.admin_graphql_api_id | json }}{% endif %}
+        tags: {{ options.apply_this_order_tag__required | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}
