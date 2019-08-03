@@ -1,0 +1,112 @@
+{% assign valid_risk_level_keys = "Low,Medium,High" | split: "," %}
+{% for keyval in options.risk_levels_and_tags__keyval_required %}
+  {% assign some_risk_level_key = keyval[0] | capitalize %}
+  {% unless some_risk_level_key == blank or valid_risk_level_keys contains some_risk_level_key %}
+    {"error": {{ keyval[0] | json | prepend: "Unknown risk level " | append: ". Valid risk level values: low, medium, high" | json }}}
+  {% endunless %}
+{% endfor %}
+
+{% assign order_nodes = array %}
+
+{% if event.preview %}
+  {% assign order_nodes[0] = '{"id":"gid://shopify/Order/1234567890","tags":[]}' | parse_json %}
+  {% assign order_nodes[0]["riskLevel"] = options.risk_levels_and_tags__keyval_required.first[0] | upcase %}
+{% elsif event.topic == "shopify/orders/updated" %}
+  {% capture query %}
+    query {
+      order(id: {{ order.admin_graphql_api_id | json }}) {
+        id
+        tags
+        riskLevel
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+  {% assign order_nodes[0] = result.data.order %}
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% assign cursor = nil %}
+
+  {% for n in (0..100) %}
+    {% capture query %}
+      query {
+        orders(
+          first: 250
+          after: {{ cursor | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+          }
+          edges {
+            cursor
+            node {
+              id
+              tags
+              riskLevel
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% assign order_nodes = result.data.orders.edges | map: "node" | concat: order_nodes %}
+
+    {% if result.data.orders.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.orders.edges.last.cursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+{% for order_node in order_nodes %}
+  {% assign tag_to_add = nil %}
+  {% assign tags_to_remove = array %}
+
+  {% assign risk_level_key = order_node.riskLevel | capitalize %}
+  {% for keyval in options.risk_levels_and_tags__keyval_required %}
+    {% assign some_risk_level_key = keyval[0] | capitalize %}
+
+    {% if risk_level_key == some_risk_level_key %}
+      {% if order_node.tags contains keyval[1] %}
+        {"log": {{ order_node.id | prepend: "Order " | append: " is already appropriately tagged " | append: keyval[1] | json }}}
+      {% else %}
+        {% assign tag_to_add = keyval[1] %}
+      {% endif %}
+    {% elsif order_node.tags contains keyval[1] %}
+      {% assign tags_to_remove[tags_to_remove.size] = keyval[1] %}
+    {% endif %}
+  {% endfor %}
+
+  {% if tag_to_add != blank or tags_to_remove != empty %}
+    {% action "shopify" %}
+      mutation {
+        {% if tag_to_add != blank %}
+          tagsAdd(
+            id: {{ order_node.id | json }}
+            tags: {{ tag_to_add | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        {% endif %}
+
+        {% if tags_to_remove != empty %}
+          tagsRemove(
+            id: {{ order_node.id | json }}
+            tags: {{ tags_to_remove | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        {% endif %}
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}
