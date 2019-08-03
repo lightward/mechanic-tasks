@@ -1,0 +1,54 @@
+{% comment %}
+  Establish option order:
+
+  {{ options.tag_to_watch_for__required }}
+  {{ options.email_subject__required }}
+  {{ options.email_body__required_multiline }}
+  {{ options.ignore_orders_older_than_this_task__boolean }}
+{% endcomment %}
+
+{% assign tag_to_watch_for = options.tag_to_watch_for__required %}
+{% capture email_sent_tag %}{{ tag_to_watch_for }}-email-sent{% endcapture %}
+{% assign order_tags = order.tags | split: ", " %}
+
+{% assign order_qualifies = false %}
+
+{% if order_tags contains tag_to_watch_for %}
+  {% unless order_tags contains email_sent_tag %}
+    {% assign order_qualifies = true %}
+  {% endunless %}
+{% endif %}
+
+{% if order_qualifies and options.ignore_orders_older_than_this_task__boolean %}
+  {% assign order_created_at = order.created_at | date: "%s" %}
+  {% assign task_created_at = task.created_at | date: "%s" %}
+  {% if order_created_at < task_created_at %}
+    {% assign order_qualifies = false %}
+  {% endif %}
+{% endif %}
+
+{% if event.preview or order_qualifies %}
+  {% action "email" %}
+    {
+      "to": {{ order.email | json }},
+      "subject": {{ options.email_subject__required | json }},
+      "body": {{ options.email_body__required_multiline | strip | newline_to_br | json }},
+      "reply_to": {{ shop.customer_email | json }},
+      "from_display_name": {{ shop.name | json }}
+    }
+  {% endaction %}
+
+  {% action "shopify" %}
+    mutation {
+      tagsAdd(
+        id: {% if event.preview %}"gid://shopify/Order/1234567890"{% else %}{{ order.admin_graphql_api_id | json }}{% endif %}
+        tags: {{ email_sent_tag | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}
