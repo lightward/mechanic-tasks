@@ -1,0 +1,146 @@
+{% if event.preview %}
+  {% for keyval in options.shipping_method_titles_and_tags__keyval_required %}
+    {% assign tag = keyval[1] %}
+    {% break %}
+  {% endfor %}
+
+  {% capture mutation %}
+    mutation {
+      tagsAdd(
+        id: "gid://shopify/Order/1234567890"
+        tags: {{ tag | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" mutation %}
+{% elsif event.topic contains "shopify/orders/" %}
+  {% if options.allow_partial_matches_for_shipping_method_titles__boolean %}
+    {% for keyval in options.shipping_method_titles_and_tags__keyval_required %}
+      {% if order.shipping_lines.first.title contains keyval[0] %}
+        {% assign tag = keyval[1] %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+  {% else %}
+    {% assign tag = options.shipping_method_titles_and_tags__keyval_required[order.shipping_lines.first.title] %}
+  {% endif %}
+
+  {% assign order_tags = order.tags | split: ", " %}
+
+  {"log": {{ order.shipping_lines.first.title | json | prepend: "Shipping method title for this order: " | json }}}
+
+  {% if tag == nil %}
+    {"log": "No tag to add for this order; nothing to do."}
+  {% elsif order_tags contains tag %}
+    {"log": "Order is already tagged {{ tag | json }}; nothing to do."}
+  {% else %}
+    {% capture mutation %}
+      mutation {
+        tagsAdd(
+          id: {{ order.admin_graphql_api_id | default: "gid://shopify/Order/1234567890" | json }}
+          tags: {{ tag | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% action "shopify" mutation %}
+  {% endif %}
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% assign query_parts = array %}
+  {% for keyval in options.shipping_method_titles_and_tags__keyval_required %}
+    {% assign query_parts[query_parts.size] = keyval[1] | json | prepend: "-tag:" %}
+  {% endfor %}
+  {% assign query = query_parts | uniq | join: " AND " %}
+
+  {"log": {{ query | json | prepend: "Searching for orders matching " | json }}}
+
+  {% assign cursor = nil %}
+  {% for n in (0..100) %}
+    {% capture orders_query %}
+      query {
+        orders(
+          first: 250
+          after: {{ cursor | json }}
+          
+          {% comment %}
+            As of 2019-07-10, negative tag specifiers can result in an
+            empty set of pages, *and* hasNextPage being true. Until that's
+            fixed, we disable the query, and just deal with having to go
+            through all orders. :)
+
+            query: {{ query | json }}
+          {% endcomment %}
+        ) {
+          pageInfo {
+            hasNextPage
+          }
+          edges {
+            cursor
+            node {
+              id
+              tags
+              shippingLine {
+                title
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign orders_result = orders_query | shopify %}
+
+    {% for edge in orders_result.data.orders.edges %}
+      {% assign order_node = edge.node %}
+      {% assign tag = nil %}
+
+      {% if options.allow_partial_matches_for_shipping_method_titles__boolean %}
+        {% for keyval in options.shipping_method_titles_and_tags__keyval_required %}
+          {% if order_node.shippingLine.title contains keyval[0] %}
+            {% assign tag = keyval[1] %}
+            {% break %}
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        {% assign tag = options.shipping_method_titles_and_tags__keyval_required[order_node.shippingLine.title] %}
+      {% endif %}
+
+      {% if tag %}
+        {% unless order_node.tags contains tag %}
+          {% capture mutation %}
+            mutation {
+              tagsAdd(
+                id: {{ order_node.id | json }}
+                tags: {{ tag | json }}
+              ) {
+                userErrors {
+                  field
+                  message
+                }
+              }
+            }
+          {% endcapture %}
+
+          {% action "shopify" mutation %}
+        {% endunless %}
+      {% endif %}
+    {% endfor %}
+
+    {% if orders_result.data.orders.pageInfo.hasNextPage %}
+      {% assign cursor = orders_result.data.orders.edges.last.cursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+{% endif %}

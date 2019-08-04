@@ -32,6 +32,7 @@
 *   [Auto-tag new orders based on payment method](./auto-tag-new-orders-based-on-payment-method)
 *   [Auto-tag new orders by staff member](./auto-tag-new-orders-by-staff-member)
 *   [Auto-tag orders based on cart attributes](./auto-tag-orders-based-on-cart-attributes)
+*   [Auto-tag orders based on shipping method](./auto-tag-orders-based-on-shipping-method)
 *   [Auto-tag orders by product collections](./auto-tag-orders-by-product-collections)
 *   [Auto-tag orders by shipment status](./auto-tag-orders-by-shipment-status)
 *   [Auto-tag orders by their risk level](./auto-tag-orders-by-their-risk-level)
