@@ -42,6 +42,7 @@
 *   [Auto-tag orders using product tags](./auto-tag-orders-using-product-tags)
 *   [Auto-tag orders with chargeback or inquiry activity](./auto-tag-orders-with-chargeback-or-inquiry-activity)
 *   [Auto-tag products that have a "compare at" price](./auto-tag-products-that-have-a-compare-at-price)
+*   [Auto-tag products that meet a sales threshold](./auto-tag-products-that-meet-a-sales-threshold)
 *   [Auto-tag products with their vendors](./auto-tag-products-with-their-vendors)
 *   [Auto-update inventory policy based on a "preorder" tag](./auto-update-inventory-policy-based-on-a-preorder-tag)
 *   [Automatically publish and unpublish on a monthly cycle](./automatically-publish-and-unpublish-on-a-monthly-cycle)
