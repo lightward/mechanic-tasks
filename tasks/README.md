@@ -19,6 +19,7 @@
 *   [Auto-fulfill orders when tagged](./auto-fulfill-orders-when-tagged)
 *   [Auto-generate SKUs](./auto-generate-skus)
 *   [Auto-invite customers when tagged](./auto-invite-customers-when-tagged)
+*   [Auto-pay orders from customers with a certain tag](./auto-pay-orders-from-customers-with-a-certain-tag)
 *   [Auto-publish products tagged with the current day](./auto-publish-products-tagged-with-the-current-day)
 *   [Auto-recurring draft orders](./auto-recurring-draft-orders)
 *   [Auto-tag cancelled orders](./auto-tag-cancelled-orders)
