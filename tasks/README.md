@@ -113,6 +113,7 @@
 *   [Sync inventory across a product type](./sync-inventory-across-a-product-type)
 *   [Sync inventory levels to variant metafields](./sync-inventory-levels-to-variant-metafields)
 *   [Sync variant inventory within a product by pack size](./sync-variant-inventory-within-a-product-by-pack-size)
+*   [Tag orders that have at least x of a certain product](./tag-orders-that-have-at-least-x-of-a-certain-product)
 *   [Temporarily add an order note](./temporarily-add-an-order-note)
 *   [Temporarily enable tax-exempt status when a customer is tagged](./temporarily-enable-tax-exempt-status-when-a-customer-is-tagged)
 *   [Track incoming donations in a store metafield](./track-incoming-donations-in-a-store-metafield)
