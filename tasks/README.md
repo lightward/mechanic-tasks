@@ -101,6 +101,7 @@
 *   [Schedule a storefront banner](./schedule-a-storefront-banner)
 *   [Schedule customer auto-tagging after a purchase](./schedule-customer-auto-tagging-after-a-purchase)
 *   [Send a follow-up email to customers after purchasing from a certain vendor](./send-a-follow-up-email-to-customers-after-purchasing-from-a-certain-vendor)
+*   [Send a message to Slack](./send-a-message-to-slack)
 *   [Send account invites to all customers in bulk](./send-account-invites-to-all-customers-in-bulk)
 *   [Send an email alert if a new collection has no orders after x days](./send-an-email-alert-if-a-new-collection-has-no-orders-after-x-days)
 *   [Send an email alert when a customer changes state](./send-an-email-alert-when-a-customer-changes-state)
