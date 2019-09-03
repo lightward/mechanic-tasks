@@ -54,6 +54,7 @@
 *   [Bulk capture orders by order number](./bulk-capture-by-order-number)
 *   [Cancel fulfillments when an order is fully refunded](./cancel-fulfillments-when-an-order-is-fully-refunded)
 *   [Capture all authorized payments](./capture-all-authorized-payments)
+*   [Capture order payment upon fulfillment](./capture-order-payment-upon-fulfillment)
 *   [Catalog update email](./catalog-update-email)
 *   [Clean up draft orders](./clean-up-draft-orders)
 *   [Create a product inventory feed](./create-a-product-inventory-feed)
