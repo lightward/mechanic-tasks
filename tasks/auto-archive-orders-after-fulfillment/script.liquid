@@ -1,0 +1,32 @@
+{% if options.days_to_wait_after_fulfillment_before_archiving__number %}
+  {% if options.days_to_wait_after_fulfillment_before_archiving__number <= 0 %}
+    {"error": "'Days to wait after fulfillment before archiving', if set, must be greater than zero. :)"}
+  {% endif %}
+{% endif %}
+
+{% if event.preview %}
+  {% assign order = '{"admin_graphql_api_id": "gid://shopify/Order/1234567890","closed_at":null}' | parse_json %}
+{% else %}
+  {% assign order = order.reload %}
+{% endif %}
+
+{% if order.closed_at == blank %}
+  {% action "shopify" %}
+    mutation {
+      orderClose(
+        input: {
+          id: {{ order.admin_graphql_api_id | json }}
+        }
+      ) {
+        order {
+          closed
+          closedAt
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}
