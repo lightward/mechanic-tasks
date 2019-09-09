@@ -11,6 +11,7 @@
 *   [Archive orders when tagged](./archive-orders-when-tagged)
 *   [Ask for reviews a week after order fulfillment](./ask-for-reviews-a-week-after-order-fulfillment)
 *   [Auto-add an order note for returning customers](./auto-add-an-order-note-for-returning-customers)
+*   [Auto-add products to a custom collection when tagged](./auto-add-products-to-a-custom-collection-when-tagged)
 *   [Auto-archive orders after fulfillment](./auto-archive-orders-after-fulfillment)
 *   [Auto-capture order payment after 30 days](./auto-capture-order-payment-after-30-days)
 *   [Auto-capture order payment based on shipping method](./auto-capture-order-payment-based-on-shipping-method)
