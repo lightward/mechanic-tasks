@@ -1,0 +1,118 @@
+{% if options.dates_and_tags_to_add__keyval == blank and options.dates_and_tags_to_remove__keyval == blank %}
+  {"error": "Fill in at least one of 'Dates and tags to add' and 'Dates and tags to remove'. :)"}
+{% endif %}
+
+{% assign products = array %}
+{% assign tags_to_add = array %}
+{% assign tags_to_remove = array %}
+
+{% for product_id in options.product_ids__array_number_required %}
+  {% assign products[products.size] = shop.products[product_id] %}
+{% endfor %}
+
+{% if options.use_hour_specificity__boolean %}
+  {% assign time_format = "%Y-%m-%d %I%p" %}
+{% else %}
+  {% assign time_format = "%Y-%m-%d" %}
+{% endif %}
+
+{% assign now_time = "now" | date: time_format %}
+
+{% assign test_mode = options.test_mode__boolean %}
+{% assign full_schedule = hash %}
+
+{% for keyval in options.dates_and_tags_to_add__keyval %}
+  {% assign some_time = keyval[0] | date: time_format %}
+
+  {% if some_time == now_time %}
+    {% assign tags_to_add[tags_to_add.size] = keyval[1] %}
+  {% endif %}
+
+  {% if full_schedule[some_time] == nil %}
+    {% assign full_schedule[some_time] = array %}
+  {% endif %}
+
+  {% assign n = full_schedule[some_time].size %}
+  {% assign full_schedule[some_time][n] = "add: " | append: keyval[1] %}
+{% endfor %}
+
+{% for keyval in options.dates_and_tags_to_remove__keyval %}
+  {% assign some_time = keyval[0] | date: time_format %}
+
+  {% if some_time == now_time %}
+    {% assign tags_to_remove[tags_to_remove.size] = keyval[1] %}
+  {% endif %}
+
+  {% if full_schedule[some_time] == nil %}
+    {% assign full_schedule[some_time] = array %}
+  {% endif %}
+
+  {% assign n = full_schedule[some_time].size %}
+  {% assign full_schedule[some_time][n] = "remove: " | append: keyval[1] %}
+{% endfor %}
+
+{% capture log %}
+  {
+    "now": {{ now_time | json }},
+    "schedule": {{ full_schedule | json }},
+    "product_ids": {{ options.product_ids__array_number_required | json }},
+    "product_handles": {{ products | map: "handle" | json }}
+  }
+{% endcapture %}
+
+{% if test_mode %}
+  {% action "echo" %}{{ log }}{% endaction %}
+{% else %}
+  {"log": {{ log }}}
+{% endif %}
+
+{% if event.preview %}
+  {% if options.dates_and_tags_to_add__keyval != blank %}
+    {% assign tags_to_add = array %}
+    {% assign tags_to_add[0] = options.dates_and_tags_to_add__keyval.first[1] %}
+  {% endif %}
+
+  {% if options.dates_and_tags_to_remove__keyval != blank %}
+    {% assign tags_to_remove = array %}
+    {% assign tags_to_remove[0] = options.dates_and_tags_to_remove__keyval.first[1] %}
+  {% endif %}
+
+  {% assign products = array %}
+  {% assign products[0] = '{"admin_graphql_api_id": "gid://shopify/Product/1234567890"}' | parse_json %}
+{% endif %}
+
+{% unless test_mode %}
+  {% if products != empty %}
+    {% if tags_to_add != empty or tags_to_remove != empty %}
+      {% for product in products %}
+        {% action "shopify" %}
+          mutation {
+            {% if tags_to_add != empty %}
+              tagsAdd(
+                id: {{ product.admin_graphql_api_id | json }}
+                tags: {{ tags_to_add | json }}
+              ) {
+                userErrors {
+                  field
+                  message
+                }
+              }
+            {% endif %}
+
+            {% if tags_to_remove != empty %}
+              tagsRemove(
+                id: {{ product.admin_graphql_api_id | json }}
+                tags: {{ tags_to_remove | json }}
+              ) {
+                userErrors {
+                  field
+                  message
+                }
+              }
+            {% endif %}
+          }
+        {% endaction %}
+      {% endfor %}
+    {% endif %}
+  {% endif %}
+{% endunless %}

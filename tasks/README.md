@@ -104,6 +104,7 @@
 *   [Save Locksmith passcodes to the customer's notes](./save-locksmith-passcode-to-customer-notes)
 *   [Schedule a storefront banner](./schedule-a-storefront-banner)
 *   [Schedule customer auto-tagging after a purchase](./schedule-customer-auto-tagging-after-a-purchase)
+*   [Schedule product tags by date](./schedule-product-tags-by-date)
 *   [Send a follow-up email to customers after purchasing from a certain vendor](./send-a-follow-up-email-to-customers-after-purchasing-from-a-certain-vendor)
 *   [Send a message to Slack](./send-a-message-to-slack)
 *   [Send account invites to all customers in bulk](./send-account-invites-to-all-customers-in-bulk)
