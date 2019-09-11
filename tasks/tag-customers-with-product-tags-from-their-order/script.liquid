@@ -1,0 +1,49 @@
+{% if event.preview %}
+  {% if options.only_copy_these_tags__array != blank %}
+    {% assign product_tags_from_order = options.only_copy_these_tags__array %}
+  {% else %}
+    {% assign product_tags_from_order = "club-limited,december-sale" | split: "," %}
+  {% endif  %}
+{% else %}
+  {% assign product_tags_from_order = order.line_items | map: "product" | map: "tags" | join: ", " | split: ", " | sort | uniq %}
+  {% capture log_message %}This order contains these product tags: {{ product_tags_from_order | json }}{% endcapture %}
+  {"log": {{ log_message | json }}}
+{% endif %}
+
+{% if options.only_copy_these_tags__array == blank %}
+  {% assign tags_to_copy = product_tags_from_order %}
+{% else %}
+  {% assign tags_to_copy = array %}
+
+  {% assign whitelisted_tags = options.only_copy_these_tags__array %}
+  {% capture log_message %}Whitelist is set to these tags: {{ whitelisted_tags | json }}{% endcapture %}
+  {"log": {{ log_message | json }}}
+
+  {% for whitelisted_tag in whitelisted_tags %}
+    {% if product_tags_from_order contains whitelisted_tag %}
+      {% assign tags_to_copy[tags_to_copy.size] = whitelisted_tag %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+{% if tags_to_copy != empty %}
+  {% if event.preview %}
+    {% assign customer = '{"admin_graphql_api_id":"gid://shopify/Customer/1234567890"}' | parse_json %}
+  {% else %}
+    {% assign customer = order.customer %}
+  {% endif %}
+
+  {% action "shopify" %}
+    mutation {
+      tagsAdd(
+        id: {{ customer.admin_graphql_api_id | json }}
+        tags: {{ tags_to_copy | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}
