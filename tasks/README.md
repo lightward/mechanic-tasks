@@ -32,6 +32,7 @@
 *   [Auto-tag customers who purchase an item on sale](./auto-tag-customers-who-purchase-an-item-on-sale)
 *   [Auto-tag customers with the location of their purchase](./auto-tag-customers-with-the-location-of-their-purchase)
 *   [Auto-tag customers with vendors after ordering](./auto-tag-customers-with-vendors-after-ordering)
+*   [Auto-tag customers within a purchase range](./auto-tag-customers-within-a-purchase-range)
 *   [Auto-tag new online orders by web browser](./auto-tag-new-online-orders-by-web-browser)
 *   [Auto-tag new orders](./auto-tag-new-orders)
 *   [Auto-tag new orders based on payment method](./auto-tag-new-orders-based-on-payment-method)
