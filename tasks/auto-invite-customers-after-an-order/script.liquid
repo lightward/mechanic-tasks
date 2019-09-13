@@ -1,0 +1,62 @@
+{% comment %}
+  Establish option order:
+  {{ options.only_invite_if_the_customer_has_not_yet_been_invited__boolean }}
+  {{ options.only_invite_if_the_customer_has_this_tag }}
+  {{ options.only_invite_if_the_order_contains_a_product_with_this_tag }}
+  {{ options.invitation_email_subject__required }}
+  {{ options.invitation_email_body__multiline_required }}
+{% endcomment %}
+
+{% assign customer_qualifies = true %}
+{% if order.customer == nil or order.customer.state == "enabled" %}
+  {% assign customer_qualifies = false %}
+{% elsif options.only_invite_if_the_customer_has_not_yet_been_invited__boolean and order.customer.state == "invited" %}
+  {% assign customer_qualifies = false %}
+{% elsif options.only_invite_if_the_customer_has_this_tag != blank %}
+  {% assign customer_tags = order.customer.tags | downcase | split: ", " %}
+  {% assign tag_to_match = options.only_invite_if_the_customer_has_this_tag | strip | downcase %}
+  {% unless customer_tags contains tag_to_match %}
+    {% assign customer_qualifies = false %}
+  {% endunless %}
+{% endif %}
+
+{% assign order_qualifies = false %}
+{% if customer_qualifies %}
+  {% if options.only_invite_if_the_order_contains_a_product_with_this_tag == blank %}
+    {% assign order_qualifies = true %}
+  {% else %}
+    {% for line_item in order.line_items %}
+      {% assign product_tags = line_item.product.tags | split: ", " %}
+      {% if product_tags contains options.only_invite_if_the_order_contains_a_product_with_this_tag %}
+        {% assign order_qualifies = true %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+{% endif %}
+
+{% if order.customer == nil %}
+  {% capture message %}Order does not have a customer; skipping invitation"}{% endcapture %}
+  {"log": {{ message | json }}}
+{% elsif customer_qualifies == false %}
+  {% capture message %}Customer state is {{ order.customer.state | json }} with tags {{ order.customer.tags | json }}; skipping invitation"}{% endcapture %}
+  {"log": {{ message | json }}}
+{% elsif order_qualifies == false and options.only_invite_if_the_order_contains_a_product_with_this_tag != blank %}
+  {% capture message %}No product found in the order with the tag {{ options.only_invite_if_the_order_contains_a_product_with_this_tag | json }}; skipping invitation"}{% endcapture %}
+  {"log": {{ message | json }}}
+{% endif %} 
+
+{% if event.preview or order_qualifies %}
+  {% action "shopify" %}
+    [
+      "post",
+      "/admin/customers/{{ order.customer.id | json }}/send_invite.json",
+      {
+        "customer_invite": {
+          "subject": {{ options.invitation_email_subject__required | json }},
+          "custom_message": {{ options.invitation_email_body__multiline_required | json }}
+        }
+      }
+    ]
+  {% endaction %}
+{% endif %}

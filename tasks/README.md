@@ -21,6 +21,7 @@
 *   [Auto-fulfill orders on a weekly schedule](./auto-fulfill-orders-on-a-weekly-schedule)
 *   [Auto-fulfill orders when tagged](./auto-fulfill-orders-when-tagged)
 *   [Auto-generate SKUs](./auto-generate-skus)
+*   [Auto-invite customers after an order](./auto-invite-customers-after-an-order)
 *   [Auto-invite customers when tagged](./auto-invite-customers-when-tagged)
 *   [Auto-pay orders from customers with a certain tag](./auto-pay-orders-from-customers-with-a-certain-tag)
 *   [Auto-publish products tagged with the current day](./auto-publish-products-tagged-with-the-current-day)
