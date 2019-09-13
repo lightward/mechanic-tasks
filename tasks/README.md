@@ -115,6 +115,7 @@
 *   [Send an email alert if a new collection has no orders after x days](./send-an-email-alert-if-a-new-collection-has-no-orders-after-x-days)
 *   [Send an email alert when a customer changes state](./send-an-email-alert-when-a-customer-changes-state)
 *   [Send an email when a purchase is made from a certain collection](./send-an-email-when-a-purchase-is-made-from-a-certain-collection)
+*   [Send an event to Klaviyo when a fulfillment is delayed](./send-an-event-to-klaviyo-when-a-fulfillment-is-delayed)
 *   [Send customers a reorder link X days after ordering](./send-customers-a-reorder-link-x-days-after-ordering)
 *   [Send email when an order comes in](./send-email-when-an-order-comes-in)
 *   [Send email when an order is tagged](./send-email-when-an-order-is-tagged)
