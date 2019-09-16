@@ -30,6 +30,7 @@
 *   [Auto-tag customers based on discount codes used](./auto-tag-customers-based-on-discount-codes-used)
 *   [Auto-tag customers based on their orders count](./auto-tag-customers-based-on-their-orders-count)
 *   [Auto-tag customers having a rolling minimum total spend](./auto-tag-customers-having-a-rolling-minimum-total-spend)
+*   [Auto-tag customers when their order is paid](./auto-tag-customers-when-order-paid)
 *   [Auto-tag customers who purchase an item on sale](./auto-tag-customers-who-purchase-an-item-on-sale)
 *   [Auto-tag customers with product tags from their order](./tag-customers-with-product-tags-from-their-order)
 *   [Auto-tag customers with the location of their purchase](./auto-tag-customers-with-the-location-of-their-purchase)
