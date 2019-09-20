@@ -1,0 +1,138 @@
+{% if event.preview %}
+  {% comment %}
+    Populate some preview/test data. Handling our preview this way allows
+    us to use the preview state *as a test stage* - which is perfect! The
+    entire task is exercised, every time a preview occurs.
+  {% endcomment %}
+
+  {% assign product_ids = array %}
+  {% assign product_ids[product_ids.size] = 1234567890 %}
+  {% assign product_ids[product_ids.size] = 2345678901 %}
+
+  {% capture collections_json %}
+    [
+      {
+        "sort_order": "manual",
+        "admin_graphql_api_id": "gid://shopify/Collection/1234567890",
+        "products": [],
+        "collects": [
+          {
+            "product_id": 1234567890,
+            "position": 2
+          },
+          {
+            "product_id": 2345678901,
+            "position": 1
+          }
+        ]
+      }
+    ]
+  {% endcapture %}
+  {% assign collections = collections_json | parse_json %}
+
+  {% for product_id in product_ids %}
+    {% assign product = hash %}
+    {% for lookup in options.product_property_lookups__array_required reversed %}
+      {% if forloop.first %}
+        {% assign product[lookup] = product_id %}
+      {% else %}
+        {% assign temp = product %}
+        {% assign product = hash %}
+        {% assign product[lookup] = temp %}
+      {% endif %}
+    {% endfor %}
+
+    {% assign product["id"] = product_id %}
+    {% assign product["admin_graphql_api_id"] = "gid://shopify/Product/" | append: product_id %}
+
+    {% assign collections[0]["products"][forloop.index0] = product %}
+
+    {% assign collect = hash %}
+    {% assign collect["product_id"] = product_id %}
+    {% if options.reverse_sort__boolean %}
+      {% assign collect["position"] = forloop.index %}
+    {% else %}
+      {% assign collect["position"] = forloop.rindex %}
+    {% endif %}
+
+    {% assign collections[0]["collects"][forloop.index0] = collect %}
+  {% endfor %}
+{% else %}
+  {% assign collections = array %}
+
+  {% for some_collection in shop.collections %}
+    {% assign some_collection_id_string = "" | append: some_collection.id %}
+    {% if options.collection_titles_or_ids__array_required contains some_collection_id_string or options.collection_titles_or_ids__array_required contains some_collection.title %}
+      {% assign collections[collections.size] = some_collection %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+{% for collection in collections %}
+  {% if collection.sort_order != "manual" %}
+    {% action "echo" %}
+      {"error": {{ collection.title | json | prepend: " is not configured for manual sorting. Set this collection to be manually sorted, and try again." | json }}}
+    {% endaction %}
+    {% continue %}
+  {% endif %}
+
+  {% assign moves = array %}
+  {% assign product_ids_and_positions = hash %}
+  {% assign product_ids_and_admin_graphql_api_ids = hash %}
+  {% assign product_ids_and_values = array %}
+
+  {% for collect in collection.collects %}
+    {% assign product_id_string = "" | append: collect.product_id %}
+    {% assign product_ids_and_positions[product_id_string] = collect.position %}
+  {% endfor %}
+
+  {% for product in collection.products %}
+    {% assign product_id_string = "" | append: product.id %}
+    {% assign product_ids_and_admin_graphql_api_ids[product_id_string] = product.admin_graphql_api_id %}
+
+    {% assign product_id_and_value = hash %}
+    {% assign product_id_and_value["id"] = product.id %}
+
+    {% assign value = product %}
+    {% for lookup in options.product_property_lookups__array_required %}
+      {% assign value = value[lookup] %}
+    {% endfor %}
+
+    {% unless value == product %}
+      {% assign product_id_and_value["value"] = value %}
+    {% endunless %}
+
+    {% assign product_ids_and_values[product_ids_and_values.size] = product_id_and_value %}
+  {% endfor %}
+
+  {% assign sorted_product_ids = product_ids_and_values | sort: "value" | map: "id" %}
+  {% if options.reverse_sort__boolean %}
+    {% assign sorted_product_ids = sorted_product_ids | reverse %}
+  {% endif %}
+
+  {% for sorted_product_id in sorted_product_ids %}
+    {% assign sorted_product_id_string = "" | append: sorted_product_id %}
+    {% if forloop.index != product_ids_and_positions[sorted_product_id_string] %}
+      {% assign move = hash %}
+      {% assign move["id"] = product_ids_and_admin_graphql_api_ids[sorted_product_id_string] %}
+      {% assign move["newPosition"] = "" | append: forloop.index %}
+      {% assign moves[moves.size] = move %}
+    {% endif %}
+  {% endfor %}
+
+  {% if moves != empty %}
+    {% action "shopify" %}
+      mutation {
+        collectionReorderProducts(
+          id: {{ collection.admin_graphql_api_id | json }}
+          moves: {{ moves | json | replace: '"id"', 'id' | replace: '"newPosition"', 'newPosition' }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}
