@@ -118,6 +118,7 @@
 *   [Send account invites to all customers in bulk](./send-account-invites-to-all-customers-in-bulk)
 *   [Send an email alert if a new collection has no orders after x days](./send-an-email-alert-if-a-new-collection-has-no-orders-after-x-days)
 *   [Send an email alert when a customer changes state](./send-an-email-alert-when-a-customer-changes-state)
+*   [Send an email alert when a variant hits 0 total inventory](./send-an-email-alert-when-a-variant-hits-0-total-inventory)
 *   [Send an email when a purchase is made from a certain collection](./send-an-email-when-a-purchase-is-made-from-a-certain-collection)
 *   [Send an event to Klaviyo when a fulfillment is delayed](./send-an-event-to-klaviyo-when-a-fulfillment-is-delayed)
 *   [Send customers a reorder link X days after ordering](./send-customers-a-reorder-link-x-days-after-ordering)
