@@ -1,0 +1,33 @@
+{% if event.preview or fulfillment_event.status == "failure" %}
+  {% capture email_subject %}
+    Fulfillment failed for order #{% if event.preview %}12345{% else %}{{ fulfillment_event.order.order_number }}{% endif %}
+  {% endcapture %}
+
+  {% capture email_body %}
+    Hello,
+
+    {% if event.preview %}FedEx{% else %}{{ fulfillment_event.fulfillment.tracking_company }}{% endif %} has reported a fulfillment failure for order #{% if event.preview %}12345{% else %}{{ fulfillment_event.order.order_number }}{% endif %}. Here's the message they included:
+
+    {% if fulfillment_event.message != blank %}> {{ fulfillment_event.message }}{% else %}(no message){% endif %}
+
+    View this order's details in Shopify:
+
+    https://{{ shop.myshopify_domain }}/admin/orders/{% if event.preview %}1234567890{% else %}{{ fulfillment_event.order.id }}{% endif %}
+
+    Thanks,
+
+    - Mechanic, for {{ shop.name }}
+  {% endcapture %}
+
+  {
+    "action": {
+      "type": "email",
+      "options": {
+        "to": {{ options.email_recipient__required | json }},
+        "subject": {{ email_subject | unindent | json }},
+        "body": {{ email_body | unindent | newline_to_br | json }},
+        "from_display_name": {{ shop.name | json }}
+      }
+    }
+  }
+{% endif %}
