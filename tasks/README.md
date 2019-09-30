@@ -16,6 +16,7 @@
 *   [Auto-cancel orders with too many of a certain SKU](./auto-cancel-orders-with-too-many-of-a-certain-sku)
 *   [Auto-capture order payment after 30 days](./auto-capture-order-payment-after-30-days)
 *   [Auto-capture order payment based on shipping method](./auto-capture-order-payment-based-on-shipping-method)
+*   [Auto-capture order payments based on Kount risk assessments](./auto-capture-order-payments-based-on-kount-risk-assessments)
 *   [Auto-connect new products to all locations](./auto-connect-new-products-to-all-locations)
 *   [Auto-copy notes from customers to their orders](./auto-copy-notes-from-customers-to-their-orders)
 *   [Auto-copy order notes to the customer's note](./auto-copy-order-notes-to-the-customers-note)
