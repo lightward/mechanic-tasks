@@ -1,0 +1,64 @@
+{% comment %}
+  An opinion about option order:
+
+  {{ options.skus_to_watch_for__required_array }}
+  {{ options.quantity_threshold_for_cancellation__number_required }}
+  {{ options.send_cancellation_email_to_customer__boolean }}
+  {{ options.attempt_to_refund_or_void_payment_in_full__boolean }}
+  {{ options.reason_for_cancellation__required }}
+{% endcomment %}
+
+{% assign valid_reasons = "customer,inventory,fraud,declined,other" | split: "," %}
+{% if options.reason_for_cancellation__required != blank %}
+  {% unless valid_reasons contains options.reason_for_cancellation__required %}
+    {"error": {{ valid_reasons | json | prepend: "'Reason for cancellation' must be one of " | json }}}
+  {% endunless %}
+{% endif %}
+
+{% assign sku_count = 0 %}
+
+{% for line_item in order.line_items %}
+  {% if line_item.sku != blank and options.skus_to_watch_for__required_array contains line_item.sku %}
+    {% assign sku_count = sku_count | plus: line_item.quantity %}
+  {% endif %}
+{% endfor %}
+
+{% if event.preview or sku_count >= options.quantity_threshold_for_cancellation__number_required %}
+  {% action "shopify" %}
+      [
+        "post",
+        "/admin/orders/{{ order.id }}/cancel.json",
+        {
+          {% if options.attempt_to_refund_or_void_payment_in_full__boolean %}
+            {% capture refund_query %}
+              query {
+                order(id: {{ order.admin_graphql_api_id | json }}) {
+                  suggestedRefund(suggestFullRefund: true) {
+                    amountSet {
+                      shopMoney {
+                        amount
+                        currencyCode
+                      }
+                    }
+                  }
+                }
+              }
+            {% endcapture %}
+            {% assign refund_result = refund_query | shopify %}
+            {% assign refund_money = refund_result.data.order.suggestedRefund.amountSet.shopMoney %}
+
+            {% if event.preview %}
+              {% assign refund_money = hash %}
+              {% assign refund_money["amount"] = order.total_price %}
+              {% assign refund_money["currencyCode"] = order.currency %}
+            {% endif %}
+
+            "amount": {{ refund_money.amount | json }},
+            "currency": {{ refund_money.currencyCode | json }},
+          {% endif %}
+          "email": {{ options.send_cancellation_email_to_customer__boolean | json }},
+          "reason": {{ options.reason_for_cancellation__required | json }}
+        }
+      ]
+    {% endaction %}
+{% endif %}
