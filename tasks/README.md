@@ -96,6 +96,7 @@
 *   [Keep inventory levels in sync within products](./keep-inventory-levels-in-sync-within-products)
 *   [Maintain a collection of new products](./maintain-a-collection-of-new-products)
 *   [Manage annual memberships based on order minimums](./manage-annual-memberships-based-on-order-minimums)
+*   [Manage collection templates by product inventory](./manage-collection-templates-by-product-inventory)
 *   [Manage fulfillment status using order tags](./manage-fulfillment-status-using-order-tags)
 *   [Monitor customer note for certain information](./monitor-customer-note-for-certain-information)
 *   [Move out-of-stock products to the end of a collection](./move-out-of-stock-products-to-the-end-of-a-collection)
