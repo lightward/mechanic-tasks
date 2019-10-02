@@ -71,6 +71,7 @@
 *   [Capture order payment upon fulfillment](./capture-order-payment-upon-fulfillment)
 *   [Catalog update email](./catalog-update-email)
 *   [Clean up draft orders](./clean-up-draft-orders)
+*   [Copy order and/or product tags to customers](./copy-order-tags-to-customers)
 *   [Create a product inventory feed](./create-a-product-inventory-feed)
 *   [Credit customers for sample orders](./credit-customers-for-sample-orders)
 *   [Delete all products](./delete-all-products)

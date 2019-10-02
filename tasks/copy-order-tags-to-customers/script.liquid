@@ -1,0 +1,200 @@
+{% comment %}
+  Option order:
+
+  {{ options.include_order_tags__boolean }}
+  {{ options.include_product_tags__boolean }}
+
+  {{ options.only_include_customers_matching_this_query }}
+  {{ options.only_include_orders_matching_this_query }}
+
+  {{ options.only_copy_these_tags__array }}
+  {{ options.remove_those_tags_if_a_qualifying_source_cannot_be_found__boolean }}
+
+  {{ options.run_daily__boolean }}
+{% endcomment %}
+
+{% if options.include_order_tags__boolean == false and options.include_product_tags__boolean == false %}
+  {"error": "Choose at least one of 'Include order tags' and 'Include product tags'.  :)"}
+{% endif %}
+
+{% if options.remove_those_tags_if_a_qualifying_source_cannot_be_found__boolean and options.only_copy_these_tags__array == blank %}
+  {"error": "Mechanic can only remove tags it knows about. If you choose 'Remove those tags [...]', you must also fill in 'Only copy these tags'."}
+{% endif %}
+
+{% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% capture bulk_operation_query %}
+    query {
+      customers(query: {{ options.only_include_customers_matching_this_query | json }}) {
+        edges {
+          node {
+            __typename
+            id
+            tags
+            orders(query: {{ options.only_include_orders_matching_this_query | json }}) {
+              edges {
+                node {
+                  __typename
+                  id
+                  {% if options.include_order_tags__boolean %}
+                    tags
+                  {% endif %}
+                  {% if options.include_product_tags__boolean %}
+                    lineItems {
+                      edges {
+                        node {
+                          __typename
+                          id
+                          product {
+                            __typename
+                            id
+                            tags
+                          }
+                        }
+                      }
+                    }
+                  {% endif %}
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% assign customer_ids = bulkOperation.objects | where: "__typename", "Customer" | map: "id" %}
+
+  {% assign tags_available_by_customer_id = hash %}
+
+  {% if options.include_order_tags__boolean %}
+    {% assign orders = bulkOperation.objects | where: "__typename", "Order" %}
+    {% for order in orders %}
+      {% assign customer = order.__parent %}
+
+      {% if tags_available_by_customer_id[customer.id] == nil %}
+        {% assign tags_available_by_customer_id[customer.id] = array %}
+      {% endif %}
+
+      {% assign tags_available_by_customer_id[customer.id] = tags_available_by_customer_id[customer.id] | concat: order.tags %}
+    {% endfor %}
+  {% endif %}
+
+  {% if options.include_product_tags__boolean %}
+    {% assign lineItems = bulkOperation.objects | where: "__typename", "LineItem" | where: "product" %}
+    {% for lineItem in lineItems %}
+      {% assign product = lineItem.product %}
+      {% assign order = lineItem.__parent %}
+      {% assign customer = order.__parent %}
+
+      {% if tags_available_by_customer_id[customer.id] == nil %}
+        {% assign tags_available_by_customer_id[customer.id] = array %}
+      {% endif %}
+
+      {% assign tags_available_by_customer_id[customer.id] = tags_available_by_customer_id[customer.id] | concat: product.tags %}
+    {% endfor %}
+  {% endif %}
+
+  {% if event.preview %}
+    {% assign preview_tags = "foo,bar,baz" | split: "," %}
+    {% assign customer_ids[0] = "gid://shopify/Customer/1234567890" %}
+    {% assign tags_available_by_customer_id["gid://shopify/Customer/1234567890"] = options.only_copy_these_tags__array | default: preview_tags %}
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = array %}
+    {% assign bulkOperation["objects"][0] = '{"id":"gid://shopify/Customer/1234567890","tags":""}' | parse_json %}
+  {% endif %}
+
+  {% for customer_id in customer_ids %}
+    {% assign customer = bulkOperation.objects | where: "id", customer_id | first %}
+
+    {% assign tags_available = tags_available_by_customer_id[customer_id] | default: array %}
+
+    {% if options.only_copy_these_tags__array == blank %}
+      {% assign tags_applicable = tags_available %}
+    {% else %}
+      {% assign tags_applicable = array %}
+
+      {% for whitelisted_tag in options.only_copy_these_tags__array %}
+        {% if tags_available contains whitelisted_tag %}
+          {% assign tags_applicable[tags_applicable.size] = whitelisted_tag %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+
+    {% assign tags_applicable = tags_applicable | sort | uniq %}
+
+    {% if tags_applicable != empty %}
+      {% assign tags_to_copy = array %}
+
+      {% for tag in tags_applicable %}
+        {% unless customer.tags contains tag %}
+          {% assign tags_to_copy[tags_to_copy.size] = tag %}
+        {% endunless %}
+      {% endfor %}
+
+      {% if tags_to_copy == empty %}
+        {% capture log_message %}Customer {{ customer.id }} already has all applicable tags ({{ tags_applicable | join: ", " }}); nothing to do.{% endcapture %}
+        {"log": {{ log_message | json }}}
+      {% else %}
+        {% action "shopify" %}
+          mutation {
+            tagsAdd(
+              id: {{ customer.id | json }}
+              tags: {{ tags_to_copy | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+      {% endif %}
+    {% endif %}
+
+    {% if options.remove_those_tags_if_a_qualifying_source_cannot_be_found__boolean and options.only_copy_these_tags__array != blank %}
+      {% assign tags_to_remove = array %}
+
+      {% for tag in options.only_copy_these_tags__array %}
+        {% unless tags_applicable contains tag %}
+          {% if customer.tags contains tag %}
+            {% assign tags_to_remove[tags_to_remove.size] = tag %}
+          {% endif %}
+        {% endunless %}
+      {% endfor %}
+
+      {% if tags_to_remove != empty %}
+        {% action "shopify" %}
+          mutation {
+            tagsRemove(
+              id: {{ customer.id | json }}
+              tags: {{ tags_to_remove | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+      {% endif %}
+    {% endif %}
+
+  {% endfor %}
+{% endif %}
