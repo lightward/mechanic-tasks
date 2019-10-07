@@ -48,6 +48,7 @@
 *   [Auto-tag orders based on shipping method](./auto-tag-orders-based-on-shipping-method)
 *   [Auto-tag orders by product collections](./auto-tag-orders-by-product-collections)
 *   [Auto-tag orders by shipment status](./auto-tag-orders-by-shipment-status)
+*   [Auto-tag orders by shipping address city](./auto-tag-orders-by-shipping-address-city)
 *   [Auto-tag orders by their risk level](./auto-tag-orders-by-their-risk-level)
 *   [Auto-tag orders created from drafts](./auto-tag-orders-created-from-drafts)
 *   [Auto-tag orders that contain a matching product](./auto-tag-orders-that-contain-a-matching-product)
