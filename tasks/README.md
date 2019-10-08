@@ -26,6 +26,7 @@
 *   [Auto-invite customers after an order](./auto-invite-customers-after-an-order)
 *   [Auto-invite customers when tagged](./auto-invite-customers-when-tagged)
 *   [Auto-pay orders from customers with a certain tag](./auto-pay-orders-from-customers-with-a-certain-tag)
+*   [Auto-prefix tracking numbers for each new fulfillment](./auto-prefix-tracking-numbers-for-each-new-fulfillment)
 *   [Auto-publish products tagged with the current day](./auto-publish-products-tagged-with-the-current-day)
 *   [Auto-recurring draft orders](./auto-recurring-draft-orders)
 *   [Auto-sort collections by product properties](./auto-sort-collections-by-product-properties)
