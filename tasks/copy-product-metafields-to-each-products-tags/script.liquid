@@ -1,0 +1,119 @@
+{% comment %}
+  An opinion about object order:
+
+  {{ options.metafield_namespace__required }}
+  {{ options.metafield_key__required }}
+  {{ options.monitor_new_products__boolean }}
+  {{ options.test_mode__boolean }}
+{% endcomment %}
+
+{% assign product_ids_and_tags = hash %}
+
+{% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% assign cursor = nil %}
+
+  {% for n in (0..100) %}
+    {% capture query %}
+      query {
+        products(
+          first: 250
+          after: {{ cursor | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+          }
+          edges {
+            node {
+              id
+              tags
+              metafield(
+                namespace: {{ options.metafield_namespace__required | json }}
+                key: {{ options.metafield_key__required | json }}
+              ) {
+                value
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% for product_edge in result.data.products.edges %}
+      {% assign product = product_edge.node %}
+
+      {% if product.metafield == nil %}
+        {% continue %}
+      {% endif %}
+
+      {% if product.tags contains product.metafield.value %}
+        {% continue %}
+      {% endif %}
+
+      {% assign product_ids_and_tags[product.id] = product.metafield.value %}
+    {% endfor %}
+
+    {% if result.data.products.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.products.edges.last.cursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+{% elsif event.topic contains "shopify/products/" %}
+  {% capture query %}
+    query {
+      product(id: {{ product.admin_graphql_api_id | json }}) {
+        id
+        tags
+        metafield(
+          namespace: {{ options.metafield_namespace__required | json }}
+          key: {{ options.metafield_key__required | json }}
+        ) {
+          value
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+  {% assign product = result.data.product %}
+
+  {% if product.metafield %}
+    {% unless product.tags contains product.metafield.value %}
+      {% assign product_ids_and_tags[product.id] = product.metafield.value %}
+    {% endunless %}
+  {% endif %}
+{% endif %}
+
+{% if event.preview %}
+  {% assign product_ids_and_tags["gid://shopify/Product/1234567890"] = "Delta" %}
+{% endif %}
+
+{% if options.test_mode__boolean %}
+  {% action "echo" %}
+    {
+      "message": "Found {{ product_ids_and_tags.size }} tagging operations",
+      "product_ids_and_tags": {{ product_ids_and_tags | json }}
+    }
+  {% endaction %}
+{% else %}
+  {% for keyval in product_ids_and_tags %}
+    {% assign product_id = keyval[0] %}
+    {% assign tag = keyval[1] %}
+
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {{ product_id | json }}
+          tags: {{ tag | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endfor %}
+{% endif %}

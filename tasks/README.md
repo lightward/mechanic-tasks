@@ -75,6 +75,7 @@
 *   [Catalog update email](./catalog-update-email)
 *   [Clean up draft orders](./clean-up-draft-orders)
 *   [Copy order and/or product tags to customers](./copy-order-tags-to-customers)
+*   [Copy product metafields to each product's tags](./copy-product-metafields-to-each-products-tags)
 *   [Create a product inventory feed](./create-a-product-inventory-feed)
 *   [Credit customers for sample orders](./credit-customers-for-sample-orders)
 *   [Delete all products](./delete-all-products)
