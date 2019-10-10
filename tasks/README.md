@@ -156,3 +156,4 @@
 *   [Track incoming donations in a store metafield](./track-incoming-donations-in-a-store-metafield)
 *   [Trigger order emails with a tag](./trigger-order-emails-with-a-tag)
 *   [Unpublish a certain collection, daily](./unpublish-a-certain-collection-daily)
+*   [Unpublish products that fall below a rolling sales threshold](./unpublish-products-that-fall-below-a-rolling-sales-threshold)
