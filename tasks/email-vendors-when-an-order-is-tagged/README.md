@@ -1,0 +1,35 @@
+# Email vendors when an order is tagged
+
+* [Task script](./script.liquid)
+
+Use this task to automatically keep vendors up to date as an order evolves. Configure this task with a list of known vendor names and their email addresses, and this task will email them whenever it notices the tag of your choice on the order.
+
+## Default options
+
+```json
+{
+  "order_tag_to_watch_for__required": null,
+  "vendors_and_email_addresses__keyval_required": {
+    "Apple": "apple@example.com",
+    "Nike": "nike@example.com"
+  },
+  "email_subject__required": "Order {{ order.name }} has been tagged",
+  "email_body__required_multiline": "Hello,\n\nOrder {{ order.name }} has been tagged.\n\nThanks,\n{{ shop.name }}",
+  "ignore_orders_older_than_this_task__boolean": true
+}
+```
+
+## Subscriptions
+
+```liquid
+shopify/orders/create
+shopify/orders/updated
+```
+
+## Documentation
+
+This task watches for new and updated orders, and sends an email to all known vendors on the order when the tag of your choice is observed. To make a note of which orders have had their emails sent, this task adds another tag. (For example, if this task is configured to watch for the "hold" tag, this task will add the tag "hold-vendor-emails-sent" after sending that order's vendor emails.)
+
+Configure the "Vendors and email addresses" options with vendor names on the left, and vendor email addresses on the right.
+
+Important note: Because Shopify doesn't let apps know _what_ has changed about an order, it's safest to use the "Ignore orders older than this task" option. This way, this task is guaranteed to receive _every_ update for the order since the order is created, allowing it to know for sure when an order has been tagged. Without this option, orders that are _already_ tagged run the risk of having emails sent for them.

@@ -98,6 +98,7 @@
 *   [Email customers when their order is tagged](./email-customer-when-order-tagged)
 *   [Email someone specific based on a new order's customer tags](./email-someone-specific-based-on-a-new-orders-customer-tags)
 *   [Email someone when a certain variant is purchased](./email-when-variant-purchased)
+*   [Email vendors when an order is tagged](./email-vendors-when-an-order-is-tagged)
 *   [Email vendors when an order shipping address changes](./email-vendors-when-an-order-shipping-address-changes)
 *   [Email vendors when their products are ordered](./email-vendors-when-their-products-are-ordered)
 *   [Email your customers after a quiet period of no orders](./email-your-customers-after-a-quiet-period-of-no-orders)
