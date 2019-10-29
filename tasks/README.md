@@ -64,6 +64,7 @@
 *   [Auto-tag orders with chargeback or inquiry activity](./auto-tag-orders-with-chargeback-or-inquiry-activity)
 *   [Auto-tag out-of-stock products](./auto-tag-out-of-stock-products)
 *   [Auto-tag products by largest available size](./auto-tag-products-by-largest-available-size)
+*   [Auto-tag products by their options](./auto-tag-products-by-their-options)
 *   [Auto-tag products that are missing costs](./auto-tag-products-that-are-missing-costs)
 *   [Auto-tag products that have a "compare at" price](./auto-tag-products-that-have-a-compare-at-price)
 *   [Auto-tag products that meet a sales threshold](./auto-tag-products-that-meet-a-sales-threshold)

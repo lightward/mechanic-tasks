@@ -1,0 +1,92 @@
+{% if event.preview %}
+  {% action "shopify" %}
+    mutation {
+      tagsAdd(
+        id: "gid://shopify/Product/1234567890"
+        tags: {{ options.product_options_to_consider__array_required.first | append: "-Blue" | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% else %}
+  {% assign products = nil %}
+
+  {% if event.topic contains "shopify/products/" %}
+    {% assign products = array %}
+    {% assign products[0] = product %}
+  {% elsif event.topic == "mechanic/user/trigger" %}
+    {% assign products = shop.products %}
+  {% endif %}
+
+  {% for product in products %}
+    {% assign product_tags = product.tags | split: ", " %}
+    {% assign product_tags_applicable = array %}
+    {% assign product_tags_to_add = array %}
+    {% assign product_tags_to_remove = array %}
+
+    {% for variant in product.variants %}
+      {% if options.product_options_to_consider__array_required contains product.options[0].name %}
+        {% assign tag = product.options[0].name | append: "-" | append: variant.option1 %}
+        {% assign product_tags_applicable[product_tags_applicable.size] = tag %}
+      {% endif %}
+
+      {% if options.product_options_to_consider__array_required contains product.options[1].name %}
+        {% assign tag = product.options[1].name | append: "-" | append: variant.option2 %}
+        {% assign product_tags_applicable[product_tags_applicable.size] = tag %}
+      {% endif %}
+
+      {% if options.product_options_to_consider__array_required contains product.options[2].name %}
+        {% assign tag = product.options[2].name | append: "-" | append: variant.option3 %}
+        {% assign product_tags_applicable[product_tags_applicable.size] = tag %}
+      {% endif %}
+    {% endfor %}
+
+    {% for tag in product_tags %}
+      {% assign tag_parts = tag | split: "-" %}
+      {% if options.product_options_to_consider__array_required contains tag_parts[0] %}
+        {% unless product_tags_applicable contains tag %}
+          {% assign product_tags_to_remove[product_tags_to_remove.size] = tag %}
+        {% endunless %}
+      {% endif %}
+    {% endfor %}
+
+    {% for tag in product_tags_applicable %}
+      {% unless product_tags contains tag %}
+        {% assign product_tags_to_add[product_tags_to_add.size] = tag %}
+      {% endunless %}
+    {% endfor %}
+
+    {% if product_tags_to_add != blank or product_tags_to_remove != blank %}
+      {% action "shopify" %}
+        mutation {
+          {% if product_tags_to_add != blank %}
+            tagsAdd(
+              id: {{ product.admin_graphql_api_id | json }}
+              tags: {{ product_tags_to_add | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          {% endif %}
+          {% if product_tags_to_remove != blank %}
+            tagsRemove(
+              id: {{ product.admin_graphql_api_id | json }}
+              tags: {{ product_tags_to_remove | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          {% endif %}
+        }
+      {% endaction %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
