@@ -163,6 +163,7 @@
 *   [Tag orders in bulk by order name](./tag-orders-in-bulk-by-order-name)
 *   [Tag orders that have at least x of a certain product](./tag-orders-that-have-at-least-x-of-a-certain-product)
 *   [Tag products as in- or out-of-stock, by location ID](./tag-products-as-in-or-out-of-stock-by-location-id)
+*   [Tag products by their price ranges](./tag-products-by-their-price-ranges)
 *   [Temporarily add an order note](./temporarily-add-an-order-note)
 *   [Temporarily enable tax-exempt status when a customer is tagged](./temporarily-enable-tax-exempt-status-when-a-customer-is-tagged)
 *   [Track incoming donations in a store metafield](./track-incoming-donations-in-a-store-metafield)

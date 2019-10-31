@@ -1,0 +1,140 @@
+{% assign tag_prefix = options.tag_prefix__required %}
+
+{% assign range_max = options.range_maximum__required_number | round %}
+{% assign range_min = options.range_minimum__required_number | round %}
+{% assign range_increment = options.range_increment__required_number | round %}
+{% assign range_steps = range_max | minus: range_min | divided_by: range_increment %}
+
+{% if range_max <= range_min %}
+  {% error "'Range maximum' is smaller than or equal to 'Range minimum'. Try again!" %}
+{% endif %}
+
+{% assign range_max_mod = range_max | minus: range_min | modulo: range_increment %}
+
+{% if range_max_mod != 0 %}
+  {% error %}
+    "Ensure both 'Range maximum' is an even multiple of {{ range_increment }} away from 'Range minimum'."
+  {% enderror %}
+{% endif %}
+
+{% if options.use_only_the_single_smallest_range_that_applies_to_each_variant__boolean and options.use_every_range_that_applies_to_each_variant__boolean %}
+  {% error "Use only one of the 'Use only...' options. :)" %}
+{% elsif options.use_only_the_single_smallest_range_that_applies_to_each_variant__boolean == false and options.use_every_range_that_applies_to_each_variant__boolean == false %}
+  {% error "Use exactly one of the 'Use only...' options. :)" %}
+{% endif %}
+
+{% assign products = array %}
+
+{% if event.preview %}
+  {% assign products[0] = hash %}
+  {% assign products[0]["admin_graphql_api_id"] = "gid://shopify/Product/1234567890" %}
+
+  {% assign tags = array %}
+  {% assign tags[tags.size] = "red" %}
+  {% assign tags[tags.size] = "blue" %}
+  {% assign tags[tags.size] = tag_prefix | append: "1-99999999999999999" %}
+
+  {% assign products[0]["tags"] = tags | join: ", " %}
+  {% assign products[0]["variants"] = array %}
+  {% assign products[0]["variants"][0] = hash %}
+  {% assign products[0]["variants"][0]["price"] = options.range_minimum__required_number | plus: 0.01 %}
+  {% assign products[0]["variants"][1] = hash %}
+  {% assign products[0]["variants"][1]["price"] = options.range_maximum__required_number | minus: 0.01 %}
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% assign products = shop.products %}
+{% elsif event.topic == "shopify/products/create" or event.topic == "shopify/products/update" %}
+  {% assign products[0] = product %}
+{% endif %}
+
+{% for product in products %}
+  {% assign product_tags = product.tags | split: ", " %}
+  {% assign existing_price_range_tags = array %}
+  {% assign applicable_price_range_tags = array %}
+
+  {% for tag in product_tags %}
+    {% assign possible_prefix = tag | slice: 0, tag_prefix.size %}
+    {% if possible_prefix == tag_prefix %}
+      {% assign existing_price_range_tags[existing_price_range_tags.size] = tag %}
+    {% endif %}
+  {% endfor %}
+
+  {% if options.use_only_the_single_smallest_range_that_applies_to_each_variant__boolean %}
+    {% for variant in product.variants %}
+      {% assign variant_price = variant.price | times: 1 %}
+      {% assign variant_price_left = variant_price | divided_by: range_increment | floor | times: range_increment %}
+      {% assign variant_price_right = variant_price_left | plus: range_increment %}
+      {% capture tag %}{{ tag_prefix }}{{ variant_price_left }}-{{ variant_price_right }}{% endcapture %}
+      {% unless applicable_price_range_tags contains tag %}
+        {% assign applicable_price_range_tags[applicable_price_range_tags.size] = tag %}
+      {% endunless %}
+    {% endfor %}
+  {% elsif options.use_every_range_that_applies_to_each_variant__boolean %}
+    {% for i in (0..range_steps) %}
+      {% for j in (i..range_steps) %}
+        {% if j <= i %}
+          {% continue %}
+        {% endif %}
+
+        {% assign step_min = i | times: range_increment | plus: range_min %}
+        {% assign step_max = j | times: range_increment | plus: range_min %}
+
+        {% for variant in product.variants %}
+          {% assign variant_price = variant.price | times: 1 %}
+          {% if variant_price >= step_min and variant_price <= step_max %}
+            {% capture tag %}{{ tag_prefix }}{{ step_min }}-{{ step_max }}{% endcapture %}
+            {% unless applicable_price_range_tags contains tag %}
+              {% assign applicable_price_range_tags[applicable_price_range_tags.size] = tag %}
+            {% endunless %}
+          {% endif %}
+        {% endfor %}
+      {% endfor %}
+    {% endfor %}
+  {% endif %}
+
+  {% assign tags_to_add = array %}
+  {% assign tags_to_remove = array %}
+
+  {% for tag in applicable_price_range_tags %}
+    {% unless existing_price_range_tags contains tag %}
+      {% assign tags_to_add[tags_to_add.size] = tag %}
+    {% endunless %}
+  {% endfor %}
+
+  {% for tag in existing_price_range_tags %}
+    {% unless applicable_price_range_tags contains tag %}
+      {% assign tags_to_remove[tags_to_remove.size] = tag %}
+    {% endunless %}
+  {% endfor %}
+
+  {% if tags_to_add != empty or tags_to_remove != empty %}
+    {% action "shopify" %}
+      mutation {
+
+        {% if tags_to_add != empty %}
+          tagsAdd(
+            id: {{ product.admin_graphql_api_id | json }}
+            tags: {{ tags_to_add | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        {% endif %}
+
+        {% if tags_to_remove != empty %}
+          tagsRemove(
+            id: {{ product.admin_graphql_api_id | json }}
+            tags: {{ tags_to_remove | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        {% endif %}
+
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}
