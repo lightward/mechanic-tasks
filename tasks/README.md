@@ -74,6 +74,7 @@
 *   [Auto-untag customers when a certain product is refunded](./auto-untag-customers-when-a-certain-product-is-refunded)
 *   [Auto-update inventory policy based on a "preorder" tag](./auto-update-inventory-policy-based-on-a-preorder-tag)
 *   [Auto-verify customer email addresses](./auto-verify-customer-email-addresses)
+*   [Automatically cancel high-risk orders](./automatically-cancel-high-risk-orders)
 *   [Automatically publish and unpublish on a monthly cycle](./automatically-publish-and-unpublish-on-a-monthly-cycle)
 *   [Automatically send account invite to new customers](./automatically-send-account-invite-to-new-customers)
 *   [Backfill customer names from order addresses](./backfill-customer-names-from-order)
