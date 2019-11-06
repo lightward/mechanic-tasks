@@ -61,6 +61,7 @@
 *   [Auto-tag orders by shipping address country](./auto-tag-orders-by-shipping-address-country)
 *   [Auto-tag orders by their risk level](./auto-tag-orders-by-their-risk-level)
 *   [Auto-tag orders created from drafts](./auto-tag-orders-created-from-drafts)
+*   [Auto-tag orders that are ready to ship](./auto-tag-orders-that-are-ready-to-ship)
 *   [Auto-tag orders that contain a matching product](./auto-tag-orders-that-contain-a-matching-product)
 *   [Auto-tag orders that contain an out of stock item](./auto-tag-orders-that-contain-an-out-of-stock-item)
 *   [Auto-tag orders that contain bundles](./auto-tag-orders-that-contain-bundles)

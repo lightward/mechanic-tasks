@@ -1,0 +1,302 @@
+{% assign order_nodes = array %}
+
+{% if event.topic contains "shopify/orders/" %}
+  {% capture query %}
+    query {
+      order(id: {{ order.admin_graphql_api_id | json }}) {
+        id
+        name
+        tags
+        lineItems(first: 15) {
+          pageInfo {
+            hasNextPage
+          }
+          edges {
+            cursor
+            node {
+              {% if options.ignore_line_items_not_fulfilled_manually__boolean %}
+                fulfillmentService {
+                  id
+                }
+              {% endif %}
+              variant {
+                inventoryQuantity
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "order": {
+            "id": "gid://shopify/Order/1234567890",
+            "tags": [],
+            "lineItems": {
+              "pageInfo": {
+                "hasNextPage": false
+              },
+              "edges": [
+                {
+                  "cursor": "eyJsYXN0X2lkIjo0MDc4NTI5NjQyNTMxLCJsYXN0X3ZhbHVlIjo0MDc4NTI5NjQyNTMxfQ==",
+                  "node": {
+                    "fulfillmentService": {
+                      "id": "gid://shopify/FulfillmentService/manual"
+                    },
+                    "variant": {
+                      "inventoryQuantity": 2
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% unless result.data.order.tags contains options.order_tag_to_add__required %}
+    {% assign order_nodes[0] = result.data.order %}
+  {% endunless %}
+{% else %}
+  {% assign event_qualifies_for_bulk_scan = false %}
+  {% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+    {% assign event_qualifies_for_bulk_scan = true %}
+  {% elsif event.topic == "shopify/inventory_levels/update" and options.scan_unfulfilled_orders_when_inventory_is_updated__boolean%}
+    {% assign event_qualifies_for_bulk_scan = true %}
+  {% endif %}
+
+  {% if event_qualifies_for_bulk_scan %}
+    {% assign cursor = nil %}
+    {% for n in (0..100) %}
+      {% capture query %}
+        query {
+          orders(
+            first: 20
+            after: {{ cursor | json }}
+            query: {{ options.order_tag_to_add__required | json | prepend: "fulfillment_status:unshipped AND -tag:" | json }}
+
+            {% comment %}
+              This is important! If we sort the other direction (as is the default), and the Mechanic account
+              has read_all_orders disabled, we run the risk of seeing a true pageInfo.hasNextPage, but an empty
+              set of edges, preventing us from being able to continue paging.
+            {% endcomment %}
+            sortKey: CREATED_AT
+            reverse: true
+          ) {
+            pageInfo {
+              hasNextPage
+            }
+            edges {
+              cursor
+              node {
+                id
+                name
+                lineItems(
+                  first: 5
+                ) {
+                  pageInfo {
+                    hasNextPage
+                  }
+                  edges {
+                    cursor
+                    node {
+                    {% if options.ignore_line_items_not_fulfilled_manually__boolean %}
+                      fulfillmentService {
+                        id
+                      }
+                    {% endif %}
+                      variant {
+                        inventoryQuantity
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = query | shopify %}
+
+      {% if event.preview %}
+        {% capture result_json %}
+          {
+            "data": {
+              "orders": {
+                "edges": [
+                  {
+                    "cursor": "eyJsYXN0X2lkIjoxODM1MTU0NDA3NDU5LCJsYXN0X3ZhbHVlIjoxNTcyNTU3MzQ1MDAwfQ==",
+                    "node": {
+                      "id": "gid://shopify/Order/1835138777123",
+                      "lineItems": {
+                        "pageInfo": {
+                          "hasNextPage": false
+                        },
+                        "edges": [
+                          {
+                            "cursor": "eyJsYXN0X2lkIjo0MDc4NTI5NjQyNTMxLCJsYXN0X3ZhbHVlIjo0MDc4NTI5NjQyNTMxfQ==",
+                            "node": {
+                              "fulfillmentService": {
+                                "id": "gid://shopify/FulfillmentService/manual"
+                              },
+                              "variant": {
+                                "inventoryQuantity": 1
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+
+                  {% comment %}
+                  // Commenting this out to keep the task preview clean. Bring
+                  // this back if you want to test multi-order pages.
+                  ,
+                  {
+                    "cursor": "eyJsYXN0X2lkIjo0MDc4NTU0OTA2NjU5LCJsYXN0X3ZhbHVlIjo0MDc4NTU0OTA2NjU5fQ==",
+                    "node": {
+                      "id": "gid://shopify/Order/1835154407459",
+                      "lineItems": {
+                        "pageInfo": {
+                          "hasNextPage": false
+                        },
+                        "edges": [
+                          {
+                            "cursor": "eyJsYXN0X2lkIjo0MDc4NTU0OTA2NjU5LCJsYXN0X3ZhbHVlIjo0MDc4NTU0OTA2NjU5fQ==",
+                            "node": {
+                              "fulfillmentService": {
+                                "id": "gid://shopify/FulfillmentService/manual"
+                              },
+                              "variant": {
+                                "inventoryQuantity": 1
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                  {% endcomment %}
+                ]
+              }
+            }
+          }
+        {% endcapture %}
+
+        {% assign result = result_json | parse_json %}
+      {% endif %}
+
+      {% assign order_nodes = result.data.orders.edges | map: "node" | concat: order_nodes %}
+
+      {% if result.data.orders.pageInfo.hasNextPage %}
+        {% assign cursor = result.data.orders.edges.last.cursor %}
+        {% if cursor == nil %}
+          {% log "Encountered pageInfo.hasNextPage = true and cursor = nil; stopping the loop." %}
+          {% break %}
+        {% endif %}
+      {% else %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+{% endif %}
+
+{% for order_node in order_nodes %}
+  {% assign order_node_index = forloop.index0 %}
+  {% if order_node.lineItems.pageInfo.hasNextPage %}
+    {% assign cursor = order_node.lineItems.edges.last.cursor %}
+    {% for n in (0..100) %}
+      {% capture query %}
+        query {
+          order(id: {{ order_node.id | json }}) {
+            id
+            lineItems(
+              first: 15
+              after: {{ cursor | json }}
+            ) {
+              pageInfo {
+                hasNextPage
+              }
+              edges {
+                cursor
+                node {
+                  {% if options.ignore_line_items_not_fulfilled_manually__boolean %}
+                    fulfillmentService {
+                      id
+                    }
+                  {% endif %}
+                  variant {
+                    inventoryQuantity
+                  }
+                }
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = query | shopify %}
+
+      {% assign order_nodes[order_node_index]["lineItems"]["edges"] = order_nodes[order_node_index]["lineItems"]["edges"] | concat: result.data.order.lineItems.edges %}
+
+      {% if result.data.order.lineItems.pageInfo.hasNextPage %}
+        {% assign cursor = result.data.order.lineItems.edges.last.cursor %}
+        {% if cursor == nil %}
+          {% log "Encountered pageInfo.hasNextPage = true and cursor = nil; stopping the loop." %}
+          {% break %}
+        {% endif %}
+      {% else %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
+  {% assign order_qualifies = nil %}
+
+  {% for lineItem_edge in order_node.lineItems.edges %}
+    {% if options.ignore_line_items_not_fulfilled_manually__boolean %}
+      {% if lineItem_edge.node.fulfillmentService.id != "gid://shopify/FulfillmentService/manual" %}
+        {% continue %}
+      {% endif  %}
+    {% endif %}
+
+    {% if order_qualifies == nil and lineItem_edge.node.variant.inventoryQuantity >= 0 %}
+      {% assign order_qualifies = true %}
+    {% elsif lineItem_edge.node.variant.inventoryQuantity < 0 %}
+      {% assign order_qualifies = false %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% if order_qualifies %}
+    {% if options.test_mode__boolean %}
+      {% action "echo", order_id_to_tag: order_node.id, order_name_to_tag: order_node.name %}
+    {% else %}
+      {% action "shopify" %}
+        mutation {
+          tagsAdd(
+            id: {{ order_node.id | json }}
+            tags: {{ options.order_tag_to_add__required | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endif %}
+  {% endif %}
+{% endfor %}
