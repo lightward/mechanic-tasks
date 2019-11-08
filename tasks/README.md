@@ -98,6 +98,7 @@
 *   [Delete the oldest x products from a specific collection](./delete-the-oldest-x-products-from-a-specific-collection)
 *   [Delete variants having a metafield date that has passed](./delete-variants-having-a-metafield-date-that-has-passed)
 *   [Email a CSV export of orders](./email-a-csv-export-of-orders)
+*   [Email a summary of all products and quantities ordered](./email-a-summary-of-all-products-and-quantities-ordered)
 *   [Email all customers who made a purchase](./email-customers-who-purchased-product)
 *   [Email customer when their order is paid](./email-customer-when-order-paid)
 *   [Email customers after purchasing a certain product](./product-order-email)
