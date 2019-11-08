@@ -166,6 +166,7 @@
 *   [Sync inventory levels to variant metafields](./sync-inventory-levels-to-variant-metafields)
 *   [Sync order timeline comments to the customer note](./sync-order-timeline-comments-to-the-customer-note)
 *   [Sync variant inventory within a product by pack size](./sync-variant-inventory-within-a-product-by-pack-size)
+*   [Tag online orders by their ?ref= referral codes](./tag-orders-by-url-referrer)
 *   [Tag orders in bulk by order name](./tag-orders-in-bulk-by-order-name)
 *   [Tag orders that have at least x of a certain product](./tag-orders-that-have-at-least-x-of-a-certain-product)
 *   [Tag products as in- or out-of-stock, by location ID](./tag-products-as-in-or-out-of-stock-by-location-id)
