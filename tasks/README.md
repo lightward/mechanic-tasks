@@ -56,6 +56,7 @@
 *   [Auto-tag orders based on cart attributes](./auto-tag-orders-based-on-cart-attributes)
 *   [Auto-tag orders based on shipping method](./auto-tag-orders-based-on-shipping-method)
 *   [Auto-tag orders by discount code](./auto-tag-orders-by-discount-code)
+*   [Auto-tag orders by originating staff member](./auto-tag-orders-by-originating-staff-member)
 *   [Auto-tag orders by product collections](./auto-tag-orders-by-product-collections)
 *   [Auto-tag orders by shipment status](./auto-tag-orders-by-shipment-status)
 *   [Auto-tag orders by shipping address city](./auto-tag-orders-by-shipping-address-city)
