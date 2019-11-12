@@ -122,6 +122,7 @@
 *   [Import PayPal transactions as Shopify orders](./import-paypal-transactions-as-shopify-orders)
 *   [Keep inventory levels in sync within products](./keep-inventory-levels-in-sync-within-products)
 *   [Maintain a collection of new products](./maintain-a-collection-of-new-products)
+*   [Maintain a tag for orders processed today](./maintain-a-tag-for-orders-processed-today)
 *   [Manage annual memberships based on order minimums](./manage-annual-memberships-based-on-order-minimums)
 *   [Manage collection templates by product inventory](./manage-collection-templates-by-product-inventory)
 *   [Manage fulfillment status using order tags](./manage-fulfillment-status-using-order-tags)

@@ -1,0 +1,123 @@
+{% if options.use_rolling_24_hour_window__boolean %}
+  {% assign now_s = "now" | date: "%s" | times: 1 %}
+  {% assign twenty_four_hours_s = 24 | times: 60 | times: 60 %}
+  {% assign threshold_s = now_s | minus: twenty_four_hours_s %}
+{% else %}
+  {% assign threshold_s = "now" | date: "%Y-%m-%d" | date: "%s" | times: 1 %}
+{% endif %}
+
+{% assign threshold_iso8601 = threshold_s | date: "%FT%T%:z" %}
+
+{% assign order_nodes = array %}
+
+{% if event.topic == "shopify/orders/create" %}
+  {% if event.preview %}
+    {% assign order = hash %}
+    {% assign order["processed_at"] = threshold_s | plus: 1 | date: "%FT%T%:z" %}
+    {% assign order["admin_graphql_api_id"] = "gid://shopify/Order/1234567890" %}
+  {% endif %}
+
+  {% assign order_node = hash %}
+  {% assign order_node["id"] = order.admin_graphql_api_id %}
+  {% assign order_node["processedAt"] = order.processed_at %}
+  {% assign order_node["tags"] = order.tags | split: ", " %}
+
+  {% assign order_nodes[order_nodes.size] = order_node %}
+{% elsif event.topic contains "mechanic/scheduler/" %}
+  {% assign cursor = nil %}
+
+  {% for n in (0..100) %}
+    {% capture query %}
+      query {
+        orders(
+          first: 250
+          after: {{ cursor | json }}
+          query: {{ options.order_tag__required | json | prepend: "tag:" | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+          }
+          edges {
+            cursor
+            node {
+              id
+              processedAt
+              tags
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "orders": {
+              "edges": [
+                {
+                  "node": {
+                    "id": "gid://shopify/Order/1234567890",
+                    "processedAt": "2000-01-01T00:00:00Z",
+                    "tags": [
+                      {{ options.order_tag__required | json }}
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% for order_edge in result.data.orders.edges %}
+      {% assign order_nodes[order_nodes.size] = order_edge.node %}
+    {% endfor %}
+
+    {% if result.data.orders.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.orders.edges.last.cursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+{% for order_node in order_nodes %}
+  {% assign processed_at_s = order_node.processedAt | date: "%s" | times: 1 %}
+  {% if processed_at_s >= threshold_s %}
+    {% unless order_node.tags contains options.order_tag__required %}
+      {% action "shopify" %}
+        mutation {
+          tagsAdd(
+            id: {{ order_node.id | json }}
+            tags: {{ options.order_tag__required | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endunless %}
+  {% elsif order_node.tags contains options.order_tag__required %}
+    {% action "shopify" %}
+      mutation {
+        tagsRemove(
+          id: {{ order_node.id | json }}
+          tags: {{ options.order_tag__required | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}
