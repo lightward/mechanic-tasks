@@ -44,6 +44,7 @@
 *   [Auto-tag customers with vendors after ordering](./auto-tag-customers-with-vendors-after-ordering)
 *   [Auto-tag customers with who have accounts](./auto-tag-customers-with-who-have-accounts)
 *   [Auto-tag customers within a purchase range](./auto-tag-customers-within-a-purchase-range)
+*   [Auto-tag draft orders by originating staff member](./auto-tag-draft-orders-by-originating-staff-member)
 *   [Auto-tag new customers](./auto-tag-new-customers)
 *   [Auto-tag new online orders by web browser](./auto-tag-new-online-orders-by-web-browser)
 *   [Auto-tag new orders](./auto-tag-new-orders)
