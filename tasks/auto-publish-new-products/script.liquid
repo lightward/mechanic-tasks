@@ -1,0 +1,122 @@
+{% if event.preview %}
+  {% assign product = hash %}
+  {% assign product["admin_graphql_api_id"] = "gid://shopify/Product/1234567890" %}
+{% endif %}
+
+{% assign publication_ids = array %}
+
+{% capture publication_query %}
+  query {
+    publications(first: 250) {
+      edges {
+        node {
+          id
+          name
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign publication_result = publication_query | shopify %}
+
+{% if event.preview %}
+  {% capture publication_result_json %}
+    {
+      "data": {
+        "publications": {
+          "edges": [
+            {% for name in options.sales_channel_names__array_required %}
+              {
+                "node": {
+                  "id": "gid://shopify/Publication/1234567890",
+                  "name": {{ name | json }}
+                }
+              }
+              {% unless forloop.last %}
+                ,
+              {% endunless %}
+            {% endfor %}
+          ]
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign publication_result = publication_result_json | parse_json %}
+{% endif %}
+
+{% for publication_edge in publication_result.data.publications.edges %}
+  {% if options.sales_channel_names__array_required contains publication_edge.node.name %}
+    {% assign publication_ids[publication_ids.size] = publication_edge.node.id %}
+  {% endif %}
+{% endfor %}
+
+{% if publication_ids.size != options.sales_channel_names__array_required.size %}
+  {% error %}
+    {{ "Only found " | append: publication_ids.size | append: " existing sales channels - check your task configuration, and fix any incorrect names. :)" | json }}
+  {% enderror %}
+{% else %}
+  {% capture product_query %}
+    query {
+      product(id: {{ product.admin_graphql_api_id | json }}) {
+        {% for publication_id in publication_ids %}
+          publishedOnPublication{{ forloop.index }}: publishedOnPublication(publicationId: {{ publication_id | json }})
+        {% endfor %}
+      }
+    }
+  {% endcapture %}
+
+  {% assign product_result = product_query | shopify %}
+
+  {% if event.preview %}
+    {% capture product_result_json %}
+      {
+        "data": {
+          "product": {
+            {% for publication_id in publication_ids %}
+              "publishedOnPublication{{ forloop.index }}": false
+              {% unless forloop.last %}
+                ,
+              {% endunless %}
+            {% endfor %}
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign product_result = product_result_json | parse_json %}
+  {% endif %}
+
+  {% assign publication_ids_for_publishing = array %}
+
+  {% for publication_id in publication_ids %}
+    {% assign key = "publishedOnPublication" | append: forloop.index %}
+    {% assign published = product_result.data.product[key] %}
+    {% unless published %}
+      {% assign publication_ids_for_publishing[publication_ids_for_publishing.size] = publication_id %}
+    {% endunless %}
+  {% endfor %}
+
+  {% if publication_ids_for_publishing == empty %}
+    {% log "Product was already published on all configured sales channel(s). :)" %}
+  {% else %}
+    {% action "shopify" %}
+      mutation {
+        {% for publication_id in publication_ids_for_publishing %}
+          publishablePublish{{ forloop.index }}: publishablePublish(
+            id: {{ product.admin_graphql_api_id | json }}
+            input: {
+              publicationId: {{ publication_id | json }}
+            }
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        {% endfor %}
+      }
+    {% endaction %}
+  {% endif %}
+{% endif %}
