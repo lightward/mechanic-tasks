@@ -1,0 +1,138 @@
+{% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% capture bulk_operation_query %}
+    query {
+      customers(
+        query: {{ options.required_customer_tag__required | json | prepend: "orders_count:>=1 AND tag:" | json }}
+      ) {
+        edges {
+          node {
+            displayName
+            email
+            id
+            legacyResourceId
+
+            lastOrder {
+              createdAt
+              legacyResourceId
+              name
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% assign now_s = "now" | date: "%s" | times: 1 %}
+  {% assign interval_d = options.include_customers_who_have_not_placed_an_order_in_this_many_days__number_required %}
+  {% assign interval_s = interval_d | times: 24 | times: 60 | times: 60 %}
+  {% assign order_time_threshold_s = now_s | minus: interval_s %}
+
+  {% if interval_d <= 0 %}
+    {% error "The number of days must be greater than 0. :)" %}
+  {% endif %}
+
+  {% if event.preview %}
+    {% capture objects_json %}
+      [
+        {
+          "displayName": "Alpha Beta",
+          "email": "customer@example.com",
+          "id": "gid://shopify/Customer/1234567890",
+          "legacyResourceId": "1234567890",
+          "lastOrder": {
+            "createdAt": {{ now_s | minus: interval_s | minus: 432000 | date: "%Y-%m-%dT%H:%M:%SZ" | json }},
+            "legacyResourceId": "1234567890",
+            "name": "#1000"
+          }
+        }
+      ]
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = objects_json | parse_json %}
+  {% endif %}
+
+  {% assign qualifying_customers = array %}
+
+  {% for customer in bulkOperation.objects %}
+    {% assign order_time_s = customer.lastOrder.createdAt | date: "%s" | times: 1 %}
+    {% if order_time_s < order_time_threshold_s %}
+      {% assign qualifying_customers[qualifying_customers.size] = customer %}
+    {% endif %}
+  {% endfor %}
+
+  {% capture email_subject %}
+    {{ options.email_subject_prefix__required }} {{ qualifying_customers.size }} {{ qualifying_customers.size | pluralize: "customer", "customers" }} found
+  {% endcapture %}
+
+  {% if qualifying_customers != empty %}
+    {% capture email_body %}
+      <p>Hello,</p>
+      <p>
+        Filtering for customers tagged {{ options.required_customer_tag__required | json }},
+        the following {{ qualifying_customers.size }} {{ qualifying_customers.size | pluralize: "customer was", "customers were" }}
+        found to have not placed an order in the last {{ interval_d }} {{ interval_d | pluralize: "day", "days" }}:
+      </p>
+      <ul>
+        {% for customer in qualifying_customers %}
+          {% assign lastOrder_days_ago = customer.lastOrder.createdAt | date: "%s" | times: 1 | minus: now_s | times: -1 | divided_by: 60 | divided_by: 60 | divided_by: 24 %}
+          <li>
+            <a href="https://{{ shop.domain }}/admin/customers/{{ customer.legacyResourceId }}">{{ customer.displayName | default: "(unnamed)" }}</a>
+            ({{ customer.email | default: "(no email)" }})
+            <br>
+            Last ordered on {{ customer.lastOrder.createdAt | date: "%Y-%m-%d" }},
+            {{ lastOrder_days_ago }} {{ lastOrder_days_ago | pluralize: "day", "days" }} ago
+            – <a href="https://{{ shop.domain }}/admin/orders/{{ customer.lastOrder.legacyResourceId }}">{{ customer.lastOrder.name }}</a>
+          </li>
+        {% endfor %}
+      </ul>
+      <p>Thanks,<br>- Mechanic, for {{ shop.name }}</p>
+    {% endcapture %}
+
+    {% action "email" %}
+      {
+        "to": {{ options.email_recipient__required_email | json }},
+        "subject": {{ email_subject | strip | json }},
+        "body": {{ email_body | json }},
+        "reply_to": {{ shop.customer_email | json }},
+        "from_display_name": {{ shop.name | json }}
+      }
+    {% endaction %}
+  {% elsif options.send_email_anyway_if_no_customers_are_found__boolean %}
+    {% capture email_body %}
+      Hello,
+
+      We didn't find any customers (tagged {{ options.required_customer_tag__required | json }}) having zero orders placed in the last {{ interval_d }} day(s).
+
+      Thanks,
+      - Mechanic, for {{ shop.name }}
+    {% endcapture %}
+
+    {% action "email" %}
+      {
+        "to": {{ options.email_recipient__required_email | json }},
+        "subject": {{ email_subject | strip | json }},
+        "body": {{ email_body | unindent | strip | newline_to_br | json }},
+        "reply_to": {{ shop.customer_email | json }},
+        "from_display_name": {{ shop.name | json }}
+      }
+    {% endaction %}
+  {% endif %}
+{% endif %}
