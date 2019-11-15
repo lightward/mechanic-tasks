@@ -112,6 +112,7 @@
 *   [Email customers when tagged](./email-customers-when-tagged)
 *   [Email customers when their order is tagged](./email-customer-when-order-tagged)
 *   [Email someone specific based on a new order's customer tags](./email-someone-specific-based-on-a-new-orders-customer-tags)
+*   [Email someone when a certain product is purchased](./email-someone-when-certain-product-purchased)
 *   [Email someone when a certain variant is purchased](./email-when-variant-purchased)
 *   [Email vendors when an order is tagged](./email-vendors-when-an-order-is-tagged)
 *   [Email vendors when an order shipping address changes](./email-vendors-when-an-order-shipping-address-changes)

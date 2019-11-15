@@ -1,0 +1,28 @@
+{% unless event.preview %}
+  {% assign order = order.reload %}
+{% endunless %}
+
+{% assign order_qualifies = false %}
+
+{% for line_item in order.line_items %}
+  {% if line_item.product.title == options.product_title__required %}
+    {% assign order_qualifies = true %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% if order.cancelled_at != blank %}
+  {% assign order_qualifies = false %}
+{% endif %}
+
+{% if event.preview or order_qualifies %}
+  {% action "email" %}
+    {
+      "to": {{ options.email_address__required | json }},
+      "subject": {{ options.email_subject__required | json }},
+      "body": {{ options.email_body__multiline_required | strip | newline_to_br | json }},
+      "reply_to": {{ options.reply_to_email_address | json }},
+      "from_display_name": {{ shop.name | json }}
+    }
+  {% endaction %}
+{% endif %}
