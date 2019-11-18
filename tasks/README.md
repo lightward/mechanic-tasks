@@ -109,6 +109,7 @@
 *   [Email a summary of all products and quantities ordered](./email-a-summary-of-all-products-and-quantities-ordered)
 *   [Email all customers who made a purchase](./email-customers-who-purchased-product)
 *   [Email customer when their order is paid](./email-customer-when-order-paid)
+*   [Email customers a unique discount code, two weeks after order fulfillment](./email-customers-a-unique-discount-code-two-weeks-after-order-fulfillment)
 *   [Email customers after purchasing a certain product](./product-order-email)
 *   [Email customers when created](./email-customers-when-created)
 *   [Email customers when tagged](./email-customers-when-tagged)
