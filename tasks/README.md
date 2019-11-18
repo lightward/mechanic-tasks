@@ -115,6 +115,7 @@
 *   [Email someone specific based on a new order's customer tags](./email-someone-specific-based-on-a-new-orders-customer-tags)
 *   [Email someone when a certain product is purchased](./email-someone-when-certain-product-purchased)
 *   [Email someone when a certain variant is purchased](./email-when-variant-purchased)
+*   [Email the customer when tracking numbers are added to their order](./email-the-customer-when-tracking-numbers-are-added-to-their-order)
 *   [Email vendors when an order is tagged](./email-vendors-when-an-order-is-tagged)
 *   [Email vendors when an order shipping address changes](./email-vendors-when-an-order-shipping-address-changes)
 *   [Email vendors when their products are ordered](./email-vendors-when-their-products-are-ordered)
