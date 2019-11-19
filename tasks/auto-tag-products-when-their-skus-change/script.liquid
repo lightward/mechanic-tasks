@@ -1,0 +1,157 @@
+{% comment %}
+  An opinion about option order:
+
+  {{ options.product_tag_to_add__required }}
+  {{ options.tag_with_the_titles_of_each_variant_having_a_new_sku__boolean }}
+{% endcomment %}
+
+{% assign metafield_key = "variant_ids_and_skus" %}
+
+{% assign products_that_need_a_metafield_update = array %}
+
+{% if event.topic == "mechanic/user/trigger" %}
+  {% if event.preview %}
+    {% capture shop_json %}
+      {
+        "products": [
+          {
+            "variants": [
+              {
+                "id": 1234567890,
+                "sku": "OHHELLO"
+              },
+              {
+                "id": 2345678901,
+                "sku": "OHGOODBYE"
+              }
+            ]
+          }
+        ]
+      }
+    {% endcapture %}
+
+    {% assign shop = shop_json | parse_json %}
+  {% endif %}
+
+  {% assign products_that_need_a_metafield_update = shop.products %}
+{% elsif event.topic == "shopify/products/create" %}
+  {% assign products_that_need_a_metafield_update[0] = product %}
+{% elsif event.topic == "shopify/products/update" %}
+  {% if event.preview %}
+    {% capture product_json %}
+      {
+        "admin_graphql_api_id": "gid://shopify/Product/12346567890",
+        "variants": [
+          {
+            "id": 1234567890,
+            "sku": "OHHELLO",
+            "title": "OH / HELLO"
+          },
+          {
+            "id": 2345678901,
+            "sku": "OHGOODBYE",
+            "title": "OH / GOODBYE"
+          }
+        ],
+        "metafields": {
+          "mechanic": {
+            {{ metafield_key | json }}: {
+              "1234567890": "OHHELLOOOOOOOOOOOOOOOOO",
+              "2345678901": "OHGOODBYE"
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign product = product_json | parse_json %}
+  {% endif %}
+
+  {% assign previous_variant_ids_and_skus = product.metafields.mechanic[metafield_key] %}
+
+  {% if previous_variant_ids_and_skus == nil %}
+    {% error %}
+      "Mechanic has not had an opportunty to store this product's previous variant SKUs. Use the \"Run task\" button to re-scan your products. :)"
+    {% enderror %}
+  {% endif %}
+
+  {% assign product_qualifies = false %}
+
+  {% assign tags_to_add = array %}
+
+  {% unless options.tag_with_the_titles_of_each_variant_having_a_new_sku__boolean %}
+    {% assign tags_to_add[0] = options.product_tag_to_add__required %}
+  {% endunless %}
+
+  {% for variant in product.variants %}
+    {% assign variant_id_string = variant.id | append: "" %}
+    {% if previous_variant_ids_and_skus[variant_id_string] != variant.sku %}
+      {% assign product_qualifies = true %}
+
+      {% if options.tag_with_the_titles_of_each_variant_having_a_new_sku__boolean %}
+        {% if variant.title == "Default Title" %}
+          {% assign tags_to_add[tags_to_add.size] = options.product_tag_to_add__required %}
+        {% else %}
+          {% assign tags_to_add[tags_to_add.size] = options.product_tag_to_add__required | append: " " | append: variant.title %}
+        {% endif %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+
+  {% if product_qualifies %}
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {{ product.admin_graphql_api_id | json }}
+          tags: {{ tags_to_add | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+
+    {% assign products_that_need_a_metafield_update[0] = product %}
+  {% endif %}
+{% endif %}
+
+{% for product in products_that_need_a_metafield_update %}
+  {% assign metafield_value = hash %}
+  {% assign existing_metafield = product.metafields.mechanic | where: "key", metafield_key | first %}
+
+  {% for variant in product.variants %}
+    {% assign variant_id_string = variant.id | append: "" %}
+    {% assign metafield_value[variant_id_string] = variant.sku %}
+  {% endfor %}
+
+  {% assign metafield_value_json = metafield_value | json %}
+
+  {% if existing_metafield.value == metafield_value_json %}
+    {% log %}
+      {{ "Product " | append: product.id | append: " has a metafield that is already up to date. :)" | json }}
+    {% endlog %}
+  {% else %}
+    {% action "shopify" %}
+      [
+        "update",
+        [
+          "product",
+          {{ product.id | json }}
+        ],
+        {
+          "metafields": [
+            {
+              {% if existing_metafield %}"id": {{ existing_metafield.id | json }},{% endif %}
+              "namespace": "mechanic",
+              "key": {{ metafield_key | json }},
+              "value": {{ metafield_value_json | json }},
+              "value_type": "json_string"
+            }
+          ]
+        }
+      ]
+    {% endaction %}
+  {% endif %}
+{% endfor %}

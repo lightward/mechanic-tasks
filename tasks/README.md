@@ -79,6 +79,7 @@
 *   [Auto-tag products that are missing costs](./auto-tag-products-that-are-missing-costs)
 *   [Auto-tag products that have a "compare at" price](./auto-tag-products-that-have-a-compare-at-price)
 *   [Auto-tag products that meet a sales threshold](./auto-tag-products-that-meet-a-sales-threshold)
+*   [Auto-tag products when their SKUs change](./auto-tag-products-when-their-skus-change)
 *   [Auto-tag products with their vendors](./auto-tag-products-with-their-vendors)
 *   [Auto-untag customers when a certain product is refunded](./auto-untag-customers-when-a-certain-product-is-refunded)
 *   [Auto-update inventory policy based on a "preorder" tag](./auto-update-inventory-policy-based-on-a-preorder-tag)
