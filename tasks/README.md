@@ -170,6 +170,7 @@
 *   [Send an email alert when a fulfillment is cancelled](./send-an-email-alert-when-a-fulfillment-is-cancelled)
 *   [Send an email alert when a variant hits 0 total inventory](./send-an-email-alert-when-a-variant-hits-0-total-inventory)
 *   [Send an email when a purchase is made from a certain collection](./send-an-email-when-a-purchase-is-made-from-a-certain-collection)
+*   [Send an email when a specific product is shipped](./send-an-email-when-a-specific-product-is-shipped)
 *   [Send an event to Klaviyo when a fulfillment is delayed](./send-an-event-to-klaviyo-when-a-fulfillment-is-delayed)
 *   [Send customers a reorder link X days after ordering](./send-customers-a-reorder-link-x-days-after-ordering)
 *   [Send email when an order comes in](./send-email-when-an-order-comes-in)
