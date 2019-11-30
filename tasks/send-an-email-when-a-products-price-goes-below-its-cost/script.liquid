@@ -1,0 +1,131 @@
+{% capture query %}
+  query {
+    product(id: {{ product.admin_graphql_api_id | json }}) {
+      metafield(
+        namespace: "mechanic"
+        key: "variant_costs"
+      ) {
+        id
+        value
+      }
+      variants(first: 250) {
+        edges {
+          node {
+            id
+            legacyResourceId
+            sku
+            title
+            price
+            inventoryItem {
+              unitCost {
+                amount
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "product": {
+          "metafield": null,
+          "variants": {
+            "edges": [
+              {
+                "node": {
+                  "id": "gid://shopify/ProductVariant/1234567890",
+                  "legacyResourceId": "1234567890",
+                  "price": "5.00",
+                  "sku": "ABC123",
+                  "title": "Default Title",
+                  "inventoryItem": {
+                    "unitCost": {
+                      "amount": "10.0"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% assign known_costs = result.data.product.metafield.value | default: "{}" | parse_json %}
+{% assign current_costs = hash %}
+
+{% for variant_edge in result.data.product.variants.edges %}
+  {% assign unit_cost = variant_edge.node.inventoryItem.unitCost.amount | times: 1 %}
+  {% assign price = variant_edge.node.price | times: 1 %}
+
+  {% assign current_costs[variant_edge.node.id] = unit_cost %}
+
+  {% if price < unit_cost and known_costs[variant_edge.node.id] != unit_cost %}
+    {% assign variant_name = variant_edge.node.sku | default: variant_edge.node.title %}
+    {% if variant_name == "Default Title" %}
+      {% assign variant_name = product.title %}
+    {% endif %}
+
+    {% capture email_subject %}
+      {{ variant_name }} was priced lower than its cost
+    {% endcapture %}
+
+    {% capture email_body %}
+      Hello,
+
+      {{ variant_name }} was found to have a unit cost of {{ unit_cost | times: 100 | money_with_currency }}, while its price is set to {{ price | times: 100 | money_with_currency }}.
+
+      <a href="https://{{ shop.myshopify_domain }}/admin/products/{{ product.id }}/variants/{{ variant_edge.node.legacyResourceId }}">Manage this in Shopify</a>
+
+      Thanks,
+      Mechanic, for {{ shop.name }}
+    {% endcapture %}
+
+    {% action "email" %}
+      {
+        "to": {{ options.recipient_email__email_required | json }},
+        "subject": {{ email_subject | strip | json }},
+        "body": {{ email_body | unindent | strip | newline_to_br | json }},
+        "reply_to": {{ shop.customer_email | json }},
+        "from_display_name": {{ shop.name | json }}
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}
+
+{% if known_costs != current_costs %}
+  {% action "shopify" %}
+    mutation {
+      productUpdate(
+        input: {
+          id: {{ product.admin_graphql_api_id | json }}
+          metafields: [
+            {
+              id: {{ result.data.product.metafield.id | json }}
+              namespace: "mechanic"
+              key: "variant_costs"
+              valueType: JSON_STRING
+              value: {{ current_costs | json | json }}
+            }
+          ]
+        }
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}
