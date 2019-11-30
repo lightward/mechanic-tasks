@@ -1,0 +1,95 @@
+{% if event.topic contains "mechanic/scheduler/" or event.topic == "mechanic/user/trigger" %}
+  {% assign query = "orders_count:>0" %}
+  {% if options.only_include_customers_having_this_tag != blank %}
+    {% assign query = options.only_include_customers_having_this_tag | json | prepend: "tag:" | append: " " | append: query %}
+  {% endif %}
+
+  {% capture bulk_operation_query %}
+    query {
+      customers(
+        query: {{ query | json }}
+      ) {
+        edges {
+          node {
+            email
+            lastOrder {
+              email
+              name
+              processedAt
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% assign now_s = "now" | date: "%s" | times: 1 %}
+  {% assign interval_d = options.number_of_days_to_wait_between_emails__number_required %}
+
+  {% if event.preview %}
+    {% capture object_json %}
+      {
+        "email": "customer@example.com",
+        "lastOrder": {
+          "email": "customer+fallback@example.com",
+          "name": "#1234",
+          "processedAt": {{ interval_d | times: 24 | times: 60 | times: 60 | times: -1 | plus: now_s | date: "%FT%T%:z" | json }}
+        }
+      }
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = array %}
+    {% assign bulkOperation["objects"][0] = object_json | parse_json %}
+  {% endif %}
+
+  {% for customer in bulkOperation.objects %}
+    {% if customer.lastOrder == nil %}
+      {% continue %}
+    {% endif %}
+
+    {% assign processed_at_s = customer.lastOrder.processedAt | date: "%s" | times: 1 %}
+    {% assign age_d = now_s | minus: processed_at_s | divided_by: 60 | divided_by: 60 | divided_by: 24 | round %}
+    {% assign age_d_modulo = age_d | modulo: interval_d %}
+
+    {% if age_d == 0 %}
+      {% continue %}
+    {% elsif age_d_modulo != 0 %}
+      {% capture message -%}
+        Order {{ customer.lastOrder.name }} ({{ customer.email | default: customer.lastOrder.email }}) was placed on {{ customer.lastOrder.processedAt }}. Next email is due in {{ interval_d | minus: age_d_modulo }} day(s).
+      {%- endcapture %}
+      {% log message %}
+      {% continue %}
+    {% else %}
+      {% assign email_options = hash %}
+      {% assign email_options["to"] = customer.email | default: customer.lastOrder.email %}
+      {% assign email_options["subject"] = options.email_subject__required | replace: "ORDER_NUMBER", customer.lastOrder.name %}
+      {% assign email_options["body"] = options.email_body__multiline_required | replace: "ORDER_NUMBER", customer.lastOrder.name | strip | newline_to_br %}
+      {% assign email_options["reply_to"] = shop.customer_email %}
+      {% assign email_options["from_display_name"] = shop.name %}
+
+      {% if options.test_mode__boolean %}
+        {% action "echo" email_options %}
+      {% else %}
+        {% action "email" email_options %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
