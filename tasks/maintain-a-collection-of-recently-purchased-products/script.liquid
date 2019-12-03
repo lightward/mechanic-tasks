@@ -1,0 +1,263 @@
+{% comment %}
+  This task script *also* includes a feature for ignoring
+  products based on metafield value. To reveal and use this
+  feature, swap "options_" for "options." in these variables:
+  * options_product_metafield_namespace
+  * options_product_metafield_key
+  * options_ignore_products_having_this_metafield_value
+{% endcomment %}
+
+{% assign collection_maximum_size = options.collection_maximum_size__number_required %}
+{% assign collection = shop.collections[options.collection_id__number_required] %}
+
+{% if collection_maximum_size < 1 %}
+  {% error "The 'Collection maximum size' option must be at least 1. :)" %}
+{% else %}
+  {% assign collection_maximum_size_rounded = collection_maximum_size | round %}
+  {% if collection_maximum_size_rounded != collection_maximum_size %}
+    {% error "The 'Collection maximum size' option must be a whole number. ;)" %}
+  {% endif %}
+{% endif %}
+
+{% if event.preview %}
+  {% assign order = hash %}
+  {% assign order = "gid://shopify/Order/1234567890" %}
+
+  {% assign collection = hash %}
+  {% assign collection["admin_graphql_api_id"] = "gid://shopify/Collection/1234567890" %}
+{% endif %}
+
+{% assign product_ids_ordered = array %}
+{% assign cursor = nil %}
+
+{% for n in (0..100) %}
+  {% capture query %}
+    query {
+      order(id: {{ order.admin_graphql_api_id | json }}) {
+        id
+        lineItems(
+          first: 250
+          after: {{ cursor | json }}
+        ) {
+          edges {
+            node {
+              product {
+                id
+                {% if options.ignore_products_that_are_sold_out__boolean %}
+                  totalInventory
+                {% endif %}
+                {% if options_product_metafield_namespace != blank %}
+                  metafield(
+                    namespace: {{ options_product_metafield_namespace | json }}
+                    key: {{ options_product_metafield_key | json }}
+                  ) {
+                    value
+                  }
+                {% endif %}
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "order": {
+            "id": "gid://shopify/Order/1234567890",
+            "lineItems": {
+              "edges": [
+                {
+                  "node": {
+                    "product": {
+                      {% if options.ignore_products_that_are_sold_out__boolean %}
+                        "totalInventory": 1,
+                      {% endif %}
+                      {% if options_product_metafield_namespace != blank %}
+                        "metafield": null,
+                      {% endif %}
+                      "id": "gid://shopify/Product/1234567890"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% for lineItem_edge in result.data.order.lineItems.edges %}
+    {% assign product = lineItem_edge.node.product %}
+
+    {% if options.ignore_products_that_are_sold_out__boolean and product.totalInventory <= 0 %}
+      {% continue %}
+    {% elsif options_product_metafield_namespace != blank and product.metafield.value == options_ignore_products_having_this_metafield_value %}
+        {% continue %}
+    {% endif %}
+
+    {% assign product_ids_ordered[product_ids_ordered.size] = product.id %}
+  {% endfor %}
+
+  {% if result.data.order.lineItems.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.order.lineItems.edges.last.cursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% assign product_ids_already_collected = array %}
+{% assign cursor = nil %}
+
+{% for n in (0..100) %}
+  {% capture query %}
+    query {
+      collection(id: {{ collection.admin_graphql_api_id | json }}) {
+        products(
+          first: 250
+          after: {{ cursor | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+          }
+          edges {
+            cursor
+            node {
+              id
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "collection": {
+            "id": "gid://shopify/Collection/1234567890",
+            "products": {
+              "edges": [
+                {
+                  "node": {
+                    "id": "gid://shopify/Product/2345678901"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% for product_edge in result.data.collection.products.edges %}
+    {% assign product = product_edge.node %}
+    {% assign product_ids_already_collected[product_ids_already_collected.size] = product.id %}
+  {% endfor %}
+
+  {% if result.data.collection.products.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.collection.products.edges.last.cursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% assign product_ids_under_consideration = product_ids_ordered | concat: product_ids_already_collected | uniq %}
+{% assign product_ids_to_have_at_the_end_of_the_day = array %}
+{% assign product_ids_to_add = array %}
+{% assign product_ids_to_remove = array %}
+
+{% for product_id in product_ids_under_consideration %}
+  {% if forloop.index <= collection_maximum_size %}
+    {% assign product_ids_to_have_at_the_end_of_the_day[product_ids_to_have_at_the_end_of_the_day.size] = product_id %}
+    {% unless product_ids_already_collected contains product_id %}
+      {% assign product_ids_to_add[product_ids_to_add.size] = product_id %}
+    {% endunless %}
+  {% else %}
+    {% assign product_ids_to_remove[product_ids_to_remove.size] = product_id %}
+  {% endif %}
+{% endfor %}
+
+{% assign mutations = array %}
+
+{% if product_ids_to_add != empty %}
+  {% capture mutation %}
+    collectionAddProducts(
+      id: {{ collection.admin_graphql_api_id | json }}
+      productIds: {{ product_ids_to_add | json }}
+    ) {
+      userErrors {
+        field
+        message
+      }
+    }
+  {% endcapture %}
+  {% assign mutations[mutations.size] = mutation %}
+{% endif %}
+
+{% if product_ids_to_remove != empty %}
+  {% capture mutation %}
+    collectionRemoveProducts(
+      id: {{ collection.admin_graphql_api_id | json }}
+      productIds: {{ product_ids_to_remove | json }}
+    ) {
+      userErrors {
+        field
+        message
+      }
+    }
+  {% endcapture %}
+  {% assign mutations[mutations.size] = mutation %}
+{% endif %}
+
+{% assign moves = array %}
+{% for product_id in product_ids_ordered %}
+  {% if product_ids_already_collected[forloop.index0] != product_id %}
+    {% capture move %}
+      {
+        id: {{ product_id | json }}
+        newPosition: {{ forloop.index0 | append: "" | json }}
+      }
+    {% endcapture %}
+    {% assign moves[moves.size] = move %}
+  {% endif %}
+{% endfor %}
+
+{% if moves != empty %}
+  {% capture mutation %}
+    collectionReorderProducts(
+      id: {{ collection.admin_graphql_api_id | json }}
+      moves: [
+        {{ moves | join: newline }}
+      ]
+    ) {
+      userErrors {
+        field
+        message
+      }
+    }
+  {% endcapture %}
+  {% assign mutations[mutations.size] = mutation %}
+{% endif %}
+
+{% if mutations != blank %}
+  {% action "shopify" %}
+    mutation {
+      {{ mutations | join: newline }}
+    }
+  {% endaction %}
+{% endif %}
