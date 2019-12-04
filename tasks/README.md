@@ -24,6 +24,7 @@
 *   [Auto-copy notes from customers to their orders](./auto-copy-notes-from-customers-to-their-orders)
 *   [Auto-copy order notes to the customer's note](./auto-copy-order-notes-to-the-customers-note)
 *   [Auto-delete customers that are created without orders](./auto-delete-customers-that-are-created-without-orders)
+*   [Auto-fulfill items that don't require shipping](./auto-fulfill-items-that-dont-require-shipping)
 *   [Auto-fulfill orders on a weekly schedule](./auto-fulfill-orders-on-a-weekly-schedule)
 *   [Auto-fulfill orders when tagged](./auto-fulfill-orders-when-tagged)
 *   [Auto-generate SKUs](./auto-generate-skus)
