@@ -169,6 +169,7 @@
 *   [Send a message to Slack](./send-a-message-to-slack)
 *   [Send a new-order email to someone based on a cart attribute](./send-a-new-order-email-to-someone-based-on-a-cart-attribute)
 *   [Send account invites to all customers in bulk](./send-account-invites-to-all-customers-in-bulk)
+*   [Send an SMS via Nexmo when a product is created](./send-an-sms-via-nexmo-when-a-product-is-created)
 *   [Send an email alert if a new collection has no orders after x days](./send-an-email-alert-if-a-new-collection-has-no-orders-after-x-days)
 *   [Send an email alert on fulfillment failure](./fulfillment-failure-email)
 *   [Send an email alert when a customer changes state](./send-an-email-alert-when-a-customer-changes-state)
