@@ -139,6 +139,7 @@
 *   [Maintain a collection of new products](./maintain-a-collection-of-new-products)
 *   [Maintain a collection of recently purchased products](./maintain-a-collection-of-recently-purchased-products)
 *   [Maintain a tag for orders processed today](./maintain-a-tag-for-orders-processed-today)
+*   [Maintain inventory for a product bundle](./maintain-inventory-for-a-product-bundle)
 *   [Manage annual memberships based on order minimums](./manage-annual-memberships-based-on-order-minimums)
 *   [Manage collection templates by product inventory](./manage-collection-templates-by-product-inventory)
 *   [Manage fulfillment status using order tags](./manage-fulfillment-status-using-order-tags)
