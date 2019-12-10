@@ -1,0 +1,272 @@
+{% capture query %}
+  query {
+    publications(first: 250) {
+      edges {
+        node {
+          id
+          name
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% assign publication_ids = array %}
+{% assign publication_names_by_id = hash %}
+
+{% for publication_edge in result.data.publications.edges %}
+  {% if options.sales_channel_names__required_array contains publication_edge.node.name %}
+    {% assign publication_ids[publication_ids.size] = publication_edge.node.id %}
+    {% assign publication_names_by_id[publication_edge.node.id] = publication_edge.node.name %}
+  {% endif %}
+{% endfor %}
+
+{% unless event.preview %}
+  {% if publication_ids.size != options.sales_channel_names__required_array.size %}
+    {"error": "Expected to find {{ options.sales_channel_names__required_array.size }} sales channels; found {{ publication_ids.size }} instead. Double-check your sales channel names for accuracy!"}
+  {% endif %}
+{% endunless %}
+
+{% if event.preview %}
+  {% action "shopify" %}
+    mutation {
+      publishableUnpublish1: publishableUnpublish(
+        id: "gid://shopify/Product/1234567890"
+        input: {
+          publicationId: "gid://shopify/Publication/1234567809"
+        }
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+  {% if options.email_notification_recipient__email != blank %}
+    {% capture email_subject %}
+      Out of stock: Short Sleeve T-shirt
+    {% endcapture %}
+
+    {% capture email_body %}
+      Hi there,
+
+      Your product is out of stock!
+
+      <a href="https://{{ shop.domain }}/admin/products/12345">Manage this product</a>
+
+      Thanks,
+      - Mechanic, for {{ shop.name }}
+    {% endcapture %}
+
+    {% action "email" %}
+      {
+        "to": {{ options.email_notification_recipient__email | json }},
+        "subject": {{ email_subject | unindent | strip | json }},
+        "body": {{ email_body | unindent | strip | newline_to_br | json }}
+      }
+    {% endaction %}
+  {% endif %}
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% assign unpublished_product_links = array %}
+  {% assign cursor = nil %}
+
+  {% for n in (0..100) %}
+    {% capture query %}
+      query {
+        products(
+          first: 250
+          after: {{ cursor | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+          }
+          edges {
+            cursor
+            node {
+              id
+              legacyResourceId
+              title
+              totalInventory
+
+              {% for publication_id in publication_ids %}
+                published{{ forloop.index }}: publishedOnPublication(publicationId: {{ publication_id | json }})
+              {% endfor %}
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% for edge in result.data.products.edges %}
+      {% assign product_node = edge.node %}
+
+      {% if product_node.totalInventory > options.out_of_stock_inventory_quantity__number_required %}
+        {% continue %}
+      {% endif %}
+
+      {% assign mutations = array %}
+      {% assign publication_names = array %}
+
+      {% for publication_id in publication_ids %}
+        {% assign key = "published" | append: forloop.index %}
+        {% if product_node[key] == false %}
+          {% continue %}
+        {% endif %}
+
+        {% assign publication_names[publication_names.size] = publication_names_by_id[publication_id] %}
+
+        {% capture mutation %}
+          publishableUnpublish{{ forloop.index}}: publishableUnpublish(
+            id: {{ product_node.id | json }}
+            input: {
+              publicationId: {{ publication_id | json }}
+            }
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        {% endcapture %}
+        {% assign mutations[mutations.size] = mutation %}
+      {% endfor %}
+
+      {% if mutations != empty %}
+        {% action "shopify" %}
+          mutation {
+            {{ mutations | join: newline }}
+          }
+        {% endaction %}
+
+        {% capture link %}<li><a href="https://{{ shop.domain }}/admin/products/{{ product_node.legacyResourceId }}">{{ product_node.title }}</a> ({{ product_node.totalInventory }} - unpublished from {{ publication_names | join: ", " }})</li>{% endcapture %}
+        {% assign unpublished_product_links[unpublished_product_links.size] = link %}
+      {% endif %}
+    {% endfor %}
+
+    {% if result.data.products.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.products.edges.last.cursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% if unpublished_product_links != empty and options.email_notification_recipient__email != blank %}
+    {% capture email_subject %}
+      Found {{ unpublished_product_links.size }} {{ unpublished_product_links.size | pluralize: "product", "products" }} out of stock
+    {% endcapture %}
+
+    {% capture email_body %}
+      Hi there,
+      <br><br>
+      These products were found to be under your out of stock minimum quantity ({{ options.out_of_stock_inventory_quantity__number_required }}), when adding up the inventory for each product.
+      <br>
+      <ul>{{ unpublished_product_links | join: "" }}</ul>
+      <br>
+      Thanks,
+      <br>
+      - Mechanic, for {{ shop.name }}
+    {% endcapture %}
+
+    {% action "email" %}
+      {
+        "to": {{ options.email_notification_recipient__email | json }},
+        "subject": {{ email_subject | unindent | strip | json }},
+        "body": {{ email_body | unindent | strip | json }}
+      }
+    {% endaction %}
+  {% endif %}
+{% elsif event.topic contains "shopify/inventory_levels/" %}
+  {% capture query %}
+    query {
+      inventoryLevel(
+        id: {{ inventory_level.admin_graphql_api_id | json }}
+      ) {
+        item {
+          variant {
+            product {
+              id
+              legacyResourceId
+              title
+              totalInventory
+
+              {% for publication_id in publication_ids %}
+                published{{ forloop.index }}: publishedOnPublication(publicationId: {{ publication_id | json }})
+              {% endfor %}
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+  {% assign product_node = result.data.inventoryLevel.item.variant.product %}
+
+  {% if product_node.totalInventory <= options.out_of_stock_inventory_quantity__number_required %}
+    {% assign mutations = array %}
+    {% assign publication_names = array %}
+
+    {% for publication_id in publication_ids %}
+      {% assign key = "published" | append: forloop.index %}
+      {% if product_node[key] == false %}
+        {% continue %}
+      {% endif %}
+
+      {% assign publication_names[publication_names.size] = publication_names_by_id[publication_id] %}
+
+      {% capture mutation %}
+        publishableUnpublish{{ forloop.index}}: publishableUnpublish(
+          id: {{ product_node.id | json }}
+          input: {
+            publicationId: {{ publication_id | json }}
+          }
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      {% endcapture %}
+      {% assign mutations[mutations.size] = mutation %}
+    {% endfor %}
+
+    {% if mutations != empty %}
+      {% action "shopify" %}
+        mutation {
+          {{ mutations | join: newline }}
+        }
+      {% endaction %}
+
+      {% if options.email_notification_recipient__email != blank %}
+        {% capture email_subject %}
+          Out of stock: {{ product_node.title }}
+        {% endcapture %}
+
+        {% capture email_body %}
+          Hi there,
+
+          Your product is out of stock! This product has been unpublished from: {{ publication_names | join: ", " }}.
+
+          <a href="https://{{ shop.domain }}/admin/products/{{ product_node.legacyResourceId }}">Manage this product</a>
+
+          Thanks,
+          - Mechanic, for {{ shop.name }}
+        {% endcapture %}
+
+        {% action "email" %}
+          {
+            "to": {{ options.email_notification_recipient__email | json }},
+            "subject": {{ email_subject | unindent | strip | json }},
+            "body": {{ email_body | unindent | strip | newline_to_br | json }}
+          }
+        {% endaction %}
+      {% endif %}
+    {% endif %}
+  {% endif %}
+{% endif %}
