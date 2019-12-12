@@ -1,0 +1,200 @@
+{% assign search_query_parts = array %}
+{% for product_type in options.product_types_to_monitor__array_required %}
+  {% assign search_query_parts[search_query_parts.size] = "product_type:" | append: product_type %}
+{% endfor %}
+{% assign search_query = search_query_parts | join: " OR " %}
+
+{% if event.preview %}
+  {% capture variants_query %}
+    {
+      productVariants(
+        first: 250
+        query: {{ search_query | json }}
+      ) {
+        pageInfo {
+          hasNextPage
+        }
+        edges {
+          node {
+            id
+            inventoryQuantity
+            inventoryItem {
+              id
+            }
+            product {
+              id
+            }
+          }
+          cursor
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign variants_query_result = variants_query | shopify %}
+
+  {% action "cache" %}
+    {"set": {"key": "inventory_by_product:gid://shopify/Product/1234567890", "value": 500}}
+  {% endaction %}
+
+  {% capture primary_location_query %}
+    {
+      location {
+        id
+      }
+    }
+  {% endcapture %}
+
+  {% assign primary_location_query_result = primary_location_query | shopify %}
+
+  {% capture adjustment_query %}
+    mutation {
+      inventoryBulkAdjustQuantityAtLocation(
+        inventoryItemAdjustments: []
+        locationId: "gid://shopify/Location/123467890"
+      ) {
+        inventoryLevels {
+          id
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" adjustment_query %}
+{% else %}
+  {% assign variants_by_product = hash %}
+  {% assign cursor = nil %}
+
+  {% for n in (0..100) %}
+    {% capture variant_query %}
+      {
+        productVariants(
+          first: 250
+          query: {{ search_query | json }}
+          after: {{ cursor | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+          }
+          edges {
+            node {
+              id
+              inventoryQuantity
+              inventoryItem {
+                id
+              }
+              product {
+                id
+              }
+            }
+            cursor
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign variant_query_result = variant_query | shopify %}
+
+    {% assign variant_nodes = variant_query_result.data.productVariants.edges | map: "node" %}
+    {% for variant_node in variant_nodes %}
+      {% assign product_id = variant_node.product.id %}
+      {% if variants_by_product[product_id] == nil %}
+        {% assign variants_by_product[product_id] = array %}
+      {% endif %}
+
+      {% assign index = variants_by_product[product_id].size %}
+      {% assign variants_by_product[product_id][index] = variant_node %}
+    {% endfor %}
+
+    {% if variant_query_result.data.productVariants.pageInfo.hasNextPage %}
+      {% assign cursor = variant_query_result.data.productVariants.edges.last.cursor %}
+      {% continue %}
+    {% endif %}
+
+    {% break %}
+  {% endfor %}
+
+  {% if event.topic == "mechanic/user/trigger" %}
+    {% for pair in variants_by_product %}
+      {% assign product_id = pair[0] %}
+      {% assign variants = pair[1] %}
+
+      {% assign unique_inventory_levels = variants | map: "inventoryQuantity" | uniq %}
+      {% if unique_inventory_levels.size != 1 %}
+        {"error": {{ "Ensure all products have even inventory levels across their variants, then try again. (Encountered mismatching inventory quantity in " | append: product_id | append: ")" | json }}}
+        {% break %}
+      {% else %}
+        {% assign cache_key = "inventory_by_product:" | append: product_id %}
+        {% action "cache" %}
+          {"set": {"key": {{ cache_key | json }}, "value": {{ variants.first.inventoryQuantity | json }}}}
+        {% endaction %}
+      {% endif %}
+    {% endfor %}
+  {% elsif event.topic contains "mechanic/scheduler/" %}
+    {% assign inventory_item_adjustments = array %}
+
+    {% capture primary_location_query %}
+      {
+        location {
+          id
+        }
+      }
+    {% endcapture %}
+
+    {% assign primary_location_query_result = primary_location_query | shopify %}
+
+    {% assign primary_location_id = primary_location_query_result.data.location.id %}
+
+    {% for pair in variants_by_product %}
+      {% assign product_id = pair[0] %}
+      {% assign variants = pair[1] %}
+
+      {% assign cache_key = "inventory_by_product:" | append: product_id %}
+      {% assign starting_inventory = cache[cache_key] %}
+      {% assign inventory_list = variants | map: "inventoryQuantity" %}
+      {% assign inventory_total = inventory_list | sum %}
+      {% assign inventory_diff = starting_inventory | times: inventory_list.size | minus: inventory_total %}
+      {% assign new_inventory = starting_inventory | minus: inventory_diff %}
+
+      {% if new_inventory == starting_inventory %}
+        {"log": {{ product_id | append: ": No inventory adjustments needed." | json }}}
+      {% else %}
+        {% action "cache" %}
+          {"set": {"key": {{ cache_key | json }}, "value": {{ new_inventory | json }}}}
+        {% endaction %}
+
+        {% for variant in variants %}
+          {% assign adjustment = hash %}
+          {% assign adjustment["inventoryItemId"] = variant.inventoryItem.id %}
+          {% assign adjustment["availableDelta"] = new_inventory | minus: variant.inventoryQuantity %}
+          {% assign inventory_item_adjustments[inventory_item_adjustments.size] = adjustment %}
+        {% endfor %}
+      {% endif %}
+    {% endfor %}
+
+    {% if inventory_item_adjustments.size > 0 %}
+      {% capture adjustment_query %}
+        mutation {
+          inventoryBulkAdjustQuantityAtLocation(
+            inventoryItemAdjustments: {{ inventory_item_adjustments | json | replace: '"inventoryItemId"', "inventoryItemId" | replace: '"availableDelta"', "availableDelta" }}
+            locationId: {{ primary_location_id | json }}
+          ) {
+            inventoryLevels {
+              id
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% action "shopify" adjustment_query %}
+    {% endif %}
+  {% endif %}
+{% endif %}
