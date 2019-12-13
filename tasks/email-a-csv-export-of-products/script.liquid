@@ -1,0 +1,47 @@
+{% if event.preview %}
+  {% capture shop_json %}
+    {
+      "products": [
+        {
+          "id": 1234567890,
+          "title": "Short sleeve t-shirt"
+        }
+      ]
+    }
+  {% endcapture %}
+
+  {% assign shop = shop_json | parse_json %}
+{% endif %}
+
+{% assign rows = array %}
+
+{% assign header = array %}
+{% assign header[0] = "Product ID" %}
+{% assign header[1] = "Product Title" %}
+
+{% assign rows[0] = header %}
+
+{% for product in shop.products %}
+  {% assign row = array %}
+  {% assign row[0] = product.id %}
+  {% assign row[1] = product.title %}
+
+  {% assign rows[rows.size] = row %}
+{% endfor %}
+
+{% assign csv = rows | csv %}
+
+{% action "email" %}
+  {
+    "to": {{ options.email_recipient__email_required | json }},
+    "subject": {{ "Product ID export for " | append: shop.name | json }},
+    "body": "Please see attached. :)",
+    "reply_to": {{ shop.customer_email | json }},
+    "from_display_name": {{ shop.name | json }},
+    "attachments": {
+      "export.csv": {{ csv | json }}
+    }
+  }
+{% endaction %}
+
+{% action "echo" csv %}
