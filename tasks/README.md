@@ -44,6 +44,7 @@
 *   [Auto-tag customers by purchased SKUs](./auto-tag-customers-by-purchased-skus)
 *   [Auto-tag customers having a rolling minimum total spend](./auto-tag-customers-having-a-rolling-minimum-total-spend)
 *   [Auto-tag customers when their order is paid](./auto-tag-customers-when-order-paid)
+*   [Auto-tag customers when they purchase a matching product](./auto-tag-customers-upon-product-purchase)
 *   [Auto-tag customers who purchase an item on sale](./auto-tag-customers-who-purchase-an-item-on-sale)
 *   [Auto-tag customers with product tags from their order](./tag-customers-with-product-tags-from-their-order)
 *   [Auto-tag customers with the location of their purchase](./auto-tag-customers-with-the-location-of-their-purchase)
