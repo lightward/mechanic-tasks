@@ -33,6 +33,7 @@
 *   [Auto-pay orders from customers with a certain tag](./auto-pay-orders-from-customers-with-a-certain-tag)
 *   [Auto-pay orders having a certain tag](./auto-pay-orders-having-a-certain-tag)
 *   [Auto-prefix tracking numbers for each new fulfillment](./auto-prefix-tracking-numbers-for-each-new-fulfillment)
+*   [Auto-price products based on their compare-at prices](./auto-price-products-based-on-their-compare-at-prices)
 *   [Auto-publish new products](./auto-publish-new-products)
 *   [Auto-publish products tagged with the current day](./auto-publish-products-tagged-with-the-current-day)
 *   [Auto-recurring draft orders](./auto-recurring-draft-orders)
