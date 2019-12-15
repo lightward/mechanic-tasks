@@ -98,6 +98,7 @@
 *   [Automatically send account invite to new customers](./automatically-send-account-invite-to-new-customers)
 *   [Backfill customer names from order addresses](./backfill-customer-names-from-order)
 *   [Bulk capture orders by order number](./bulk-capture-by-order-number)
+*   [Calculate total quantities purchased by SKU](./calculate-total-quantities-purchased-by-sku)
 *   [Cancel fulfillments when an order is fully refunded](./cancel-fulfillments-when-an-order-is-fully-refunded)
 *   [Capture all authorized payments](./capture-all-authorized-payments)
 *   [Capture order payment upon fulfillment](./capture-order-payment-upon-fulfillment)

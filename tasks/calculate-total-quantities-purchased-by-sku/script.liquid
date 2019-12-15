@@ -1,0 +1,82 @@
+{% if event.topic == "mechanic/user/trigger" %}
+  {% capture bulk_operation_query %}
+    query {
+      orders {
+        edges {
+          node {
+            id
+            __typename
+            name
+            lineItems {
+              edges {
+                node {
+                  id
+                  __typename
+                  quantity
+                  sku
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% assign quantities_by_sku = hash %}
+  {% assign order_names_by_sku = hash %}
+
+  {% for object in bulkOperation.objects %}
+    {% case object.__typename %}
+    {% when "LineItem" %}
+      {% assign sku = object.sku | default: "(no sku)" %}
+      {% assign quantities_by_sku[sku] = quantities_by_sku[sku] | default: 0 | plus: object.quantity %}
+
+      {% if order_names_by_sku[object.sku] == nil %}
+        {% assign order_names_by_sku[sku] = array %}
+      {% endif %}
+
+      {% assign _count = order_names_by_sku[sku].size %}
+      {% assign order_names_by_sku[sku][_count] = object.__parent.name %}
+    {% endcase %}
+  {% endfor %}
+
+  {% if event.preview %}
+    {% assign quantities_by_sku["ABC123"] = 20 %}
+    {% assign order_names_by_sku["ABC123"] = "#12345,#67890" | split: "," %}
+    {% assign quantities_by_sku["DEF456"] = 20 %}
+    {% assign order_names_by_sku["DEF456"] = "#12345,#67890" | split: "," %}
+  {% endif %}
+
+  {% capture summary -%}
+    Quantity purchased by SKU, across all time and all order statuses:
+
+    {% for keyval in quantities_by_sku -%}
+      {% assign sku = keyval[0] -%}
+      {% assign quantity = keyval[1] -%}
+
+      * {{ sku }}: {{ quantity }} ({{ order_names_by_sku[sku] | join: ", " }})
+    {% endfor %}
+  {% endcapture %}
+
+  {% assign summary = summary | unindent | strip %}
+
+  {% action "echo" summary %}
+{% endif %}
