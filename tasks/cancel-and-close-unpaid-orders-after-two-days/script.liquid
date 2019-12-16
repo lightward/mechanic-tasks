@@ -1,0 +1,184 @@
+{% comment %}
+  Preferred option order
+
+  {{ options.period_to_wait_before_checking_each_order__number_required }}
+  {{ options.period_to_wait_is_in_hours__boolean }}
+  {{ options.period_to_wait_is_in_days__boolean }}
+  {{ options.tag_to_add_to_the_order }}
+  {{ options.void_payment_when_possible__boolean }}
+  {{ options.cancel_fulfillment_and_restock_to_default_location__boolean }}
+  {{ options.send_cancellation_email_to_customer__boolean }}
+  {{ options.test_mode__boolean }}
+{% endcomment %}
+
+{% if event.preview %}
+  {% capture orders_json %}
+    [
+      {
+        "id": 1234567890,
+        "name": "#1234",
+        "admin_graphql_api_id": "gid://shopify/Order/1234567890",
+        "processed_at": "1990-01-01",
+        "line_items": [
+          {
+            "id": 1234567890,
+            "quantity": 5,
+            "variant_inventory_management": "shopify"
+          }
+        ]
+      }
+    ]
+  {% endcapture %}
+  {% assign orders = orders_json | parse_json %}
+{% else %}
+  {% assign orders = shop.orders.any.pending %}
+{% endif %}
+
+{% if options.test_mode__boolean %}
+  {% assign test_mode_summaries = array %}
+{% endif %}
+
+{% if options.period_to_wait_before_checking_each_order__number_required <= 0 %}
+  {% error "period must be positive! :)" %}
+{% elsif options.period_to_wait_is_in_hours__boolean == false and options.period_to_wait_is_in_days__boolean == false %}
+  {% error "Choose either 'Period to wait is in hours' or 'Period to wait is in days'." %}
+{% elsif options.period_to_wait_is_in_hours__boolean and options.period_to_wait_is_in_days__boolean %}
+  {% error "Choose exactly one of 'Period to wait is in hours' or 'Period to wait is in days'. :)" %}
+{% elsif options.period_to_wait_is_in_hours__boolean %}
+  {% assign period_unit = 60 | times: 60 %}
+{% elsif options.period_to_wait_is_in_days__boolean %}
+  {% assign period_unit = 60 | times: 60 | times: 24 %}
+{% endif %}
+
+{% assign period_s = period_unit | times: options.period_to_wait_before_checking_each_order__number_required %}
+{% assign maximum_date_s = "now" | date: "%s" | minus: period_s %}
+
+{% for order in orders %}
+  {% assign processed_at_s = order.processed_at | default: order.created_at | date: "%s" | times: 1 %}
+
+  {% if processed_at_s > maximum_date_s %}
+    {% continue %}
+  {% endif %}
+
+  {% assign summary = hash %}
+  {% assign summary["order_name"] = order.name %}
+  {% assign summary["order_id"] = order.id %}
+  {% assign summary["order_processed_at"] = processed_at_s | date: "%FT%T%:z" %}
+  {% assign summary["threshold_processed_at"] = maximum_date_s | date: "%FT%T%:z" %}
+
+  {% if order.cancelled_at == blank %}
+    {% assign summary["qualifies_for_cancellation"] = true %}
+  {% else %}
+    {% assign summary["qualifies_for_cancellation"] = false %}
+  {% endif %}
+
+  {% if order.closed_at == blank %}
+    {% assign summary["qualifies_for_closing"] = true %}
+  {% else %}
+    {% assign summary["qualifies_for_closing"] = false %}
+  {% endif %}
+
+  {% assign summary["qualifies_for_tagging"] = false %}
+  {% if options.tag_to_add_to_the_order != blank %}
+    {% assign order_tags = order.tags | downcase | split: ", " %}
+    {% assign order_tag_to_match = options.tag_to_add_to_the_order | downcase | strip %}
+    {% unless order_tags contains order_tag_to_match %}
+      {% assign summary["qualifies_for_tagging"] = true %}
+    {% endunless %}
+  {% endif %}
+
+  {% unless summary.qualifies_for_cancellation or summary.qualifies_for_closing or summary.qualifies_for_tagging %}
+    {% continue %}
+  {% endunless %}
+
+  {% if options.test_mode__boolean %}
+    {% assign test_mode_summaries[test_mode_summaries.size] = summary %}
+    {% continue %}
+  {% endif %}
+
+  {% log summary %}
+
+  {% if summary.qualifies_for_cancellation %}
+    {% action "shopify" %}
+      [
+        "post",
+        "/admin/orders/{{ order.id }}/cancel.json",
+        {
+          "refund": {
+            "note": {{ task.name | json }},
+            {% assign transaction = order.transactions.first %}
+            {% if options.void_payment_when_possible__boolean and transaction != nil %}
+              "transactions": [
+                {
+                  "parent_id": {{ transaction.id | json }},
+                  "amount": "0.0",
+                  "kind": "void",
+                  "gateway": {{ transaction.gateway | json }}
+                }
+              ],
+            {% endif %}
+            "refund_line_items": [
+              {% for line_item in order.line_items %}
+                {
+                  "line_item_id": {{ line_item.id | json }},
+
+                  {% if options.cancel_fulfillment_and_restock_to_default_location__boolean and line_item.variant_inventory_management == "shopify" %}
+                    "restock_type": "cancel",
+                    "quantity": {{ line_item.quantity | json }},
+                    "location_id": {{ shop.primary_location_id | json }}
+                  {% else %}
+                    "restock_type": "no_restock",
+                    "quantity": 0
+                  {% endif %}
+                }
+                {% unless forloop.last %}
+                  ,
+                {% endunless %}
+              {% endfor %}
+            ]
+          },
+          "email": {{ options.send_cancellation_email_to_customer__boolean | json }}
+        }
+      ]
+    {% endaction %}
+  {% endif %}
+
+  {% if summary.qualifies_for_closing or summary.qualifies_for_tagging %}
+    {% action "shopify" %}
+      mutation {
+        {% if summary.qualifies_for_closing %}
+          orderClose(
+            input: {
+              id: {{ order.admin_graphql_api_id | json }}
+            }
+          ) {
+            order {
+              closed
+              closedAt
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        {% endif %}
+
+        {% if summary.qualifies_for_tagging %}
+          tagsAdd(
+            id: {{ order.admin_graphql_api_id | json }}
+            tags: {{ options.tag_to_add_to_the_order | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        {% endif %}
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}
+
+{% if options.test_mode__boolean %}
+  {% action "echo" orders_count: test_mode_summaries.size, order_summaries: test_mode_summaries %}
+{% endif %}
