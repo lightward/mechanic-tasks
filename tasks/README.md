@@ -63,6 +63,7 @@
 *   [Auto-tag new products by "back in stock" age](./auto-tag-new-products-by-back-in-stock-age)
 *   [Auto-tag new products by age](./auto-tag-new-products-by-age)
 *   [Auto-tag orders based on cart attributes](./auto-tag-orders-based-on-cart-attributes)
+*   [Auto-tag orders based on customer account tags](./auto-tag-orders-based-on-customer-account-tags)
 *   [Auto-tag orders based on shipping method](./auto-tag-orders-based-on-shipping-method)
 *   [Auto-tag orders by discount code](./auto-tag-orders-by-discount-code)
 *   [Auto-tag orders by originating staff member](./auto-tag-orders-by-originating-staff-member)
