@@ -142,6 +142,7 @@
 *   [Flag orders that aren't fulfilled after several days](./flag-orders-that-arent-fulfilled-after-two-days)
 *   [Generate a discount code when a certain product is purchased](./generate-a-discount-code-when-a-certain-product-is-purchased)
 *   [Generate a product discount when a voucher product is purchased](./generate-a-product-discount-when-a-voucher-product-is-purchased)
+*   [Generate a report of orders that still require payment](./generate-a-report-of-orders-that-still-require-payment)
 *   [Get email alerts for FBA failures](./get-email-alerts-for-fba-failures)
 *   [Get email alerts for out of stock products](./get-email-alerts-for-out-of-stock-products)
 *   [Hide out-of-stock products](./hide-out-of-stock-products)
