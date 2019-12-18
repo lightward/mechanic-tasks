@@ -1,0 +1,25 @@
+{% if event.preview %}
+  {% action "shopify" %}
+    [
+      "update",
+      ["order", {{ order.id | json }}],
+      {"phone": {{ customer.phone | json }}}
+    ]
+  {% endaction %}
+{% elsif customer.phone != blank %}
+  {% assign orders = customer.orders.any.unshipped | concat: customer.orders.any.partial %}
+
+  {% for order in orders %}
+    {% if order.phone != blank %}
+      {% continue %}
+    {% endif %}
+
+    {% action "shopify" %}
+      [
+        "update",
+        ["order", {{ order.id | json }}],
+        {"phone": {{ customer.phone | json }}}
+      ]
+    {% endaction %}
+  {% endfor %}
+{% endif %}
