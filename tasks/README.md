@@ -165,6 +165,7 @@
 *   [Receive email alerts when inventory levels change](./receive-email-alerts-when-inventory-levels-change)
 *   [Record Judge.me customer review counts](./record-judge-me-customer-review-counts)
 *   [Redirect users based on input codes](./redirect-users-based-on-input-codes)
+*   [Reissue single-use discount codes after order cancellation](./reissue-single-use-discount-codes-after-order-cancellation)
 *   [Remind customers after x days about unpaid orders](./remind-customers-after-x-days-about-unpaid-orders)
 *   [Remind customers that their order is on the way](./remind-customers-that-their-order-is-on-the-way)
 *   [Remove a customer tag when another tag is added](./remove-a-customer-tag-when-another-tag-is-added)
