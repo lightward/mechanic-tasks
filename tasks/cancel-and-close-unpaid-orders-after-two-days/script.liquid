@@ -22,7 +22,7 @@
         "line_items": [
           {
             "id": 1234567890,
-            "quantity": 5,
+            "fulfillable_quantity": 5,
             "variant_inventory_management": "shopify"
           }
         ]
@@ -124,7 +124,7 @@
 
                   {% if options.cancel_fulfillment_and_restock_to_default_location__boolean and line_item.variant_inventory_management == "shopify" %}
                     "restock_type": "cancel",
-                    "quantity": {{ line_item.quantity | json }},
+                    "quantity": {{ line_item.fulfillable_quantity | default: line_item.quantity | json }},
                     "location_id": {{ shop.primary_location_id | json }}
                   {% else %}
                     "restock_type": "no_restock",
