@@ -137,6 +137,7 @@
 *   [Maintain a collection of recently purchased products](./maintain-a-collection-of-recently-purchased-products)
 *   [Maintain a tag for orders processed today](./maintain-a-tag-for-orders-processed-today)
 *   [Maintain inventory for a product bundle](./maintain-inventory-for-a-product-bundle)
+*   [Make products unavailable, after the date/time stored in product metafields](./make-products-unavailable-after-the-date-time-stored-in-product-metafields)
 *   [Manage annual memberships based on order minimums](./manage-annual-memberships-based-on-order-minimums)
 *   [Manage collection templates by product inventory](./manage-collection-templates-by-product-inventory)
 *   [Manage fulfillment status using order tags](./manage-fulfillment-status-using-order-tags)

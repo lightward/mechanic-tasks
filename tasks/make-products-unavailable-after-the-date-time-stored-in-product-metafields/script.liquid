@@ -3,6 +3,7 @@
 
   {{ options.datetime_product_metafield_namespace__required }}
   {{ options.datetime_product_metafield_key__required }}
+  {{ options.datetime_format__required }}
   {{ options.run_hourly__boolean }}
   {{ options.run_daily__boolean }}
   {{ options.test_mode__boolean }}
@@ -88,7 +89,7 @@
           "__typename": "Product",
           "id": "gid://shopify/Product/1234567890",
           "metafield": {
-            "value": "2019-01-01"
+            "value": {{ "2019-01-01" | date: options.datetime_format__required | json }}
           }
         }
       },
@@ -118,7 +119,18 @@
       {% continue %}
     {% endif %}
 
-    {% assign product_date_s = product.metafield.value | date: "%s" | times: 1 %}
+    {% assign product_date = product.metafield.value | parse_date: "%m/%d/%y" %}
+    {% if product_date == nil %}
+      {% log message: "Found a product metafield value that doesn't match the configured date format. Skipping.", product_metafield_value: product.metafield.value %}
+      {% continue %}
+    {% endif %}
+
+    {% assign product_date_s = product_date | date: "%s" | times: 1 %}
+
+    {% assign product_date_formatted = product_date_s | date: options.datetime_format__required %}
+    {% if product_date_formatted != product.metafield.value %}
+      {% log "Product date metafield was found to be ", product.metafield.value, " which does not match the configured datetime format." %}
+    {% endif %}
 
     {% if product_date_s > now_s %}
       {% continue %}
