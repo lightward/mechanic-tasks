@@ -36,6 +36,7 @@
 *   [Auto-recurring draft orders](./auto-recurring-draft-orders)
 *   [Auto-sort collections by product properties](./auto-sort-collections-by-product-properties)
 *   [Auto-tag cancelled orders](./auto-tag-cancelled-orders)
+*   [Auto-tag customers based on discount codes used](./auto-tag-customers-based-on-discount-codes-used)
 *   [Auto-tag customers based on email domain](./auto-tag-customers-by-email-domain)
 *   [Auto-tag customers by purchased SKUs](./auto-tag-customers-by-purchased-skus)
 *   [Auto-tag customers having a rolling minimum total spend](./auto-tag-customers-having-a-rolling-minimum-total-spend)

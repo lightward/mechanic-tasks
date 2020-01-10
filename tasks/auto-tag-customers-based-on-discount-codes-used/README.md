@@ -10,7 +10,8 @@ Use this task to easily identify customers who used certain discount codes. This
 {
   "discount_codes_and_tags__keyval_required": {
   },
-  "untag_customers_instead_of_tagging_them__boolean": null
+  "untag_customers_instead_of_tagging_them__boolean": null,
+  "allow_partial_matches_when_checking_for_discount_codes__boolean": null
 }
 ```
 
