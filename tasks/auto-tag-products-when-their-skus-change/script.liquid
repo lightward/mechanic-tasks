@@ -1,11 +1,24 @@
 {% comment %}
   An opinion about option order:
 
+  {{ options.variant_attribute_to_watch_for_changes__required }}
+  {{ options.tag_product_with_the_titles_of_each_variant_that_has_changed__boolean }}
   {{ options.product_tag_to_add__required }}
-  {{ options.tag_with_the_titles_of_each_variant_having_a_new_sku__boolean }}
+  {{ options.ignore_products_with_any_of_these_tags__array }}
 {% endcomment %}
 
-{% assign metafield_key = "variant_ids_and_skus" %}
+{% assign variant_attribute = options.variant_attribute_to_watch_for_changes__required %}
+
+{% assign valid_variant_attributes = "barcode,compare_at_price,grams,option1,option2,option3,price,sku,taxable" | split: "," %}
+
+{% unless valid_variant_attributes contains variant_attribute %}
+  {% capture message -%}
+    {{ variant_attribute | json }} is not a valid variant attribute. Choose one of these instead: {{ valid_variant_attributes | join: ", " }}
+  {%- endcapture %}
+  {% error message %}
+{% endunless %}
+
+{% assign metafield_key = "variant_ids_and_" | append: variant_attribute | append: "s" %}
 
 {% assign products_that_need_a_metafield_update = array %}
 
@@ -18,11 +31,11 @@
             "variants": [
               {
                 "id": 1234567890,
-                "sku": "OHHELLO"
+                {{ variant_attribute | json }}: "OHHELLO"
               },
               {
                 "id": 2345678901,
-                "sku": "OHGOODBYE"
+                {{ variant_attribute | json }}: "OHGOODBYE"
               }
             ]
           }
@@ -44,12 +57,12 @@
         "variants": [
           {
             "id": 1234567890,
-            "sku": "OHHELLO",
+            {{ variant_attribute | json }}: "OHHELLO",
             "title": "OH / HELLO"
           },
           {
             "id": 2345678901,
-            "sku": "OHGOODBYE",
+            {{ variant_attribute | json }}: "OHGOODBYE",
             "title": "OH / GOODBYE"
           }
         ],
@@ -67,11 +80,11 @@
     {% assign product = product_json | parse_json %}
   {% endif %}
 
-  {% assign previous_variant_ids_and_skus = product.metafields.mechanic[metafield_key] %}
+  {% assign previous_variant_ids_and_values = product.metafields.mechanic[metafield_key] %}
 
-  {% if previous_variant_ids_and_skus == nil %}
+  {% if previous_variant_ids_and_values == nil %}
     {% error %}
-      "Mechanic has not had an opportunty to store this product's previous variant SKUs. Use the \"Run task\" button to re-scan your products. :)"
+      "Mechanic has not had an opportunty to store this product's previous variant values. Use the \"Run task\" button to re-scan your products. :)"
     {% enderror %}
   {% endif %}
 
@@ -79,16 +92,16 @@
 
   {% assign tags_to_add = array %}
 
-  {% unless options.tag_with_the_titles_of_each_variant_having_a_new_sku__boolean %}
+  {% unless options.tag_product_with_the_titles_of_each_variant_that_has_changed__boolean %}
     {% assign tags_to_add[0] = options.product_tag_to_add__required %}
   {% endunless %}
 
   {% for variant in product.variants %}
     {% assign variant_id_string = variant.id | append: "" %}
-    {% if previous_variant_ids_and_skus[variant_id_string] != variant.sku %}
+    {% if previous_variant_ids_and_values[variant_id_string] != variant[variant_attribute] %}
       {% assign product_qualifies = true %}
 
-      {% if options.tag_with_the_titles_of_each_variant_having_a_new_sku__boolean %}
+      {% if options.tag_product_with_the_titles_of_each_variant_that_has_changed__boolean %}
         {% if variant.title == "Default Title" %}
           {% assign tags_to_add[tags_to_add.size] = options.product_tag_to_add__required %}
         {% else %}
@@ -97,6 +110,17 @@
       {% endif %}
     {% endif %}
   {% endfor %}
+
+  {% if options.ignore_products_with_any_of_these_tags__array != empty %}
+    {% assign product_tags = product.tags | split: ", " %}
+    {% for product_tag in product_tags %}
+      {% if options.ignore_products_with_any_of_these_tags__array contains product_tag %}
+        {% log message: "Product is disqualified by tag", disqualifying_product_tag: product_tag %}
+        {% assign product_qualifies = false %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
 
   {% if product_qualifies %}
     {% action "shopify" %}
@@ -123,15 +147,13 @@
 
   {% for variant in product.variants %}
     {% assign variant_id_string = variant.id | append: "" %}
-    {% assign metafield_value[variant_id_string] = variant.sku %}
+    {% assign metafield_value[variant_id_string] = variant[variant_attribute] %}
   {% endfor %}
 
   {% assign metafield_value_json = metafield_value | json %}
 
   {% if existing_metafield.value == metafield_value_json %}
-    {% log %}
-      {{ "Product " | append: product.id | append: " has a metafield that is already up to date. :)" | json }}
-    {% endlog %}
+    {% log message: "Product metafield is already up to date", product_id: product_id %}
   {% else %}
     {% action "shopify" %}
       [
