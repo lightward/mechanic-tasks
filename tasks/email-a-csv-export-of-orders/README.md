@@ -11,7 +11,7 @@ Use this task to generate and email a CSV of orders, including one row per line 
   "search_query_for_orders": "fulfillment_status:unshipped",
   "ignore_orders_with_this_tag": "exported",
   "add_this_tag_after_export": "exported",
-  "export_email_recipient__email_required": "isaac@lightward.com",
+  "export_email_recipient__email_required": "",
   "export_email_subject__required": "Unfulfilled orders for {{ \"now\" | date: \"%Y-%m-%d\" }}",
   "export_email_body__required_multiline": "Hello,\n\nPlease see the attachment for currently unfulfilled orders.\n\nThanks,\nMechanic, for {{ shop.name }}",
   "export_csv_filename__required": "unfulfilled-orders-{{ \"now\" | date: \"%Y-%m-%d\" }}",

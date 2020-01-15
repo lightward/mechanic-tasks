@@ -109,6 +109,7 @@
 *   [Delete draft orders older than 30 days](./delete-draft-orders-older-than-30-days)
 *   [Delete the oldest x products from a specific collection](./delete-the-oldest-x-products-from-a-specific-collection)
 *   [Delete variants having a metafield date that has passed](./delete-variants-having-a-metafield-date-that-has-passed)
+*   [Email a CSV export of orders](./email-a-csv-export-of-orders)
 *   [Email a CSV export of products](./email-a-csv-export-of-products)
 *   [Email a report of customers who haven't ordered in X days](./email-a-report-of-customers-who-havent-ordered-in-x-days)
 *   [Email a summary of all products and quantities ordered](./email-a-summary-of-all-products-and-quantities-ordered)
