@@ -1,5 +1,6 @@
 # Task index
 
+*   [Abandoned checkout emails](./abandoned-checkout-emails)
 *   [Activate a discount when ISS passes overhead](./activate-a-discount-when-iss-passes-overhead)
 *   [Add Locksmith passcodes to order notes](./add-locksmith-passcodes-to-order-notes)
 *   [Add all products to a certain sales channel](./add-all-products-to-a-certain-sales-channel)
