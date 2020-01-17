@@ -1,3 +1,5 @@
+{% assign metafield_key = task.id | sha256 | slice: 0, 5 | prepend: "archived-" %}
+
 {% assign orders = array %}
 {% if event.preview or event.topic contains "shopify/orders/" %}
   {% assign orders[0] = order %}
@@ -12,6 +14,13 @@
   {% assign order_qualifies = false %}
   {% if order.closed_at == blank and order_tags contains tag_to_match %}
     {% assign order_qualifies = true %}
+  {% endif %}
+
+  {% if options.allow_manual_unarchiving_of_orders__boolean %}
+    {% if order.metafields.mechanic[metafield_key] %}
+      {% assign order_qualifies = false %}
+      {% log "Order has previously been archived, and manual unarchiving is allowed. Skipping." %}
+    {% endif %}
   {% endif %}
 
   {% if event.preview or order_qualifies %}
@@ -31,6 +40,36 @@
             message
           }
         }
+        
+        {% if options.allow_manual_unarchiving_of_orders__boolean %}
+          orderUpdate(
+            input: {
+              id: {{ order.admin_graphql_api_id | json }}
+              metafields: [
+                {
+                  namespace: "mechanic"
+                  key: {{ metafield_key | json }}
+                  valueType: STRING
+                  value: {{ "now" | date: "%FT%T%:z" | json }}
+                }
+              ]
+            }
+          ) {
+            order {
+              metafield(
+                namespace: "mechanic"
+                key: {{ metafield_key | json }}
+              ) {
+                id
+                value
+              }
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        {% endif %}
       }
     {% endaction %}
   {% endif %}

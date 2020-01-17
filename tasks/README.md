@@ -8,6 +8,7 @@
 *   [Archive free orders on fulfillment](./archive-free-orders-on-fulfillment)
 *   [Archive orders on delivery](./archive-orders-on-delivery)
 *   [Archive orders when fulfilled](./archive-orders-when-fulfilled)
+*   [Archive orders when tagged](./archive-orders-when-tagged)
 *   [Auto-add an order note for returning customers](./auto-add-an-order-note-for-returning-customers)
 *   [Auto-add phone numbers to unfulfilled orders, when the customer is updated](./auto-add-phone-numbers-to-unfulfilled-orders-when-the-customer-is-updated)
 *   [Auto-add products to a custom collection when tagged](./auto-add-products-to-a-custom-collection-when-tagged)
