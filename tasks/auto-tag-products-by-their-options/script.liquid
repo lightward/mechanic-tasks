@@ -1,10 +1,187 @@
-{% if event.preview %}
+{% comment %}
+  Preferred option order:
+
+  {{ options.product_options_to_consider__array_required }}
+  {{ options.option_name_and_value_separator__required }}
+  {{ options.use_lowercase_tags__boolean }}
+  {{ options.ignore_variants_that_are_out_of_stock__boolean }}
+  {{ options.run_for_all_products_daily__boolean }}
+  {{ options.run_for_individual_products_when_they_are_created_or_updated__boolean }}
+  {{ options.run_for_individual_products_when_their_inventory_changes__boolean }}
+{% endcomment %}
+
+{% assign jobs = array %}
+
+{% assign separator = options.option_name_and_value_separator__required %}
+
+{% assign lowercase_product_options_to_consider = array %}
+{% for option in options.product_options_to_consider__array_required %}
+  {% assign lowercase_product_options_to_consider[lowercase_product_options_to_consider.size] = option | downcase %}
+{% endfor %}
+
+{% if options.use_lowercase_tags__boolean %}
+  {% assign product_options_to_consider = lowercase_product_options_to_consider %}
+{% else %}
+  {% assign product_options_to_consider = options.product_options_to_consider__array_required %}
+{% endif %}
+
+{% if event.topic contains "shopify/products/" or event.topic contains "shopify/inventory_levels/" %}
+  {% if event.topic contains "shopify/inventory_levels/" %}
+    {% capture query %}
+      query {
+        inventoryLevel(id: {{ inventory_level.admin_graphql_api_id | json }}) {
+          item {
+            variant {
+              product {
+                legacyResourceId
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% assign product = shop.products[result.data.inventoryLevel.item.variant.product.legacyResourceId] %}
+  {% endif %}
+
+  {% if event.preview %}
+    {% assign product = hash %}
+    {% assign product["admin_graphql_api_id"] = "gid://shopify/Product/1234567890" %}
+    {% assign product["tags"] = "foo, bar, baz, " | append: options.product_options_to_consider__array_required.first | append: separator | append: "Red, " | append: options.product_options_to_consider__array_required.first | append: separator | append: "Green" %}
+  {% endif %}
+
+  {% assign jobs[0] = hash %}
+  {% assign jobs[0]["product_id"] = product.admin_graphql_api_id %}
+  {% assign jobs[0]["existing_tags"] = product.tags | split: ", " %}
+  {% assign jobs[0]["selected_options_found"] = array %}
+
+  {% assign cursor = nil %}
+
+  {% for n in (0..100) %}
+    {% capture query %}
+      query {
+        product(id: {{ product.admin_graphql_api_id | json }}) {
+          variants(
+            first: 250
+            after: {{ cursor | json }}
+          ) {
+            pageInfo {
+              hasNextPage
+            }
+            edges {
+              cursor
+              node {
+                inventoryQuantity
+                selectedOptions {
+                  name
+                  value
+                }
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "product": {
+              "variants": {
+                "edges": [
+                  {
+                    "node": {
+                      "inventoryQuantity": 0,
+                      "selectedOptions": [
+                        {
+                          "name": {{ options.product_options_to_consider__array_required.first | json }},
+                          "value": "Green"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "node": {
+                      "inventoryQuantity": 10,
+                      "selectedOptions": [
+                        {
+                          "name": "Title",
+                          "value": "Default Title"
+                        },
+                        {
+                          "name": {{ options.product_options_to_consider__array_required.first | json }},
+                          "value": "Blue"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% for variant_edge in result.data.product.variants.edges %}
+      {% assign variant = variant_edge.node %}
+
+      {% if options.ignore_variants_that_are_out_of_stock__boolean and variant.inventoryQuantity <= 0 %}
+        {% continue %}
+      {% endif %}
+
+      {% assign jobs[0]["selected_options_found"] = jobs[0]["selected_options_found"] | concat: variant.selectedOptions %}
+    {% endfor %}
+
+    {% if result.data.product.variants.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.product.variants.edges.last.cursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+{% elsif event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% capture bulk_operation_query %}
+    query {
+      products {
+        edges {
+          node {
+            __typename
+            id
+            tags
+            variants {
+              edges {
+                node {
+                  __typename
+                  inventoryQuantity
+                  selectedOptions {
+                    name
+                    value
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
   {% action "shopify" %}
     mutation {
-      tagsAdd(
-        id: "gid://shopify/Product/1234567890"
-        tags: {{ options.product_options_to_consider__array_required.first | append: "-Blue" | json }}
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
       ) {
+        bulkOperation {
+          id
+          status
+        }
         userErrors {
           field
           message
@@ -12,81 +189,153 @@
       }
     }
   {% endaction %}
-{% else %}
-  {% assign products = nil %}
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture bulkOperation_json %}
+      {
+        "objects": [
+          {
+            "__typename": "Product",
+            "id": "gid://shopify/Product/1234567890",
+            "tags": [
+              "foo",
+              "bar",
+              "baz",
+              {{ options.product_options_to_consider__array_required.first | append: separator | append: "Red" | json }},
+              {{ options.product_options_to_consider__array_required.first | append: separator | append: "Green" | json }}
+            ]
+          },
+          {
+            "__typename": "ProductVariant",
+            "inventoryQuantity": 0,
+            "selectedOptions": [
+              {
+                "name": {{ options.product_options_to_consider__array_required.first | json }},
+                "value": "Green"
+              }
+            ],
+            "__parentId": "gid://shopify/Product/1234567890"
+          },
+          {
+            "__typename": "ProductVariant",
+            "inventoryQuantity": 10,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              },
+              {
+                "name": {{ options.product_options_to_consider__array_required.first | json }},
+                "value": "Blue"
+              }
+            ],
+            "__parentId": "gid://shopify/Product/1234567890"
+          }
+        ]
+      }
+    {% endcapture %}
 
-  {% if event.topic contains "shopify/products/" %}
-    {% assign products = array %}
-    {% assign products[0] = product %}
-  {% elsif event.topic == "mechanic/user/trigger" %}
-    {% assign products = shop.products %}
+    {% assign bulkOperation = bulkOperation_json | parse_json %}
   {% endif %}
 
+  {% assign products = bulkOperation.objects | where: "__typename", "Product" %}
+  {% assign variants = bulkOperation.objects | where: "__typename", "ProductVariant" %}
+
   {% for product in products %}
-    {% assign product_tags = product.tags | split: ", " %}
-    {% assign product_tags_applicable = array %}
-    {% assign product_tags_to_add = array %}
-    {% assign product_tags_to_remove = array %}
+    {% assign job = hash %}
+    {% assign job["product_id"] = product.id %}
+    {% assign job["existing_tags"] = product.tags %}
+    {% assign job["selected_options_found"] = array %}
 
-    {% for variant in product.variants %}
-      {% if options.product_options_to_consider__array_required contains product.options[0].name %}
-        {% assign tag = product.options[0].name | append: "-" | append: variant.option1 %}
-        {% assign product_tags_applicable[product_tags_applicable.size] = tag %}
+    {% assign product_variants = variants | where: "__parentId", product.id %}
+    {% for product_variant in product_variants %}
+      {% if options.ignore_variants_that_are_out_of_stock__boolean and product_variant.inventoryQuantity <= 0 %}
+        {% continue %}
       {% endif %}
 
-      {% if options.product_options_to_consider__array_required contains product.options[1].name %}
-        {% assign tag = product.options[1].name | append: "-" | append: variant.option2 %}
-        {% assign product_tags_applicable[product_tags_applicable.size] = tag %}
-      {% endif %}
-
-      {% if options.product_options_to_consider__array_required contains product.options[2].name %}
-        {% assign tag = product.options[2].name | append: "-" | append: variant.option3 %}
-        {% assign product_tags_applicable[product_tags_applicable.size] = tag %}
-      {% endif %}
+      {% assign job["selected_options_found"] = job["selected_options_found"] | concat: product_variant.selectedOptions %}
     {% endfor %}
 
-    {% for tag in product_tags %}
-      {% assign tag_parts = tag | split: "-" %}
-      {% if options.product_options_to_consider__array_required contains tag_parts[0] %}
-        {% unless product_tags_applicable contains tag %}
-          {% assign product_tags_to_remove[product_tags_to_remove.size] = tag %}
-        {% endunless %}
-      {% endif %}
-    {% endfor %}
-
-    {% for tag in product_tags_applicable %}
-      {% unless product_tags contains tag %}
-        {% assign product_tags_to_add[product_tags_to_add.size] = tag %}
-      {% endunless %}
-    {% endfor %}
-
-    {% if product_tags_to_add != blank or product_tags_to_remove != blank %}
-      {% action "shopify" %}
-        mutation {
-          {% if product_tags_to_add != blank %}
-            tagsAdd(
-              id: {{ product.admin_graphql_api_id | json }}
-              tags: {{ product_tags_to_add | json }}
-            ) {
-              userErrors {
-                field
-                message
-              }
-            }
-          {% endif %}
-          {% if product_tags_to_remove != blank %}
-            tagsRemove(
-              id: {{ product.admin_graphql_api_id | json }}
-              tags: {{ product_tags_to_remove | json }}
-            ) {
-              userErrors {
-                field
-                message
-              }
-            }
-          {% endif %}
-        }
-      {% endaction %}
-    {% endif %}
+    {% assign jobs[jobs.size] = job %}
   {% endfor %}
 {% endif %}
+
+{% log jobs: jobs %}
+
+{% for job in jobs %}
+  {% assign tags_to_add = array %}
+  {% assign tags_to_remove = array %}
+
+  {% assign applicable_tags = array %}
+  {% for selected_option in job.selected_options_found %}
+    {% assign lowercase_selected_option_name = selected_option.name | downcase %}
+    {% unless lowercase_product_options_to_consider contains lowercase_selected_option_name %}
+      {% continue %}
+    {% endunless %}
+
+    {% assign tag = selected_option.name | append: separator | append: selected_option.value %}
+
+    {% if options.use_lowercase_tags__boolean %}
+      {% assign tag = tag | downcase %}
+    {% endif %}
+
+    {% assign applicable_tags[applicable_tags.size] = tag %}
+  {% endfor %}
+
+  {% for tag in job.existing_tags %}
+    {% assign lowercase_tag_prefix = tag | split: separator | first | downcase %}
+
+    {% if lowercase_product_options_to_consider contains lowercase_tag_prefix %}
+      {% unless applicable_tags contains tag %}
+        {% assign tags_to_remove[tags_to_remove.size] = tag %}
+      {% endunless %}
+    {% endif %}
+  {% endfor %}
+
+  {% for tag in applicable_tags %}
+    {% unless job.existing_tags contains tag %}
+      {% assign tags_to_add[tags_to_add.size] = tag %}
+    {% endunless %}
+  {% endfor %}
+
+  {% if tags_to_add != blank or tags_to_remove != blank %}
+    {% action "shopify" %}
+      mutation {
+        {% if tags_to_remove != blank %}
+          tagsRemove(
+            id: {{ job.product_id | json }}
+            tags: {{ tags_to_remove | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+            node {
+              ... on Product {
+                onlineStoreUrl
+                tags
+              }
+            }
+          }
+        {% endif %}
+        {% if tags_to_add != blank %}
+          tagsAdd(
+            id: {{ job.product_id | json }}
+            tags: {{ tags_to_add | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+            node {
+              ... on Product {
+                onlineStoreUrl
+                tags
+              }
+            }
+          }
+        {% endif %}
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}

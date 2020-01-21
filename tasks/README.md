@@ -81,6 +81,7 @@
 *   [Auto-tag out-of-stock products](./auto-tag-out-of-stock-products)
 *   [Auto-tag products based on their publishing status](./auto-tag-products-based-on-their-publishing-status)
 *   [Auto-tag products by largest available size](./auto-tag-products-by-largest-available-size)
+*   [Auto-tag products by their options](./auto-tag-products-by-their-options)
 *   [Auto-tag products by their publish date](./auto-tag-products-by-their-publish-date)
 *   [Auto-tag products in a manual collection](./auto-tag-products-in-a-manual-collection)
 *   [Auto-tag products that are missing costs](./auto-tag-products-that-are-missing-costs)
