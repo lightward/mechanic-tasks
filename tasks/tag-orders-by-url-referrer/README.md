@@ -10,10 +10,10 @@ Have your traffic sources refer customers using ?ref=referral-code-here URLs (us
 
 ```json
 {
-  "query_parameter_name__required": null,
-  "cart_attribute_name__required": null,
-  "tag_customer_with_parameter_value__boolean": null,
-  "only_tag_the_customer_for_their_first_order__boolean": null
+  "query_parameter_name__required": "ref",
+  "cart_attribute_name__required": "Referral code",
+  "tag_customer_with_parameter_value__boolean": false,
+  "only_tag_the_customer_for_their_first_order__boolean": false
 }
 ```
 
