@@ -1,0 +1,72 @@
+{% if event.preview %}
+  {% assign customer = hash %}
+  {% assign customer["admin_graphql_api_id"] = "gid://shopify/Customer/1234567890" %}
+  {% assign customer["tags"] = options.tags_to_watch_for_and_tags_to_add__keyval_required.first.first %}
+{% endif %}
+
+{% assign existing_tags = customer.tags | split: ", " %}
+{% assign tags_to_add = array %}
+{% assign tags_to_remove = array %}
+
+{% for tag_observed in existing_tags %}
+  {% assign tag_to_add = options.tags_to_watch_for_and_tags_to_add__keyval_required[tag_observed] %}
+
+  {% if tag_to_add == blank or existing_tags contains tag_to_add %}
+    {% continue %}
+  {% endif %}
+
+  {% assign tags_to_add[tags_to_add.size] = tag_to_add %}
+{% endfor %}
+
+{% if options.remove_tag_to_add_when_the_corresponding_tag_to_watch_for_is_removed__boolean %}
+  {% for keyval in options.tags_to_watch_for_and_tags_to_add__keyval_required %}
+    {% assign tag_to_watch_for = keyval[0] %}
+    {% assign tag_to_add = keyval[1] %}
+
+    {% if existing_tags contains tag_to_watch_for %}
+      {% comment %}
+        Already handled this case earlier.
+      {% endcomment %}
+      {% continue %}
+    {% endif %}
+
+    {% unless existing_tags contains tag_to_add %}
+      {% comment %}
+        The corresponding tag has either already been removed, or was never present.
+      {% endcomment %}
+      {% continue %}
+    {% endunless %}
+
+    {% assign tags_to_remove[tags_to_remove.size] = tag_to_add %}
+  {% endfor %}
+{% endif %}
+
+{% if tags_to_add != empty or tags_to_remove != empty %}
+  {% action "shopify" %}
+    mutation {
+      {% if tags_to_add != empty %}
+        tagsAdd(
+          id: {{ customer.admin_graphql_api_id | json }}
+          tags: {{ tags_to_add | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      {% endif %}
+
+      {% if tags_to_remove != empty %}
+        tagsRemove(
+          id: {{ customer.admin_graphql_api_id | json }}
+          tags: {{ tags_to_remove | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      {% endif %}
+    }
+  {% endaction %}
+{% endif %}
