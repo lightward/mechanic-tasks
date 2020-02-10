@@ -143,6 +143,7 @@
 *   [Get email alerts for out of stock products](./get-email-alerts-for-out-of-stock-products)
 *   [Hide out-of-stock products](./hide-out-of-stock-products)
 *   [Import PayPal transactions as Shopify orders](./import-paypal-transactions-as-shopify-orders)
+*   [Keep SKUs up to date with barcodes](./keep-skus-up-to-date-with-barcodes)
 *   [Keep inventory levels in sync within products](./keep-inventory-levels-in-sync-within-products)
 *   [Maintain a collection of new products](./maintain-a-collection-of-new-products)
 *   [Maintain a collection of recently purchased products](./maintain-a-collection-of-recently-purchased-products)
