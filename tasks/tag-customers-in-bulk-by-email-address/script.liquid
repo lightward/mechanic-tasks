@@ -1,0 +1,166 @@
+{% if event.preview %}
+  {% assign event = hash %}
+  {% assign event["data"] = "customer@example.com:foobar,customer@foo:bar" | replace: ",", newline %}
+  {% assign event["preview"] = true %}
+{% endif %}
+
+{% assign query_cost = 3 %}
+{% assign mutation_cost = 10 %}
+{% assign bucket_size = 1000 %}
+{% assign buffer_factor = 2 %}
+
+{% assign lines = event.data | strip | split: newline | uniq | sort %}
+{% assign lines_and_customers = hash %}
+
+{% assign scan_batch_size = bucket_size | times: 1.0 | divided_by: query_cost | divided_by: buffer_factor | round %}
+{% assign scan_batch_count = lines.size | times: 1.0 | divided_by: scan_batch_size | ceil %}
+
+{% for n in (1..scan_batch_count) %}
+  {% assign batch_lines = array %}
+  {% assign start_index = scan_batch_size | times: forloop.index0 %}
+  {% assign stop_index = start_index | plus: scan_batch_size | minus: 1 %}
+
+  {% for m in (start_index..stop_index) %}
+    {% assign line = lines[m] | strip %}
+
+    {% if line == blank %}
+      {% continue %}
+    {% endif %}
+
+    {% assign parts = line | split: ":" %}
+    {% if parts.size != 2 %}
+      {% log message: "Found an invalid line.", line: line %}
+      {% continue %}
+    {% endif %}
+
+    {% unless parts.first contains "@" %}
+      {% log message: "Found an invalid email address.", line: line %}
+      {% continue %}
+    {% endunless %}
+
+    {% assign batch_lines[batch_lines.size] = line %}
+  {% endfor %}
+
+  {% capture query %}
+    query {
+      {% for line in batch_lines %}
+        {% assign email = line | split: ":" | first %}
+        customer{{ forloop.index0 }}: customers(first: 1, query: {{ email | json | prepend: "email:" | json }}) {
+          edges {
+            node {
+              id
+              email
+              tags
+            }
+          }
+        }
+      {% endfor %}
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          {% for line in batch_lines %}
+            "customer{{ forloop.index0 }}": {
+              "edges": [
+                {
+                  "node": {
+                    "email": {{ line | split: ":" | first | json }},
+                    "id": "gid://shopify/Customer/{{ forloop.index0 }}",
+                    "tags": []
+                  }
+                }
+              ]
+            }
+            {% unless forloop.last %},{% endunless %}
+          {% endfor %}
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% for line in batch_lines %}
+    {% assign key = "customer" | append: forloop.index0 %}
+    {% assign email = line | split: ":" | first %}
+    {% assign tag = line | split: ":" | last %}
+    {% assign customer = result.data[key].edges.first.node %}
+
+    {% assign customer_email_downcase = customer.email | downcase %}
+    {% assign email_downcase = email | downcase %}
+    {% if customer_email_downcase != email_downcase %}
+      {% log message: "Customer returned by Shopify somehow does not match the email address we searched for. Skipping.", line: line, customer: customer %}
+      {% continue %}
+    {% endif %}
+
+    {% if customer == nil %}
+      {% log message: "This customer could not be found. Skipping.", line: line %}
+      {% continue %}
+    {% endif %}
+
+    {% if customer.tags contains tag %}
+      {% log message: "Customer already has tag. Skipping.", line: line, tag: tag, customer: customer %}
+      {% continue %}
+    {% endif %}
+
+    {% assign lines_and_customers[line] = customer %}
+  {% endfor %}
+{% endfor %}
+
+{% assign taggings = array %}
+
+{% for keyval in lines_and_customers %}
+  {% assign line = keyval[0] %}
+  {% assign tag = line | split: ":" | last %}
+  {% assign customer = keyval[1] %}
+
+  {% assign tagging = hash %}
+  {% assign tagging["id"] = customer.id %}
+  {% assign tagging["tags"] = tag %}
+
+  {% assign taggings[taggings.size] = tagging %}
+{% endfor %}
+
+{% if taggings != empty %}
+  {% assign tagging_batch_size = bucket_size | times: 1.0 | divided_by: mutation_cost | divided_by: buffer_factor | round %}
+  {% assign tagging_batch_count = taggings.size | times: 1.0 | divided_by: tagging_batch_size | ceil %}
+
+  {% for n in (1..tagging_batch_count) %}
+    {% assign batch_taggings = array %}
+    {% assign start_index = tagging_batch_size  | times: forloop.index0 %}
+    {% assign stop_index = start_index | plus: tagging_batch_size | minus: 1 %}
+
+    {% for m in (start_index..stop_index) %}
+      {% if taggings[m] %}
+        {% assign batch_taggings[batch_taggings.size] = taggings[m] %}
+      {% endif %}
+    {% endfor %}
+
+    {% log batch_taggings: batch_taggings, start_index: start_index, stop_index: stop_index %}
+
+    {% action "shopify" %}
+      mutation {
+        {% for tagging in taggings %}
+          customer{{ forloop.index0 }}: tagsAdd({{ tagging | graphql_arguments }}) {
+            userErrors {
+              field
+              message
+            }
+            node {
+              ... on Customer {
+                id
+                email
+                tags
+              }
+            }
+          }
+        {% endfor %}
+      }
+    {% endaction %}
+  {% endfor %}
+{% endif %}
