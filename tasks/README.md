@@ -208,6 +208,7 @@
 *   [Sync inventory levels to variant metafields](./sync-inventory-levels-to-variant-metafields)
 *   [Sync order timeline comments to the customer note](./sync-order-timeline-comments-to-the-customer-note)
 *   [Sync variant inventory within a product by pack size](./sync-variant-inventory-within-a-product-by-pack-size)
+*   [Tag customers by order tier](./tag-customers-by-order-tier)
 *   [Tag customers in bulk by email address](./tag-customers-in-bulk-by-email-address)
 *   [Tag online orders by their ?ref= referral codes](./tag-orders-by-url-referrer)
 *   [Tag orders in bulk by order name](./tag-orders-in-bulk-by-order-name)
