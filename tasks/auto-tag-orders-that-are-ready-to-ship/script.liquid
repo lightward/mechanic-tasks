@@ -203,7 +203,7 @@
       {% if result.data.orders.pageInfo.hasNextPage %}
         {% assign cursor = result.data.orders.edges.last.cursor %}
         {% if cursor == nil %}
-          {% log "Encountered pageInfo.hasNextPage = true and cursor = nil; stopping the loop." %}
+          {% log "Encountered pageInfo.hasNextPage = true and cursor = nil in result.data.orders.edges.last.cursor; stopping the loop." %}
           {% break %}
         {% endif %}
       {% else %}
@@ -254,7 +254,7 @@
       {% if result.data.order.lineItems.pageInfo.hasNextPage %}
         {% assign cursor = result.data.order.lineItems.edges.last.cursor %}
         {% if cursor == nil %}
-          {% log "Encountered pageInfo.hasNextPage = true and cursor = nil; stopping the loop." %}
+          {% log "Encountered pageInfo.hasNextPage = true and cursor = nil in result.data.order.lineItems.edges.last.cursor; stopping the loop." %}
           {% break %}
         {% endif %}
       {% else %}
