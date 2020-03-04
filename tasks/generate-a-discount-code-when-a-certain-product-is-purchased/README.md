@@ -29,7 +29,7 @@ shopify/orders/paid
 
 ## Documentation
 
-This task watches for newly-paid orders, and if the configured product is purchased, sends the customer a discount code that's just for them.
+This task watches for newly-paid orders, and if the configured product is purchased, sends the customer a discount code that's just for them. If a customer purchases more than one qualified product, they will receive more than one email, each containing a unique discount code.
 
 ### Options
 

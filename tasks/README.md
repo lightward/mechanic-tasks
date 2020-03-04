@@ -141,6 +141,7 @@
 *   [Email vendors when their products are ordered](./email-vendors-when-their-products-are-ordered)
 *   [Email your customers after a quiet period of no orders](./email-your-customers-after-a-quiet-period-of-no-orders)
 *   [Flag orders that aren't fulfilled after several days](./flag-orders-that-arent-fulfilled-after-two-days)
+*   [Generate a discount code when a certain product is purchased](./generate-a-discount-code-when-a-certain-product-is-purchased)
 *   [Generate a product discount when a voucher product is purchased](./generate-a-product-discount-when-a-voucher-product-is-purchased)
 *   [Generate a report of orders that still require payment](./generate-a-report-of-orders-that-still-require-payment)
 *   [Get email alerts for FBA failures](./get-email-alerts-for-fba-failures)
