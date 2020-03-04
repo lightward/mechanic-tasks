@@ -163,6 +163,7 @@
 *   [Monitor customer note for certain information](./monitor-customer-note-for-certain-information)
 *   [Move out-of-stock products to the end of a collection](./move-out-of-stock-products-to-the-end-of-a-collection)
 *   [Notify a team when a tagged product is ordered](./notify-a-team-when-a-tagged-product-is-ordered)
+*   [Partially auto-capture payments as orders are fulfilled](./partially-auto-capture-payments-as-orders-are-fulfilled)
 *   [Publish a certain collection, daily](./publish-a-certain-collection-daily)
 *   [Publish back-in-stock products](./publish-back-in-stock-products)
 *   [Raise the price of a product after every sale](./raise-the-price-of-a-product-after-every-sale)
