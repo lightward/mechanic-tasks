@@ -83,6 +83,7 @@
 *   [Auto-tag orders with chargeback or inquiry activity](./auto-tag-orders-with-chargeback-or-inquiry-activity)
 *   [Auto-tag orders with customer tags when new customer tags are tagged](./tag-orders-with-customer-tags-when-customer-is-tagged)
 *   [Auto-tag orders with mismatching billing and shipping addresses](./auto-tag-orders-with-mismatching-billing-and-shipping-addresses)
+*   [Auto-tag orders with product tags](./auto-tag-orders-with-product-tags)
 *   [Auto-tag orders with their tracking numbers](./auto-tag-orders-with-their-tracking-numbers)
 *   [Auto-tag out-of-stock products](./auto-tag-out-of-stock-products)
 *   [Auto-tag products based on their publishing status](./auto-tag-products-based-on-their-publishing-status)
