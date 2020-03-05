@@ -80,6 +80,7 @@
 *   [Auto-tag orders that contain a matching product](./auto-tag-orders-that-contain-a-matching-product)
 *   [Auto-tag orders that contain an out of stock item](./auto-tag-orders-that-contain-an-out-of-stock-item)
 *   [Auto-tag orders that contain bundles](./auto-tag-orders-that-contain-bundles)
+*   [Auto-tag orders that do not have a certain tag](./auto-tag-orders-that-do-not-have-a-certain-tag)
 *   [Auto-tag orders using product tags](./auto-tag-orders-using-product-tags)
 *   [Auto-tag orders with chargeback or inquiry activity](./auto-tag-orders-with-chargeback-or-inquiry-activity)
 *   [Auto-tag orders with customer tags when new customer tags are tagged](./tag-orders-with-customer-tags-when-customer-is-tagged)
