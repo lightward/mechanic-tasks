@@ -70,6 +70,7 @@
 *   [Auto-tag orders by discount code](./auto-tag-orders-by-discount-code)
 *   [Auto-tag orders by originating staff member](./auto-tag-orders-by-originating-staff-member)
 *   [Auto-tag orders by product collections](./auto-tag-orders-by-product-collections)
+*   [Auto-tag orders by sales channel](./auto-tag-orders-by-sales-channel)
 *   [Auto-tag orders by shipment status](./auto-tag-orders-by-shipment-status)
 *   [Auto-tag orders by shipping address city](./auto-tag-orders-by-shipping-address-city)
 *   [Auto-tag orders by shipping address country](./auto-tag-orders-by-shipping-address-country)
