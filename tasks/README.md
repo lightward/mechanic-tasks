@@ -57,6 +57,7 @@
 *   [Auto-tag draft orders by originating staff member](./auto-tag-draft-orders-by-originating-staff-member)
 *   [Auto-tag new customers](./auto-tag-new-customers)
 *   [Auto-tag new online orders by web browser](./auto-tag-new-online-orders-by-web-browser)
+*   [Auto-tag new orders based on payment method](./auto-tag-new-orders-based-on-payment-method)
 *   [Auto-tag new orders by staff member](./auto-tag-new-orders-by-staff-member)
 *   [Auto-tag new orders using Liquid](./auto-tag-new-orders-using-liquid)
 *   [Auto-tag new orders using the customer's tags](./auto-tag-orders-using-the-customers-tags)

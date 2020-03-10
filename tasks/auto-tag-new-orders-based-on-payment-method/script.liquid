@@ -1,30 +1,28 @@
-{% assign order_qualifies = false %}
-{% if order.payment_gateway_names contains options.payment_gateway_name__required %}
-  {% assign order_qualifies = true %}
-{% endif %}
-
-{% if event.preview or order_qualifies %}
-  {
-    "action": {
-      "type": "shopify",
-      "options": [
-        "update",
-        [
-          "order",
-          {{ order.id }}
-        ],
-        {
-          "tags": {{ order.tags | add_tags: options.comma_separated_tags_to_add__required | json }}
-        }
-      ]
+{% if event.preview %}
+  {% capture order_json %}
+    {
+      "admin_graphql_api_id": "gid://shopify/Order/12345",
+      "payment_gateway_names": {{ options.payment_gateway_name__required | json }}
     }
-  }
-{% endif %}
-
-{% if event.preview != true and order_qualifies != true %}
-  {% capture log_message %}
-    The order did not qualify for auto-tagging. This task is configured to look for {{ options.payment_gateway_name__required | json }}; this order was paid using {{ order.payment_gateway_names | json }}.
   {% endcapture %}
 
-  { "log": {{ log_message | strip | json }} }
+  {% assign order = order_json | parse_json %}
+{% endif %}
+
+{% if order.payment_gateway_names contains options.payment_gateway_name__required %}
+  {% action "shopify" %}
+    mutation {
+      tagsAdd(
+        id: {{ order.admin_graphql_api_id | json }}
+        tags: {{ options.order_tag_to_add__required | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% else %}
+  {% log order_payment_gateway_names: order.payment_gateway_names %}
 {% endif %}

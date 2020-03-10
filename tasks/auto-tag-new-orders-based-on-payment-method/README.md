@@ -2,14 +2,14 @@
 
 * [Task script](./script.liquid)
 
-This task checks the payment method for new orders immediately upon order creation, and tags the order accordingly. (If you need to tag the order later on, based on updates or when the order is paid, get in touch!)
+This task checks the payment method for new orders immediately upon order creation, and tags the order accordingly.
 
 ## Default options
 
 ```json
 {
   "payment_gateway_name__required": null,
-  "comma_separated_tags_to_add__required": null
+  "order_tag_to_add__required": null
 }
 ```
 
@@ -21,4 +21,6 @@ shopify/orders/create
 
 ## Documentation
 
-(none)
+This task checks the payment method for new orders immediately upon order creation, and tags the order accordingly.
+
+Tip: to tag orders paid with a gift card, fill in "Payment gateway name" with "gift_card".
