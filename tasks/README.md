@@ -55,6 +55,7 @@
 *   [Auto-tag customers with who have accounts](./auto-tag-customers-with-who-have-accounts)
 *   [Auto-tag customers within a purchase range](./auto-tag-customers-within-a-purchase-range)
 *   [Auto-tag draft orders by originating staff member](./auto-tag-draft-orders-by-originating-staff-member)
+*   [Auto-tag fulfilled orders by carrier](./auto-tag-fulfilled-orders-by-carrier)
 *   [Auto-tag new customers](./auto-tag-new-customers)
 *   [Auto-tag new online orders by web browser](./auto-tag-new-online-orders-by-web-browser)
 *   [Auto-tag new orders based on payment method](./auto-tag-new-orders-based-on-payment-method)
