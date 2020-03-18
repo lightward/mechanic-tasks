@@ -173,6 +173,7 @@
 *   [Publish a certain collection, daily](./publish-a-certain-collection-daily)
 *   [Publish back-in-stock products](./publish-back-in-stock-products)
 *   [Raise the price of a product after every sale](./raise-the-price-of-a-product-after-every-sale)
+*   [Receive a nightly out-of-stock report](./receive-a-nightly-out-of-stock-report)
 *   [Receive email alerts when inventory levels change](./receive-email-alerts-when-inventory-levels-change)
 *   [Record Judge.me customer review counts](./record-judge-me-customer-review-counts)
 *   [Redirect users based on input codes](./redirect-users-based-on-input-codes)
