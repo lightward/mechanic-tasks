@@ -214,6 +214,7 @@
 *   [Send email when an order is tagged](./send-email-when-an-order-is-tagged)
 *   [Send follow-up emails after sending a draft order invoice](./send-follow-up-emails-after-sending-a-draft-order-invoice)
 *   [Send new customer signups to IFTTT](./send-new-customer-signups-to-ifttt)
+*   [Send recurring reminders about unpaid orders](./unpaid-order-reminders)
 *   [Send your customers reorder reminders](./send-your-customers-reorder-reminders)
 *   [Set a default tracking number for new fulfillments](./set-a-default-tracking-number-for-new-fulfillments)
 *   [Set product templates based on product tags](./set-product-templates-based-on-product-tags)

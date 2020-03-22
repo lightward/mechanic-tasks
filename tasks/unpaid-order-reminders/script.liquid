@@ -2,6 +2,8 @@
   Preferred option order:
 
   {{ options.include_partially_paid_orders__boolean }}
+  {{ options.limit_to_orders_matching_this_query }}
+  {{ options.ignore_customers_having_this_tag }}
   {{ options.initial_delay_period__number_required }}
   {{ options.interval_period_between_emails__number_required }}
   {{ options.periods_given_are_in_days__boolean }}
@@ -48,12 +50,20 @@
   {% assign initial_threshold_s = now_s | minus: initial_delay_period_s %}
   {% assign interval_period_between_emails_s = options.interval_period_between_emails__number_required | times: period_unit_s %}
 
+  {% capture orders_query %}-status:cancelled AND (financial_status:pending{% if options.include_partially_paid_orders__boolean %} OR financial_status:partially_paid){% endif %}{% endcapture %}
+
+  {% if options.limit_to_orders_matching_this_query != blank %}
+    {% assign orders_query = orders_query | append: " AND (" | append: options.limit_to_orders_matching_this_query | append: ")" %}
+  {% endif %}
+
+  {% log orders_query: orders_query %}
+
   {% for n in (0..100) %}
     {% capture query %}
       query {
         orders(
-          first: 200
-          query: "-status:cancelled AND (financial_status:pending{% if options.include_partially_paid_orders__boolean %} OR financial_status:partially_paid){% endif %}"
+          first: 100
+          query: {{ orders_query | json }}
           after: {{ cursor | json }}
         ) {
           edges {
@@ -62,6 +72,10 @@
               processedAt
               email
               name
+              customer {
+                firstName
+                tags
+              }
               totalPriceSet {
                 shopMoney {
                   amount
@@ -101,6 +115,10 @@
                     "processedAt": {{ now_s | minus: initial_delay_period_s | minus: arbitrary_multiple_of_interval_period_between_emails_s | date: "%Y-%m-%d %H:%M:%S" | json }},
                     "email": "customer@example.com",
                     "name": "#1234",
+                    "customer": {
+                      "tags": [],
+                      "firstName": "Bente"
+                    },
                     "totalPriceSet": {
                       "shopMoney": {
                         "amount": "50.0"
@@ -134,12 +152,15 @@
 
     {% for order_edge in result.data.orders.edges %}
       {% assign order = order_edge.node %}
-      {% assign order_qualifies = false %}
+
+      {% if options.ignore_customers_having_this_tag != blank and order.customer.tags contains options.ignore_customers_having_this_tag %}
+        {% continue %}
+      {% endif %}
 
       {% assign processed_at_s = order.processedAt | date: "%s" | times: 1 %}
 
       {% if processed_at_s <= initial_threshold_s %}
-        {% assign period_offset_h = now_s | minus: processed_at_s | minus: initial_delay_period_s | modulo: interval_period_between_emails_s | divided_by: 60.0 | divided_by: 60.0 | round %}
+        {% assign period_offset_h = now_s | minus: processed_at_s | minus: initial_delay_period_s | modulo: interval_period_between_emails_s | divided_by: 60.0 | divided_by: 60.0 | floor %}
 
         {% if period_offset_h == 0 %}
           {% assign orders_that_deserve_an_email[orders_that_deserve_an_email.size] = order %}
@@ -162,8 +183,10 @@
     {% endfor %}
     {% assign tax_lines = tax_lines | join: ", " %}
 
-    {% assign email_subject = options.email_subject__required | replace: "ORDER_NUMBER", order.name | replace: "AMOUNT_DUE", amount_due | replace: "TAX_LINES", tax_lines %}
-    {% assign email_body = options.email_body__multiline_required | replace: "ORDER_NUMBER", order.name | replace: "AMOUNT_DUE", amount_due | replace: "TAX_LINES", tax_lines %}
+    {% assign customer_first_name = order.customer.firstName | default: "Kunde" %}
+
+    {% assign email_subject = options.email_subject__required | replace: "ORDER_NUMBER", order.name | replace: "AMOUNT_DUE", amount_due | replace: "TAX_LINES", tax_lines | replace: "CUSTOMER_FIRST_NAME", customer_first_name %}
+    {% assign email_body = options.email_body__multiline_required | replace: "ORDER_NUMBER", order.name | replace: "AMOUNT_DUE", amount_due | replace: "TAX_LINES", tax_lines | replace: "CUSTOMER_FIRST_NAME", customer_first_name %}
 
     {% if options.test_mode__boolean %}
       {% action "echo", order_name: order.name, order_email: order.email, email_subject: email_subject, email_body: email_body %}
