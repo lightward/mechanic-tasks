@@ -1,24 +1,87 @@
-{% if event.preview %}
-  {% capture inventory_query %}
-    {
-      productVariants(first: 1, query: "product_type:Shirt") {
-        edges {
-          node {
-            inventoryQuantity
+{% assign product_types = options.product_types_to_monitor__array_required %}
+
+{% if event.topic == "mechanic/user/trigger" %}
+  {% for product_type in product_types %}
+    {% assign inventory_list = array %}
+    {% assign cursor = nil %}
+
+    {% for n in (0..100) %}
+      {% capture inventory_query %}
+        query {
+          productVariants(
+            first: 250
+            query: {{ "product_type:" | append: product_type | json }}
+            after: {{ cursor | json }}
+          ) {
+            pageInfo {
+              hasNextPage
+            }
+            edges {
+              node {
+                inventoryQuantity
+              }
+            }
           }
         }
-      }
-    }
-  {% endcapture %}
+      {% endcapture %}
 
-  {% assign inventory_query_result = inventory_query | shopify %}
+      {% assign inventory_query_result = inventory_query | shopify %}
 
-  {% action "cache" %}
-    {"set": {"key": {{ "inventory_by_product_type:Shirt" | sha256 | json }}, "value": 500}}
-  {% endaction %}
+      {% if event.preview %}
+        {% capture inventory_query_result_json %}
+          {
+            "data": {
+              "productVariants": {
+                "pageInfo": {
+                  "hasNextPage": false
+                },
+                "edges": [
+                  {
+                    "node": {
+                      "inventoryQuantity": 30
+                    }
+                  },
+                  {
+                    "node": {
+                      "inventoryQuantity": 30
+                    }
+                  },
+                  {
+                    "node": {
+                      "inventoryQuantity": 30
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        {% endcapture %}
 
+        {% assign inventory_query_result = inventory_query_result_json | parse_json %}
+      {% endif %}
+
+      {% assign inventory_list = inventory_query_result.data.productVariants.edges | map: "node" | map: "inventoryQuantity" | concat: inventory_list %}
+
+      {% if inventory_query_result.data.productVariants.pageInfo.hasNextPage %}
+        {% assign cursor = inventory_query_result.data.productVariants.edges.last.cursor %}
+        {% continue %}
+      {% endif %}
+
+      {% break %}
+    {% endfor %}
+
+    {% assign inventory_total = inventory_list | sum %}
+    {% assign expected_inventory_total = inventory_list.first | times: inventory_list.size %}
+    {% if inventory_total != expected_inventory_total %}
+      {% error message: "Not all inventory levels are in sync. Manually ensure everything is at the same level, and try again.", product_type: product_type %}
+    {% else %}
+      {% assign cache_key = "inventory_by_product_type:" | append: product_type | sha256 %}
+      {% action "cache", "set", cache_key, inventory_list.first %}
+    {% endif %}
+  {% endfor %}
+{% elsif event.topic contains "mechanic/scheduler/" %}
   {% capture primary_location_query %}
-    {
+    query {
       location {
         id
       }
@@ -27,156 +90,153 @@
 
   {% assign primary_location_query_result = primary_location_query | shopify %}
 
-  {% capture adjustment_query %}
-    mutation {
-      inventoryBulkAdjustQuantityAtLocation(
-        inventoryItemAdjustments: []
-        locationId: "gid://shopify/Location/1234567890"
-      ) {
-        inventoryLevels {
-          id
-        }
-        userErrors {
-          field
-          message
-        }
-      }
-    }
-  {% endcapture %}
-
-  {% action "shopify" adjustment_query %}
-{% else %}
-  {% assign product_types = options.product_types_to_monitor__array_required %}
-
-  {% if event.topic == "mechanic/user/trigger" %}
-    {% for product_type in product_types %}
-      {% assign inventory_list = array %}
-      {% assign cursor = nil %}
-
-      {% for n in (0..100) %}
-        {% capture inventory_query %}
-          {
-            productVariants(
-              first: 250
-              query: {{ "product_type:" | append: product_type | json }}
-              after: {{ cursor | json }}
-            ) {
-              pageInfo {
-                hasNextPage
-              }
-              edges {
-                node {
-                  inventoryQuantity
-                }
-              }
-            }
-          }
-        {% endcapture %}
-
-        {% assign inventory_query_result = inventory_query | shopify %}
-        {% assign inventory_list = inventory_query_result.data.productVariants.edges | map: "node" | map: "inventoryQuantity" | concat: inventory_list %}
-
-        {% if inventory_query_result.data.productVariants.pageInfo.hasNextPage %}
-          {% assign cursor = inventory_query_result.data.productVariants.edges.last.cursor %}
-          {% continue %}
-        {% endif %}
-
-        {% break %}
-      {% endfor %}
-
-      {% assign inventory_total = inventory_list | sum %}
-      {% assign expected_inventory_total = inventory_list.first | times: inventory_list.size %}
-      {% if inventory_total != expected_inventory_total %}
-        {"error": {{ product_type | append: ": Not all inventory levels are in sync. Manually ensure everything is at the same level, and try again." | json }}}
-      {% else %}
-        {% assign cache_key = "inventory_by_product_type:" | append: product_type | sha256 %}
-        {% action "cache" %}
-          {"set": {"key": {{ cache_key | json }}, "value": {{ inventory_list.first | json }}}}
-        {% endaction %}
-      {% endif %}
-    {% endfor %}
-  {% elsif event.topic contains "mechanic/scheduler/" %}
-    {% capture primary_location_query %}
+  {% if event.preview %}
+    {% capture primary_location_result_json %}
       {
-        location {
-          id
+        "data": {
+          "location": {
+            "id": "gid://shopify/Location/1234567890"
+          }
         }
       }
     {% endcapture %}
 
-    {% assign primary_location_query_result = primary_location_query | shopify %}
+    {% assign primary_location_query_result = primary_location_result_json | parse_json %}
+  {% endif %}
 
-    {% assign primary_location_id = primary_location_query_result.data.location.id %}
+  {% assign primary_location_id = primary_location_query_result.data.location.id %}
 
-    {% for product_type in product_types %}
-      {% assign cache_key = "inventory_by_product_type:" | append: product_type | sha256 %}
-      {% assign starting_inventory = cache[cache_key] %}
-      {% assign new_inventory = starting_inventory %}
-      {% assign cursor = nil %}
+  {% for product_type in product_types %}
+    {% assign cache_key = "inventory_by_product_type:" | append: product_type | sha256 %}
+    {% assign starting_inventory = cache[cache_key] %}
 
-      {% assign variants = array %}
+    {% if event.preview %}
+      {% assign starting_inventory = 30 %}
+    {% endif %}
 
-      {% for n in (0..100) %}
-        {% capture inventory_query %}
-          {
-            productVariants(
-              first: 250
-              query: {{ "product_type:" | append: product_type | json }}
-              after: {{ cursor | json }}
-            ) {
-              pageInfo {
-                hasNextPage
-              }
-              edges {
-                node {
-                  inventoryQuantity
-                  inventoryItem {
-                    id
-                  }
+    {% assign new_inventory = starting_inventory %}
+    {% assign cursor = nil %}
+
+    {% assign variants = array %}
+
+    {% for n in (0..100) %}
+      {% capture inventory_query %}
+        query {
+          productVariants(
+            first: 250
+            query: {{ "product_type:" | append: product_type | json }}
+            after: {{ cursor | json }}
+          ) {
+            pageInfo {
+              hasNextPage
+            }
+            edges {
+              node {
+                inventoryQuantity
+                inventoryItem {
+                  id
                 }
-                cursor
+              }
+              cursor
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign inventory_query_result = inventory_query | shopify %}
+
+      {% if event.preview %}
+        {% capture inventory_query_result_json %}
+          {
+            "data": {
+              "productVariants": {
+                "pageInfo": {
+                  "hasNextPage": false
+                },
+                "edges": [
+                  {
+                    "node": {
+                      "inventoryQuantity": 29,
+                      "inventoryItem": {
+                        "id": "gid://shopify/InventoryItem/1234567890"
+                      }
+                    },
+                    "cursor": "eyJsYXN0X2lkIjozMTcxMTYwMDkwMjI0MSwibGFzdF92YWx1ZSI6IjMxNzExNjAwOTAyMjQxIn0="
+                  },
+                  {
+                    "node": {
+                      "inventoryQuantity": 25,
+                      "inventoryItem": {
+                        "id": "gid://shopify/InventoryItem/2345678901"
+                      }
+                    },
+                    "cursor": "eyJsYXN0X2lkIjozMTcxMTYwMTgxOTc0NSwibGFzdF92YWx1ZSI6IjMxNzExNjAxODE5NzQ1In0="
+                  },
+                  {
+                    "node": {
+                      "inventoryQuantity": 30,
+                      "inventoryItem": {
+                        "id": "gid://shopify/InventoryItem/3456789012"
+                      }
+                    },
+                    "cursor": "eyJsYXN0X2lkIjozMTcxMzYwNDc2Mzc0NSwibGFzdF92YWx1ZSI6IjMxNzEzNjA0NzYzNzQ1In0="
+                  }
+                ]
               }
             }
           }
         {% endcapture %}
 
-        {% assign inventory_query_result = inventory_query | shopify %}
-        {% assign inventory_list = inventory_query_result.data.productVariants.edges | map: "node" | map: "inventoryQuantity" %}
-        {% assign inventory_total = inventory_list | sum %}
-        {% assign inventory_diff = starting_inventory | times: inventory_list.size | minus: inventory_total %}
-        {% assign new_inventory = new_inventory | minus: inventory_diff %}
+        {% assign inventory_query_result = inventory_query_result_json | parse_json %}
+      {% endif %}
 
-        {% assign variants = inventory_query_result.data.productVariants.edges | map: "node" | concat: variants %}
+      {% assign inventory_list = inventory_query_result.data.productVariants.edges | map: "node" | map: "inventoryQuantity" %}
+      {% assign inventory_total = inventory_list | sum %}
+      {% assign inventory_diff = starting_inventory | times: inventory_list.size | minus: inventory_total %}
+      {% assign new_inventory = new_inventory | minus: inventory_diff %}
 
-        {% if inventory_query_result.data.productVariants.pageInfo.hasNextPage %}
-          {% assign cursor = inventory_query_result.data.productVariants.edges.last.cursor %}
-          {% continue %}
-        {% endif %}
+      {% assign variants = inventory_query_result.data.productVariants.edges | map: "node" | concat: variants %}
 
-        {% break %}
+      {% if inventory_query_result.data.productVariants.pageInfo.hasNextPage %}
+        {% assign cursor = inventory_query_result.data.productVariants.edges.last.cursor %}
+        {% continue %}
+      {% endif %}
+
+      {% break %}
+    {% endfor %}
+
+    {% if new_inventory == starting_inventory %}
+      {% log message: "No inventory adjustments needed", product_type: product_type %}
+    {% else %}
+      {% action "cache", "set", cache_key, new_inventory %}
+
+      {% assign inventory_item_adjustments = array %}
+
+      {% for variant in variants %}
+        {% assign adjustment = hash %}
+        {% assign adjustment["inventoryItemId"] = variant.inventoryItem.id %}
+        {% assign adjustment["availableDelta"] = new_inventory | minus: variant.inventoryQuantity %}
+        {% assign index = inventory_item_adjustments.size %}
+        {% assign inventory_item_adjustments[index] = adjustment %}
       {% endfor %}
 
-      {% if new_inventory == starting_inventory %}
-        {"log": {{ product_type | append: ": No inventory adjustments needed." | json }}}
-      {% else %}
-        {% action "cache" %}
-          {"set": {"key": {{ cache_key | json }}, "value": {{ new_inventory | json }}}}
-        {% endaction %}
+      {% assign batch_size = 100 %}
+      {% assign batch_count = inventory_item_adjustments.size | times: 1.0 | divided_by: batch_size | ceil %}
+      {% for n in (1..batch_count) %}
+        {% assign batch = array %}
+        {% assign start_index = batch_size | times: forloop.index0 %}
+        {% assign stop_index = start_index | plus: batch_size | minus: 1 %}
 
-        {% assign inventory_item_adjustments = array %}
-
-        {% for variant in variants %}
-          {% assign adjustment = hash %}
-          {% assign adjustment["inventoryItemId"] = variant.inventoryItem.id %}
-          {% assign adjustment["availableDelta"] = new_inventory | minus: variant.inventoryQuantity %}
-          {% assign index = inventory_item_adjustments.size %}
-          {% assign inventory_item_adjustments[index] = adjustment %}
+        {% for m in (start_index..stop_index) %}
+          {% if inventory_item_adjustments[m] %}
+            {% assign batch[batch.size] = inventory_item_adjustments[m] %}
+          {% endif %}
         {% endfor %}
 
-        {% capture adjustment_query %}
+        {% action "shopify" %}
           mutation {
             inventoryBulkAdjustQuantityAtLocation(
-              inventoryItemAdjustments: {{ inventory_item_adjustments | json | replace: '"inventoryItemId"', "inventoryItemId" | replace: '"availableDelta"', "availableDelta" }}
+              inventoryItemAdjustments: {{ batch | graphql_arguments }}
               locationId: {{ primary_location_id | json }}
             ) {
               inventoryLevels {
@@ -188,10 +248,8 @@
               }
             }
           }
-        {% endcapture %}
-
-        {% action "shopify" adjustment_query %}
-      {% endif %}
-    {% endfor %}
-  {% endif %}
+        {% endaction %}
+      {% endfor %}
+    {% endif %}
+  {% endfor %}
 {% endif %}

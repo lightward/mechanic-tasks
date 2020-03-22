@@ -219,6 +219,7 @@
 *   [Set a default tracking number for new fulfillments](./set-a-default-tracking-number-for-new-fulfillments)
 *   [Set product templates based on product tags](./set-product-templates-based-on-product-tags)
 *   [Standardize UK shipping postcodes](./standardize-uk-shipping-postcodes)
+*   [Sync inventory across a product type](./sync-inventory-across-a-product-type)
 *   [Sync inventory across product variants](./sync-inventory-across-product-variants)
 *   [Sync inventory for shared SKUs](./sync-inventory-for-shared-skus)
 *   [Sync inventory levels to variant metafields](./sync-inventory-levels-to-variant-metafields)
