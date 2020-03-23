@@ -59,6 +59,7 @@
 *   [Auto-tag fulfilled orders with their carriers](./auto-tag-fulfilled-orders-with-their-carriers)
 *   [Auto-tag new customers](./auto-tag-new-customers)
 *   [Auto-tag new online orders by web browser](./auto-tag-new-online-orders-by-web-browser)
+*   [Auto-tag new orders](./auto-tag-new-orders)
 *   [Auto-tag new orders based on payment method](./auto-tag-new-orders-based-on-payment-method)
 *   [Auto-tag new orders by staff member](./auto-tag-new-orders-by-staff-member)
 *   [Auto-tag new orders using Liquid](./auto-tag-new-orders-using-liquid)

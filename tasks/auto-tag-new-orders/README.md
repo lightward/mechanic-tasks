@@ -8,7 +8,7 @@ Immediately upon order creation, add one or more tags to the order. Simple as th
 
 ```json
 {
-  "comma_separated_tags_to_add__required": null
+  "order_tags_to_add__array_required": null
 }
 ```
 
