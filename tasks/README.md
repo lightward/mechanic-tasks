@@ -152,6 +152,7 @@
 *   [Email vendors when an order shipping address changes](./email-vendors-when-an-order-shipping-address-changes)
 *   [Email vendors when their products are ordered](./email-vendors-when-their-products-are-ordered)
 *   [Email your customers after a quiet period of no orders](./email-your-customers-after-a-quiet-period-of-no-orders)
+*   [Export a CSV of order shipping addresses](./export-a-csv-of-order-shipping-addresses)
 *   [Flag orders that aren't fulfilled after several days](./flag-orders-that-arent-fulfilled-after-two-days)
 *   [Generate a discount code when a certain product is purchased](./generate-a-discount-code-when-a-certain-product-is-purchased)
 *   [Generate a product discount when a voucher product is purchased](./generate-a-product-discount-when-a-voucher-product-is-purchased)

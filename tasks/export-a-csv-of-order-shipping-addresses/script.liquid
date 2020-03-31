@@ -22,7 +22,7 @@
     query {
       orders(
         first: 250
-        after: null
+        after: {{ cursor | json }}
         query: {{ options.orders_search_query | json }}
       ) {
         pageInfo {
@@ -31,6 +31,7 @@
         edges {
           cursor
           node {
+            name
             shippingAddress {
               address1
               address2
