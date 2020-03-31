@@ -1,77 +1,133 @@
-{% if event.preview %}
-  {
-    "action": {
-      "type": "shopify",
-      "options": [
-        "update",
-        [
-          "customer",
-          1234567890
-        ],
-        {
-          "tags": "Ontario HQ"
+{% if event.topic contains "shopify/orders" %}
+  {% if event.preview %}
+    {% capture order_json %}
+      {
+        "location": {
+          "name": "Storefront"
+        },
+        "customer": {
+          "admin_graphql_api_id": "gid://shopify/Customer/1234567890",
+          "tags": ""
         }
-      ]
-    }
-  }
-{% elsif event.topic contains "shopify/orders/" %}
-  {% assign customer = order.customer.reload %}
+      }
+    {% endcapture %}
 
-  {% if order.location_id == blank and options.tag_for_online_orders != blank %}
-    {% assign order_location = options.tag_for_online_orders %}
-  {% elsif order.location %}
-    {% assign order_location = order.location.name %}
+    {% assign order = order_json | parse_json %}
   {% endif %}
 
-  {% assign customer_tags_to_save = customer.tags | add_tag: order_location %}
+  {% assign customer_tags = order.customer.tags | split: ", " %}
 
-  {% if customer_tags_to_save != customer.tags %}
-    {
-      "action": {
-        "type": "shopify",
-        "options": [
-          "update",
-          [
-            "customer",
-            {{ customer.id | json }}
-          ],
-          {
-            "tags": {{ customer_tags_to_save | json }}
+  {% assign location = order.location.name | default: options.tag_for_online_orders %}
+
+  {% unless location == blank or customer_tags contains location %}
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {{ order.customer.admin_graphql_api_id | json }}
+          tags: [{{ location | json }}]
+        ) {
+          node {
+            ... on Customer {
+              tags
+            }
           }
-        ]
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endunless %}
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% capture bulk_operation_query %}
+    query {
+      customers(query: "orders_count:>0") {
+        edges {
+          node {
+            __typename
+            id
+            tags
+            orders {
+              edges {
+                node {
+                  __typename
+                  id
+                  physicalLocation {
+                    name
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
-  {% endif %}
-{% elsif event.topic == "mechanic/user/trigger" %}
-  {% for customer in shop.customers %}
-    {% assign customer_tags_to_save = customer.tags %}
+  {% endcapture %}
 
-    {% for order in customer.orders.any %}
-      {% if order.location_id == blank and options.tag_for_online_orders != blank %}
-        {% assign order_location = options.tag_for_online_orders %}
-      {% elsif order.location %}
-        {% assign order_location = order.location.name %}
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture objects_jsonl %}
+      {"__typename":"Customer","id":"gid:\/\/shopify\/Customer\/1234567890","tags":[]}
+      {"__typename":"Order","id":"gid:\/\/shopify\/Order\/1234567890","physicalLocation":{"name":"Storefront"},"__parentId":"gid:\/\/shopify\/Customer\/1234567890"}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = objects_jsonl | parse_jsonl %}
+  {% endif %}
+
+  {% assign customers = bulkOperation.objects | where: "__typename", "Customer" %}
+  {% assign orders = bulkOperation.objects | where: "__typename", "Order" %}
+
+  {% for customer in customers %}
+    {% assign customer_orders = orders | where: "__parentId", customer.id %}
+    {% assign tags_to_add = array %}
+
+    {% for order in customer_orders %}
+      {% assign location = order.physicalLocation.name | default: options.tag_for_online_orders %}
+
+      {% if location == blank or customer.tags contains location %}
+        {% continue %}
       {% endif %}
 
-      {% assign customer_tags_to_save = customer_tags_to_save | add_tag: order_location %}
+      {% assign tags_to_add[tags_to_add.size] = location %}
     {% endfor %}
 
-    {% if customer_tags_to_save != customer.tags %}
-      {
-        "action": {
-          "type": "shopify",
-          "options": [
-            "update",
-            [
-              "customer",
-              {{ customer.id | json }}
-            ],
-            {
-              "tags": {{ customer_tags_to_save | json }}
+    {% if tags_to_add != empty %}
+      {% action "shopify" %}
+        mutation {
+          tagsAdd(
+            id: {{ customer.id | json }}
+            tags: {{ tags_to_add | uniq | json }}
+          ) {
+            node {
+              ... on Customer {
+                tags
+              }
             }
-          ]
+            userErrors {
+              field
+              message
+            }
+          }
         }
-      }
+      {% endaction %}
     {% endif %}
   {% endfor %}
 {% endif %}
