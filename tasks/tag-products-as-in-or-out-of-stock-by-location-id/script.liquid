@@ -6,7 +6,7 @@
   {"error": "Add either a prefix or suffix for the 'out of stock' tag, to distinguish it from the 'in stock' tag."}
 {% endif %}
 
-{% if event.topic == "mechanic/user/trigger" %}
+{% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
   {% capture bulk_operation_query %}
     query {
       products {
