@@ -263,6 +263,8 @@
       {% endaction %}
     {% endfor %}
 
-    {% action "cache", "del", cache_key %}
+    {% if inventory_levels_to_restore != blank %}
+      {% action "cache", "del", cache_key %}
+    {% endif %}
   {% endif %}
 {% endif %}
