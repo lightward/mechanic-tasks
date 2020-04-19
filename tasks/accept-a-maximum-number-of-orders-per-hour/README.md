@@ -8,9 +8,9 @@ This task works by monitoring the number of orders created per hour, and clearin
 
 ```json
 {
-  "maximum_hourly_orders__number_required": null,
+  "maximum_hourly_orders__number_required": 10,
   "only_clear_inventory_for_products_with_this_tag": null,
-  "restore_inventory_levels_the_next_hour__boolean": null,
+  "restore_inventory_levels_the_next_hour__boolean": true,
   "restore_inventory_levels_on_demand__boolean": null
 }
 ```
