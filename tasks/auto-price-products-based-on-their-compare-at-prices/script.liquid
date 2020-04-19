@@ -133,7 +133,7 @@
               "edges": [
                 {
                   "node": {
-                    "id": "gid://shopify/ProductVariant/31343133196349",
+                    "id": "gid://shopify/ProductVariant/1234567890",
                     "displayName": "IPod Nano - 8GB",
                     "price": "999.00",
                     "compareAtPrice": "10.00"
@@ -167,7 +167,7 @@
             mutation {
               productVariantUpdate(
                 input: {
-                  id: "gid://shopify/ProductVariant/31343133196349"
+                  id: {{ productVariant.id | json }}
                   price: {{ desired_price | append: "" | json }}
                 }
               ) {
