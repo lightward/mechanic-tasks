@@ -18,21 +18,78 @@
   {% assign customer_qualifies = true %}
   {% unless customer_tags contains approval_tag %}
     {% assign customer_qualifies = false %}
+    {% log "The customer does not have the required tag." %}
   {% endunless %}
 
   {% if options.autotag_customers_after_emailing__boolean %}
     {% if customer_tags contains email_sent_tag %}
       {% assign customer_qualifies = false %}
+      {% log "According to the customer's tags, this customer has already received this email." %}
     {% endif %}
   {% endif %}
 
-  {% if customer.metafields.mechanic[tag_processed_metafield_key] %}
-    {% assign customer_qualifies = false %}
+  {% if customer_qualifies %}
+    {% capture query %}
+      query {
+        customer(id: {{ customer.admin_graphql_api_id | json }}) {
+          metafield(namespace: "mechanic", key: {{ tag_processed_metafield_key | json }}) {
+            value
+          }
+        }
+      }
+    {% endcapture %}
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "customer": {
+              "metafield": {
+                "value": "1"
+              }
+            }
+          }
+        }
+      {% endcapture %}
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% if result.data.customer.metafield %}
+      {% assign customer_qualifies = false %}
+      {% log "According to a stored metafield, this customer has already received this email, or was already tagged when this task was initially set up." %}
+    {% endif %}
   {% endif %}
 
-  {% if event.preview != true %}
-    {% if shop.metafields.mechanic[customers_scanned_metafield_key] == nil %}
-      {"error": "Please use this task's \"Run task\" button to manually scan your existing customers. Mechanic will take note of everyone who's already tagged, so as to *not* send them an email in the future."}
+  {% if customer_qualifies %}
+    {% capture query %}
+      query {
+        shop {
+          metafield(namespace: "mechanic", key: {{ customers_scanned_metafield_key | json }}) {
+            value
+          }
+        }
+      }
+    {% endcapture %}
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "shop": {
+              "metafield": {
+                "value": "1"
+              }
+            }
+          }
+        }
+      {% endcapture %}
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% if result.data.shop.metafield == nil %}
+      {% error "Please use this task's 'Run task' button to manually scan your existing customers. Mechanic will take note of everyone who's already tagged, so as to *not* send them an email in the future." %}
     {% endif %}
   {% endif %}
 
@@ -48,133 +105,143 @@
     {% endaction %}
 
     {% action "shopify" %}
-      [
-        "update",
-        ["customer", {{ customer.id | json }}],
-        {
-          {% if options.autotag_customers_after_emailing__boolean %}
-            "tags": {{ customer.tags | add_tag: email_sent_tag | json }},
-          {% endif %}
-          "metafields": [
+      mutation {
+        {% if options.autotag_customers_after_emailing__boolean %}
+          tagsAdd(
+            id: {{ customer.admin_graphql_api_id | json }}
+            tags: {{ email_sent_tag | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        {% endif %}
+
+        customerUpdate(input: {
+          id: {{ customer.admin_graphql_api_id | json }}
+          metafields: [
             {
-              "namespace": "mechanic",
-              "key": {{ tag_processed_metafield_key | json }},
-              "value_type": "integer",
-              "value": "1"
+              namespace: "mechanic"
+              key: {{ tag_processed_metafield_key | json }}
+              value: "1"
+              valueType: INTEGER
             }
           ]
+        }) {
+          userErrors {
+            field
+            message
+          }
         }
-      ]
+      }
     {% endaction %}
   {% endif %}
 {% elsif event.topic == "mechanic/user/trigger" %}
-  {% if event.preview %}
-    {% action "shopify" %}
-      [
-        "update",
-        ["customer", 1234567890],
-        {
-          "metafields": [
-            {
-              "namespace": "mechanic",
-              "key": {{ tag_processed_metafield_key | json }},
-              "value_type": "integer",
-              "value": "1"
-            }
-          ]
-        }
-      ]
-    {% endaction %}
+  {% assign customer_ids_to_mark = array %}
+  {% assign cursor = nil %}
 
-    {% action "shopify" %}
-      [
-        "create",
-        "metafield",
-        {
-          "namespace": "mechanic",
-          "key": {{ customers_scanned_metafield_key | json }},
-          "value_type": "integer",
-          "value": "1"
-        }
-      ]
-    {% endaction %}
-  {% else %}
-    {% assign customer_ids_to_mark = array %}
-    {% assign cursor = nil %}
-
-    {% for n in (0..100) %}
-      {% capture query %}
-        query {
-          customers(
-            first: 250
-            query: {{ "tag:" | append: approval_tag | json }}
-            after: {{ cursor | json }}
-          ) {
-            pageInfo {
-              hasNextPage
-            }
-            edges {
-              cursor
-              node {
-                legacyResourceId
-                metafield(
-                  namespace: "mechanic"
-                  key: {{ tag_processed_metafield_key | json }}
-                ) {
-                  value
-                }
+  {% for n in (0..100) %}
+    {% capture query %}
+      query {
+        customers(
+          first: 250
+          query: {{ approval_tag | json | prepend: "tag:" | json }}
+          after: {{ cursor | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+          }
+          edges {
+            cursor
+            node {
+              id
+              metafield(
+                namespace: "mechanic"
+                key: {{ tag_processed_metafield_key | json }}
+              ) {
+                value
               }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "customers": {
+              "pageInfo": {
+                "hasNextPage": false
+              },
+              "edges": [
+                {
+                  "node": {
+                    "id": "gid://shopify/Customer/1234567890",
+                    "metafield": null
+                  }
+                }
+              ]
             }
           }
         }
       {% endcapture %}
 
-      {% assign result = query | shopify %}
-      {% for edge in result.data.customers.edges %}
-        {% if edge.node.metafield %}
-          {% continue %}
-        {% endif %}
+      {% assign result = result_json | parse_json %}
+    {% endif %}
 
-        {% assign customer_ids_to_mark[customer_ids_to_mark.size] = edge.node.legacyResourceId %}
-      {% endfor %}
-
-      {% if result.data.customers.pageInfo.hasNextPage %}
-        {% assign cursor = result.data.customers.edges.last.cursor %}
-      {% else %}
-        {% break %}
+    {% for edge in result.data.customers.edges %}
+      {% if edge.node.metafield %}
+        {% continue %}
       {% endif %}
+
+      {% assign customer_ids_to_mark[customer_ids_to_mark.size] = edge.node.id %}
     {% endfor %}
 
-    {% for customer_id in customer_ids_to_mark %}
-      {% action "shopify" %}
-        [
-          "update",
-          ["customer", {{ customer_id | json }}],
-          {
-            "metafields": [
-              {
-                "namespace": "mechanic",
-                "key": {{ tag_processed_metafield_key | json }},
-                "value_type": "integer",
-                "value": "1"
-              }
-            ]
-          }
-        ]
-      {% endaction %}
-    {% endfor %}
+    {% if result.data.customers.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.customers.edges.last.cursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
 
+  {% for customer_id in customer_ids_to_mark %}
     {% action "shopify" %}
-      [
-        "create",
-        "metafield",
-        {
-          "namespace": "mechanic",
-          "key": {{ customers_scanned_metafield_key | json }},
-          "value_type": "integer",
-          "value": "1"
+      mutation {
+        customerUpdate(input: {
+          id: {{ customer_id | json }}
+          metafields: [
+            {
+              namespace: "mechanic"
+              key: {{ tag_processed_metafield_key | json }}
+              value: "1"
+              valueType: INTEGER
+            }
+          ]
+        }) {
+          userErrors {
+            field
+            message
+          }
         }
-      ]
+      }
     {% endaction %}
-  {% endif %}
+  {% endfor %}
+
+  {% action "shopify" %}
+    [
+      "create",
+      "metafield",
+      {
+        "namespace": "mechanic",
+        "key": {{ customers_scanned_metafield_key | json }},
+        "value_type": "integer",
+        "value": "1"
+      }
+    ]
+  {% endaction %}
 {% endif %}

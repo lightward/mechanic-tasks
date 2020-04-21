@@ -146,6 +146,7 @@
 *   [Email customers a unique discount code, two weeks after order fulfillment](./email-customers-a-unique-discount-code-two-weeks-after-order-fulfillment)
 *   [Email customers after purchasing a certain product](./product-order-email)
 *   [Email customers when created](./email-customers-when-created)
+*   [Email customers when tagged](./email-customers-when-tagged)
 *   [Email customers when their order is tagged](./email-customer-when-order-tagged)
 *   [Email someone specific based on a new order's customer tags](./email-someone-specific-based-on-a-new-orders-customer-tags)
 *   [Email someone when a certain product is purchased](./email-someone-when-certain-product-purchased)
