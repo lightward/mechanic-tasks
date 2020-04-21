@@ -17,7 +17,9 @@
 {% endif %}
 
 {% assign value = order.note_attributes[options.cart_attribute_name__required] %}
-{% if value != blank %}
+{% if value == blank %}
+  {% log message: "This order did not have the specified cart attribute - nothing to do.", attributes: order.note_attributes %}
+{% else %}
   {% assign order_tags = order.tags | split: ", " %}
   {% unless order_tags contains value %}
     {% action "shopify" %}
@@ -107,7 +109,7 @@
     {% endif %}
   {% endif %}
 
-  {% if customer_qualifies %}
+  {% if customer_qualifies and value != blank %}
     {% action "shopify" %}
       mutation {
         tagsAdd(
