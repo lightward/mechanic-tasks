@@ -132,7 +132,7 @@
     {% for parameter_name in parameter_names %}
       {% assign key = "tag_with_utm_" | append: parameter_name | append: "__boolean" %}
 
-      {% if options[key] == false %}
+      {% if options[key] == false or parameter_set[parameter_name] == blank %}
         {% continue %}
       {% elsif order.tags contains parameter_set[parameter_name] %}
         {% log message: "Order already has this parameter value as a tag", order_id: order.id, order_name: order.name, order_tags: order.tags, parameter_name: parameter_name, parameter_value: parameter_set[parameter_name] %}
