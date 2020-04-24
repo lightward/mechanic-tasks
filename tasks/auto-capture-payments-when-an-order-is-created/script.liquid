@@ -12,8 +12,9 @@
       transactions(first: 1, capturable: true) {
         id
         totalUnsettledSet {
-          shopMoney {
+          presentmentMoney {
             amount
+            currencyCode
           }
         }
       }
@@ -25,8 +26,9 @@
           node {
             requiresShipping
             discountedTotalSet {
-              shopMoney {
+              presentmentMoney {
                 amount
+                currencyCode
               }
             }
           }
@@ -59,8 +61,9 @@
             {
               "id": "gid://shopify/OrderTransaction/1234567890",
               "totalUnsettledSet": {
-                "shopMoney": {
-                  "amount": "200.0"
+                "presentmentMoney": {
+                  "amount": "200.0",
+                  "currencyCode": "CAD"
                 }
               }
             }
@@ -74,8 +77,9 @@
                 "node": {
                   "requiresShipping": true,
                   "discountedTotalSet": {
-                    "shopMoney": {
-                      "amount": "10.0"
+                    "presentmentMoney": {
+                      "amount": "10.0",
+                      "currencyCode": "CAD"
                     }
                   }
                 }
@@ -84,8 +88,9 @@
                 "node": {
                   "requiresShipping": false,
                   "discountedTotalSet": {
-                    "shopMoney": {
-                      "amount": "100.0"
+                    "presentmentMoney": {
+                      "amount": "100.0",
+                      "currencyCode": "CAD"
                     }
                   }
                 }
@@ -102,6 +107,8 @@
 
 {% assign orderNode = result.data.order %}
 {% assign capturableTransactionNode = orderNode.transactions.first %}
+
+{% log order: orderNode %}
 
 {% assign do_capture = false %}
 
@@ -122,7 +129,7 @@
 {% endif %}
 
 {% if do_capture %}
-  {% assign maximum_amount_to_capture = capturableTransactionNode.totalUnsettledSet.shopMoney.amount | times: 1 %}
+  {% assign maximum_amount_to_capture = capturableTransactionNode.totalUnsettledSet.presentmentMoney.amount | times: 1 %}
 
   {% if options.only_capture_for_line_items_that_do_not_require_shipping__boolean %}
     {% assign lineItemNodes_noShipping = orderNode.lineItems.edges | map: "node" | where: "requiresShipping", false %}
@@ -135,7 +142,7 @@
     {% else %}
       {% assign amount_to_capture = 0 %}
       {% for lineItemNode in lineItemNodes_noShipping %}
-        {% assign amount_to_capture = amount_to_capture | plus: lineItemNode.discountedTotalSet.shopMoney.amount %}
+        {% assign amount_to_capture = amount_to_capture | plus: lineItemNode.discountedTotalSet.presentmentMoney.amount %}
       {% endfor %}
 
       {% if amount_to_capture > maximum_amount_to_capture %}
@@ -153,6 +160,7 @@
           id: {{ orderNode.id | json }}
           parentTransactionId: {{ capturableTransactionNode.id | json }}
           amount: {{ amount_to_capture | json }}
+          currency: {{ capturableTransactionNode.totalUnsettledSet.presentmentMoney.currencyCode | json }}
         }
       ) {
         transaction {
