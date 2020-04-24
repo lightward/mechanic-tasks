@@ -93,6 +93,7 @@
 *   [Auto-tag orders that contain bundles](./auto-tag-orders-that-contain-bundles)
 *   [Auto-tag orders that do not have a certain tag](./auto-tag-orders-that-do-not-have-a-certain-tag)
 *   [Auto-tag orders using product tags](./auto-tag-orders-using-product-tags)
+*   [Auto-tag orders with UTM parameters](./auto-tag-orders-with-utm-parameters)
 *   [Auto-tag orders with chargeback or inquiry activity](./auto-tag-orders-with-chargeback-or-inquiry-activity)
 *   [Auto-tag orders with customer tags when new customer tags are tagged](./tag-orders-with-customer-tags-when-customer-is-tagged)
 *   [Auto-tag orders with mismatching billing and shipping addresses](./auto-tag-orders-with-mismatching-billing-and-shipping-addresses)
