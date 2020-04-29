@@ -1,6 +1,14 @@
 {% assign bundle_sku = options.bundle_product_sku__required %}
-{% assign component_skus = options.component_product_skus__array_required %}
-{% assign all_skus = component_skus | join: "|||" | prepend: "|||" | prepend: bundle_sku | split: "|||" %}
+{% assign component_skus_and_quantities = options.component_product_skus_and_quantities_per_bundle__keyval_number_required %}
+{% assign component_skus = array %}
+{% for keyval in component_skus_and_quantities %}
+  {% assign component_skus[component_skus.size] = keyval.first %}
+{% endfor %}
+{% assign all_skus = array %}
+{% assign all_skus[0] = bundle_sku %}
+{% assign all_skus = all_skus | concat: component_skus %}
+
+{% log bundle_sku: bundle_sku, component_skus_and_quantities: component_skus_and_quantities %}
 
 {% if component_skus.size > 249 %}
   {% error %}
@@ -10,7 +18,7 @@
 
 {% assign do_full_sync = false %}
 {% assign do_component_adjustment = false %}
-{% assign component_adjustment_quantity = nil %}
+{% assign component_adjustment_bundle_quantity = nil %}
 
 {% if event.topic == "mechanic/user/trigger" %}
   {% assign do_full_sync = true %}
@@ -35,7 +43,7 @@
   {% assign bundle_quantity = order.line_items | where: "sku", bundle_sku | map: "quantity" | sum %}
   {% if bundle_quantity != 0 %}
     {% assign do_component_adjustment = true %}
-    {% assign component_adjustment_quantity = bundle_quantity | times: -1 %}
+    {% assign component_adjustment_bundle_quantity = bundle_quantity | times: -1 %}
   {% endif %}
 {% endif %}
 
@@ -68,7 +76,7 @@
     {% endif %}
   {% endfor %}
 
-  {% assign component_adjustment_quantity = bundle_restock_quantity %}
+  {% assign component_adjustment_bundle_quantity = bundle_restock_quantity %}
 {% endif %}
 
 {% if event.topic contains "shopify/inventory_levels/" %}
@@ -199,10 +207,12 @@
   {% action "shopify" %}
     mutation {
       {% for variant in variants %}
+        {% assign variant_delta = component_adjustment_bundle_quantity | times: component_skus_and_quantities[variant.sku] %}
+
         inventoryAdjustQuantity{{ forloop.index }}: inventoryAdjustQuantity(
           input: {
             inventoryLevelId: {{ variant.inventoryItem.inventoryLevels.edges.first.node.id | json }}
-            availableDelta: {{ component_adjustment_quantity | json }}
+            availableDelta: {{ variant_delta | json }}
           }
         ) {
           inventoryLevel {
@@ -319,31 +329,39 @@
   {% endif %}
 
   {% assign minimum_inventory_variant = nil %}
+  {% assign minimum_inventory_variant_bundle_quantity = nil %}
   {% assign bundle_variant = nil %}
 
   {% for variant in variants %}
     {% if variant.sku == bundle_sku %}
       {% assign bundle_variant = variant %}
     {% elsif component_skus contains variant.sku %}
-      {% if minimum_inventory_variant == nil or minimum_inventory_variant.inventoryQuantity > variant.inventoryQuantity %}
+      {% assign variant_bundle_quantity = variant.inventoryQuantity | times: 1.0 | divided_by: component_skus_and_quantities[variant.sku] %}
+
+      {% if minimum_inventory_variant == nil or minimum_inventory_variant_bundle_quantity > variant_bundle_quantity %}
         {% assign minimum_inventory_variant = variant %}
+        {% assign minimum_inventory_variant_bundle_quantity = variant_bundle_quantity %}
       {% endif %}
     {% endif %}
   {% endfor %}
 
-  {% assign delta = minimum_inventory_variant.inventoryQuantity | minus: bundle_variant.inventoryQuantity %}
+  {% assign bundle_delta = minimum_inventory_variant_bundle_quantity | floor | minus: bundle_variant.inventoryQuantity %}
 
   {% if options.inventory_buffer_quantity__number != blank %}
-    {% assign delta = delta | minus: options.inventory_buffer_quantity__number %}
+    {% assign bundle_delta = bundle_delta | minus: options.inventory_buffer_quantity__number %}
   {% endif %}
 
-  {% if delta != 0 %}
+  {% log minimum_inventory_variant_sku: minimum_inventory_variant.sku, minimum_inventory_variant_quantity: minimum_inventory_variant.inventoryQuantity, minimum_inventory_variant_bundle_quantity: minimum_inventory_variant_bundle_quantity %}
+
+  {% if bundle_delta == 0 %}
+    {% log "Lowest quantity component SKU had an inventory that was appropriate for the bundle's current inventory. No change needed." %}
+  {% else %}
     {% action "shopify" %}
       mutation {
         inventoryAdjustQuantity(
           input: {
             inventoryLevelId: {{ bundle_variant.inventoryItem.inventoryLevels.edges.first.node.id | json }}
-            availableDelta: {{ delta | json }}
+            availableDelta: {{ bundle_delta | json }}
           }
         ) {
           inventoryLevel {
