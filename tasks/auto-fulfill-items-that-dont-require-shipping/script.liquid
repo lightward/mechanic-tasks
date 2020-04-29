@@ -1,3 +1,10 @@
+{% comment %}
+  Preferred option order:
+
+  {{ options.wait_until_any_other_shippable_items_are_fulfilled__boolean }}
+  {{ options.ignore_products_with_this_tag }}
+{% endcomment %}
+
 {% assign line_items_to_fulfill = array %}
 
 {% if event.preview %}
@@ -13,10 +20,18 @@
         {
           "id": 2345678901,
           "requires_shipping": false,
+          "fulfillment_status": null,
+          "product": {
+            "tags": {{ options.ignore_products_with_this_tag | json }}
+          }
+        },
+        {
+          "id": 3456789012,
+          "requires_shipping": true,
           "fulfillment_status": "fulfilled"
         },
         {
-          "id": 3456789023,
+          "id": 4567890123,
           "requires_shipping": true,
           "fulfillment_status": "fulfilled"
         }
@@ -29,6 +44,13 @@
 
 {% assign unfulfilled_line_items = array %}
 {% for line_item in order.line_items %}
+  {% if options.ignore_products_with_this_tag != blank %}
+    {% assign line_item_product_tags = line_item.product.tags | split: ", " %}
+    {% if line_item_product_tags contains options.ignore_products_with_this_tag %}
+      {% continue %}
+    {% endif %}
+  {% endif %}
+
   {% if line_item.fulfillment_status != "fulfilled" %}
     {% assign unfulfilled_line_items[unfulfilled_line_items.size] = line_item %}
   {% endif %}
