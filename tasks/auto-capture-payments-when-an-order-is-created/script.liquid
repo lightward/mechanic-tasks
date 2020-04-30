@@ -160,7 +160,7 @@
           id: {{ orderNode.id | json }}
           parentTransactionId: {{ capturableTransactionNode.id | json }}
           amount: {{ amount_to_capture | json }}
-          currency: {{ capturableTransactionNode.totalUnsettledSet.presentmentMoney.currencyCode | json }}
+          currency: {{ capturableTransactionNode.totalUnsettledSet.presentmentMoney.currencyCode }}
         }
       ) {
         transaction {
