@@ -58,9 +58,9 @@
 {% for order in orders %}
   {% if options.only_process_orders_having_this_tag != blank %}
     {% assign order_tags = order.tags | split: ", " %}
-    {% if order_tags contains options.only_process_orders_having_this_tag %}
+    {% unless order_tags contains options.only_process_orders_having_this_tag %}
       {% continue %}
-    {% endif %}
+    {% endunless %}
   {% endif %}
 
   {% assign processed_at_s = order.processed_at | default: order.created_at | date: "%s" | times: 1 %}
