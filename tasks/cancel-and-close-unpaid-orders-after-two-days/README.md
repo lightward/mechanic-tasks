@@ -8,9 +8,10 @@ Clear the clutter in your orders list, automatically! On a scheduled basis or on
 
 ```json
 {
-  "period_to_wait_before_checking_each_order__number_required": null,
+  "only_process_orders_having_this_tag": null,
+  "period_to_wait_before_checking_each_order__number_required": 1,
   "period_to_wait_is_in_hours__boolean": null,
-  "period_to_wait_is_in_days__boolean": null,
+  "period_to_wait_is_in_days__boolean": true,
   "tag_to_add_to_the_order": null,
   "void_payment_when_possible__boolean": null,
   "cancel_fulfillment_and_restock_to_default_location__boolean": null,

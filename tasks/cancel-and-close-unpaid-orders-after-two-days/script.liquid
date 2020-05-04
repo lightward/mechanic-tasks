@@ -1,6 +1,7 @@
 {% comment %}
   Preferred option order
 
+  {{ options.only_process_orders_having_this_tag }}
   {{ options.period_to_wait_before_checking_each_order__number_required }}
   {{ options.period_to_wait_is_in_hours__boolean }}
   {{ options.period_to_wait_is_in_days__boolean }}
@@ -19,6 +20,7 @@
         "name": "#1234",
         "admin_graphql_api_id": "gid://shopify/Order/1234567890",
         "processed_at": "1990-01-01",
+        "tags": "",
         "line_items": [
           {
             "id": 1234567890,
@@ -39,7 +41,7 @@
 {% endif %}
 
 {% if options.period_to_wait_before_checking_each_order__number_required <= 0 %}
-  {% error "period must be positive! :)" %}
+  {% error "Period must be positive! :)" %}
 {% elsif options.period_to_wait_is_in_hours__boolean == false and options.period_to_wait_is_in_days__boolean == false %}
   {% error "Choose either 'Period to wait is in hours' or 'Period to wait is in days'." %}
 {% elsif options.period_to_wait_is_in_hours__boolean and options.period_to_wait_is_in_days__boolean %}
@@ -54,6 +56,13 @@
 {% assign maximum_date_s = "now" | date: "%s" | minus: period_s %}
 
 {% for order in orders %}
+  {% if options.only_process_orders_having_this_tag != blank %}
+    {% assign order_tags = order.tags | split: ", " %}
+    {% if order_tags contains options.only_process_orders_having_this_tag %}
+      {% continue %}
+    {% endif %}
+  {% endif %}
+
   {% assign processed_at_s = order.processed_at | default: order.created_at | date: "%s" | times: 1 %}
 
   {% if processed_at_s > maximum_date_s %}
