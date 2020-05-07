@@ -20,7 +20,7 @@
         "name": "#1234",
         "admin_graphql_api_id": "gid://shopify/Order/1234567890",
         "processed_at": "1990-01-01",
-        "tags": "",
+        "tags": {{ options.only_process_orders_having_this_tag | json }},
         "line_items": [
           {
             "id": 1234567890,
