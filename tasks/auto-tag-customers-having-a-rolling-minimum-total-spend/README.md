@@ -9,8 +9,9 @@ Use this task to tag customers who reach a certain spending threshold, by scanni
 ```json
 {
   "minimum_total_spent__number_required": null,
-  "customer_tag__required": null,
-  "days_of_order_history_to_consider__number_required": 30
+  "customer_tag_to_apply__required": null,
+  "days_of_order_history_to_consider__number_required": 30,
+  "only_monitor_customers_having_this_tag": null
 }
 ```
 
