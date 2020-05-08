@@ -41,30 +41,10 @@
               {
                 "node": {
                   "id": "gid://shopify/ProductVariant/1234567890",
-                  "sku": "MEDIUM",
-                  "inventoryQuantity": {% if event.topic == "mechanic/user/trigger" %}5{% else %}3{% endif %},
-                  "inventoryItem": {
-                    "id": "gid://shopify/InventoryItem/1234567890"
-                  }
-                }
-              },
-              {
-                "node": {
-                  "id": "gid://shopify/ProductVariant/2345678901",
-                  "sku": "MEDIUM",
+                  "sku": {{ skus[0] | json }},
                   "inventoryQuantity": {% if event.topic == "mechanic/user/trigger" %}5{% else %}4{% endif %},
                   "inventoryItem": {
-                    "id": "gid://shopify/InventoryItem/2345678901"
-                  }
-                }
-              },
-              {
-                "node": {
-                  "id": "gid://shopify/ProductVariant/3456789012",
-                  "sku": "MEDIUM",
-                  "inventoryQuantity": {% if event.topic == "mechanic/user/trigger" %}5{% else %}5{% endif %},
-                  "inventoryItem": {
-                    "id": "gid://shopify/InventoryItem/3456789012"
+                    "id": "gid://shopify/InventoryItem/1234567890"
                   }
                 }
               }
@@ -94,6 +74,8 @@
     {% break %}
   {% endif %}
 {% endfor %}
+
+{% log variants_by_sku: variants_by_sku %}
 
 {% if event.topic == "mechanic/user/trigger" %}
   {% for pair in variants_by_sku %}
@@ -138,6 +120,8 @@
       {% assign deltas[variant.id] = variant.inventoryQuantity | minus: cached_inventory_quantity %}
       {% assign total_delta = total_delta | plus: deltas[variant.id] %}
     {% endfor %}
+
+    {% log sku: sku, total_delta: total_delta %}
 
     {% for variant in variants_by_sku[sku] %}
       {% assign delta_for_sync = total_delta | minus: deltas[variant.id] %}
