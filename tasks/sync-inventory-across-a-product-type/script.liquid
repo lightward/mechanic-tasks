@@ -108,13 +108,13 @@
 
   {% for product_type in product_types %}
     {% assign cache_key = "inventory_by_product_type:" | append: product_type | sha256 %}
-    {% assign starting_inventory = cache[cache_key] %}
+    {% assign inventory_old = cache[cache_key] %}
 
     {% if event.preview %}
-      {% assign starting_inventory = 30 %}
+      {% assign inventory_old = 30 %}
     {% endif %}
 
-    {% assign new_inventory = starting_inventory %}
+    {% assign variants = array %}
     {% assign cursor = nil %}
 
     {% assign variants = array %}
@@ -190,11 +190,6 @@
         {% assign inventory_query_result = inventory_query_result_json | parse_json %}
       {% endif %}
 
-      {% assign inventory_list = inventory_query_result.data.productVariants.edges | map: "node" | map: "inventoryQuantity" %}
-      {% assign inventory_total = inventory_list | sum %}
-      {% assign inventory_diff = starting_inventory | times: inventory_list.size | minus: inventory_total %}
-      {% assign new_inventory = new_inventory | minus: inventory_diff %}
-
       {% assign variants = inventory_query_result.data.productVariants.edges | map: "node" | concat: variants %}
 
       {% if inventory_query_result.data.productVariants.pageInfo.hasNextPage %}
@@ -205,17 +200,27 @@
       {% break %}
     {% endfor %}
 
-    {% if new_inventory == starting_inventory %}
-      {% log message: "No inventory adjustments needed", product_type: product_type %}
+    {% assign inventory_list = variants | map: "inventoryQuantity" %}
+    {% assign inventory_total_old = inventory_old | times: inventory_list.size %}
+    {% assign inventory_total_new = inventory_list | sum %}
+    {% assign inventory_total_diff = inventory_total_new | minus: inventory_total_old %}
+    {% assign inventory_new = inventory_old | plus: inventory_total_diff %}
+
+    {% log inventory_old: inventory_old, inventory_total_old: inventory_total_old, inventory_total_new: inventory_total_new, inventory_total_diff: inventory_total_diff, inventory_new: inventory_new, product_type: product_type, variants_count: variants.size, variants: variants %}
+
+    {% assign variants = inventory_query_result.data.productVariants.edges | map: "node" | concat: variants %}
+
+    {% if inventory_new == inventory_old %}
+      {% log message: "No inventory adjustments needed" %}
     {% else %}
-      {% action "cache", "set", cache_key, new_inventory %}
+      {% action "cache", "set", cache_key, inventory_new %}
 
       {% assign inventory_item_adjustments = array %}
 
       {% for variant in variants %}
         {% assign adjustment = hash %}
         {% assign adjustment["inventoryItemId"] = variant.inventoryItem.id %}
-        {% assign adjustment["availableDelta"] = new_inventory | minus: variant.inventoryQuantity %}
+        {% assign adjustment["availableDelta"] = inventory_new | minus: variant.inventoryQuantity %}
         {% assign index = inventory_item_adjustments.size %}
         {% assign inventory_item_adjustments[index] = adjustment %}
       {% endfor %}
