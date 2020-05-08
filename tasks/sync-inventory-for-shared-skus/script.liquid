@@ -47,6 +47,16 @@
                     "id": "gid://shopify/InventoryItem/1234567890"
                   }
                 }
+              },
+              {
+                "node": {
+                  "id": "gid://shopify/ProductVariant/1234567890",
+                  "sku": {{ skus[0] | json }},
+                  "inventoryQuantity": {% if event.topic == "mechanic/user/trigger" %}5{% else %}4{% endif %},
+                  "inventoryItem": {
+                    "id": "gid://shopify/InventoryItem/2345678901"
+                  }
+                }
               }
             ]
           }
