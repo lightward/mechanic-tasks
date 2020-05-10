@@ -8,12 +8,8 @@ Use this task to tag incoming orders with all the product tags in the order. Opt
 
 ```json
 {
-  "copy_these_tags__array": [
-
-  ],
-  "copy_tags_having_this_prefix": [
-
-  ]
+  "only_copy_these_tags__array": null,
+  "only_copy_tags_having_this_prefix": null
 }
 ```
 

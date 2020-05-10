@@ -1,44 +1,73 @@
-{% assign order_product_tags = order.line_items | map: "product" | map: "tags" | join: ", " %}
-{% assign order_tags_to_save = order.tags %}
-
-{% if options.copy_these_tags__array == blank and options.copy_tags_having_this_prefix == blank %}
-  {% assign order_tags_to_save = order.tags | add_tags: order_product_tags %}
-{% else %}
-  {% assign order_product_tags_array = order_product_tags | split: ", " | uniq %}
-
-  {% if options.copy_these_tags__array != blank %}
-    {% for order_product_tag in order_product_tags_array %}
-      {% if options.copy_these_tags__array contains order_product_tag %}
-        {% assign order_tags_to_save = order_tags_to_save | add_tag: order_product_tag %}
-      {% endif %}
-    {% endfor %}
-  {% endif %}
-
-  {% if options.copy_tags_having_this_prefix != blank %}
-    {% assign prefix_length = options.copy_tags_having_this_prefix.size %}
-    {% for order_product_tag in order_product_tags_array %}
-      {% assign order_product_tag_substr = order_product_tag | slice: 0, prefix_length %}
-      {% if order_product_tag_substr == options.copy_tags_having_this_prefix %}
-        {% assign order_tags_to_save = order_tags_to_save | add_tag: order_product_tag %}
-      {% endif %}
-    {% endfor %}
-  {% endif %}
-{% endif %}
-
-{% if event.preview or order_tags_to_save != order.tags %}
-  {
-    "action": {
-      "type": "shopify",
-      "options": [
-        "update",
-        [
-          "order",
-          {{ order.id | json }}
-        ],
+{% if event.preview %}
+  {% capture order_json %}
+    {
+      "admin_graphql_api_id": "gid://shopify/Order/12345",
+      "line_items": [
         {
-          "tags": {{ order_tags_to_save | json }}
+          "product": {
+            "tags": {{ options.only_copy_these_tags__array | join: ", " | default: "preorder" | json }}
+          }
+        },
+        {
+          "product": {
+            "tags": {{ options.only_copy_tags_having_this_prefix | default: "important" | append: "-order" | json }}
+          }
         }
       ]
     }
-  }
+  {% endcapture %}
+
+  {% assign order = order_json | parse_json %}
+{% endif %}
+
+{% assign order_product_tags = order.line_items | map: "product" | map: "tags" | join: ", " | split: ", " %}
+{% assign existing_order_tags = order.tags | split: ", " %}
+{% assign tags_to_add = array %}
+
+{% log order_product_tags: order_product_tags, existing_order_tags: existing_order_tags %}
+
+{% for tag in order_product_tags %}
+  {% if existing_order_tags contains tag %}
+    {% continue %}
+  {% endif %}
+
+  {% if options.only_copy_these_tags__array != blank %}
+    {% if options.only_copy_these_tags__array contains nil %}
+      {% error "'Only copy these tags' must not contain any blank items. If you don't want to use this option, remove its remaining items." %}
+    {% endif %}
+
+    {% unless options.only_copy_these_tags__array contains tag %}
+      {% continue %}
+    {% endunless %}
+  {% endif %}
+
+  {% if options.only_copy_tags_having_this_prefix != blank %}
+    {% assign prefix_length = options.only_copy_tags_having_this_prefix.size %}
+    {% assign tag_substr = tag | slice: 0, prefix_length %}
+    {% if tag_substr != options.only_copy_tags_having_this_prefix %}
+      {% continue %}
+    {% endif %}
+  {% endif %}
+
+  {% assign tags_to_add[tags_to_add.size] = tag %}
+{% endfor %}
+
+{% if event.preview and tags_to_add == empty %}
+  {% error "It looks like you have conflicting options configured. Please double-check your options, and try again. :)" %}
+{% endif %}
+
+{% if tags_to_add != empty %}
+  {% action "shopify" %}
+    mutation {
+      tagsAdd(
+        id: {{ order.admin_graphql_api_id | json }}
+        tags: {{ tags_to_add | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
 {% endif %}
