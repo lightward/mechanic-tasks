@@ -70,6 +70,7 @@
                 legacyResourceId
               }
               inventoryItem {
+                tracked
                 inventoryLevels(first: 50) {
                   edges {
                     node {
@@ -91,6 +92,10 @@
     {% assign result = query | shopify %}
 
     {% for variant_edge in result.data.productVariants.edges %}
+      {% if variant_edge.node.inventoryItem.tracked == false %}
+        {% continue %}
+      {% endif %}
+
       {% for inventoryLevel_edge in variant_edge.node.inventoryItem.inventoryLevels.edges %}
         {% if inventoryLevel_edge.node.available <= options.out_of_stock_quantity__number_required %}
           {% capture list_item %}
