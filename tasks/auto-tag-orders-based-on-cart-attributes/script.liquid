@@ -2,45 +2,44 @@
   Preferred order of options:
 
   {{ options.cart_attribute_to_monitor__required }}
-  {{ options.cart_attribute_values_and_tags_to_add__keyval_required }}
+  {{ options.cart_attribute_values_and_order_tags_to_add__keyval_required }}
 {% endcomment %}
 
 {% if event.preview %}
-  {
-    "action": {
-      "type": "shopify",
-      "options": [
-        "update",
-        [
-          "order",
-          1234567890
-        ],
-        {
-          "tags": {{ options.cart_attribute_values_and_tags_to_add__keyval_required.first.first | json }}
-        }
-      ]
-    }
-  }
-{% else %}
-  {% assign attribute_name = options.cart_attribute_to_monitor__required %}
-  {% assign attribute_value = order.note_attributes[attribute_name] %}
-  {% assign tag = options.cart_attribute_values_and_tags_to_add__keyval_required[attribute_value] %}
-
-  {% if tag != blank %}
+  {% capture order_json %}
     {
-      "action": {
-        "type": "shopify",
-        "options": [
-          "update",
-          [
-            "order",
-            {{ order.id | json }}
-          ],
-          {
-            "tags": {{ order.tags | add_tag: tag | json }}
-          }
-        ]
+      "admin_graphql_api_id": "gid://shopify/Order/12345",
+      "tags": "",
+      "note_attributes": {
+        {{ options.cart_attribute_to_monitor__required | json }}: {{ options.cart_attribute_values_and_order_tags_to_add__keyval_required.first.first | json }}
       }
     }
-  {% endif %}
+  {% endcapture %}
+
+  {% assign order = order_json | parse_json %}
+{% endif %}
+
+{% assign attribute_name = options.cart_attribute_to_monitor__required %}
+{% assign attribute_value = order.note_attributes[attribute_name] %}
+{% assign tag = options.cart_attribute_values_and_order_tags_to_add__keyval_required[attribute_value] %}
+{% assign order_tags = order.tags | split: ", " %}
+
+{% if tag == blank %}
+  {% log "Order does not qualify for a tag" %}
+{% elsif order_tags contains tag %}
+  {% log message: "Order is already tagged", tag: tag %}
+{% else %}
+  {% action "shopify" %}
+    mutation {
+      tagsAdd(
+        id: {{ order.admin_graphql_api_id | json }}
+        tags: {{ tag | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
 {% endif %}
