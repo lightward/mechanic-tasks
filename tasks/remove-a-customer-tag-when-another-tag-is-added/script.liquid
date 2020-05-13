@@ -12,7 +12,7 @@
   {% assign customer_qualifies = true %}
 {% endif %}
 
-{% assign customer_id = customer.reload.admin_graphql_api_id %}
+{% assign customer_id = customer.admin_graphql_api_id %}
 {% if event.preview %}
   {% assign customer_id = "gid://shopify/Customer/1234567890" %}
 {% endif %}
