@@ -143,6 +143,7 @@
 *   [Email a CSV export of orders](./email-a-csv-export-of-orders)
 *   [Email a CSV export of products](./email-a-csv-export-of-products)
 *   [Email a report of customers who haven't ordered in X days](./email-a-report-of-customers-who-havent-ordered-in-x-days)
+*   [Email a report of pick-up orders for the next x days](./email-a-report-of-pick-up-orders-for-the-next-x-days)
 *   [Email a summary of all products and quantities ordered](./email-a-summary-of-all-products-and-quantities-ordered)
 *   [Email all customers who made a purchase](./email-customers-who-purchased-product)
 *   [Email customer when their order is paid](./email-customer-when-order-paid)

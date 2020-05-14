@@ -1,0 +1,53 @@
+{% assign tag_filter = options.tagged_with__required %}
+{% assign date_tag_format = options.date_tag_format__required %}
+{% assign days_ahead = options.days_ahead__number_required %}
+
+{% assign seconds_per_day = 86400 %}
+{% assign valid_dates = array %}
+{% assign order_summary = hash %}
+
+{% for i in (1..days_ahead) %}
+  {% assign time_ahead = 0 | plus: seconds_per_day | times: i %}
+  {% capture max_date %}{{'now' | date: "%s" | plus: time_ahead | date: date_tag_format }}{% endcapture %}
+  {% assign valid_dates[valid_dates.size] = max_date %}
+  {% assign order_summary[max_date] = 0 %}
+{% endfor %}
+
+{% if event.preview %}
+  {% for tag_date in valid_dates %}
+    {% assign not_so_random_num = tag_date | date: "%d" | plus: not_so_random_num %}
+    {% assign order_summary[tag_date] = not_so_random_num %}
+  {% endfor %}
+{% else %}
+  {% for order in shop.orders.unshipped %}
+    {% assign order_tags = order.tags | split: ", " %}
+    {% if order_tags contains tag_filter %}
+       {% for tag_date in valid_dates %}
+          {% if order_tags contains tag_date %}
+              {% assign order_summary[tag_date] = order_summary[tag_date] | plus: 1 %}
+            {% continue %}
+          {% endif %}
+       {% endfor %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+{% capture email_body %}
+  Hi there,
+
+  There are your orders tagged with `{{ tag_filter }}` for the next {{ days_ahead }} days:
+  <ul>{% for tag_date in valid_dates %}<li>{{ tag_date | date: "%a, %b %d" }} - {{ order_summary[tag_date] }}</li>{% endfor %}</ul>
+
+  Thanks,
+  Mechanic, (for {{ shop.name }})
+{% endcapture %}
+
+{% action "email" %}
+  {
+    "to": {{ options.email_recipient__email_required | json }},
+    "subject": {{ options.email_subject__required | json }},
+    "body": {{ email_body | unindent | newline_to_br | json }},
+    "reply_to": {{ shop.customer_email | json }},
+    "from_display_name": {{ shop.name | json }}
+  }
+{% endaction %}
