@@ -75,7 +75,7 @@
                       "tags": []
                     },
                     "variant": {
-                      "inventoryQuantity": 0
+                      "inventoryQuantity": -1
                     }
                   }
                 }
@@ -91,7 +91,7 @@
 
   {% for line_item_edge in result.data.order.lineItems.edges %}
     {% assign variant = line_item_edge.node.variant %}
-    {% if variant and variant.inventoryQuantity <= 0 %}
+    {% if variant and variant.inventoryQuantity < 0 %}
       {% log %}{{ line_item_edge.node.name | append: " was purchased while at stock level " | append: variant.inventoryQuantity | json }}{% endlog %}
       {% assign out_of_stock_line_items[out_of_stock_line_items.size] = line_item_edge.node %}
     {% endif %}
