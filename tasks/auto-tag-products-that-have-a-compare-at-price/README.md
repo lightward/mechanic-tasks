@@ -10,7 +10,7 @@ This task will keep your sale tags in sync, without any manual work. Configure t
 {
   "tag_for_sale_products": "on-sale",
   "tag_for_all_other_products": "not-on-sale",
-  "sale_products_must_have_a_price_lower_than_the_compare_at_price__boolean": null
+  "sale_products_must_have_a_price_lower_than_the_compare_at_price__boolean": true
 }
 ```
 
