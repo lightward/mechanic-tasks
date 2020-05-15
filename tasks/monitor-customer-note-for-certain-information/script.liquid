@@ -51,33 +51,28 @@
       Mechanic (for {{ shop.name }})
     {% endcapture %}
 
-    {
-      "action": {
-        "type": "email",
-        "options": {
-          "to": {{ options.staff_notification_email_recipient__email | json }},
-          "subject": {{ email_subject | strip | json }},
-          "body": {{ email_body | unindent | strip | newline_to_br | json }},
-          "reply_to": {{ shop.customer_email | json }},
-          "from_display_name": {{ shop.name | json }}
+    {% action "email" %}
+      {
+        "to": {{ options.staff_notification_email_recipient__email | json }},
+        "subject": {{ email_subject | strip | json }},
+        "body": {{ email_body | unindent | strip | newline_to_br | json }},
+        "reply_to": {{ shop.customer_email | json }},
+        "from_display_name": {{ shop.name | json }}
+      }
+    {% endaction %}
+  {% endif %}
+
+  {% action "shopify" %}
+    mutation {
+      tagsAdd(
+        id: {{ customer.admin_graphql_api_id | default: "gid://shopify/Customer/1234567890" | json }}
+        tags: {{ options.customer_tag_to_apply__required | json }}
+      ) {
+        userErrors {
+          field
+          message
         }
       }
     }
-  {% endif %}
-
-  {
-    "action": {
-      "type": "shopify",
-      "options": [
-        "update",
-        [
-          "customer",
-          {{ customer.id | json }}
-        ],
-        {
-          "tags": {{ customer.tags | add_tag: options.customer_tag_to_apply__required | json }}
-        }
-      ]
-    }
-  }
+  {% endaction %}
 {% endif %}
