@@ -70,6 +70,7 @@
 *   [Auto-tag new orders by staff member](./auto-tag-new-orders-by-staff-member)
 *   [Auto-tag new orders using Liquid](./auto-tag-new-orders-using-liquid)
 *   [Auto-tag new orders using the customer's tags](./auto-tag-orders-using-the-customers-tags)
+*   [Auto-tag new orders with a value from the customer note](./auto-tag-new-orders-with-a-value-from-the-customer-note)
 *   [Auto-tag new orders with their fulfillment locations](./auto-tag-new-orders-with-their-fulfillment-locations)
 *   [Auto-tag new products by "back in stock" age](./auto-tag-new-products-by-back-in-stock-age)
 *   [Auto-tag new products by age](./auto-tag-new-products-by-age)
