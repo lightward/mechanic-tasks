@@ -8,6 +8,7 @@ This task looks up orders by their order number, adds the note of your choice to
 
 ```json
 {
+  "hours_to_wait__number_required": 12,
   "order_note_to_add__required": null
 }
 ```
@@ -16,13 +17,11 @@ This task looks up orders by their order number, adds the note of your choice to
 
 ```liquid
 mechanic/user/text
-user/orders/remove_note+12.hours
+user/orders/remove_note
 ```
 
 ## Documentation
 
-Enter one or more order numbers (one line apiece), and Mechanic will add the note you configure to the corresponding order, and remove it 12 hours later.
+Run this task manually, and enter one or more order numbers (one per line, making sure to use the exact order number - including symbols and prefixes/suffixes. Mechanic will add the note you configure to the corresponding order, and remove it 12 hours later.
 
 Mechanic will preserve any existing notes on file for these orders, appending the new note content to the end of the content already in place.
-
-Note: Mechanic will only look at authorized and paid orders from the last 60 days.
