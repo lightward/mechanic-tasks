@@ -208,8 +208,6 @@
 
     {% log inventory_old: inventory_old, inventory_total_old: inventory_total_old, inventory_total_new: inventory_total_new, inventory_total_diff: inventory_total_diff, inventory_new: inventory_new, product_type: product_type, variants_count: variants.size, variants: variants %}
 
-    {% assign variants = inventory_query_result.data.productVariants.edges | map: "node" | concat: variants %}
-
     {% if inventory_new == inventory_old %}
       {% log message: "No inventory adjustments needed" %}
     {% else %}
