@@ -1,8 +1,6 @@
 # Task index
 
 *   [Abandoned checkout emails](./abandoned-checkout-emails)
-*   [Accept a maximum number of orders per day](./accept-a-maximum-number-of-orders-per-day)
-*   [Accept a maximum number of orders per hour](./accept-a-maximum-number-of-orders-per-hour)
 *   [Activate a discount when ISS passes overhead](./activate-a-discount-when-iss-passes-overhead)
 *   [Add Locksmith passcodes to order notes](./add-locksmith-passcodes-to-order-notes)
 *   [Add all products to a certain sales channel](./add-all-products-to-a-certain-sales-channel)
@@ -13,7 +11,6 @@
 *   [Archive orders when fulfilled](./archive-orders-when-fulfilled)
 *   [Archive orders when tagged](./archive-orders-when-tagged)
 *   [Ask for reviews a week after order fulfillment](./ask-for-reviews-a-week-after-order-fulfillment)
-*   [Auto-add an order note for returning customers](./auto-add-an-order-note-for-returning-customers)
 *   [Auto-add phone numbers to unfulfilled orders, when the customer is updated](./auto-add-phone-numbers-to-unfulfilled-orders-when-the-customer-is-updated)
 *   [Auto-add products to a custom collection when tagged](./auto-add-products-to-a-custom-collection-when-tagged)
 *   [Auto-add the draft order ID to an order's attributes](./auto-add-the-draft-order-id-to-an-orders-attributes)

@@ -97,6 +97,8 @@
     {% endif %}
 
     {% if tag_to_add or tag_to_remove %}
+      {% log product: product %}
+
       {% action "shopify" %}
         mutation {
           {% if tag_to_add %}
