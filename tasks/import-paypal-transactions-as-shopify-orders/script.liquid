@@ -16,7 +16,7 @@
   an actual order.
 {% endcomment %}
 {% assign import_order = false %}
-{% assign allowed_txn_types = "cart,express_checkout,masspay,merch_pmt,mp_cancel,payout,pro_hosted,recurring_payment,send_money,subscr_payment,virtual_terminal,web_accept" | split: "," %}
+{% assign allowed_txn_types = "cart,express_checkout,masspay,merch_pmt,mp_cancel,payout,pro_hosted,recurring_payment,send_money,subscr_payment,virtual_terminal,web_accept,invoice_payment" | split: "," %}
 {% if event.data.payment_status == "Completed" and allowed_txn_types contains event.data.txn_type %}
   {% assign import_order = true %}
 {% endif %}
