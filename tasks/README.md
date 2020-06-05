@@ -248,3 +248,4 @@
 *   [Unpublish products that fall below a rolling sales threshold](./unpublish-products-that-fall-below-a-rolling-sales-threshold)
 *   [Unpublish products that have been out of stock for x days](./unpublish-products-that-have-been-out-of-stock-for-x-days)
 *   [Unpublish products when tagged](./unpublish-products-when-tagged)
+*   [Untag orders when paid](./untag-orders-when-paid)
