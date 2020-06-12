@@ -57,22 +57,24 @@
 
     {% assign collections[0]["collects"][forloop.index0] = collect %}
   {% endfor %}
-{% else %}
+{% elsif options.only_sort_these_collections__array != blank %}
   {% assign collections = array %}
 
   {% for some_collection in shop.collections %}
     {% assign some_collection_id_string = "" | append: some_collection.id %}
-    {% if options.collection_titles_or_ids__array_required contains some_collection_id_string or options.collection_titles_or_ids__array_required contains some_collection.title %}
+    {% if options.only_sort_these_collections__array contains some_collection_id_string or options.only_sort_these_collections__array contains some_collection.title %}
       {% assign collections[collections.size] = some_collection %}
     {% endif %}
   {% endfor %}
+{% else %}
+  {% assign collections = shop.collections %}
 {% endif %}
 
 {% for collection in collections %}
   {% if collection.sort_order != "manual" %}
-    {% action "echo" %}
-      {"error": {{ collection.title | json | prepend: " is not configured for manual sorting. Set this collection to be manually sorted, and try again." | json }}}
-    {% endaction %}
+    {% log %}
+      {{ collection.title | json | append: " is not configured for manual sorting. Set this collection to be manually sorted, and try again." | json }}
+    {% endlog %}
     {% continue %}
   {% endif %}
 
@@ -121,18 +123,21 @@
   {% endfor %}
 
   {% if moves != empty %}
-    {% action "shopify" %}
-      mutation {
-        collectionReorderProducts(
-          id: {{ collection.admin_graphql_api_id | json }}
-          moves: {{ moves | json | replace: '"id"', 'id' | replace: '"newPosition"', 'newPosition' }}
-        ) {
-          userErrors {
-            field
-            message
+    {% assign moves_in_groups = moves | in_groups_of: 100, fill_with: false %}
+    {% for move_group in moves_in_groups %}
+      {% action "shopify" %}
+        mutation {
+          collectionReorderProducts(
+            id: {{ collection.admin_graphql_api_id | json }}
+            moves: {{ move_group | graphql_arguments }}
+          ) {
+            userErrors {
+              field
+              message
+            }
           }
         }
-      }
-    {% endaction %}
+      {% endaction %}
+    {% endfor %}
   {% endif %}
 {% endfor %}
