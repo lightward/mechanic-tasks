@@ -11,6 +11,9 @@
   {% error "'Maximum daily orders' must be at least 1. :)" %}
 {% endif %}
 
+{% assign inventory_is_zeroed_cache_key = "inventory_is_zeroed:" | append: task.id %}
+{% assign inventory_is_zeroed = cache[inventory_is_zeroed_cache_key] | default: false %}
+
 {% if event.topic contains "shopify/orders" %}
   {% assign cursor = nil %}
   {% assign orders_today = 0 %}
@@ -71,9 +74,11 @@
     {% endif %}
   {% endfor %}
 
-  {% log orders_today_thus_far: orders_today %}
+  {% log orders_today_thus_far: orders_today, inventory_is_already_zeroed: inventory_is_zeroed %}
 
-  {% if orders_today == options.maximum_daily_orders__number_required %}
+  {% if orders_today >= options.maximum_daily_orders__number_required and inventory_is_zeroed == false %}
+    {% action "cache", "set", inventory_is_zeroed_cache_key, true %}
+
     {% assign cursor = nil %}
 
     {% for n in (0..100) %}
@@ -217,6 +222,8 @@
   {% endif %}
 
   {% if proceed %}
+    {% action "cache", "del", inventory_is_zeroed_cache_key %}
+
     {% assign day_in_s = 60 | times: 60 | times: 24 %}
     {% assign midnight = "now" | date: "%s" | minus: day_in_s | date: "%Y-%m-%dT00:00:00%z" %}
     {% assign midnight_s = midnight | date: "%s" %}
