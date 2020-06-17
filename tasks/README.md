@@ -2,6 +2,7 @@
 
 *   [Abandoned checkout emails](./abandoned-checkout-emails)
 *   [Accept a maximum number of orders per day](./accept-a-maximum-number-of-orders-per-day)
+*   [Accept a maximum number of orders per hour](./accept-a-maximum-number-of-orders-per-hour)
 *   [Activate a discount when ISS passes overhead](./activate-a-discount-when-iss-passes-overhead)
 *   [Add all products to a certain sales channel](./add-all-products-to-a-certain-sales-channel)
 *   [Add fulfillment tracking when an order is tagged](./add-fulfillment-tracking-when-an-order-is-tagged)
