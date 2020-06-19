@@ -138,6 +138,7 @@
 *   [Delete product metafields in bulk](./delete-product-metafields-in-bulk)
 *   [Delete the oldest x products from a specific collection](./delete-the-oldest-x-products-from-a-specific-collection)
 *   [Delete variants having a metafield date that has passed](./delete-variants-having-a-metafield-date-that-has-passed)
+*   [Demonstration: Fetch an external configuration file](./demonstration-fetch-an-external-configuration-file)
 *   [Demonstration: Performing action runs in sequence](./demonstration-performing-action-runs-in-sequence)
 *   [Demonstration: Web fonts in PDFs](./demonstration-web-fonts-in-pdfs)
 *   [Download and email a file to a customer, when purchased](./download-and-email-a-file-to-a-customer-when-purchased)
