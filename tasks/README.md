@@ -121,6 +121,7 @@
 *   [Backfill customer names from order addresses](./backfill-customer-names-from-order)
 *   [Bulk capture orders by order number](./bulk-capture-by-order-number)
 *   [Calculate total quantities purchased by SKU](./calculate-total-quantities-purchased-by-sku)
+*   [Cancel and close unpaid orders after x hours/days](./cancel-and-close-unpaid-orders-after-two-days)
 *   [Cancel fulfillments when an order is fully refunded](./cancel-fulfillments-when-an-order-is-fully-refunded)
 *   [Capture all authorized payments](./capture-all-authorized-payments)
 *   [Capture order payment upon fulfillment](./capture-order-payment-upon-fulfillment)

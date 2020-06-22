@@ -2,7 +2,7 @@
 
 * [Task script](./script.liquid)
 
-Clear the clutter in your orders list, automatically! On a scheduled basis or on-demand, this task scans for orders that are more than x days or hours old, and cancels and closes the order if its financial status is still marked "pending".
+Clear the clutter in your orders list, automatically! On a scheduled basis or on-demand, this task scans for orders that are more than x days or hours old, and cancels and closes/archives the order if its financial status is still marked "pending".
 
 ## Default options
 
@@ -34,7 +34,7 @@ mechanic/user/trigger
 
 ## Documentation
 
-This task scans for orders that are more than X days or hours old that have a financial status of "pending", and ensures that they are all closed and cancelled. Orders that are already closed will be cancelled, and orders that are already cancelled will be closed. Optionally, choose to add a tag to such orders, and Mechanic will ensure that all qualifying orders receive your chosen tag.
+This task scans for orders that are more than X days or hours old that have a financial status of "pending", and ensures that they are all closed/archived and cancelled. Orders that are already closed will be cancelled, and orders that are already cancelled will be closed. Optionally, choose to add a tag to such orders, and Mechanic will ensure that all qualifying orders receive your chosen tag.
 
 Run first using test mode, to ensure expected results before running without it.
 
