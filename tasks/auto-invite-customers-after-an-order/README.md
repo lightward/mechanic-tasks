@@ -24,4 +24,4 @@ shopify/orders/create
 
 ## Documentation
 
-(none)
+This task works by asking Shopify to send along an invitation email, using the subject and body that you configure here. There's no need to add in an invitation link yourself - Shopify takes care of that themselves.
