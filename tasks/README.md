@@ -61,6 +61,7 @@
 *   [Auto-tag fulfilled orders by carrier](./auto-tag-fulfilled-orders-by-carrier)
 *   [Auto-tag fulfilled orders with their carriers](./auto-tag-fulfilled-orders-with-their-carriers)
 *   [Auto-tag new customers](./auto-tag-new-customers)
+*   [Auto-tag new customers with the current date](./auto-tag-customers-with-the-current-date)
 *   [Auto-tag new draft orders](./auto-tag-new-draft-orders)
 *   [Auto-tag new online orders by web browser](./auto-tag-new-online-orders-by-web-browser)
 *   [Auto-tag new orders](./auto-tag-new-orders)
