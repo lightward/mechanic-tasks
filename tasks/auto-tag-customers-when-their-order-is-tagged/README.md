@@ -8,7 +8,9 @@ This task watches for order tags, and adds a corresponding tag to the customer w
 
 ```json
 {
-  "order_tags_and_customer_tags__keyval_required": null
+  "order_tags_and_customer_tags__keyval_required": {
+    "order-tag-to-watch-for": "corresponding-customer-tag-to-apply"
+  }
 }
 ```
 

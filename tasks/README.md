@@ -50,6 +50,7 @@
 *   [Auto-tag customers having a rolling minimum total spend](./auto-tag-customers-having-a-rolling-minimum-total-spend)
 *   [Auto-tag customers when another tag is added](./auto-tag-customers-when-another-tag-is-added)
 *   [Auto-tag customers when their order is paid](./auto-tag-customers-when-order-paid)
+*   [Auto-tag customers when their order is tagged](./auto-tag-customers-when-their-order-is-tagged)
 *   [Auto-tag customers when they purchase a matching product](./auto-tag-customers-upon-product-purchase)
 *   [Auto-tag customers who purchase an item on sale](./auto-tag-customers-who-purchase-an-item-on-sale)
 *   [Auto-tag customers with product tags from their order](./tag-customers-with-product-tags-from-their-order)
