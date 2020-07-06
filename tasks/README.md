@@ -203,6 +203,7 @@
 *   [Reissue single-use discount codes after order cancellation](./reissue-single-use-discount-codes-after-order-cancellation)
 *   [Remind customers after x days about unpaid orders](./remind-customers-after-x-days-about-unpaid-orders)
 *   [Remind customers that their order is on the way](./remind-customers-that-their-order-is-on-the-way)
+*   [Remove a customer tag when another tag is added](./remove-a-customer-tag-when-another-tag-is-added)
 *   [Reset inventory levels daily](./reset-inventory-levels-daily)
 *   [Reset inventory levels when they get too low](./reset-inventory-levels-when-they-get-too-low)
 *   [Reset negative inventory levels to zero in bulk](./reset-negative-inventory-levels-to-zero-in-bulk)
