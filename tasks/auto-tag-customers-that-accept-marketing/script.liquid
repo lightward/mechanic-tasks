@@ -1,0 +1,49 @@
+{% assign customers = array %}
+
+{% if event.preview %}
+  {% assign customer = hash %}
+  {% assign customer["admin_graphql_api_id"] = "gid://shopify/Customer/1234567890" %}
+  {% assign customer["accepts_marketing"] = true %}
+  {% assign customer["tags"] = "" %}
+  {% assign customers[0] = customer %}
+{% elsif event.topic contains "shopify/customers/" %}
+  {% assign customers[0] = customer %}
+{% else %}
+  {% assign customers = shop.customers %}
+{% endif %}
+
+{% for customer in customers %}
+  {% assign customer_tags = customer.tags | split: ", " %}
+
+  {% if customer.accepts_marketing %}
+    {% unless customer_tags contains options.customer_tag_to_add__required %}
+      {% action "shopify" %}
+        mutation {
+          tagsAdd(
+            id: {{ customer.admin_graphql_api_id | json }}
+            tags: {{ options.customer_tag_to_add__required | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endunless %}
+  {% elsif customer_tags contains options.customer_tag_to_add__required %}
+    {% action "shopify" %}
+      mutation {
+        tagsRemove(
+          id: {{ customer.admin_graphql_api_id | json }}
+          tags: {{ options.customer_tag_to_add__required | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}
