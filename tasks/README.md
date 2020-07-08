@@ -217,6 +217,7 @@
 *   [Send a follow-up email to customers after purchasing from a certain vendor](./send-a-follow-up-email-to-customers-after-purchasing-from-a-certain-vendor)
 *   [Send a message to Slack](./send-a-message-to-slack)
 *   [Send a new-order email to someone based on a cart attribute](./send-a-new-order-email-to-someone-based-on-a-cart-attribute)
+*   [Send a welcome email to new customers, in their language](./send-a-welcome-email-to-new-customers-in-their-language)
 *   [Send an SMS via Nexmo when a product is created](./send-an-sms-via-nexmo-when-a-product-is-created)
 *   [Send an email alert if a new collection has no orders after x days](./send-an-email-alert-if-a-new-collection-has-no-orders-after-x-days)
 *   [Send an email alert on fulfillment failure](./fulfillment-failure-email)
