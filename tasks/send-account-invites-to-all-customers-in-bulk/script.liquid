@@ -1,38 +1,31 @@
+{% assign customers = shop.customers %}
+
+{% if options.only_invite_customers_with_this_tag != blank %}
+  {% assign query = "tag:" | append: options.only_invite_customers_with_this_tag %}
+  {% assign customers = shop.customers.search[query] %}
+{% endif %}
+
 {% if event.preview %}
-  {
-    "action": {
-      "type": "email",
-      "options": {
-        "to": "customer@example.com",
-        "subject": {{ options.invitation_email_subject__required | strip | json }},
-        "body": {{ options.invitation_email_body__multiline_required | replace: "CUSTOMER_FIRST_NAME", "(customer first name)" | replace: "ACCOUNT_ACTIVATION_URL", "https://example.com/" | newline_to_br | json }},
-        "reply_to": {{ shop.customer_email | json }},
-        "from_display_name": {{ shop.name | json }}
-      }
-    }
-  }
-{% else %}
-  {% assign customers = shop.customers %}
-  {% if options.only_invite_customers_with_this_tag != blank %}
-    {% assign query = "tag:" | append: options.only_invite_customers_with_this_tag %}
-    {% assign customers = shop.customers.search[query] %}
+  {% assign customers = array %}
+  {% assign customers[0] = hash %}
+  {% assign customers[0]["id"] = 12345 %}
+{% endif %}
+
+{% for customer in customers %}
+  {% if customer.state == "enabled" %}
+    {% continue %}
   {% endif %}
 
-  {% for customer in customers %}
-    {% if customer.state != "enabled" %}
-      {% assign customer_first_name = customer.first_name | default: "there" %}
+  {% action "shopify" %}
+    [
+      "post",
+      "/admin/customers/{{ customer.id }}/send_invite.json",
       {
-        "action": {
-          "type": "email",
-          "options": {
-            "to": {{ customer.email | json }},
-            "subject": {{ options.invitation_email_subject__required | strip | json }},
-            "body": {{ options.invitation_email_body__multiline_required | replace: "CUSTOMER_FIRST_NAME", customer_first_name | replace: "ACCOUNT_ACTIVATION_URL", customer.account_activation_url | newline_to_br | json }},
-            "reply_to": {{ shop.customer_email | json }},
-            "from_display_name": {{ shop.name | json }}
-          }
+        "customer_invite": {
+          "subject": {{ options.custom_subject | json }},
+          "custom_message": {{ options.custom_message__multiline | json }}
         }
       }
-    {% endif %}
-  {% endfor %}
-{% endif %}
+    ]
+  {% endaction %}
+{% endfor %}

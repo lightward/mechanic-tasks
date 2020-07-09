@@ -8,9 +8,9 @@ Use this task to send out account invitations to all the customers you already h
 
 ```json
 {
-  "invitation_email_subject__required": "Activate your account at {{ shop.name }}",
-  "invitation_email_body__multiline_required": "Hi CUSTOMER_FIRST_NAME,\n\nJust one step left:\n\n<b><a href=\"ACCOUNT_ACTIVATION_URL\">Activate your account</a></b>\n\nThanks,\n{{ shop.name }}",
-  "only_invite_customers_with_this_tag": null
+  "only_invite_customers_with_this_tag": null,
+  "custom_subject": null,
+  "custom_message__multiline": null
 }
 ```
 
@@ -22,4 +22,4 @@ mechanic/user/trigger
 
 ## Documentation
 
-(none)
+This task sends the same Shopify-powered emails that are used when sending individual customer invitations ([see Shopify's documentation](https://help.shopify.com/en/manual/customers/customer-accounts#individual-invites)), and uses the same Shopify email template. A custom subject and message are not required, but will be included when specified.
