@@ -203,9 +203,9 @@
             title: {{ new_discount_code | json }}
             code: {{ new_discount_code | json }}
             {% if options.override_source_with_this_discount_validitity_period_in_days__number != blank %}
-              startsAt: {{ "now" | date: "%FT%TZ" | json }}
+              startsAt: {{ "now" | date: "%FT%TZ", tz: "UTC" | json }}
               {% assign interval = 86400 | times: options.override_source_with_this_discount_validitity_period_in_days__number %}
-              endsAt: {{ "now" | date: "%s" | plus: interval | date: "%FT%TZ" | json }}
+              endsAt: {{ "now" | date: "%s" | plus: interval | date: "%FT%TZ", tz: "UTC" | json }}
             {% else %}
               startsAt: {{ discountNode.startsAt | json }}
               endsAt: {{ discountNode.endsAt | json }}
