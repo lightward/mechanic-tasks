@@ -13,16 +13,12 @@
 {% assign lines_and_customers = hash %}
 
 {% assign scan_batch_size = bucket_size | times: 1.0 | divided_by: query_cost | divided_by: buffer_factor | round %}
-{% assign scan_batch_count = lines.size | times: 1.0 | divided_by: scan_batch_size | ceil %}
+{% assign scan_batches = lines | in_groups_of: scan_batch_size, fill_with: false %}
 
-{% for n in (1..scan_batch_count) %}
+{% for scan_batch in scan_batches %}
   {% assign batch_lines = array %}
-  {% assign start_index = scan_batch_size | times: forloop.index0 %}
-  {% assign stop_index = start_index | plus: scan_batch_size | minus: 1 %}
 
-  {% for m in (start_index..stop_index) %}
-    {% assign line = lines[m] | strip %}
-
+  {% for line in scan_batch %}
     {% if line == blank %}
       {% continue %}
     {% endif %}
@@ -38,8 +34,15 @@
       {% continue %}
     {% endunless %}
 
-    {% assign batch_lines[batch_lines.size] = line %}
+    {% assign email = parts[0] | strip %}
+    {% assign tag = parts[1] | strip %}
+
+    {% assign batch_lines[batch_lines.size] = email | append: ":" | append: tag %}
   {% endfor %}
+
+  {% if batch_lines == empty %}
+    {% continue %}
+  {% endif %}
 
   {% capture query %}
     query {
@@ -128,24 +131,12 @@
 
 {% if taggings != empty %}
   {% assign tagging_batch_size = bucket_size | times: 1.0 | divided_by: mutation_cost | divided_by: buffer_factor | round %}
-  {% assign tagging_batch_count = taggings.size | times: 1.0 | divided_by: tagging_batch_size | ceil %}
+  {% assign tagging_batches = taggings | in_groups_of: tagging_batch_size, fill_with: false %}
 
-  {% for n in (1..tagging_batch_count) %}
-    {% assign batch_taggings = array %}
-    {% assign start_index = tagging_batch_size  | times: forloop.index0 %}
-    {% assign stop_index = start_index | plus: tagging_batch_size | minus: 1 %}
-
-    {% for m in (start_index..stop_index) %}
-      {% if taggings[m] %}
-        {% assign batch_taggings[batch_taggings.size] = taggings[m] %}
-      {% endif %}
-    {% endfor %}
-
-    {% log batch_taggings: batch_taggings, start_index: start_index, stop_index: stop_index %}
-
+  {% for tagging_batch in tagging_batches %}
     {% action "shopify" %}
       mutation {
-        {% for tagging in taggings %}
+        {% for tagging in tagging_batch %}
           customer{{ forloop.index0 }}: tagsAdd({{ tagging | graphql_arguments }}) {
             userErrors {
               field
