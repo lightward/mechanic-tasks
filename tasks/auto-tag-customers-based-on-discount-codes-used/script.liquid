@@ -79,16 +79,14 @@
   {% endfor %}
   {% assign orders_query = query_parts | join: " " %}
 
-  {% log orders_query: orders_query %}
-
-  {% assign cursor = nil %}
+  {% assign orders_cursor = nil %}
   {% for n in (0..100) %}
     {% capture query %}
       query {
         orders(
           first: 250
           after: {{ orders_cursor | json }}
-          query: {{ query | json }}
+          query: {{ orders_query | json }}
         ) {
           pageInfo {
             hasNextPage
@@ -175,7 +173,7 @@
     {% endfor %}
 
     {% if result.data.orders.pageInfo.hasNextPage %}
-      {% assign cursor = result.data.orders.edges.last.cursor %}
+      {% assign orders_cursor = result.data.orders.edges.last.cursor %}
     {% else %}
       {% break %}
     {% endif %}
