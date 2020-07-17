@@ -44,6 +44,14 @@
         {% continue %}
       {% endif %}
 
+      {% comment %}
+        Avoid an infinite loop
+      {% endcomment %}
+      {% assign tag_that_may_be_removed_next = options.tags_to_watch_for_and_tags_to_add__keyval_required[tag] %}
+      {% if tag_to_watch_for == tag_that_may_be_removed_next %}
+        {% continue %}
+      {% endif %}
+
       {% assign tags_to_remove[tags_to_remove.size] = tag %}
     {% endfor %}
   {% endfor %}
