@@ -6,7 +6,7 @@
     query {
       products(
         first: 250
-        after: null
+        after: {{ cursor | json }}
         sortKey: TITLE
         query: {{ options.query | json }}
       ) {
