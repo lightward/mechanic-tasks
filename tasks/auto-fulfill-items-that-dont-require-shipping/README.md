@@ -18,6 +18,7 @@ Useful for digital products, memberships, or anything else that needs to be fulf
 ```liquid
 shopify/orders/paid
 {% if options.wait_until_any_other_shippable_items_are_fulfilled__boolean %}
+  shopify/orders/partially_fulfilled
   shopify/orders/fulfilled
 {% endif %}
 ```
