@@ -8,7 +8,8 @@ This task monitors order tags, and when a certain tag is added to an order, it a
 
 ```json
 {
-  "order_tag__required": null,
+  "order_tag_to_watch_for__required": null,
+  "ignore_if_this_order_tag_is_found": null,
   "notify_customer_on_fulfillment__boolean": false
 }
 ```
@@ -21,4 +22,4 @@ shopify/orders/updated
 
 ## Documentation
 
-This task auto-fulfills from the store's default location. (If you need to change this, contact support!)
+This task auto-fulfills from the store's default location.
