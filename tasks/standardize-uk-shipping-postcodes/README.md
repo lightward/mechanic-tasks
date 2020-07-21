@@ -1,4 +1,4 @@
-# Standardize UK shipping postcodes
+# Standardize UK postcodes
 
 * [Task script](./script.liquid)
 

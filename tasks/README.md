@@ -240,6 +240,7 @@
 *   [Send your customers reorder reminders](./send-your-customers-reorder-reminders)
 *   [Set a default tracking number for new fulfillments](./set-a-default-tracking-number-for-new-fulfillments)
 *   [Set product templates based on product tags](./set-product-templates-based-on-product-tags)
+*   [Standardize UK postcodes](./standardize-uk-shipping-postcodes)
 *   [Sync an inverse customer tag](./sync-an-inverse-customer-tag)
 *   [Sync inventory across a product type](./sync-inventory-across-a-product-type)
 *   [Sync inventory across product variants](./sync-inventory-across-product-variants)
