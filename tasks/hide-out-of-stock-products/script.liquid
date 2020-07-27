@@ -19,13 +19,15 @@
 {% for publication_edge in result.data.publications.edges %}
   {% if options.sales_channel_names__required_array contains publication_edge.node.name %}
     {% assign publication_ids[publication_ids.size] = publication_edge.node.id %}
+    {% assign publication_names[publication_names.size] = publication_edge.node.name %}
     {% assign publication_names_by_id[publication_edge.node.id] = publication_edge.node.name %}
   {% endif %}
 {% endfor %}
 
 {% unless event.preview %}
+  {% assign available_channels = result.data.publications.edges | map: "node" | map: "name" %}
   {% if publication_ids.size != options.sales_channel_names__required_array.size %}
-    {"error": "Expected to find {{ options.sales_channel_names__required_array.size }} sales channels; found {{ publication_ids.size }} instead. Double-check your sales channel names for accuracy!"}
+    {% error message: "Didn't find all configured sales channels. Please check the list of available channels, and compare it with the list of configured channels.", available_channels: available_channels, configured_channels: options.sales_channel_names__required_array %}
   {% endif %}
 {% endunless %}
 
