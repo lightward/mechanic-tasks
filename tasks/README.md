@@ -196,6 +196,7 @@
 *   [Notify a team when a tagged product is ordered](./notify-a-team-when-a-tagged-product-is-ordered)
 *   [Partially auto-capture payments as orders are fulfilled](./partially-auto-capture-payments-as-orders-are-fulfilled)
 *   [Publish a certain collection, daily](./publish-a-certain-collection-daily)
+*   [Publish back-in-stock products](./publish-back-in-stock-products)
 *   [Raise the price of a product after every sale](./raise-the-price-of-a-product-after-every-sale)
 *   [Receive a nightly out-of-stock report](./receive-a-nightly-out-of-stock-report)
 *   [Receive email alerts when inventory levels change](./receive-email-alerts-when-inventory-levels-change)
