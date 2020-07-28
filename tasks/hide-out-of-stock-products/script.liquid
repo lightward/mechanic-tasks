@@ -14,13 +14,11 @@
 {% assign result = query | shopify %}
 
 {% assign publication_ids = array %}
-{% assign publication_names = array %}
 {% assign publication_names_by_id = hash %}
 
 {% for publication_edge in result.data.publications.edges %}
   {% if options.sales_channel_names__required_array contains publication_edge.node.name %}
     {% assign publication_ids[publication_ids.size] = publication_edge.node.id %}
-    {% assign publication_names[publication_names.size] = publication_edge.node.name %}
     {% assign publication_names_by_id[publication_edge.node.id] = publication_edge.node.name %}
   {% endif %}
 {% endfor %}
