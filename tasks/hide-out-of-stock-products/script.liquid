@@ -14,6 +14,7 @@
 {% assign result = query | shopify %}
 
 {% assign publication_ids = array %}
+{% assign publication_names = array %}
 {% assign publication_names_by_id = hash %}
 
 {% for publication_edge in result.data.publications.edges %}
