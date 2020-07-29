@@ -32,9 +32,9 @@ This task auto-tags customers who have paid orders on file for products or produ
 
 Sample searches:
 
-* A specific SKU: search product variants for _sku:ABC123_
-* All products with a certain tag: search products for _tag:holiday_
-* All products with a certain type: search products for _product\_type:"Gift Card"_
-* A product with a certain title: search products for _title:"Short sleeve t-shirt"_
+* A specific SKU: search product variants for `sku:ABC123`
+* All products with a certain tag: search products for `tag:holiday`
+* All products with a certain type: search products for `product_type:"Gift Card"`
+* A product with a certain title: search products for `title:"Short sleeve t-shirt"`
 
 To ensure expected results, use this task with test mode enabled, before disabling test mode.
