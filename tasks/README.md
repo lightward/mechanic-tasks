@@ -169,6 +169,7 @@
 *   [Email the customer when tracking numbers are added to their order](./email-the-customer-when-tracking-numbers-are-added-to-their-order)
 *   [Email vendors when an order is tagged](./email-vendors-when-an-order-is-tagged)
 *   [Email vendors when an order shipping address changes](./email-vendors-when-an-order-shipping-address-changes)
+*   [Email vendors when their products are ordered](./email-vendors-when-their-products-are-ordered)
 *   [Email your customers after a quiet period of no orders](./email-your-customers-after-a-quiet-period-of-no-orders)
 *   [Export a CSV of order shipping addresses](./export-a-csv-of-order-shipping-addresses)
 *   [Flag orders that aren't fulfilled after several days](./flag-orders-that-arent-fulfilled-after-two-days)

@@ -1,19 +1,50 @@
 {% if event.topic contains "shopify/orders/" %}
   {% if event.preview %}
-    {% assign order_vendors = array %}
-    {% assign order_vendors[0] = options.vendors_and_email_addresses__keyval_required.first.first %}
-  {% else %}
-    {% assign order_vendors = order.line_items | map: "vendor" | uniq %}
+    {% capture order_json %}
+      {
+        "line_items": [
+          {
+            "id": 4776535457853,
+            "title": "Test line item",
+            "quantity": 5,
+            "sku": "ABC123",
+            "vendor": {{ options.vendors_and_email_addresses__keyval_required.first.first | json }},
+            "variant_title": "Test variant title"
+          }
+        ]
+      }
+    {% endcapture %}
+
+    {% assign order = order_json | parse_json %}
   {% endif %}
 
+  {% assign order_vendors = order.line_items | map: "vendor" | uniq %}
+
   {% for vendor in order_vendors %}
+    {% if vendor == blank %}
+      {% continue %}
+    {% endif %}
+
     {% assign vendor_email = options.vendors_and_email_addresses__keyval_required[vendor] %}
+
     {% if vendor_email == blank %}
-      {"log": {{ "No email address found for vendor " | append: vendor | json }}}
+      {% log message: "No email address found for vendor; skipping", vendor: vendor %}
       {% continue %}
     {% endif %}
 
     {% assign vendor_line_items = order.line_items | where: "vendor", vendor %}
+
+    {% assign order_data = order | json | parse_json %}
+    {% assign order_data["line_items"] = array %}
+
+    {% for line_item in vendor_line_items %}
+      {% comment %}
+        Augment the line item that we'll send with the email event, with any additional data your email needs.
+      {% endcomment %}
+      {% assign line_item_data = line_item | json | parse_json %}
+      {% assign line_item_data["variant_barcode"] = line_item.variant.barcode %}
+      {% assign order_data["line_items"][forloop.index0] = line_item_data %}
+    {% endfor %}
 
     {% action "event" %}
       {
@@ -22,7 +53,7 @@
         "data": {
           "vendor": {{ vendor | json }},
           "vendor_email": {{ vendor_email | json }},
-          "order": {{ order | json }}
+          "order": {{ order_data | json }}
         }
       }
     {% endaction %}
