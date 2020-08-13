@@ -1,3 +1,13 @@
+{% comment %}
+  Preferred option order:
+
+  {{ options.days_to_wait_before_emailing__number }}
+  {{ options.email_subject__required }}
+  {{ options.email_body__multiline_required }}
+  {{ options.pdf_attachment_filename__required }}
+  {{ options.pdf_html_template__code_multiline_required }}
+{% endcomment %}
+
 {% if event.preview %}
   {% capture order_json %}
     {

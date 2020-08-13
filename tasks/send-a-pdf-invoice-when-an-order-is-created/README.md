@@ -2,12 +2,13 @@
 
 * [Task script](./script.liquid)
 
-Automatically generate an invoice PDF, to be emailed to the address on file for the order. Useful for working with billing departments, or with anyone else who needs an order summary auto-emailed. :)
+Automatically generate an invoice PDF, to be emailed to the address on file for the order, if the order has not yet been paid. Useful for working with billing departments, or with anyone else who needs an order summary auto-emailed. :)
 
 ## Default options
 
 ```json
 {
+  "days_to_wait_before_emailing__number": null,
   "email_subject__required": "Attached: Invoice for order {{ order.name }}",
   "email_body__multiline_required": "Hello,\n\nThank you for your order! Please see the attached invoice for details and payment options.\n\nThanks,\n{{ shop.name }}",
   "pdf_attachment_filename__required": "invoice-{{ order.order_number }}.pdf",
@@ -18,11 +19,11 @@ Automatically generate an invoice PDF, to be emailed to the address on file for 
 ## Subscriptions
 
 ```liquid
-shopify/orders/create
+shopify/orders/create{% if options.days_to_wait_before_emailing__number %}+{{ options.days_to_wait_before_emailing__number }}.days{% endif %}
 ```
 
 ## Documentation
 
-This task automatically generates a PDF, based on the supplied HTML template. Configure to taste. To use a template from Order Printer, [see this guide](https://help.usemechanic.com/en/articles/3168408-migrating-templates-from-shopify-to-mechanic).
+This task automatically generates a PDF, based on the supplied HTML template. Configure to taste! To use a template from Order Printer, [see this guide](https://help.usemechanic.com/en/articles/3168408-migrating-templates-from-shopify-to-mechanic).
 
 No email will be sent if the order does not have an email on file, or if the order's financial status is not "pending".
