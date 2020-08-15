@@ -2,7 +2,7 @@
 
 * [Task script](./script.liquid)
 
-Does exactly as it says. :)
+Does exactly as it says. :) Optionally, use combinations of tags to require, and/or combinations of tags to add.
 
 ## Default options
 
@@ -22,4 +22,4 @@ shopify/customers/update
 
 ## Documentation
 
-Configure this task with customer tags to watch for on the left, and associated tags to add on the right. (Feel free to use a comma-delimited list on the right side, too.) This task will run whenever a customer is created or updated, tagging as configured.
+Configure this task with customer tags to watch for on the left, and associated tags to add on the right. (Feel free to use comma-delimited lists on either side of that mapping!) This task will run whenever a customer is created or updated, tagging as configured.
