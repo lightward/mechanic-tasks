@@ -9,6 +9,7 @@ Clear the clutter in your orders list, automatically! On a scheduled basis or on
 ```json
 {
   "only_process_orders_having_this_tag": null,
+  "ignore_orders_having_this_tag": null,
   "period_to_wait_before_checking_each_order__number_required": 1,
   "period_to_wait_is_in_hours__boolean": null,
   "period_to_wait_is_in_days__boolean": true,
