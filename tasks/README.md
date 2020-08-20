@@ -124,6 +124,7 @@
 *   [Auto-update inventory policy based on a "preorder" tag](./auto-update-inventory-policy-based-on-a-preorder-tag)
 *   [Auto-verify customer email addresses](./auto-verify-customer-email-addresses)
 *   [Automatically cancel high-risk orders](./automatically-cancel-high-risk-orders)
+*   [Automatically cancel orders with certain risk indicators](./automatically-cancel-orders-with-certain-risk-indicators)
 *   [Automatically publish and unpublish on a monthly cycle](./automatically-publish-and-unpublish-on-a-monthly-cycle)
 *   [Automatically send account invite to new customers](./automatically-send-account-invite-to-new-customers)
 *   [Backfill customer names from order addresses](./backfill-customer-names-from-order)
