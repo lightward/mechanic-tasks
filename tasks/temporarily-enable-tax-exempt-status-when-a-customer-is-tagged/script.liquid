@@ -3,13 +3,33 @@
 {% assign expiry_event_topic = "user/customers/expire_tax_exempt" %}
 
 {% if event.topic contains "shopify/customers/" %}
-  {% assign customer_qualifies = false %}
-  {% assign customer_tags = customer.tags | split: ", " %}
-  {% if customer_tags contains options.tax_exempt_tag__required and customer.metafields[metafield_namespace][metafield_key] == nil %}
-    {% assign customer_qualifies = true %}
+  {% if event.preview %}
+    {% capture customer_json %}
+      {
+        "admin_graphql_api_id": "gid://shopify/Customer/1234567890",
+        "tags": {{ options.tax_exempt_tag__required | json }},
+        "metafields": {
+          {{ metafield_namespace | json }}: {
+            {{ metafield_key | json }}: null
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign customer = customer_json | parse_json %}
   {% endif %}
 
-  {% if event.preview or customer_qualifies %}
+  {% assign customer_qualifies = false %}
+  {% assign customer_tags = customer.tags | split: ", " %}
+  {% if customer_tags contains options.tax_exempt_tag__required %}
+    {% if customer.metafields[metafield_namespace][metafield_key] != nil %}
+      {% log "Customer already has their metafield set - skipping" %}
+    {% else %}
+      {% assign customer_qualifies = true %}
+    {% endif %}
+  {% endif %}
+
+  {% if customer_qualifies %}
     {% assign expiry_interval_s = 60 | times: 60 | times: 24 | times: options.days_before_removing_tax_exempt_status__number_required %}
     {% assign expiry_time = "now" | date: "%s" | plus: expiry_interval_s | round %}
 
@@ -17,7 +37,7 @@
       {
         "topic": {{ expiry_event_topic | json }},
         "data": {
-          "customer_id": {{ customer.id | json }},
+          "customer_id": {{ customer.admin_graphql_api_id | json }},
           "customer_tag": {{ options.tax_exempt_tag__required | json }}
         },
         "run_at": {{ expiry_time | json }}
@@ -25,50 +45,112 @@
     {% endaction %}
 
     {% action "shopify" %}
-      [
-        "update",
-        ["customer", {{ customer.id | json }}],
-        {
-          "tax_exempt": true,
-          "metafields": [
-            {
-              "namespace": {{ metafield_namespace | json }},
-              "key": {{ metafield_key | json }},
-              "value_type": "integer",
-              "value": 1
+      mutation {
+        customerUpdate(
+          input: {
+            id: {{ customer.admin_graphql_api_id | json }}
+            taxExempt: true
+            metafields: [
+              {
+                namespace: {{ metafield_namespace | json }}
+                key: {{ metafield_key | json }}
+                valueType: INTEGER
+                value: "1"
+              }
+            ]
+          }
+        ) {
+          customer {
+            id
+            taxExempt
+            metafield(namespace: {{ metafield_namespace | json }}, key: {{ metafield_key | json }}) {
+              id
+              value
             }
-          ]
+          }
+          userErrors {
+            field
+            message
+          }
         }
-      ]
+      }
     {% endaction %}
   {% endif %}
 {% elsif event.topic == expiry_event_topic %}
-  {% assign customer = shop.customers[event.data.customer_id] %}
+  {% capture customer_query %}
+    query {
+      customer(id: {{ event.data.customer_id | json }}) {
+        id
+        tags
+        metafield(namespace: {{ metafield_namespace | json }}, key: {{ metafield_key | json }}) {
+          id
+          value
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign customer_result = customer_query | shopify %}
+
+  {% if event.preview %}
+    {% capture customer_result_json %}
+      {
+        "data": {
+          "customer": {
+            "id": "gid://shopify/Customer/1234567890",
+            "tags": [{{ options.tax_exempt_tag__required | json }}],
+            "metafield": {
+              "id": "gid://shopify/Metafield/1234567890",
+              "value": "1"
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign customer_result = customer_result_json | parse_json %}
+  {% endif %}
+
+  {% assign customer = customer_result.data.customer %}
+
   {% assign customer_qualifies = false %}
-  {% assign customer_tags = customer.tags | split: ", " %}
-  {% if customer_tags contains options.tax_exempt_tag__required and customer.metafields[metafield_namespace][metafield_key] != nil %}
+  {% if customer.tags contains options.tax_exempt_tag__required and customer.metafield.value != nil %}
     {% assign customer_qualifies = true %}
   {% endif %}
 
   {% if event.preview or customer_qualifies %}
     {% action "shopify" %}
-      [
-        "update",
-        ["customer", {{ customer.id | json }}],
-        {
-          "tax_exempt": false,
-          "tags": {{ customer.tags | remove_tag: options.tax_exempt_tag__required | json }}
-        }
-      ]
-    {% endaction %}
-
-    {% assign metafield = customer.metafields[metafield_namespace] | where: "key", metafield_key | first %}
-
-    {% capture metafield_query %}
       mutation {
+        customerUpdate(
+          input: {
+            id: {{ customer.id | json }}
+            taxExempt: false
+          }
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+
+        tagsRemove(
+          id: {{ customer.id | json }}
+          tags: {{ options.tax_exempt_tag__required | json }}
+        ) {
+          node {
+            ... on Customer {
+              tags
+            }
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+
         metafieldDelete(
           input: {
-            id: {{ metafield.admin_graphql_api_id | json }}
+            id: {{ customer_result.data.customer.metafield.id | json }}
           }
         ) {
           userErrors {
@@ -77,8 +159,6 @@
           }
         }
       }
-    {% endcapture %}
-
-    {% action "shopify" metafield_query %}
+    {% endaction %}
   {% endif %}
 {% endif %}

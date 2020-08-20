@@ -8,8 +8,8 @@ This task monitors customer tags, applying tax-exempt status when a certain tag 
 
 ```json
 {
-  "tax_exempt_tag__required": "tax-exempt",
-  "days_before_removing_tax_exempt_status__number_required": null
+  "tax_exempt_tag__required": "tax-exempt-for-30-days",
+  "days_before_removing_tax_exempt_status__number_required": 30
 }
 ```
 
