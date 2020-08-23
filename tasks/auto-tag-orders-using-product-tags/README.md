@@ -2,7 +2,7 @@
 
 * [Task script](./script.liquid)
 
-Use this task to tag incoming orders with all the product tags in the order. Optionally, specify a specific list of tags to be copied, and/or a certain tag prefix to watch for.
+Use this task to tag incoming orders with all the product tags in the order. Optionally, specify a specific list of tags to be copied, and/or a certain tag prefix to watch for. Can be run manually, to scan and tag historical orders.
 
 ## Default options
 
@@ -17,8 +17,12 @@ Use this task to tag incoming orders with all the product tags in the order. Opt
 
 ```liquid
 shopify/orders/create
+mechanic/user/trigger
+mechanic/shopify/bulk_operation
 ```
 
 ## Documentation
 
-(none)
+Use this task to tag incoming orders with all the product tags in the order. Optionally, specify a specific list of tags to be copied, and/or a certain tag prefix to watch for.
+
+Run this task manually to scan and tag all orders, in bulk.

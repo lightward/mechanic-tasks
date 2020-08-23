@@ -98,6 +98,7 @@
 *   [Auto-tag orders that contain an out of stock item](./auto-tag-orders-that-contain-an-out-of-stock-item)
 *   [Auto-tag orders that contain bundles](./auto-tag-orders-that-contain-bundles)
 *   [Auto-tag orders that do not have a certain tag](./auto-tag-orders-that-do-not-have-a-certain-tag)
+*   [Auto-tag orders using product tags](./auto-tag-orders-using-product-tags)
 *   [Auto-tag orders when another tag is added](./auto-tag-orders-when-another-tag-is-added)
 *   [Auto-tag orders with UTM parameters](./auto-tag-orders-with-utm-parameters)
 *   [Auto-tag orders with a cart attribute](./auto-tag-orders-with-a-cart-attribute)
