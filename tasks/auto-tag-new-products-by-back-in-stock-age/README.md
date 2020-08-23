@@ -39,4 +39,4 @@ Phase one runs in response to inventory level changes. When a change brings a pr
 
 Phase two occurs when you run this task manually, or when it is run daily or hourly. In this phase, the task scans every product in your Shopify account, and updates tags in bulk, according to the task's configuration and according to the recorded "back in stock" time for each product.
 
-Configure "Product tags and maximum age in days" with product tags on the left, and the maximum product age to consider on the right. For exampel, a product tag of "new-5" with a maximum age in days of "5" will be added to all products that were created/published within the last 5 days. Once a product ages beyond that threshold, this task will remove that tag during the next "phase two" run.
+Configure "Product tags and maximum age in days" with product tags on the left, and the maximum product age to consider on the right. For example, a product tag of "new-5" with a maximum age in days of "5" will be added to all products that were created/published within the last 5 days. Once a product ages beyond that threshold, this task will remove that tag during the next "phase two" run.
