@@ -26,6 +26,6 @@ mechanic/user/trigger
 
 ## Documentation
 
-**Important note:** After saving this task for the first time, click the "Run task" button. Mechanic will then scan your customers to find those who _already_ have the desired tag, and will make a note of them, so as to not email them in the future. (We require this to avoid suddenly sending a flood of emails to customers that were tagged before the Mechanic task was created.)
+**Important note:** After saving this task for the first time (and every time you change the tag to watch for), click the "Run task" button. Mechanic will then scan your customers to find those who _already_ have the desired tag, and will make a note of them, so as to not email them in the future. (We require this to avoid suddenly sending a flood of emails to customers that were tagged before the Mechanic task was created.)
 
 Enable the "Autotag customers after emailing" option to have Mechanic add "YOURTAGHERE-email-sent" to the customer's tags, when their email is sent out.
