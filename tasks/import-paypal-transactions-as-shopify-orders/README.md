@@ -8,8 +8,10 @@ Use this task when you want to record your external PayPal transactions as Shopi
 
 ```json
 {
-  "default_memo": "Your PayPal payment",
+  "only_import_these_transaction_types__array": null,
+  "only_import_completed_transactions__boolean": true,
   "send_receipt__boolean": null,
+  "default_memo": "Your PayPal payment",
   "order_requires_shipping__boolean": null,
   "mark_as_fulfilled__boolean": null,
   "send_fulfillment_receipt__boolean": null
