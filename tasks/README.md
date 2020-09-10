@@ -40,6 +40,7 @@
 *   [Auto-publish new products](./auto-publish-new-products)
 *   [Auto-publish products tagged with the current day](./auto-publish-products-tagged-with-the-current-day)
 *   [Auto-recurring draft orders](./auto-recurring-draft-orders)
+*   [Auto-remove a customer tag x days after it's added](./auto-remove-a-customer-tag-x-days-after-its-added)
 *   [Auto-tag a customer's first order](./auto-tag-a-customers-first-order)
 *   [Auto-tag cancelled orders](./auto-tag-cancelled-orders)
 *   [Auto-tag customers based on discount codes used](./auto-tag-customers-based-on-discount-codes-used)
