@@ -9,6 +9,7 @@ Use this task to monitor order tags, and notify staff, vendors, or any other int
 ```json
 {
   "tag_to_watch_for__required": "in-production",
+  "ignore_orders_that_are_older_than_this_task__boolean": true,
   "email_recipients__array_required": [
     "production+team@example.com",
     "support+team@example.com"
@@ -32,4 +33,4 @@ This task monitors incoming orders, and updates to existing orders, looking for 
 **Important notes**
 
 * This task also adds a _second_ tag to the order when the email is sent, as a flag to mark the order as having had that email sent. This helps Mechanic remember what orders should _not_ have an email sent.
-* To help out merchants who have lots of existing orders, this task doesn't watch orders that were created _before_ you add this task to your Mechanic account.
+* To help out merchants who have lots of existing orders, by default this task doesn't watch orders that were created _before_ you add this task to your Mechanic account.

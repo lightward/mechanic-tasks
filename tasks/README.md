@@ -235,6 +235,7 @@
 *   [Send an event to Klaviyo when a fulfillment is delayed](./send-an-event-to-klaviyo-when-a-fulfillment-is-delayed)
 *   [Send customers a reorder link X days after ordering](./send-customers-a-reorder-link-x-days-after-ordering)
 *   [Send email when an order comes in](./send-email-when-an-order-comes-in)
+*   [Send email when an order is tagged](./send-email-when-an-order-is-tagged)
 *   [Send follow-up emails after sending a draft order invoice](./send-follow-up-emails-after-sending-a-draft-order-invoice)
 *   [Send new customer signups to IFTTT](./send-new-customer-signups-to-ifttt)
 *   [Send recurring reminders about unpaid orders](./unpaid-order-reminders)

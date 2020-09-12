@@ -17,7 +17,9 @@
 {% assign order_qualifies = false %}
 {% assign order_created_at = order.created_at | date: "%s" %}
 
-{% if order_tags contains options.tag_to_watch_for__required and order_created_at >= task_created_at %}
+{% if options.ignore_orders_that_are_older_than_this_task__boolean and order_created_at < task_created_at %}
+  {% log "This order was created before this task was added to the store. Per the configured policy of this task, in order to avoid accidental emails for old and previously-tagged orders, this order will be ignored." %}
+{% elsif order_tags contains options.tag_to_watch_for__required %}
   {% unless order_tags contains email_sent_tag %}
     {% assign order_qualifies = true %}
   {% endunless %}
