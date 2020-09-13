@@ -15,6 +15,7 @@
 *   [Auto-add an order note for returning customers](./auto-add-an-order-note-for-returning-customers)
 *   [Auto-add default custom attributes to new orders](./auto-add-default-custom-attributes-to-new-orders)
 *   [Auto-add phone numbers to unfulfilled orders, when the customer is updated](./auto-add-phone-numbers-to-unfulfilled-orders-when-the-customer-is-updated)
+*   [Auto-add products to a custom collection when tagged](./auto-add-products-to-a-custom-collection-when-tagged)
 *   [Auto-add the draft order ID to an order's attributes](./auto-add-the-draft-order-id-to-an-orders-attributes)
 *   [Auto-archive orders after fulfillment](./auto-archive-orders-after-fulfillment)
 *   [Auto-cancel fulfillments when an order is tagged](./auto-cancel-fulfillments-when-an-order-is-tagged)

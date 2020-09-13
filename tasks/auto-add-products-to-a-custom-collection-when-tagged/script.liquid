@@ -22,7 +22,9 @@
 
   {% if product_tags_to_match contains product_tag_to_match %}
     {% if collection_ids contains collection_id_to_join %}
-      {"log": {{ "This product is already in collection " | append: collection_id_to_join | append: "; skipping" | json }}}
+      {% log %}
+        {{ "This product is already in collection " | append: collection_id_to_join | append: "; skipping" | json }}
+      {% endlog %}
     {% else %}
       {% assign collection_ids_to_join[collection_ids_to_join.size] = collection_id_to_join %}
     {% endif %}
@@ -38,9 +40,9 @@
     {% endif %}
 
     {% if collection_admin_graphql_api_id == nil %}
-      {% action "echo" %}
-        {"error": {{ collection_id_to_join | append: " did not resolve to an existing collection." | json }}}
-      {% endaction %}
+      {% error %}
+        {{ collection_id_to_join | append: " did not resolve to an existing collection." | json }}
+      {% enderror %}
     {% else %}
       {% action "shopify" %}
         mutation {
