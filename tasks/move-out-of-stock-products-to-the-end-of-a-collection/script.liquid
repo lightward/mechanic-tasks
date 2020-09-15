@@ -32,7 +32,7 @@
   {% for collection in collections %}
     {% if collection.sort_order != "manual" %}
       {% error %}
-        {{ collection.title | json | prepend: " is not configured for manual sorting. Set this collection to be manually sorted, and try again." | json }}
+        {{ collection.title | json | append: " is not configured for manual sorting. Set this collection to be manually sorted, and try again." | json }}
       {% enderror %}
       {% assign collections = array %}
     {% endif %}
