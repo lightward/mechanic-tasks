@@ -1,42 +1,41 @@
 {% if event.preview %}
-  {% assign customer_tags = options.only_copy_these_tags__array %}
-{% else %}
-  {% assign customer_tags = order.customer.tags | split: ", " %}
-  {% capture log_message %}The customer has these tags: {{ customer_tags | json }}{% endcapture %}
-  {"log": {{ log_message | json }}}
-{% endif %}
-
-{% if options.only_copy_these_tags__array == blank %}
-  {% assign tags_to_copy = customer_tags %}
-{% else %}
-  {% assign tags_to_copy = "" %}
-
-  {% assign whitelisted_tags = options.only_copy_these_tags__array %}
-
-  {% for whitelisted_tag in whitelisted_tags %}
-    {% if customer_tags contains whitelisted_tag %}
-      {% assign tags_to_copy = tags_to_copy | add_tag: whitelisted_tag %}
-    {% endif %}
-  {% endfor %}
-{% endif %}
-
-{% assign tags_to_save = order.tags | add_tags: tags_to_copy %}
-{% if tags_to_save == order.tags and event.preview != true %}
-  {"log": "The order already has all applicable tags from this customer, so there's nothing to update."}
-{% else %}
-  {
-    "action": {
-      "type": "shopify",
-      "options": [
-        "update",
-        [
-          "order",
-          {{ order.id | json }}
-        ],
-        {
-          "tags": {{ tags_to_save | json }}
-        }
-      ]
+  {% capture order_json %}
+    {
+      "admin_graphql_api_id": "gid://shopify/Order/1234567890",
+      "tags": "",
+      "customer": {
+        "tags": {{ options.only_copy_these_tags__array | join: ", " | default: "wholesale, approved" | json }}
+      }
     }
-  }
+  {% endcapture %}
+
+  {% assign order = order_json | parse_json %}
+{% endif %}
+
+{% assign customer_tags = order.customer.tags | split: ", " %}
+{% assign order_tags = order.tags | split: ", " %}
+{% assign tags_to_add = array %}
+
+{% for tag in customer_tags %}
+  {% if options.only_copy_these_tags__array == blank or options.only_copy_these_tags__array contains tag %}
+    {% unless order_tags contains tag %}
+      {% assign tags_to_add[tags_to_add.size] = tag %}
+    {% endunless %}
+  {% endif %}
+{% endfor %}
+
+{% if tags_to_add != empty %}
+  {% action "shopify" %}
+    mutation {
+      tagsAdd(
+        id: {{ order.admin_graphql_api_id | json }}
+        tags: {{ tags_to_add | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
 {% endif %}
