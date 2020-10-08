@@ -2,7 +2,7 @@
 
 * [Task script](./script.liquid)
 
-Use this this task to monitor for the addition of a new customer tag, and to schedule the customer to be untagged some number of days later. Useful for temporarily granting access to discounts, or other resources.
+Use this this task to monitor for the addition of a new customer tag, and to schedule the customer to be untagged some number of days later. Useful for granting temporary access to discounts, or other resources.
 
 ## Default options
 
