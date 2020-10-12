@@ -1,9 +1,9 @@
 {% if options.tag_prefix_when_in_stock == blank and options.tag_suffix_when_in_stock == blank %}
-  {"error": "Add either a prefix or suffix for the 'in stock' tag, to distinguish it from the 'out of stock' tag."}
+  {% error "Add either a prefix or suffix for the 'in stock' tag, to distinguish it from the 'out of stock' tag." %}
 {% endif %}
 
 {% if options.tag_prefix_when_out_of_stock == blank and options.tag_suffix_when_out_of_stock == blank %}
-  {"error": "Add either a prefix or suffix for the 'out of stock' tag, to distinguish it from the 'in stock' tag."}
+  {% error "Add either a prefix or suffix for the 'out of stock' tag, to distinguish it from the 'in stock' tag." %}
 {% endif %}
 
 {% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
@@ -61,38 +61,35 @@
   {% endaction %}
 {% elsif event.topic == "mechanic/shopify/bulk_operation" %}
   {% if event.preview %}
+    {% capture bulkOperation_objects_jsonl %}
+      {"__typename":"Product","id":"gid:\/\/shopify\/Product\/1234567890","tags":["In Stock_35822141538Yes","Brand_Animal","Colour_Black","Colour_Green","Colour_Purple","In Stock_Yes","not-sale"]}
+      {"__typename":"ProductVariant","id":"gid:\/\/shopify\/ProductVariant\/123567890","inventoryItem":{},"__parentId":"gid:\/\/shopify\/Product\/1234567890"}
+      {"__typename":"InventoryLevel","id":"gid:\/\/shopify\/InventoryLevel\/1234567890?inventory_item_id=1234567890","location":{"id":"gid:\/\/shopify\/Location\/1234567890"},"available":0,"__parentId":"gid:\/\/shopify\/ProductVariant\/123567890"}
+      {"__typename":"ProductVariant","id":"gid:\/\/shopify\/ProductVariant\/2345678901","inventoryItem":{},"__parentId":"gid:\/\/shopify\/Product\/1234567890"}
+      {"__typename":"InventoryLevel","id":"gid:\/\/shopify\/InventoryLevel\/1234567890?inventory_item_id=2345678901","location":{"id":"gid:\/\/shopify\/Location\/1234567890"},"available":0,"__parentId":"gid:\/\/shopify\/ProductVariant\/2345678901"}
+      {"__typename":"ProductVariant","id":"gid:\/\/shopify\/ProductVariant\/3456789012","inventoryItem":{},"__parentId":"gid:\/\/shopify\/Product\/1234567890"}
+      {"__typename":"InventoryLevel","id":"gid:\/\/shopify\/InventoryLevel\/1234567890?inventory_item_id=3456789012","location":{"id":"gid:\/\/shopify\/Location\/1234567890"},"available":1,"__parentId":"gid:\/\/shopify\/ProductVariant\/3456789012"}
+      {"__typename":"ProductVariant","id":"gid:\/\/shopify\/ProductVariant\/4567890123","inventoryItem":{},"__parentId":"gid:\/\/shopify\/Product\/1234567890"}
+      {"__typename":"InventoryLevel","id":"gid:\/\/shopify\/InventoryLevel\/1234567890?inventory_item_id=4567890123","location":{"id":"gid:\/\/shopify\/Location\/1234567890"},"available":0,"__parentId":"gid:\/\/shopify\/ProductVariant\/4567890123"}
+      {"__typename":"InventoryLevel","id":"gid:\/\/shopify\/InventoryLevel\/2345678901?inventory_item_id=4567890123","location":{"id":"gid:\/\/shopify\/Location\/2345678901"},"available":0,"__parentId":"gid:\/\/shopify\/ProductVariant\/31963081474146"}
+      {"__typename":"ProductVariant","id":"gid:\/\/shopify\/ProductVariant\/5678901234","inventoryItem":{},"__parentId":"gid:\/\/shopify\/Product\/1234567890"}
+      {"__typename":"InventoryLevel","id":"gid:\/\/shopify\/InventoryLevel\/1234567890?inventory_item_id=5678901234","location":{"id":"gid:\/\/shopify\/Location\/1234567890"},"available":0,"__parentId":"gid:\/\/shopify\/ProductVariant\/5678901234"}
+      {"__typename":"InventoryLevel","id":"gid:\/\/shopify\/InventoryLevel\/2345678901?inventory_item_id=5678901234","location":{"id":"gid:\/\/shopify\/Location\/2345678901"},"available":0,"__parentId":"gid:\/\/shopify\/ProductVariant\/5678901234"}
+    {% endcapture %}
+
     {% assign bulkOperation = hash %}
-    {% assign bulkOperation["objects"] = array %}
-
-    {% assign product = hash %}
-    {% assign product["__typename"] = "Product" %}
-    {% assign product["id"] = "gid://shopify/Product/1234567890" %}
-    {% assign product["tags"] = "" %}
-
-    {% assign variant = hash %}
-    {% assign variant["__typename"] = "Variant" %}
-    {% assign variant["__parent"] = product %}
-
-    {% assign inventory_level = hash %}
-    {% assign inventory_level["__typename"] = "InventoryLevel" %}
-    {% assign inventory_level["__parent"] = variant %}
-    {% assign inventory_level["available"] = 1 %}
-    {% assign inventory_level["location"] = hash %}
-    {% assign inventory_level["location"]["id"] = "gid://shopify/Location/1234567890" %}
-
-    {% assign bulkOperation["objects"][0] = product %}
-    {% assign bulkOperation["objects"][1] = variant %}
-    {% assign bulkOperation["objects"][2] = inventory_level %}
+    {% assign bulkOperation["objects"] = bulkOperation_objects_jsonl | parse_jsonl %}
   {% endif %}
 
   {% assign in_stock_by_product_id_and_location_id = hash %}
 
   {% assign inventory_levels = bulkOperation.objects | where: "__typename", "InventoryLevel" %}
   {% assign products = bulkOperation.objects | where: "__typename", "Product" %}
+  {% assign variants = bulkOperation.objects | where: "__typename", "ProductVariant" %}
 
   {% for inventory_level in inventory_levels %}
-    {% assign variant = inventory_level.__parent %}
-    {% assign product = variant.__parent %}
+    {% assign variant = variants | where: "id", inventory_level.__parentId | first %}
+    {% assign product = products | where: "id", variant.__parentId | first %}
     {% assign location = inventory_level.location %}
 
     {% if in_stock_by_product_id_and_location_id[product.id] == nil %}
@@ -107,6 +104,9 @@
   {% endfor %}
 
   {% for product in products %}
+    {% assign tags_to_add = array %}
+    {% assign tags_to_remove = array %}
+
     {% for keyval in in_stock_by_product_id_and_location_id[product.id] %}
       {% assign location_id = keyval[0] %}
       {% assign in_stock = keyval[1] %}
@@ -132,34 +132,42 @@
         {% assign tag_to_remove = nil %}
       {% endunless %}
 
-      {% if tag_to_add or tag_to_remove %}
-        {% action "shopify" %}
-          mutation {
-            {% if tag_to_add %}
-              tagsAdd(
-                id: {{ product.id | json }}
-                tags: {{ tag_to_add | json }}
-              ) {
-                userErrors {
-                  field
-                  message
-                }
-              }
-            {% endif %}
-            {% if tag_to_remove %}
-              tagsRemove(
-                id: {{ product.id | json }}
-                tags: {{ tag_to_remove | json }}
-              ) {
-                userErrors {
-                  field
-                  message
-                }
-              }
-            {% endif %}
-          }
-        {% endaction %}
+      {% if tag_to_add %}
+        {% assign tags_to_add[tags_to_add.size] = tag_to_add %}
+      {% endif %}
+
+      {% if tag_to_remove %}
+        {% assign tags_to_remove[tags_to_remove.size] = tag_to_remove %}
       {% endif %}
     {% endfor %}
+
+    {% if tags_to_add != empty or tags_to_remove != empty %}
+      {% action "shopify" %}
+        mutation {
+          {% if tags_to_add != empty %}
+            tagsAdd(
+              id: {{ product.id | json }}
+              tags: {{ tags_to_add | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          {% endif %}
+          {% if tags_to_remove != empty %}
+            tagsRemove(
+              id: {{ product.id | json }}
+              tags: {{ tags_to_remove | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          {% endif %}
+        }
+      {% endaction %}
+    {% endif %}
   {% endfor %}
 {% endif %}
