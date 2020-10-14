@@ -2,7 +2,7 @@
 
 * [Task script](./script.liquid)
 
-This task tags every new customer, and it's easy to update it to be more specific about who gets tagged – use that chat button in the corner, and we’ll help!
+This task tags every new customer, with the same configurable tag. :)
 
 ## Default options
 
