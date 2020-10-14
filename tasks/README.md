@@ -104,6 +104,7 @@
 *   [Auto-tag orders with UTM parameters](./auto-tag-orders-with-utm-parameters)
 *   [Auto-tag orders with a cart attribute](./auto-tag-orders-with-a-cart-attribute)
 *   [Auto-tag orders with chargeback or inquiry activity](./auto-tag-orders-with-chargeback-or-inquiry-activity)
+*   [Auto-tag orders with customer tags when new customer tags are added](./tag-orders-with-customer-tags-when-customer-is-tagged)
 *   [Auto-tag orders with mismatching billing and shipping addresses](./auto-tag-orders-with-mismatching-billing-and-shipping-addresses)
 *   [Auto-tag orders with product tags](./auto-tag-orders-with-product-tags)
 *   [Auto-tag orders with product vendors](./auto-tag-orders-with-product-vendors)

@@ -1,4 +1,4 @@
-# Auto-tag orders with customer tags when new customer tags are tagged
+# Auto-tag orders with customer tags when new customer tags are added
 
 * [Task script](./script.liquid)
 
