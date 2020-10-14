@@ -11,7 +11,8 @@ Improve your customer relationships without complicated your workflow - use this
   "tag_to_watch_for__required": "in-production",
   "email_subject__required": "Order {{ order.name }} is in production",
   "email_body__required_multiline": "Hi {{ order.customer.first_name | default: \"there\" }},\n\nYour order is in the shop! We'll be in touch when it's been shipped.\n\nThanks,\nThe team at {{ shop.name }}",
-  "ignore_orders_older_than_this_task__boolean": true
+  "ignore_orders_older_than_this_task__boolean": true,
+  "ignore_orders_having_this_tag": null
 }
 ```
 
