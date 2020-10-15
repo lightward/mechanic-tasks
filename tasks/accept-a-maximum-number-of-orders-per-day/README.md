@@ -37,5 +37,5 @@ Optionally, this task can restore inventory to its original levels at midnight t
 
 ### Important notes
 
-* ​This task only works for products that have inventory tracking enabled, which are configured to be unavailable when out of stock. This means that the "Track quantity" product option needs to be disabled, and the "Continue selling when out of stock" option needs to be disabled, for all products.
+* ​This task only works for products that have inventory tracking enabled, which are configured to be unavailable when out of stock. This means that the "Track quantity" product option needs to be enabled, and the "Continue selling when out of stock" option needs to be disabled, for all products.
 * **This task may be not behave as intended if you receive multiple orders per minute. We don't recommend using it for high-volume stores.**
