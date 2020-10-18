@@ -2,7 +2,7 @@
 
 * [Task script](./script.liquid)
 
-Follow up with your customers automatically, and establish the purchase -> earn-reviews -> attract-customers cycle. This task comes prefilled with a friendly email that gives the customer direct links to their purchases on your website – customize this email to taste.
+Follow up with your customers automatically, and establish the purchase -> earn-reviews -> attract-customers cycle. This task comes prefilled with a friendly, customizable email that gives the customer direct links to their purchases on your website, where they can leave a review using your existing review system.
 
 ## Default options
 
