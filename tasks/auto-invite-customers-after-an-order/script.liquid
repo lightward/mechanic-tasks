@@ -4,7 +4,7 @@
   {{ options.only_invite_if_the_customer_has_this_tag }}
   {{ options.only_invite_if_the_order_contains_a_product_with_this_tag }}
   {{ options.invitation_email_subject__required }}
-  {{ options.invitation_email_body__multiline_required }}
+  {{ options.invitation_email_custom_message__multiline }}
 {% endcomment %}
 
 {% assign customer_qualifies = true %}
@@ -54,7 +54,7 @@
       {
         "customer_invite": {
           "subject": {{ options.invitation_email_subject__required | json }},
-          "custom_message": {{ options.invitation_email_body__multiline_required | json }}
+          "custom_message": {{ options.invitation_email_custom_message__multiline | json }}
         }
       }
     ]
