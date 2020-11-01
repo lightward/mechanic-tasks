@@ -1,9 +1,0 @@
-{% action "http" %}
-  {
-    "method": "post",
-    "url": {{ options.slack_incoming_webhook_url__required | json }},
-    "body": {
-      "text": "hello, world!"
-    }
-  }
-{% endaction %}

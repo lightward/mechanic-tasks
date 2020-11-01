@@ -1,0 +1,46 @@
+{% if event.preview %}
+  {% assign order = hash %}
+  {% assign order["admin_graphql_api_id"] = "gid://shopify/Order/1234567890" %}
+  {% assign order["note_attributes"] = array %}
+  {% assign order["note_attributes"][0] = hash %}
+  {% assign order["note_attributes"][0]["name"] = "Existing attribute name" %}
+  {% assign order["note_attributes"][0]["value"] = "Existing attribute value" %}
+{% endif %}
+
+{% assign attributes = array %}
+
+{% for pair in options.default_order_attributes_to_add__keyval_required %}
+  {% assign attribute = hash %}
+  {% assign attribute["key"] = pair[0] %}
+  {% assign attribute["value"] = "" | append: pair[1] %}
+  {% assign attributes[attributes.size] = attribute %}
+{% endfor %}
+
+{% for note_attribute in order.note_attributes %}
+  {% assign attribute = hash %}
+  {% assign attribute["key"] = note_attribute.name %}
+  {% assign attribute["value"] = note_attribute.value %}
+  {% assign attributes[attributes.size] = attribute %}
+{% endfor %}
+
+{% action "shopify" %}
+  mutation {
+    orderUpdate(
+      input: {
+        id: {{ order.admin_graphql_api_id | json }}
+        customAttributes: {{ attributes | graphql_arguments }}
+      }
+    ) {
+      order {
+        customAttributes {
+          key
+          value
+        }
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+{% endaction %}

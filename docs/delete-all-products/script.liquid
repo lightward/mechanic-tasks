@@ -1,0 +1,67 @@
+{% assign product_ids_and_titles = hash %}
+
+{% assign cursor = nil %}
+{% for n in (0..100) %}
+  {% capture query %}
+    query {
+      products(
+        first: 250
+        after: {{ cursor | json }}
+        sortKey: TITLE
+        query: {{ options.query | json }}
+      ) {
+        pageInfo {
+          hasNextPage
+        }
+        edges {
+          cursor
+          node {
+            title
+            legacyResourceId
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% for product_edge in result.data.products.edges %}
+    {% assign product_ids_and_titles[product_edge.node.legacyResourceId] = product_edge.node.title %}
+  {% endfor %}
+
+  {% if result.data.products.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.products.edges.last.cursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% if event.preview %}
+  {% assign product_ids_and_titles = '{"1234567890": "Short Sleeve T-Shirt"}' | parse_json %}
+{% endif %}
+
+{% if options.test_mode__boolean and options.live_mode__boolean %}
+  {"error": "Please choose either test mode or live mode. (We use two separate checkboxes, as a safeguard.)"}
+{% elsif options.test_mode__boolean == false and options.live_mode__boolean == false %}
+  {"error": "Please choose either test mode or live mode. (We use two separate checkboxes, as a safeguard.)"}
+{% elsif options.test_mode__boolean %}
+  {% capture message %}
+    The test scan resulted in {{ product_ids_and_titles.size }} product(s).
+    {% for keyval in product_ids_and_titles %}
+      {{ forloop.index }}. {{ keyval[1] }} (https://{{ shop.domain }}/admin/products/{{ keyval[0] }})
+    {% endfor %}
+  {% endcapture %}
+  {% assign message = message | unindent | strip %}
+
+  {% action "echo" message %}
+{% elsif options.live_mode__boolean %}
+  {% for keyval in product_ids_and_titles %}
+    {% action "shopify" %}
+      [
+        "delete",
+        ["product", {{ keyval[0] | json }}]
+      ]
+    {% endaction %}
+  {% endfor %}
+{% endif %}

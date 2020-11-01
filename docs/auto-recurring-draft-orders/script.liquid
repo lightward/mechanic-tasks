@@ -1,0 +1,428 @@
+{% comment %}
+  Option order:
+
+  {{ options.draft_order_tag__required }}
+  {{ options.cycle_start_date__required }}
+  {{ options.number_of_days_in_cycle__number_required }}
+  {{ options.complete_the_order_after_creating__boolean }}
+  {{ options.complete_the_order_and_mark_as_paid_after_creating__boolean }}
+  {{ options.send_email_invoice_after_creating__boolean }}
+  {{ options.email_invoice_subject }}
+  {{ options.email_invoice_bcc__email_array }}
+  {{ options.email_invoice_custom_message__multiline }}
+{% endcomment %}
+
+{% if options.send_email_invoice_after_creating__boolean and options.complete_the_order_after_creating__boolean %}
+  {"error": "Choose either an email invoice or completing the order - not both. :)"}
+{% elsif options.send_email_invoice_after_creating__boolean and options.complete_the_order_and_mark_as_paid_after_creating__boolean %}
+  {"error": "Choose either an email invoice or completing the order - not both. :)"}
+{% endif %}
+
+{% if options.complete_the_order_after_creating__boolean or options.complete_the_order_and_mark_as_paid_after_creating__boolean %}
+  {% assign autocomplete = true %}
+{% endif %}
+
+{% assign cycle_start = options.cycle_start_date__required | date: "%s" %}
+{% if cycle_start == blank or cycle_start == options.cycle_start_date__required %}
+  {"error": {{ options.cycle_start_date__required | json | prepend: "Mechanic wasn't able to parse " | append: " - try another value." | json }}}
+{% endif %}
+
+{% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% assign run_qualifies = false %}
+
+  {% if event.preview %}
+    {% action "shopify" %}
+      mutation {
+        draftOrderCreate(
+          input: {
+            billingAddress: {
+              address1: "123 State St"
+              city: "Everyville"
+              company: "Widgets Inc"
+              country: "Estaria"
+              firstName: "Victor"
+              lastName: "Juarez"
+              province: "PK"
+              zip: "54321"
+            }
+            customerId: "gid://shopify/Customer/1234567890"
+            email: "customer@example.com"
+            lineItems: [
+              {
+                grams: 5
+                originalUnitPrice: "5.0"
+                quantity: 2
+                requiresShipping: false
+                sku: "123ABC"
+                taxable: true
+                title: "Widget, Our Best"
+              }
+            ]
+            tags: []
+            taxExempt: false
+            useCustomerDefaultAddress: false
+          }
+        ) {
+          draftOrder {
+            id
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% else %}
+    {% assign cycle_start_date = options.cycle_start_date__required %}
+    {% assign cycle_start_d    = cycle_start_date | date: "%s" | times: 1 | divided_by: 60 | divided_by: 60 | divided_by: 24 %}
+    {% assign now_d            = "now"            | date: "%s" | times: 1 | divided_by: 60 | divided_by: 60 | divided_by: 24 %}
+    {% assign day_gap          = now_d | minus: cycle_start_d | modulo: options.number_of_days_in_cycle__number_required %}
+
+    {% if day_gap == 0 %}
+      {% assign run_qualifies = true %}
+    {% else %}
+      {"log": {{ options.number_of_days_in_cycle__number_required | minus: day_gap | prepend: "Waiting another " | append: " day(s) for cycle to complete" | json }}}
+    {% endif %}
+  {% endif %}
+
+  {% if run_qualifies %}
+    {% for n in (0..1000) %}
+      {% capture query %}
+        query {
+          draftOrders(
+            first: 1
+            after: {{ cursor | json }}
+            query: {{ "tag:" | append: options.draft_order_tag__required | json }}
+            sortKey: NUMBER
+          ) {
+            pageInfo {
+              hasNextPage
+            }
+            edges {
+              cursor
+              node {
+                id
+                appliedDiscount {
+                  amountV2 {
+                    amount
+                    currencyCode
+                  }
+                  description
+                  title
+                  value
+                  valueType
+                }
+                billingAddress {
+                  address1
+                  address2
+                  city
+                  company
+                  country
+                  firstName
+                  lastName
+                  phone
+                  province
+                  zip
+                }
+                customer {
+                  id
+                }
+                customAttributes {
+                  key
+                  value
+                }
+                email
+                lineItems(first: 150) {
+                  edges {
+                    node {
+                      appliedDiscount {
+                        description
+                        title
+                        value
+                        valueType
+                        amountV2 {
+                          amount
+                          currencyCode
+                        }
+                      }
+                      customAttributes {
+                        key
+                        value
+                      }
+                      grams
+                      originalUnitPrice
+                      quantity
+                      sku
+                      taxable
+                      title
+                      variant {
+                        id
+                      }
+                      weight {
+                        unit
+                        value
+                      }
+                    }
+                  }
+                }
+                note2
+                shippingAddress {
+                  address1
+                  address2
+                  city
+                  company
+                  country
+                  firstName
+                  lastName
+                  phone
+                  province
+                  zip
+                }
+                shippingLine {
+                  title
+                  shippingRateHandle
+                  originalPriceSet {
+                    shopMoney {
+                      amount
+                      currencyCode
+                    }
+                  }
+                }
+                tags
+                taxExempt
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = query | shopify %}
+
+      {% for edge in result.data.draftOrders.edges %}
+        {% assign draftOrder = edge.node %}
+
+        {% action "shopify" %}
+          mutation {
+            draftOrderCreate(
+              input: {
+                {% if draftOrder.appliedDiscount %}
+                  appliedDiscount: {
+                    amount: {{ draftOrder.appliedDiscount.amountV2.amount | json }}
+                    description: {{ draftOrder.appliedDiscount.description | json }}
+                    title: {{ draftOrder.appliedDiscount.title | json }}
+                    value: {{ draftOrder.appliedDiscount.value | json }}
+                    valueType: {{ draftOrder.appliedDiscount.valueType }}
+                  }
+                {% endif %}
+                {% if draftOrder.billingAddress %}
+                  billingAddress: {
+                    address1: {{ draftOrder.billingAddress.address1 | json }}
+                    address2: {{ draftOrder.billingAddress.address2 | json }}
+                    city: {{ draftOrder.billingAddress.city | json }}
+                    company: {{ draftOrder.billingAddress.company | json }}
+                    country: {{ draftOrder.billingAddress.country | json }}
+                    firstName: {{ draftOrder.billingAddress.firstName | json }}
+                    lastName: {{ draftOrder.billingAddress.lastName | json }}
+                    phone: {{ draftOrder.billingAddress.phone | json }}
+                    province: {{ draftOrder.billingAddress.province | json }}
+                    zip: {{ draftOrder.billingAddress.zip | json }}
+                  }
+                {% endif %}
+                {% if draftOrder.customer %}
+                  customerId: {{ draftOrder.customer.id | json }}
+                {% endif %}
+                {% if draftOrder.customAttributes != empty %}
+                  customAttributes: [
+                    {% for customAttribute in draftOrder.customAttributes %}
+                      {
+                        key: {{ customAttribute.key | json }}
+                        value: {{ customAttribute.value | json }}
+                      }
+                    {% endfor %}
+                  ]
+                {% endif %}
+                {% if draftOrder.email %}
+                  email: {{ draftOrder.email | json }}
+                {% endif %}
+                lineItems: [
+                  {% for lineItem_edge in draftOrder.lineItems.edges %}
+                    {% assign lineItem = lineItem_edge.node %}
+                    {
+                      {% if lineItem.appliedDiscount %}
+                        appliedDiscount: {
+                          amount: {{ lineItem.appliedDiscount.amountV2.amount | json }}
+                          description: {{ lineItem.appliedDiscount.description | json }}
+                          title: {{ lineItem.appliedDiscount.title | json }}
+                          value: {{ lineItem.appliedDiscount.value | json }}
+                          valueType: {{ lineItem.appliedDiscount.valueType }}
+                        }
+                      {% endif %}
+                      {% if lineItem.customAttributes != empty %}
+                        customAttributes: [
+                          {% for customAttribute in lineItem.customAttributes %}
+                            {
+                              key: {{ customAttribute.key | json }}
+                              value: {{ customAttribute.value | json }}
+                            }
+                          {% endfor %}
+                        ]
+                      {% endif %}
+                      originalUnitPrice: {{ lineItem.originalUnitPrice | json }}
+                      quantity: {{ lineItem.quantity | json }}
+                      {% if lineItem.requiresShipping != nil %}
+                        requiresShipping: {{ lineItem.requiresShipping | json }}
+                      {% endif %}
+                      {% if lineItem.sku %}
+                        sku: {{ lineItem.sku | json }}
+                      {% endif %}
+                      taxable: {{ lineItem.taxable | json }}
+                      title: {{ lineItem.title | json }}
+                      {% if lineItem.variant %}
+                        variantId: {{ lineItem.variant.id | json }}
+                      {% endif %}
+                      {% if lineItem.weight and lineItem.weight.value != 0 %}
+                        weight: {
+                          value: {{ lineItem.weight.value | json }}
+                          unit: {{ lineItem.weight.unit }}
+                        }
+                      {% endif %}
+                    }
+                  {% endfor %}
+                ]
+                {% if options.send_email_invoice_after_creating__boolean or autocomplete %}
+                  metafields: [
+                    {
+                      namespace: "mechanic"
+                      key: {% if options.send_email_invoice_after_creating__boolean %}"autoinvoice"{% else %}"autocomplete"{% endif %}
+                      value: "yes"
+                      valueType: STRING
+                    }
+                  ]
+                {% endif %}
+                {% if draftOrder.note2 != blank %}
+                  note: {{ draftOrder.note2 | json }}
+                {% endif %}
+                {% if draftOrder.shippingAddress %}
+                  shippingAddress: {
+                    address1: {{ draftOrder.shippingAddress.address1 | json }}
+                    address2: {{ draftOrder.shippingAddress.address2 | json }}
+                    city: {{ draftOrder.shippingAddress.city | json }}
+                    company: {{ draftOrder.shippingAddress.company | json }}
+                    country: {{ draftOrder.shippingAddress.country | json }}
+                    firstName: {{ draftOrder.shippingAddress.firstName | json }}
+                    lastName: {{ draftOrder.shippingAddress.lastName | json }}
+                    phone: {{ draftOrder.shippingAddress.phone | json }}
+                    province: {{ draftOrder.shippingAddress.province | json }}
+                    zip: {{ draftOrder.shippingAddress.zip | json }}
+                  }
+                {% endif %}
+                {% if draftOrder.shippingLine %}
+                  shippingLine: {
+                    price: {{ draftOrder.shippingLine.originalPriceSet.shopMoney.amount | json }}
+                    shippingRateHandle: {{ draftOrder.shippingLine.shippingRateHandle | json }}
+                    title: {{ draftOrder.shippingLine.title | json }}
+                  }
+                {% endif %}
+                tags: {{ draftOrder.tags | remove_tag: options.draft_order_tag__required | json }}
+                taxExempt: {{ draftOrder.taxExempt | json }}
+                useCustomerDefaultAddress: false
+              }
+            ) {
+              draftOrder {
+                id
+              }
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+      {% endfor %}
+
+      {% if result.data.draftOrders.pageInfo.hasNextPage %}
+        {% assign cursor = result.data.draftOrders.edges.last.cursor %}
+      {% else %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+{% elsif event.topic == "shopify/draft_orders/create" and options.send_email_invoice_after_creating__boolean %}
+  {% capture query %}
+    query {
+      draftOrder(
+        id: {{ draft_order.admin_graphql_api_id | json }}
+      ) {
+        metafield(
+          namespace: "mechanic"
+          key: "autoinvoice"
+        ) {
+          value
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview or result.data.draftOrder.metafield %}
+    {% action "shopify" %}
+      mutation {
+        draftOrderInvoiceSend(
+          id: {{ draft_order.admin_graphql_api_id | json }}
+          email: {
+            {% if options.email_invoice_subject != blank %}
+              subject: {{ options.email_invoice_subject | json }}
+            {% endif %}
+            bcc: {{ options.email_invoice_bcc__email_array | json }}
+            customMessage: {{ options.email_invoice_custom_message__multiline | json }}
+          }
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% elsif event.topic == "shopify/draft_orders/create" and autocomplete %}
+  {% capture query %}
+    query {
+      draftOrder(
+        id: {{ draft_order.admin_graphql_api_id | json }}
+      ) {
+        metafield(
+          namespace: "mechanic"
+          key: "autocomplete"
+        ) {
+          value
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview or result.data.draftOrder.metafield %}
+    {% action "shopify" %}
+      mutation {
+        draftOrderComplete(
+          id: {{ draft_order.admin_graphql_api_id | json }}
+          paymentPending: {% if options.complete_the_order_and_mark_as_paid_after_creating__boolean %}false{% else %}true{% endif %}
+        ) {
+          draftOrder {
+            order {
+              id
+            }
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endif %}

@@ -1,0 +1,32 @@
+{% if event.preview %}
+  {% capture order_json %}
+    {
+      "line_items": [
+        {
+          "title": {{ options.required_line_item_title__required | json }}
+        }
+      ]
+    }
+  {% endcapture %}
+
+  {% assign order = order_json | parse_json %}
+{% endif %}
+
+{% assign line_item_titles = order.line_items | map: "title" %}
+
+{% if line_item_titles contains options.required_line_item_title__required %}
+  {% action "email" %}
+    {
+      "to": {{ order.email | json }},
+      "subject": {{ options.email_subject__required | json }},
+      "body": {{ options.email_body__required_multiline | newline_to_br | json }},
+      "reply_to": {{ shop.customer_email | json }},
+      "from_display_name": {{ shop.name | json }},
+      "attachments": {
+        {{ options.attachment_filename__required | json }}: {
+          "url": {{ options.attachment_url__required | json }}
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}

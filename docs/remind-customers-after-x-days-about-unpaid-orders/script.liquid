@@ -1,0 +1,36 @@
+{% unless event.preview %}
+  {% assign order = order.reload %}
+{% endunless %}
+
+{% assign order_qualifies = false %}
+{% if order.financial_status == "pending" and order.cancelled_at == blank %}
+  {% assign order_qualifies = true %}
+{% endif %}
+
+{% if event.preview or order_qualifies %}
+  {% action "email" %}
+    {
+      "to": {{ order.email | json }},
+      "reply_to": {{ shop.customer_email | json }},
+      "subject": {{ options.email_subject__required | json }},
+      "body": {{ options.email_body__multiline_required | strip | newline_to_br | json }},
+      "from_display_name": {{ shop.name | json }}
+    }
+  {% endaction %}
+
+  {% if options.tag_to_add_to_the_order != blank %}
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {% if event.preview %}"gid://shopify/Order/1234567890"{% else %}{{ order.admin_graphql_api_id | json }}{% endif %}
+          tags: {{ options.tag_to_add_to_the_order | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endif %}

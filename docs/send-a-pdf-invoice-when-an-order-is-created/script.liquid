@@ -1,0 +1,39 @@
+{% comment %}
+  Preferred option order:
+
+  {{ options.days_to_wait_before_emailing__number }}
+  {{ options.email_subject__required }}
+  {{ options.email_body__multiline_required }}
+  {{ options.pdf_attachment_filename__required }}
+  {{ options.pdf_html_template__code_multiline_required }}
+{% endcomment %}
+
+{% if event.preview %}
+  {% capture order_json %}
+    {
+      "email": "customer@example.com",
+      "financial_status": "pending"
+    }
+  {% endcapture %}
+
+  {% assign order = order_json | parse_json %}
+{% endif %}
+
+{% if order.email != blank and order.financial_status == "pending" %}
+  {% action "email" %}
+    {
+      "to": {{ order.email | json }},
+      "subject": {{ options.email_subject__required | strip | json }},
+      "body": {{ options.email_body__multiline_required | strip | newline_to_br | json }},
+      "reply_to": {{ shop.customer_email | json }},
+      "from_display_name": {{ shop.name | json }},
+      "attachments": {
+        {{ options.pdf_attachment_filename__required | json }}: {
+          "pdf": {
+            "html": {{ options.pdf_html_template__code_multiline_required | json }}
+          }
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}

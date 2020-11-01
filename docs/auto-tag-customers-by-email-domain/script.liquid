@@ -1,0 +1,111 @@
+{% for email_domain in options.customer_email_domains__required_array %}
+  {% if email_domain contains "@" %}
+    {% error "Do not include '@' symbols in email domains. Thanks!" %}
+  {% endif %}
+{% endfor %}
+
+{% assign customer_ids_to_tag = array %}
+
+{% if event.topic contains "shopify/customers/" %}
+  {% if event.preview %}
+    {% assign customer = hash %}
+    {% assign customer["admin_graphql_api_id"] = "gid://shopify/Customer/1234567890" %}
+    {% assign customer["email"] = "test@" | append: options.customer_email_domains__required_array.first %}
+  {% endif %}
+
+  {% assign customer_email_domain = customer.email | split: "@" | last | downcase %}
+  {% assign customer_tags = customer.tags | split: ", " %}
+
+  {% if options.customer_email_domains__required_array contains customer_email_domain %}
+    {% unless customer_tags contains options.customer_tag_to_apply__required %}
+      {% assign customer_ids_to_tag[customer_ids_to_tag.size] = customer.admin_graphql_api_id %}
+    {% endunless %}
+  {% endif %}
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% capture customers_query -%}
+    -tag:{{ options.customer_tag_to_apply__required | json }} AND ({{ options.customer_email_domains__required_array | join: " OR email:" | prepend: "email:" }})
+  {%- endcapture %}
+
+  {% assign cursor = nil %}
+
+  {% for n in (0..100) %}
+    {% capture query %}
+      query {
+        customers(
+          first: 250
+          query: {{ customers_query | json }}
+          after: {{ cursor | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+          }
+          edges {
+            cursor
+            node {
+              id
+              email
+              tags
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "customers": {
+              "edges": [
+                {
+                  "node": {
+                    "id": "gid://shopify/Customer/1234567890",
+                    "email": {{ "test@" | append: options.customer_email_domains__required_array.first | json }},
+                    "tags": []
+                  }
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% for customer_edge in result.data.customers.edges %}
+      {% assign customer = customer_edge.node %}
+      {% assign customer_email_domain = customer.email | split: "@" | last | downcase %}
+
+      {% if options.customer_email_domains__required_array contains customer_email_domain %}
+        {% unless customer.tags contains options.customer_tag_to_apply__required %}
+          {% assign customer_ids_to_tag[customer_ids_to_tag.size] = customer.id %}
+        {% endunless %}
+      {% endif %}
+    {% endfor %}
+
+    {% if result.data.customers.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.customers.edges.last.cursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+{% for id in customer_ids_to_tag %}
+  {% action "shopify" %}
+    mutation {
+      tagsAdd(
+        id: {{ id | json }}
+        tags: {{ options.customer_tag_to_apply__required | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endfor %}

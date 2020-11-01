@@ -1,0 +1,58 @@
+{% if event.preview %}
+  {% if options.delete_open_draft_orders__boolean or options.delete_draft_orders_that_have_invoices_sent__boolean or options.delete_completed_draft_orders__boolean %}
+    {
+      "action": {
+        "type": "shopify",
+        "options": [
+          "delete",
+          [
+            "draft_order",
+            1234567890
+          ]
+        ]
+      }
+    }
+  {% else %}
+    {"error": "Please choose at least one draft order status to delete. :)"}
+  {% endif %}
+{% else %}
+  {% assign maximum_created_at_s = nil %}
+  {% if options.minimum_draft_order_age_in_days__number != blank %}
+    {% assign minimum_draft_order_age_s = options.minimum_draft_order_age_in_days__number | times: 24 | times: 60 | times: 60 %}
+    {% assign maximum_created_at_s = "now" | date: "%s" | minus: minimum_draft_order_age_s %}
+  {% endif %}
+
+  {% assign statuses = "open,invoice_sent,completed" | split: "," %}
+
+  {% for status in statuses %}
+    {% if status == "open" and options.delete_open_draft_orders__boolean != true %}
+      {% continue %}
+    {% elsif status == "invoice_sent" and options.delete_draft_orders_that_have_invoices_sent__boolean != true %}
+      {% continue %}
+    {% elsif status == "completed" and options.delete_completed_draft_orders__boolean != true %}
+      {% continue %}
+    {% endif %}
+
+    {% for draft_order in shop.draft_orders[status] %}
+      {% if maximum_created_at_s != nil %}
+        {% assign draft_order_created_at_s = draft_order.created_at | date: "%s" | times: 1 %}
+        {% if draft_order_created_at_s > maximum_created_at_s %}
+          {% continue %}
+        {% endif %}
+      {% endif %}
+
+      {
+        "action": {
+          "type": "shopify",
+          "options": [
+            "delete",
+            [
+              "draft_order",
+              {{ draft_order.id | json }}
+            ]
+          ]
+        }
+      }
+    {% endfor %}
+  {% endfor %}
+{% endif %}

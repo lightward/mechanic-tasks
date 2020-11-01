@@ -1,0 +1,24 @@
+{% assign customer_tags = order.customer.tags | downcase | split: ", " %}
+
+{% assign email_recipients = array %}
+
+{% for keyval in options.customer_tags_and_assigned_email_recipients__keyval_required %}
+  {% assign assigned_tag = keyval[0] | downcase %}
+  {% assign assigned_email = keyval[1] %}
+
+  {% if customer_tags contains assigned_tag %}
+    {% assign email_recipients[email_recipients.size] = assigned_email %}
+  {% endif %}
+{% endfor %}
+
+{% if event.preview or email_recipients != empty %}
+  {% action "email" %}
+    {
+      "to": {{ email_recipients | join: ", " | json }},
+      "subject": {{ options.email_subject__required | json }},
+      "body": {{ options.email_body__required_multiline | newline_to_br | json }},
+      "reply_to": {{ shop.customer_email | json }},
+      "from_display_name": {{ shop.name | json }}
+    }
+  {% endaction %}
+{% endif %}

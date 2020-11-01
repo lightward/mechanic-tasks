@@ -1,0 +1,85 @@
+{% comment %}
+  Preferred option order:
+
+  {{ options.wait_until_any_other_shippable_items_are_fulfilled__boolean }}
+  {{ options.ignore_products_with_this_tag }}
+{% endcomment %}
+
+{% assign line_items_to_fulfill = array %}
+
+{% if event.preview %}
+  {% capture order_json %}
+    {
+      "id": 1234567890,
+      "line_items": [
+        {
+          "id": 1234567890,
+          "requires_shipping": false,
+          "fulfillment_status": null
+        },
+        {
+          "id": 2345678901,
+          "requires_shipping": false,
+          "fulfillment_status": null,
+          "product": {
+            "tags": {{ options.ignore_products_with_this_tag | json }}
+          }
+        },
+        {
+          "id": 3456789012,
+          "requires_shipping": true,
+          "fulfillment_status": "fulfilled"
+        },
+        {
+          "id": 4567890123,
+          "requires_shipping": true,
+          "fulfillment_status": "fulfilled"
+        }
+      ]
+    }
+  {% endcapture %}
+
+  {% assign order = order_json | parse_json %}
+{% endif %}
+
+{% assign unfulfilled_line_items = array %}
+{% for line_item in order.line_items %}
+  {% if options.ignore_products_with_this_tag != blank %}
+    {% assign line_item_product_tags = line_item.product.tags | split: ", " %}
+    {% if line_item_product_tags contains options.ignore_products_with_this_tag %}
+      {% continue %}
+    {% endif %}
+  {% endif %}
+
+  {% if line_item.fulfillment_status != "fulfilled" %}
+    {% assign unfulfilled_line_items[unfulfilled_line_items.size] = line_item %}
+  {% endif %}
+{% endfor %}
+
+{% assign unfulfilled_line_items_that_require_shipping = unfulfilled_line_items | where: "requires_shipping", true %}
+{% assign unfulfilled_line_items_that_do_not_require_shipping = unfulfilled_line_items | where: "requires_shipping", false %}
+
+{% if options.wait_until_any_other_shippable_items_are_fulfilled__boolean == false or unfulfilled_line_items_that_require_shipping == empty %}
+  {% for line_item in unfulfilled_line_items_that_do_not_require_shipping %}
+    {% assign fulfillment_line_item = hash %}
+    {% assign fulfillment_line_item["id"] = line_item.id %}
+    {% assign line_items_to_fulfill[line_items_to_fulfill.size] = fulfillment_line_item %}
+  {% endfor %}
+{% endif %}
+
+{% if line_items_to_fulfill != blank %}
+  {% action "shopify" %}
+    [
+      "post",
+      "/admin/orders/{{ order.id }}/fulfillments.json",
+      {
+        "fulfillment": {
+          "location_id": {{ shop.primary_location_id | json }},
+          "notify_customer": false,
+          "status": "success",
+          "line_items": {{ line_items_to_fulfill | json }}
+        }
+      }
+    ]
+  {% endaction %}
+{% endif %}

@@ -1,0 +1,23 @@
+{% if event.preview %}
+  {% assign order = '{"admin_graphql_api_id": "gid://shopify/Order/1234567890"}' | parse_json %}
+  {% assign order["shipping_address"] = hash %}
+  {% assign order["shipping_address"]["country_code"] = options.country_code__required %}
+{% endif %}
+
+{% if order.shipping_address.country_code == options.country_code__required %}
+
+  {% action "shopify" %}
+    mutation {
+      tagsAdd(
+        id: {{ order.admin_graphql_api_id | json }}
+        tags: {{ options.tag_to_apply__required | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+{% endif %}

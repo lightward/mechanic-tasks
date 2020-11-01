@@ -1,0 +1,67 @@
+{% assign metafield_key = fulfillment.id | append: options.required_product_id__number_required | append: task.id | sha256 | slice: 0, 30 %}
+
+{% if event.preview %}
+  {% assign fulfillment = hash %}
+  {% assign fulfillment["id"] = 1234567890 %}
+  {% assign fulfillment["status"] = "success" %}
+  {% assign fulfillment["order"] = hash %}
+  {% assign fulfillment["order"]["email"] = "customer@example.com" %}
+  {% assign fulfillment["order"]["metafields"] = hash %}
+  {% assign fulfillment["order"]["metafields"]["mechanic"] = hash %}
+  {% assign fulfillment["order"]["metafields"]["mechanic"][metafield_key] = nil %}
+  {% assign fulfillment["line_items"] = array %}
+  {% assign fulfillment["line_items"][0] = hash %}
+  {% assign fulfillment["line_items"][0]["product_id"] = options.required_product_id__number_required %}
+{% endif %}
+
+{% assign fulfillment_qualifies = false %}
+
+{% if fulfillment.status != "success" %}
+  {% log message: "This task only sends emails for successful fulfillments.", fulfillment_status: fulfillment.status %}
+{% else %}
+  {% assign fulfillment_product_ids = fulfillment.line_items | map: "product_id" %}
+  {% unless fulfillment_product_ids contains options.required_product_id__number_required %}
+    {% log message: "This fulfillment does not contain the configured product.", required_product_id: options.required_product_id__number_required %}
+  {% else %}
+    {% if fulfillment.order.email != blank %}
+      {% if fulfillment.order.metafields.mechanic[metafield_key] %}
+        {% log "This task already sent an email for this fulfillment and product." %}
+      {% else %}
+        {% assign fulfillment_qualifies = true %}
+      {% endif %}
+    {% endif %}
+  {% endunless %}
+{% endif %}
+
+{% if fulfillment_qualifies %}
+  {% action "email" %}
+    {
+      "to": {{ fulfillment.order.email | json }},
+      "subject": {{ options.email_subject__required | json }},
+      "body": {{ options.email_body__multiline_required | strip | newline_to_br | json }},
+      "reply_to": {{ shop.customer_email | json }},
+      "from_display_name": {{ shop.name | json }}
+    }
+  {% endaction %}
+
+  {% action "shopify" %}
+    [
+      "update",
+      [
+        "order",
+        {{ fulfillment.order_id | json }}
+      ],
+      {
+        "metafields": [
+          {
+            "namespace": "mechanic",
+            "key": {{ metafield_key | json }},
+            "value_type": "integer",
+            "value": "1",
+            "description": {{ "Mechanic sent an email for this fulfillment, for product " | append: options.required_product_id__number_required | append: ", in task " | append: task.id | json }}
+          }
+        ]
+      }
+    ]
+  {% endaction %}
+{% endif  %}

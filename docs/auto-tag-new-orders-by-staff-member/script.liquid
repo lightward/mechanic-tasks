@@ -1,0 +1,59 @@
+{% unless options.tag_orders__boolean or options.tag_draft_orders__boolean %}
+  {"error": "Choose at least one resource to auto-tag."}
+{% endunless %}
+
+{% if event.topic contains "shopify/orders/" %}
+  {% assign resource_id = order.admin_graphql_api_id | default: "gid://shopify/Order/1234567890" %}
+  {% assign connection = "order" %}
+{% elsif event.topic contains "shopify/draft_orders/" %}
+  {% assign resource_id = draft_order.admin_graphql_api_id | default: "gid://shopify/DraftOrder/1234567890" %}
+  {% assign connection = "draftOrder" %}
+{% endif %}
+
+{% capture query %}
+  query {
+    {{ connection }}(id: {{ resource_id | json }}) {
+      id
+      events(first: 250) {
+        edges {
+          node {
+            attributeToUser
+            message
+          }
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% assign placed_event = result.data.first.last.events.edges | map: "node" | where: "attributeToUser" | first %}
+{% assign name = placed_event.message | split: " created this " | first %}
+{% assign tag_to_add = options.staff_names_and_tags__keyval_required[name] %}
+
+{% if event.preview %}
+  {% assign name = options.staff_names_and_tags__keyval_required.first.first %}
+  {% assign tag_to_add = options.staff_names_and_tags__keyval_required.first.last %}
+{% endif %}
+
+{% if name == blank %}
+  {"log": "No staff member detected."}
+  {"log": {{ result.data.first.last | json }}}
+{% elsif tag_to_add == blank %}
+  {"log": {{ "No tag applicable for " | append: name | json }}}
+{% else %}
+  {% action "shopify" %}
+    mutation {
+      tagsAdd(
+        id: {{ resource_id | json }}
+        tags: {{ tag_to_add | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}

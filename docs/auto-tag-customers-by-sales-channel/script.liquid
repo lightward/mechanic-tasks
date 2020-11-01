@@ -1,0 +1,190 @@
+{% if event.topic contains "shopify/orders/" %}
+  {% capture query %}
+    query {
+      order(id: {{ order.admin_graphql_api_id | json }}) {
+        customer {
+          id
+          tags
+        }
+        publication {
+          name
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "order": {
+            "customer": {
+              "id": "gid://shopify/Customer/1234567890",
+              "tags": []
+            },
+            "publication": {
+              "name": {{ options.sales_channel_names_and_tags__keyval_required.first.first | json }}
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign publication_name = result.data.order.publication.name %}
+  {% assign tag_to_add = options.sales_channel_names_and_tags__keyval_required[publication_name] %}
+
+  {% if tag_to_add == blank %}
+    {% log message: "No tag found for this channel. Skipping.", publication_name: publication_name %}
+  {% elsif result.data.order.customer.tags contains tag_to_add %}
+    {% log message: "The customer already has the tag for this channel. Skipping.", publication_name: publication_name, tag_to_add: tag_to_add %}
+  {% elsif options.test_mode__boolean %}
+    {% action "echo" customer_id: result.data.order.customer.id, customer_publication_name: publication_name, customer_tag_to_add: tag_to_add %}
+  {% else %}
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {{ result.data.order.customer.id | json }}
+          tags: {{ tag_to_add | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% capture bulk_operation_query %}
+    query {
+      customers {
+        edges {
+          node {
+            __typename
+            id
+            tags
+            orders {
+              edges {
+                node {
+                  __typename
+                  publication {
+                    name
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture bulkOperation_json %}
+      {
+        "objects": [
+          {
+            "__typename": "Customer",
+            "id": "gid://shopify/Customer/1234567890",
+            "tags": []
+          },
+          {
+            "__typename": "Order",
+            "publication": {
+              "name": {{ options.sales_channel_names_and_tags__keyval_required.first.first | json }}
+            },
+            "__parentId": "gid://shopify/Customer/1234567890"
+          }
+        ]
+      }
+    {% endcapture %}
+
+    {% assign bulkOperation = bulkOperation_json | parse_json %}
+  {% endif %}
+
+  {% assign customers = bulkOperation.objects | where: "__typename", "Customer" %}
+  {% assign orders = bulkOperation.objects | where: "__typename", "Order" %}
+  {% assign publication_counts = hash %}
+
+  {% for order in orders %}
+    {% assign publication_name = order.publication.name %}
+
+    {% if publication_name == blank %}
+      {% assign publication_name = "(not placed via sales channel)" %}
+    {% endif %}
+
+    {% assign publication_counts[publication_name] = publication_counts[publication_name] | plus: 1 %}
+  {% endfor %}
+
+  {% log publication_counts: publication_counts %}
+
+  {% if options.test_mode__boolean %}
+    {% assign summaries = array %}
+  {% endif %}
+          
+  {% for customer in customers %}
+    {% assign customer_orders = orders | where: "__parentId", customer.id %}
+    {% assign customer_publication_names = customer_orders | map: "publication" | map: "name" | compact | uniq %}
+
+    {% assign tags_to_add = array %}
+    {% for name in customer_publication_names %}
+      {% assign tag = options.sales_channel_names_and_tags__keyval_required[name] %}
+
+      {% if tag == blank or customer.tags contains tag %}
+        {% continue %}
+      {% endif %}
+
+      {% assign tags_to_add[tags_to_add.size] = tag %}
+    {% endfor %}
+
+    {% if tags_to_add != empty %}
+      {% if options.test_mode__boolean %}
+        {% assign summary = hash %}
+        {% assign summary["customer_id"] = customer.id %}
+        {% assign summary["customer_publication_names"] = customer_publication_names %}
+        {% assign summary["customer_tags_to_add"] = tags_to_add %}
+        {% assign summaries[summaries.size] = summary %}
+      {% else %}
+        {% action "shopify" %}
+          mutation {
+            tagsAdd(
+              id: {{ customer.id | json }}
+              tags: {{ tags_to_add | uniq | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+
+  {% if options.test_mode__boolean %}
+    {% action "echo" summaries %}
+  {% endif %}
+{% endif %}

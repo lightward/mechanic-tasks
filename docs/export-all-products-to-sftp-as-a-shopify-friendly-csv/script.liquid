@@ -1,0 +1,391 @@
+{% comment %}
+  Preferred option order:
+
+  {{ options.only_export_products_matching_this_query }}
+  {{ options.run_every_x_hours__number }}
+  {{ options.sftp_host__required }}
+  {{ options.sftp_port__required_number }}
+  {{ options.sftp_user__required }}
+  {{ options.sftp_password__required }}
+  {{ options.sftp_upload_directory }}
+{% endcomment %}
+
+{% comment %}
+-- validate options
+{% endcomment %}
+{% if options.run_every_x_hours__number != blank %}
+  {% assign valid_hours = array %}
+  {% assign valid_hours[valid_hours.size] = 1 %}
+  {% assign valid_hours[valid_hours.size] = 2 %}
+  {% assign valid_hours[valid_hours.size] = 3 %}
+  {% assign valid_hours[valid_hours.size] = 4 %}
+  {% assign valid_hours[valid_hours.size] = 6 %}
+  {% assign valid_hours[valid_hours.size] = 12 %}
+  {% assign valid_hours[valid_hours.size] = 24 %}
+
+  {% unless valid_hours contains options.run_every_x_hours__number %}
+    {% error "If set, 'Run interval in hours' must be 1, 2, 3, 4, 6, 12, or 24." %}
+  {% endunless %}
+{% endif %}
+
+{% assign ok_to_run = false %}
+
+{% if event.topic == "mechanic/user/trigger" or event.topic == "mechanic/scheduler/daily" %}
+  {% assign ok_to_run = true %}
+
+{% elsif event.topic == "mechanic/scheduler/hourly" and options.run_every_x_hours__number != blank %}
+  {% assign hour_mod = "now" | date: "%H" | modulo: options.run_every_x_hours__number %}
+
+  {% if event.preview or hour_mod == 0 %}
+    {% assign ok_to_run = true %}
+
+  {% else %}
+    {% log message: "The current hour does not fall on the configured interval; skipping", hour_interval: options.run_every_x_hours__number, current_hour: hour_mod %}
+  {% endif %}
+{% endif %}
+
+{% if ok_to_run %}
+  {% capture bulk_operation_query %}
+    query {
+      products(reverse: true, query: {{ options.only_export_products_matching_this_query | json }}) {
+        edges {
+          node {
+            id
+            __typename
+            bodyHtml
+            handle
+            isGiftCard
+            onlineStoreUrl
+            options {
+              id
+              __typename
+              name
+              position
+              values
+            }
+            productType
+            seo {
+              description
+              title
+            }
+            tags
+            title
+            variants {
+              edges {
+                node {
+                  id
+                  __typename
+                  barcode
+                  compareAtPrice
+                  fulfillmentService {
+                    id
+                    __typename
+                    serviceName
+                  }
+                  image {
+                    id
+                    __typename
+                    altText
+                    originalSrc
+                  }
+                  inventoryItem {
+                    id
+                    __typename
+                    tracked
+                    unitCost {
+                      amount
+                    }
+                  }
+                  inventoryPolicy
+                  position
+                  price
+                  product {
+                    handle
+                  }
+                  requiresShipping
+                  selectedOptions {
+                    name
+                    value
+                  }
+                  sku
+                  taxable
+                  taxCode
+                  title
+                  weight
+                  weightUnit
+                }
+              }
+            }
+            vendor
+            images {
+              edges {
+                node {
+                  id
+                  __typename
+                  altText
+                  originalSrc
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture jsonl_string %}
+      {"id":"gid:\/\/shopify\/Product\/92223864844","__typename":"Product","bodyHtml":"\u003cp\u003e\u003cem\u003eThis is a demonstration store. You can purchase products like this from \u003ca href=\"https:\/\/www.purefixcycles.com\" target=\"_blank\"\u003ePure Fix Cycles\u003c\/a\u003e\u003c\/em\u003e\u003c\/p\u003e\u003cp\u003eA favorite of professional mechanics around the world! The 4mm 5mm 6mm Balldriver Y-Wrench allows for quick insertion into bolt heads from a wider variety of angles. This baby is made from heat treated Bondhus Protanium, so it will last a lifetime. Plus, it's made in the USA!\u003c\/p\u003e\n\u003cp\u003eHaving a balldriver allows you to tighten screws at up to a 25 degree angle!\u003c\/p\u003e\n\u003cp class=\"tertiary\"\u003eNote: Balldrivers are not intended for high torque situations.\u003c\/p\u003e","handle":"4mm-5mm-6mm-balldriver-y-wrench","isGiftCard":false,"onlineStoreUrl":null,"options":[{"id":"gid:\/\/shopify\/ProductOption\/141068402700","__typename":"ProductOption","name":"Title","position":1,"values":["Y-Wrench"]}],"productType":"Tools","seo":{"description":null,"title":null},"tags":["Accessories","Essential","Essentials","Safety Gear","Tool","Tools","Tools and Maintenance","Wrench"],"title":"4mm 5mm 6mm Balldriver Y-Wrench","vendor":"Park Tool"}
+      {"id":"gid:\/\/shopify\/ProductImage\/711168557068","__typename":"Image","altText":"Park Tool Wrench","originalSrc":"https:\/\/cdn.shopify.com\/s\/files\/1\/1186\/9366\/products\/balldriver.jpg?v=1513060358","__parentId":"gid:\/\/shopify\/Product\/92223864844"}
+      {"id":"gid:\/\/shopify\/ProductVariant\/971762401292","__typename":"ProductVariant","barcode":null,"compareAtPrice":null,"fulfillmentService":{"id":"gid:\/\/shopify\/FulfillmentService\/manual","__typename":"FulfillmentService","serviceName":"Manual"},"image":{"id":"gid:\/\/shopify\/ProductImage\/711168557068","__typename":"Image","altText":"Park Tool Wrench","originalSrc":"https:\/\/cdn.shopify.com\/s\/files\/1\/1186\/9366\/products\/balldriver.jpg?v=1513060358"},"inventoryItem":{"id":"gid:\/\/shopify\/InventoryItem\/981398028300","__typename":"InventoryItem","tracked":true,"unitCost":null},"inventoryPolicy":"DENY","position":1,"price":"9.99","product":{"handle":"4mm-5mm-6mm-balldriver-y-wrench"},"requiresShipping":true,"selectedOptions":[{"name":"Title","value":"Y-Wrench"}],"sku":"Tool - Park Balldriver 456","taxable":true,"taxCode":null,"title":"Y-Wrench","weight":0.2491,"weightUnit":"POUNDS","__parentId":"gid:\/\/shopify\/Product\/92223864844"}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = jsonl_string | parse_jsonl %}
+  {% endif %}
+
+  {% comment %}
+  -- csv required fields, in this order
+  {% endcomment %}
+
+  {% assign columns = "Handle,Title,Body (HTML),Vendor,Type,Tags,Published,Option1 Name,Option1 Value,Option2 Name,Option2 Value,Option3 Name,Option3 Value,Variant SKU,Variant Grams,Variant Inventory Tracker,Variant Inventory Policy,Variant Fulfillment Service,Variant Price,Variant Compare At Price,Variant Requires Shipping,Variant Taxable,Variant Barcode,Image Src,Image Position,Image Alt Text,Gift Card,SEO Title,SEO Description,Google Shopping / Google Product Category,Google Shopping / Gender,Google Shopping / Age Group,Google Shopping / MPN,Google Shopping / AdWords Grouping,Google Shopping / AdWords Labels,Google Shopping / Condition,Google Shopping / Custom Product,Google Shopping / Custom Label 0,Google Shopping / Custom Label 1,Google Shopping / Custom Label 2,Google Shopping / Custom Label 3,Google Shopping / Custom Label 4,Variant Image,Variant Weight Unit,Variant Tax Code,Cost per item" | split: "," %}
+
+  {% comment %}
+  -- setup 2d array required by csv filter, and add the columns as a header row
+  {% endcomment %}
+
+  {% assign rows = array %}
+  {% assign rows[0] = columns %}
+
+  {% comment %}
+  -- loop through the lines (JSONL) returned by the bulk operation
+  {% endcomment %}
+
+  {% assign products_by_id = hash %}
+
+  {% for object in bulkOperation.objects %}
+    {% case object.__typename %}
+      {% when "Product" %}
+        {% comment %}-- clone the object to allow modification --{% endcomment %}
+        {% assign product = object | json | parse_json %}
+        {% assign product["variants"] = array %}
+        {% assign product["images"] = array %}
+        {% assign products_by_id[product.id] = product %}
+
+      {% when "ProductVariant" %}
+        {% assign variant = object %}
+        {% assign product_id = variant.__parentId %}
+        {% assign product = products_by_id[product_id] %}
+        {% assign product["variants"][product.variants.size] = variant %}
+
+      {% when "Image" %}
+        {% assign image = object %}
+        {% assign product_id = image.__parentId %}
+        {% assign product = products_by_id[product_id] %}
+        {% assign images = product.images %}
+        {% assign product["images"][images.size] = image %}
+
+      {% else %}
+        {% log message: "Unexpected object type in JSONL", object_type: object.__typename, object: object %}
+
+    {% endcase %}
+  {% endfor %}
+
+  {% comment %}
+  -- loop through products_by_id to build csv rows
+  {% endcomment %}
+
+  {% for pair in products_by_id %}
+    {% assign product = pair[1] %}
+    {% assign product_rows = array %}
+
+    {% comment %}
+    -- loop through product variants to build csv rows, one row per variant
+    {% endcomment %}
+
+    {% for variant in product.variants %}
+      {% assign variant_row = hash %}
+      {% for column in columns %}
+        {% assign variant_row[column] = nil %}
+      {% endfor %}
+
+      {% comment %}
+      -- the first variant row contains the details for the product itself
+      {% endcomment %}
+
+      {% if variant.position == 1 %}
+        {% assign variant_row["Body (HTML)"] = product.bodyHtml %}
+        {% assign variant_row["Gift Card"] = product.isGiftCard %}
+        {% assign variant_row["Handle"] = product.handle %}
+        {% assign variant_row["SEO Description"] = product.seo.description %}
+        {% assign variant_row["SEO Title"] = product.seo.title %}
+        {% assign variant_row["Tags"] = product.tags | join: ", " %}
+        {% assign variant_row["Title"] = product.title %}
+        {% assign variant_row["Type"] = product.productType %}
+        {% assign variant_row["Vendor"] = product.vendor %}
+
+        {% assign published = false %}
+        {% if product.onlineStoreUrl != blank %}
+          {% assign published = true %}
+        {% endif%}
+        {% assign variant_row["Published"] = published %}
+
+        {% for option in product.options %}
+          {% assign option_name_key = "Option" | append: option.position | append: " Name" %}
+          {% assign option_value_key = "Option" | append: option.position | append: " Value" %}
+          {% assign variant_row[option_name_key] = option.name %}
+          {% assign variant_row[option_value_key] = option.values[0] %}
+        {% endfor %}
+      {% endif %}
+
+      {% assign variant_row["Cost per item"] = variant.inventoryItem.unitCost.amount %}
+      {% assign variant_row["Handle"] = variant.product.handle %}
+      {% assign variant_row["Variant Barcode"] = variant.barcode %}
+      {% assign variant_row["Variant Compare At Price"] = variant.compareAtPrice %}
+      {% assign variant_row["Variant Fulfillment Service"] = variant.fulfillmentService.serviceName | downcase %}
+      {% assign variant_row["Variant Inventory Policy"] = variant.inventoryPolicy | downcase %}
+      {% assign variant_row["Variant Price"] = variant.price %}
+      {% assign variant_row["Variant Requires Shipping"] = variant.requiresShipping %}
+      {% assign variant_row["Variant SKU"] = variant.sku %}
+      {% assign variant_row["Variant Taxable"] = variant.taxable %}
+      {% assign variant_row["Variant Tax Code"] = variant.taxCode %}
+
+      {% for option in variant.selectedOptions %}
+        {% assign option_value_key = "Option" | append: forloop.index | append: " Value" %}
+        {% assign variant_row[option_value_key] = option.value %}
+      {% endfor %}
+
+      {% if variant.image %}
+        {% assign variant_row["Variant Image"] = variant.image.originalSrc %}
+      {% endif  %}
+
+      {% if variant.inventoryItem.tracked %}
+        {% assign variant_row["Variant Inventory Tracker"] = "shopify" %}
+      {% endif %}
+
+      {% case variant.weightUnit %}
+        {% when "GRAMS" %}
+          {% assign variant_row["Variant Weight Unit"] = "g" %}
+          {% assign variant_row["Variant Grams"] = variant.weight %}
+        {% when "KILOGRAMS" %}
+          {% assign variant_row["Variant Weight Unit"] = "kg" %}
+          {% assign variant_row["Variant Grams"] = variant.weight | times: 1000 %}
+        {% when "OUNCES" %}
+          {% assign variant_row["Variant Weight Unit"] = "oz" %}
+          {% assign variant_row["Variant Grams"] = variant.weight | times: 28.34952 %}
+        {% when "POUNDS" %}
+          {% assign variant_row["Variant Weight Unit"] = "lb" %}
+          {% assign variant_row["Variant Grams"] = variant.weight | times: 453.59237 %}
+      {% endcase %}
+
+      {% assign product_rows[product_rows.size] = variant_row %}
+    {% endfor %}{% comment %}-- end variant loop --{% endcomment %}
+
+    {% comment %}
+    -- loop through product images to build csv rows
+    {% endcomment %}
+
+    {% for image in product.images %}
+      {% comment %}
+      -- images should be assigned sequentially to existing product rows, regardless of any
+      -- pairing with variant images, because... ¯\_(ツ)_/¯
+      {% endcomment %}
+
+      {% if product_rows[forloop.index0] %}
+        {% assign image_row = product_rows[forloop.index0] %}
+        {% assign image_row["Image Src"] = image.originalSrc %}
+        {% assign image_row["Image Position"] = forloop.index %}
+        {% assign image_row["Image Alt Text"] = image.altText %}
+        {% assign product_rows[forloop.index0] = image_row %}
+
+      {% else %}
+        {% assign image_row = hash %}
+        {% for column in columns %}
+          {% assign image_row[column] = nil %}
+        {% endfor %}
+
+        {% assign image_row["Handle"] = product.handle %}
+        {% assign image_row["Image Src"] = image.originalSrc %}
+        {% assign image_row["Image Position"] = forloop.index %}
+        {% assign image_row["Image Alt Text"] = image.altText %}
+
+        {% assign product_rows[product_rows.size] = image_row %}
+      {% endif %}
+    {% endfor %}{% comment %}-- end images loop --{% endcomment %}
+
+    {% for product_row in product_rows %}
+      {% comment %}
+      -- flatten the product rows hash into an array of values
+      {% endcomment %}
+
+      {% assign row = array %}
+      {% for pair in product_row %}
+        {% assign row[forloop.index0] = pair[1] %}
+      {% endfor %}
+
+      {% comment %}
+      -- add the row to 2d rows array
+      {% endcomment %}
+
+      {% assign rows[rows.size] = row %}
+    {% endfor %}
+  {% endfor %}{% comment %}-- end product loop --{% endcomment %}
+
+  {% comment %}
+  -- convert 2d array into csv format
+  {% endcomment %}
+
+  {% assign csv = rows | csv %}
+
+  {% if event.preview %}
+    {% action "echo" csv %}
+  {% endif %}
+
+  {% capture upload_path %}products__{{ "now" | date: "%Y-%m-%d_T%H-%M-%S_%Z", tz: "UTC" }}.csv{% endcapture %}
+
+  {% comment %}
+  -- directory paths may or may not have a leading slash (if they do, they're absolute;
+  -- if they don't, they're relative), but we always need a trailing slash
+  {% endcomment %}
+
+  {% if options.sftp_upload_directory != blank %}
+    {% assign directory = options.sftp_upload_directory %}
+
+    {% if directory.last != "/" %}
+      {% assign directory = directory | append: "/" %}
+    {% endif %}
+
+    {% assign upload_path = directory | append: upload_path %}
+  {% endif%}
+
+  {% action "ftp" %}
+    {
+      "protocol": "sftp",
+      "host": {{ options.sftp_host__required | json }},
+      "port": {{ options.sftp_port__required_number | json }},
+      "user": {{ options.sftp_user__required | json }},
+      "password": {{ options.sftp_password__required | json }},
+      "uploads": {
+        {{ upload_path | json }}: {{ csv | json }}
+      }
+    }
+  {% endaction %}
+{% endif %}

@@ -1,0 +1,22 @@
+var now = Date.now();
+var startAt = {{ options.starting_date_and_time__required | date: "%s" | times: 1000 | json }};
+var endAt = {{ options.ending_date_and_time__required | date: "%s" | times: 1000 | json }};
+
+if (document.getElementById('admin-bar-iframe')) {
+  if (startAt === 0) {
+    alert('Scheduled banner with Mechanic: starting time was not understood');
+  }
+  if (endAt === 0) {
+    alert('Scheduled banner with Mechanic: ending time was not understood');
+  }
+}
+
+if (startAt !== 0 && endAt !== 0 && startAt <= now && now <= endAt) {
+  var bannerContainer = document.createElement('div');
+  bannerContainer.innerHTML = {{ options.banner_html__required_multiline_code | json }};
+
+  var parentCssSelector = {{ options.banner_parent_css_selector__required | json }};
+  var parent = document.querySelector(parentCssSelector);
+
+  parent.insertBefore(bannerContainer, parent.firstChild);
+}

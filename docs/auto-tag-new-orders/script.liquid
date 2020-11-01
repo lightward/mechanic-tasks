@@ -1,0 +1,18 @@
+{% if event.preview %}
+  {% assign order = hash %}
+  {% assign order["admin_graphql_api_id"] = "gid://shopify/Order/1234567890" %}
+{% endif %}
+
+{% action "shopify" %}
+  mutation {
+    tagsAdd(
+      id: {{ order.admin_graphql_api_id | json }}
+      tags: {{ options.order_tags_to_add__array_required | json }}
+    ) {
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+{% endaction %}

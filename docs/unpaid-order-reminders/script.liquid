@@ -1,0 +1,205 @@
+{% comment %}
+  Preferred option order:
+
+  {{ options.include_partially_paid_orders__boolean }}
+  {{ options.limit_to_orders_matching_this_query }}
+  {{ options.ignore_customers_having_this_tag }}
+  {{ options.initial_delay_period__number_required }}
+  {{ options.interval_period_between_emails__number_required }}
+  {{ options.periods_given_are_in_days__boolean }}
+  {{ options.periods_given_are_in_hours__boolean }}
+  {{ options.email_subject__required }}
+  {{ options.email_body__multiline_required }}
+  {{ options.test_mode__boolean }}
+{% endcomment %}
+
+{% assign options_valid = true %}
+
+{% if options.initial_delay_period__number_required < 0 %}
+  {% error "The initial delay period must be at least 0." %}
+  {% assign options_valid = false %}
+{% elsif options.interval_period_between_emails__number_required < 1 %}
+  {% error "The interval delay period between emails must be at least 1." %}
+  {% assign options_valid = false %}
+{% endif %}
+
+{% if options.periods_given_are_in_days__boolean and options.periods_given_are_in_hours__boolean %}
+  {% error "Choose *either* days or hours, but not both!" %}
+  {% assign options_valid = false %}
+{% elsif options.periods_given_are_in_days__boolean == false and options.periods_given_are_in_hours__boolean == false %}
+  {% error "Choose one of days or hours. :)" %}
+  {% assign options_valid = false %}
+{% endif %}
+
+{% if options_valid %}
+  {% assign cursor = nil %}
+  {% assign orders_that_deserve_an_email = array %}
+  {% assign now_s = "now" | date: "%s" | times: 1 %}
+
+  {% if event.preview %}
+    {% assign now_s = "2020-01-01 00:00:00" | date: "%s" | times: 1 %}
+  {% endif %}
+
+  {% if options.periods_given_are_in_days__boolean %}
+    {% assign period_unit_s = 60 | times: 60 | times: 24 %}
+  {% elsif options.periods_given_are_in_hours__boolean %}
+    {% assign period_unit_s = 60 | times: 60 %}
+  {% endif %}
+
+  {% assign initial_delay_period_s = options.initial_delay_period__number_required | times: period_unit_s %}
+  {% assign initial_threshold_s = now_s | minus: initial_delay_period_s %}
+  {% assign interval_period_between_emails_s = options.interval_period_between_emails__number_required | times: period_unit_s %}
+
+  {% capture orders_query %}-status:cancelled AND (financial_status:pending{% if options.include_partially_paid_orders__boolean %} OR financial_status:partially_paid){% endif %}{% endcapture %}
+
+  {% if options.limit_to_orders_matching_this_query != blank %}
+    {% assign orders_query = orders_query | append: " AND (" | append: options.limit_to_orders_matching_this_query | append: ")" %}
+  {% endif %}
+
+  {% log orders_query: orders_query %}
+
+  {% for n in (0..100) %}
+    {% capture query %}
+      query {
+        orders(
+          first: 100
+          query: {{ orders_query | json }}
+          after: {{ cursor | json }}
+        ) {
+          edges {
+            node {
+              id
+              processedAt
+              email
+              name
+              customer {
+                firstName
+                tags
+              }
+              totalPriceSet {
+                shopMoney {
+                  amount
+                }
+              }
+              totalReceivedSet {
+                shopMoney {
+                  amount
+                }
+              }
+              taxLines {
+                title
+                priceSet {
+                  shopMoney {
+                    amount
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "orders": {
+              "edges": [
+                {
+                  "node": {
+                    "id": "gid://shopify/Order/1234567890",
+                    {% assign arbitrary_multiple_of_interval_period_between_emails_s = interval_period_between_emails_s | times: 42 %}
+                    "processedAt": {{ now_s | minus: initial_delay_period_s | minus: arbitrary_multiple_of_interval_period_between_emails_s | date: "%Y-%m-%d %H:%M:%S" | json }},
+                    "email": "customer@example.com",
+                    "name": "#1234",
+                    "customer": {
+                      "tags": [],
+                      "firstName": "Bente"
+                    },
+                    "totalPriceSet": {
+                      "shopMoney": {
+                        "amount": "50.0"
+                      }
+                    },
+                    "totalReceivedSet": {
+                      "shopMoney": {
+                        "amount": "10.0"
+                      }
+                    },
+                    "taxLines": [
+                      {
+                        "title": "VAT",
+                        "priceSet": {
+                          "shopMoney": {
+                            "amount": "21.46"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% for order_edge in result.data.orders.edges %}
+      {% assign order = order_edge.node %}
+
+      {% if options.ignore_customers_having_this_tag != blank and order.customer.tags contains options.ignore_customers_having_this_tag %}
+        {% continue %}
+      {% endif %}
+
+      {% assign processed_at_s = order.processedAt | date: "%s" | times: 1 %}
+
+      {% if processed_at_s <= initial_threshold_s %}
+        {% assign period_offset_h = now_s | minus: processed_at_s | minus: initial_delay_period_s | modulo: interval_period_between_emails_s | divided_by: 60.0 | divided_by: 60.0 | floor %}
+
+        {% if period_offset_h == 0 %}
+          {% assign orders_that_deserve_an_email[orders_that_deserve_an_email.size] = order %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+
+    {% if result.data.orders.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.orders.edges.last.cursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% for order in orders_that_deserve_an_email %}
+    {% assign amount_due = order.totalPriceSet.shopMoney.amount | minus: order.totalReceivedSet.shopMoney.amount | times: 100 | money_with_currency %}
+    {% assign tax_lines = array %}
+    {% for tax_line in order.taxLines %}
+      {% assign tax_lines[tax_lines.size] = tax_line.priceSet.shopMoney.amount | money_with_currency | prepend: ": " | prepend: tax_line.title %}
+    {% endfor %}
+    {% assign tax_lines = tax_lines | join: ", " %}
+
+    {% assign customer_first_name = order.customer.firstName | default: "Kunde" %}
+
+    {% assign email_subject = options.email_subject__required | replace: "ORDER_NUMBER", order.name | replace: "AMOUNT_DUE", amount_due | replace: "TAX_LINES", tax_lines | replace: "CUSTOMER_FIRST_NAME", customer_first_name %}
+    {% assign email_body = options.email_body__multiline_required | replace: "ORDER_NUMBER", order.name | replace: "AMOUNT_DUE", amount_due | replace: "TAX_LINES", tax_lines | replace: "CUSTOMER_FIRST_NAME", customer_first_name %}
+
+    {% if options.test_mode__boolean %}
+      {% action "echo", order_name: order.name, order_email: order.email, email_subject: email_subject, email_body: email_body %}
+    {% else %}
+      {% action "email" %}
+        {
+          "to": {{ order.email | json }},
+          "subject": {{ email_subject | json }},
+          "body": {{ email_body | strip | newline_to_br | json }},
+          "reply_to": {{ shop.customer_email | json }},
+          "from_display_name": {{ shop.name | json }}
+        }
+      {% endaction %}
+    {% endif %}
+  {% endfor %}
+{% endif %}

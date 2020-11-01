@@ -1,0 +1,47 @@
+{% if event.topic == "mechanic/user/trigger" %}
+  {% action "http" %}
+    {
+      "method": "get",
+      "url": "http://example.com/config.txt"
+    }
+  {% endaction %}
+
+  {% if options.save_data_to_cache__boolean %}
+    {% comment %}
+      For details on reading from the cache, see
+      https://docs.usemechanic.com/article/370-the-cache-object
+    {% endcomment %}
+
+    {% log cached_config: cache.demonstration_config %}
+  {% endif %}
+{% elsif event.topic == "mechanic/actions/perform" %}
+  {% if event.preview %}
+    {% comment %}
+      For details on this technique, see
+      https://docs.usemechanic.com/article/335-preview-actions
+    {% endcomment %}
+
+    {% capture action_json %}
+      {
+        "type": "http",
+        "run": {
+          "result": {
+            "body": "sample config"
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign action = action_json | parse_json %}
+  {% endif %}
+
+  {% if action.type == "http" %}
+    {% assign config = action.run.result.body %}
+
+    {% log retrieved_config: config %}
+
+    {% if options.save_data_to_cache__boolean %}
+      {% action "cache", "set", "demonstration_config", config %}
+    {% endif %}
+  {% endif %}
+{% endif %}

@@ -1,0 +1,232 @@
+{% if event.topic == "shopify/orders/create" %}
+  {% capture query %}
+    query {
+      order(id: {{ order.admin_graphql_api_id | json }}) {
+        customer {
+          id
+          tags
+        }
+        events(
+          first: 1
+          sortKey: CREATED_AT
+          query: "verb:placed"
+        ) {
+          edges {
+            node {
+              id
+              ... on BasicEvent {
+                appTitle
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "order": {
+            "customer": {
+              "id": "gid://shopify/Customer/1234567890",
+              "tags": []
+            },
+            "events": {
+              "edges": [
+                {
+                  "node": {
+                    "appTitle": {{ options.app_titles_and_customer_tags__keyval_required.first.first | json }}
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign app_title = result.data.order.events.edges.first.node.appTitle %}
+  {% assign tag_to_add = options.app_titles_and_customer_tags__keyval_required[app_title] %}
+
+  {% if app_title == blank %}
+    {% log message: "This order was not created by an app. Skipping." %}
+  {% elsif tag_to_add == blank %}
+    {% log message: "No tag found for this app. Skipping.", app_title: app_title %}
+  {% elsif result.data.order.customer.tags contains tag_to_add %}
+    {% log message: "The customer already has the tag for this app. Skipping.", app_title: app_title, tag_to_add: tag_to_add %}
+  {% elsif options.test_mode__boolean %}
+    {% action "echo" customer_id: result.data.order.customer.id, order_app_title: app_title, customer_tag_to_add: tag_to_add %}
+  {% else %}
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {{ result.data.order.customer.id | json }}
+          tags: {{ tag_to_add | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% capture bulk_operation_query %}
+    query {
+      customers {
+        edges {
+          node {
+            __typename
+            id
+            tags
+            orders {
+              edges {
+                node {
+                  __typename
+                  id
+                  events(
+                    first: 1
+                    sortKey: CREATED_AT
+                    query: "verb:placed"
+                  ) {
+                    edges {
+                      node {
+                        __typename
+                        id
+                        ... on BasicEvent {
+                          appTitle
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture bulkOperation_json %}
+      {
+        "objects": [
+          {
+            "__typename": "Customer",
+            "id": "gid://shopify/Customer/1234567890",
+            "tags": []
+          },
+          {
+            "__typename": "Order",
+            "id": "gid://shopify/Order/1234567890",
+            "__parentId": "gid://shopify/Customer/1234567890"
+          },
+          {
+            "__typename": "BasicEvent",
+            "id":" gid://shopify/BasicEvent/1234567890",
+            "appTitle": {{ options.app_titles_and_customer_tags__keyval_required.first.first | json }},
+            "__parentId": "gid://shopify/Order/1234567890"
+          }
+        ]
+      }
+    {% endcapture %}
+
+    {% assign bulkOperation = bulkOperation_json | parse_json %}
+  {% endif %}
+
+  {% assign customers = bulkOperation.objects | where: "__typename", "Customer" %}
+  {% assign orders = bulkOperation.objects | where: "__typename", "Order" %}
+  {% assign events = bulkOperation.objects | where: "__typename", "BasicEvent" %}
+  {% assign app_title_counts = hash %}
+
+  {% for event in events %}
+    {% assign app_title = event.appTitle %}
+
+    {% if app_title == blank %}
+      {% assign app_title = "(not placed via app)" %}
+    {% endif %}
+
+    {% assign app_title_counts[app_title] = app_title_counts[app_title] | plus: 1 %}
+  {% endfor %}
+
+  {% log app_title_counts: app_title_counts %}
+
+  {% if options.test_mode__boolean %}
+    {% assign summaries = array %}
+  {% endif %}
+          
+  {% for customer in customers %}
+    {% assign customer_order_ids = orders | where: "__parentId", customer.id | map: "id" %}
+    {% assign customer_app_titles = array %}
+    {% for event in events %}
+      {% if event.appTitle != blank and customer_order_ids contains event.__parentId %}
+        {% assign customer_app_titles[customer_app_titles.size] = event.appTitle %}
+      {% endif %}
+    {% endfor %}
+
+    {% assign tags_to_add = array %}
+    {% for app_title in customer_app_titles %}
+      {% assign tag = options.app_titles_and_customer_tags__keyval_required[app_title] %}
+
+      {% if tag == blank or customer.tags contains tag %}
+        {% continue %}
+      {% endif %}
+
+      {% assign tags_to_add[tags_to_add.size] = tag %}
+    {% endfor %}
+
+    {% if tags_to_add != empty %}
+      {% if options.test_mode__boolean %}
+        {% assign summary = hash %}
+        {% assign summary["customer_id"] = customer.id %}
+        {% assign summary["customer_app_titles"] = customer_app_titles %}
+        {% assign summary["customer_tags_to_add"] = tags_to_add %}
+        {% assign summaries[summaries.size] = summary %}
+      {% else %}
+        {% action "shopify" %}
+          mutation {
+            tagsAdd(
+              id: {{ customer.id | json }}
+              tags: {{ tags_to_add | uniq | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+
+  {% if options.test_mode__boolean %}
+    {% action "echo" summaries %}
+  {% endif %}
+{% endif %}

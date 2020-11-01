@@ -1,0 +1,28 @@
+{% if event.preview %}
+  {% capture order_json %}
+    {
+      "admin_graphql_api_id": "gid://shopify/Order/12345",
+      "payment_gateway_names": {{ options.payment_gateway_name__required | json }}
+    }
+  {% endcapture %}
+
+  {% assign order = order_json | parse_json %}
+{% endif %}
+
+{% if order.payment_gateway_names contains options.payment_gateway_name__required %}
+  {% action "shopify" %}
+    mutation {
+      tagsAdd(
+        id: {{ order.admin_graphql_api_id | json }}
+        tags: {{ options.order_tag_to_add__required | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% else %}
+  {% log order_payment_gateway_names: order.payment_gateway_names %}
+{% endif %}

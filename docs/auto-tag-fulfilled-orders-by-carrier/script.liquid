@@ -1,0 +1,77 @@
+{% if event.preview %}
+  {% assign order = hash %}
+  {% assign order["admin_graphql_api_id"] = "gid://shopify/Order/1234567890" %}
+{% endif %}
+
+{% capture query %}
+  query {
+    order(id: {{ order.admin_graphql_api_id | json }}) {
+      id
+      tags
+      fulfillments {
+        name
+        trackingInfo {
+          company
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "order": {
+          "id": "gid://shopify/Order/1234567890",
+          "tags": [],
+          "fulfillments": [
+            {
+              "name": "#1234-F1",
+              "trackingInfo": [
+                {
+                  "company": {{ options.fulfillment_carriers_and_order_tags__keyval_required.first.first | json }}
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% assign companies = result.data.order.fulfillments | map: "trackingInfo" | map: "company" %}
+
+{% assign tags_to_add = array %}
+{% assign order_tags = result.data.order.tags %}
+
+{% for company in companies %}
+  {% assign tag = options.fulfillment_carriers_and_order_tags__keyval_required[company] %}
+
+  {% if tag == blank or tags_to_add contains tag or order_tags contains tag %}
+    {% continue %}
+  {% endif %}
+
+  {% assign tags_to_add[tags_to_add.size] = tag %}
+{% endfor %}
+
+{% if tags_to_add != empty %}
+  {% action "shopify" %}
+    mutation {
+      tagsAdd(
+        id: {{ order.admin_graphql_api_id | json }}
+        tags: {{ tags_to_add | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}

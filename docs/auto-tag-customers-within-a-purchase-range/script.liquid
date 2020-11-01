@@ -1,0 +1,100 @@
+{% assign purchase_minimum = options.purchase_minimum__number_required %}
+{% assign purchase_maximum = options.purchase_maximum__number_required %}
+
+{% assign mode_selections = 0 %}
+{% if options.evaluate_purchase_thresholds_by_number_of_orders__boolean %}
+  {% assign mode = "orders" %}
+  {% assign mode_selections = mode_selections | plus: 1 %}
+{% endif %}
+{% if options.evaluate_purchase_thresholds_by_adding_line_item_quantities__boolean %}
+  {% assign mode = "quantity" %}
+  {% assign mode_selections = mode_selections | plus: 1 %}
+{% endif %}
+{% if options.evaluate_purchase_thresholds_by_adding_line_item_subtotals__boolean %}
+  {% assign mode = "subtotal" %}
+  {% assign mode_selections = mode_selections | plus: 1 %}
+{% endif %}
+
+{% if mode_selections == 0 %}
+  {"error": "Choose one method of evaluating the purchase thresholds. :)"}
+{% elsif mode_selections > 1 %}
+  {"error": "Choose *only* one method of evaluating the purchase thresholds. :)"}
+{% endif %}
+
+{% assign purchase_total = 0 %}
+
+{% assign orders_scope = order.customer.orders.any %}
+{% if options.only_count_paid_orders__boolean %}
+  {% assign orders_scope = orders_scope.paid %}
+{% endif %}
+
+{% for some_order in order.customer.orders.any %}
+  {% if some_order.cancelled_at != blank %}
+    {% continue %}
+  {% endif %}
+
+  {% for line_item in some_order.line_items %}
+    {% if options.only_count_this_product_id__number != blank and line_item.product_id != options.only_count_this_product_id__number %}
+      {% continue %}
+    {% endif %}
+
+    {% case mode %}
+    {% when "orders" %}
+      {% assign purchase_total = purchase_total | plus: 1 %}
+      {% break %}
+    {% when "quantity" %}
+      {% assign purchase_total = purchase_total | plus: line_item.quantity %}
+    {% when "subtotal" %}
+      {% assign purchase_total = line_item.price | times: line_item.quantity | plus: line_item.quantity %}
+    {% endcase %}
+  {% endfor %}
+{% endfor %}
+
+{% if event.preview %}
+  {% assign purchase_total = purchase_minimum | plus: 1 %}
+  {% assign customer = '{"admin_graphql_api_id":"gid://shopify/Customer/1234567890","tags":""}' | parse_json %}
+{% else %}
+  {% assign customer = order.customer %}
+{% endif %}
+
+{
+  "log": {
+    "purchase_total": {{ purchase_total | json }}
+  }
+}
+
+{% assign customer_tags_to_match = customer.tags | downcase | split: ", " %}
+{% assign customer_tag_to_match = options.customer_tag_to_apply__required | downcase %}
+{% if purchase_total >= purchase_minimum and purchase_total <= purchase_maximum %}
+  {% unless customer_tags_to_match contains customer_tag_to_match %}
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {{ customer.admin_graphql_api_id | json }}
+          tags: {{ options.customer_tag_to_apply__required | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endunless %}
+{% else %}
+  {% if customer_tags_to_match contains customer_tag_to_match %}
+    {% action "shopify" %}
+      mutation {
+        tagsRemove(
+          id: {{ customer.admin_graphql_api_id | json }}
+          tags: {{ options.customer_tag_to_apply__required | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endif %}

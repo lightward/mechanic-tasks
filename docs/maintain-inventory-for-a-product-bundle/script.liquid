@@ -1,0 +1,384 @@
+{% assign bundle_sku = options.bundle_product_sku__required %}
+{% assign component_skus_and_quantities = options.component_product_skus_and_quantities_per_bundle__keyval_number_required %}
+{% assign component_skus = array %}
+{% for keyval in component_skus_and_quantities %}
+  {% assign component_skus[component_skus.size] = keyval.first %}
+{% endfor %}
+{% assign all_skus = array %}
+{% assign all_skus[0] = bundle_sku %}
+{% assign all_skus = all_skus | concat: component_skus %}
+
+{% log bundle_sku: bundle_sku, component_skus_and_quantities: component_skus_and_quantities %}
+
+{% if component_skus.size > 249 %}
+  {% error %}
+    {{ "This task only supports up to 249 component product SKUs. You've added " | append: component_skus.size | append: "." | json }}
+  {% enderror %}
+{% endif %}
+
+{% assign do_full_sync = false %}
+{% assign do_component_adjustment = false %}
+{% assign component_adjustment_bundle_quantity = nil %}
+
+{% if event.topic == "mechanic/user/trigger" %}
+  {% assign do_full_sync = true %}
+{% endif %}
+
+{% if event.topic == "shopify/orders/create" %}
+  {% if event.preview %}
+    {% capture order_json %}
+      {
+        "line_items": [
+          {
+            "sku": {{ bundle_sku | json }},
+            "quantity": 1
+          }
+        ]
+      }
+    {% endcapture %}
+
+    {% assign order = order_json | parse_json %}
+  {% endif %}
+
+  {% assign bundle_quantity = order.line_items | where: "sku", bundle_sku | map: "quantity" | sum %}
+  {% if bundle_quantity != 0 %}
+    {% assign do_component_adjustment = true %}
+    {% assign component_adjustment_bundle_quantity = bundle_quantity | times: -1 %}
+  {% endif %}
+{% endif %}
+
+{% if event.topic == "shopify/refunds/create" %}
+  {% if event.preview %}
+    {% capture refund_json %}
+      {
+        "refund_line_items": [
+          {
+            "quantity": 1,
+            "restock_type": "cancel",
+            "line_item": {
+              "quantity": 1,
+              "sku": {{ bundle_sku | json }}
+            }
+          }
+        ]
+      }
+    {% endcapture %}
+
+    {% assign refund = refund_json | parse_json %}
+  {% endif %}
+
+  {% assign bundle_restock_quantity = 0 %}
+
+  {% for refund_line_item in refund.refund_line_items %}
+    {% if refund_line_item.line_item.sku == bundle_sku and refund_line_item.restock_type != "no_restock" %}
+      {% assign do_component_adjustment = true %}
+      {% assign bundle_restock_quantity = bundle_restock_quantity | plus: refund_line_item.quantity %}
+    {% endif %}
+  {% endfor %}
+
+  {% assign component_adjustment_bundle_quantity = bundle_restock_quantity %}
+{% endif %}
+
+{% if event.topic contains "shopify/inventory_levels/" %}
+  {% comment %}
+    Note: we don't use the "available" figure that comes in with this payload,
+    to guard against receiving webhooks in the wrong order, or a delay in event
+    processing.
+  {% endcomment %}
+
+  {% capture query %}
+    query {
+      inventoryLevel(id: {{ inventory_level.admin_graphql_api_id | json }}) {
+        item {
+          variant {
+            sku
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "inventoryLevel": {
+            "item": {
+              "variant": {
+                "sku": {{ component_skus.first | json }}
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign updated_sku = result.data.inventoryLevel.item.variant.sku %}
+
+  {% if all_skus contains updated_sku %}
+    {% assign do_full_sync = true %}
+  {% else %}
+    {% log %}
+      {{ updated_sku | json | prepend: "Inventory was updated for SKU " | append: ", which is not related to this bundle." | json }}
+    {% endlog %}
+  {% endif %}
+{% endif %}
+
+{% if do_component_adjustment %}
+  {% assign query_components = array %}
+  {% for sku in component_skus %}
+    {% assign query_components[query_components.size] = sku | json | prepend: "sku:" %}
+  {% endfor %}
+
+  {% capture query %}
+    query {
+      productVariants(
+        first: {{ component_skus.size | json }}
+        query: {{ query_components | join: " OR " | json }}
+      ) {
+        edges {
+          node {
+            inventoryItem {
+              inventoryLevels(first: 1) {
+                edges {
+                  node {
+                    id
+                  }
+                }
+              }
+            }
+            sku
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "productVariants": {
+            "edges": [
+              {% for sku in component_skus %}
+                {
+                  "node": {
+                    "inventoryItem": {
+                      "inventoryLevels": {
+                        "edges": [
+                          {
+                            "node": {
+                              "id": "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "sku": {{ sku | json }}
+                  }
+                }
+                {% unless forloop.last %},{% endunless %}
+              {% endfor %}
+            ]
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign variants = result.data.productVariants.edges | map: "node" %}
+  {% assign found_skus = variants | map: "sku" | uniq %}
+
+  {% if variants.size != component_skus.size or found_skus.size != variants.size %}
+    {% error %}
+      {{ "Expected to find " | append: component_skus.size | append: " matching component product variants with unique SKUs, based on the task configuration, but found " | append: variants.size | append: " matching variants with " | append: found_skus.size | append: " unique SKUs instead. Make sure each SKU for this task only has one associated product in your store." | json }}
+    {% enderror %}
+  {% endif %}
+
+  {% action "shopify" %}
+    mutation {
+      {% for variant in variants %}
+        {% assign variant_delta = component_adjustment_bundle_quantity | times: component_skus_and_quantities[variant.sku] %}
+
+        inventoryAdjustQuantity{{ forloop.index }}: inventoryAdjustQuantity(
+          input: {
+            inventoryLevelId: {{ variant.inventoryItem.inventoryLevels.edges.first.node.id | json }}
+            availableDelta: {{ variant_delta | json }}
+          }
+        ) {
+          inventoryLevel {
+            id
+            available
+            item {
+              variant {
+                sku
+              }
+            }
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      {% endfor %}
+    }
+  {% endaction %}
+{% endif %}
+
+{% if do_full_sync %}
+  {% assign query_components = array %}
+  {% for sku in all_skus %}
+    {% assign query_components[query_components.size] = sku | json | prepend: "sku:" %}
+  {% endfor %}
+
+  {% capture query %}
+    query {
+      productVariants(
+        first: {{ all_skus.size | json }}
+        query: {{ query_components | join: " OR " | json }}
+      ) {
+        edges {
+          node {
+            inventoryQuantity
+            inventoryItem {
+              inventoryLevels(first: 1) {
+                edges {
+                  node {
+                    id
+                  }
+                }
+              }
+            }
+            sku
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "productVariants": {
+            "edges": [
+              {
+                "node": {
+                  "inventoryItem": {
+                    "inventoryLevels": {
+                      "edges": [
+                        {
+                          "node": {
+                            "id": "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "inventoryQuantity": 2,
+                  "sku": {{ bundle_sku | json }}
+                }
+              },
+              {% for sku in component_skus %}
+                {
+                  "node": {
+                    "inventoryItem": {
+                      "inventoryLevels": {
+                        "edges": [
+                          {
+                            "node": {
+                              "id": "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "inventoryQuantity": 1,
+                    "sku": {{ sku | json }}
+                  }
+                }
+                {% unless forloop.last %},{% endunless %}
+              {% endfor %}
+            ]
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign variants = result.data.productVariants.edges | map: "node" %}
+  {% assign found_skus = variants | map: "sku" | uniq %}
+
+  {% if variants.size != all_skus.size or found_skus.size != variants.size %}
+    {% error %}
+      {{ "Expected to find " | append: all_skus.size | append: " matching component product variants with unique SKUs, based on the task configuration, but found " | append: variants.size | append: " matching variants with " | append: found_skus.size | append: " unique SKUs instead. Make sure each SKU for this task only has one associated product in your store." | json }}
+    {% enderror %}
+  {% endif %}
+
+  {% assign minimum_inventory_variant = nil %}
+  {% assign minimum_inventory_variant_bundle_quantity = nil %}
+  {% assign bundle_variant = nil %}
+
+  {% for variant in variants %}
+    {% if variant.sku == bundle_sku %}
+      {% assign bundle_variant = variant %}
+    {% elsif component_skus contains variant.sku %}
+      {% assign variant_bundle_quantity = variant.inventoryQuantity | times: 1.0 | divided_by: component_skus_and_quantities[variant.sku] %}
+
+      {% if minimum_inventory_variant == nil or minimum_inventory_variant_bundle_quantity > variant_bundle_quantity %}
+        {% assign minimum_inventory_variant = variant %}
+        {% assign minimum_inventory_variant_bundle_quantity = variant_bundle_quantity %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+
+  {% assign bundle_delta = minimum_inventory_variant_bundle_quantity | floor | minus: bundle_variant.inventoryQuantity %}
+
+  {% if options.inventory_buffer_quantity__number != blank %}
+    {% assign bundle_delta = bundle_delta | minus: options.inventory_buffer_quantity__number %}
+  {% endif %}
+
+  {% log minimum_inventory_variant_sku: minimum_inventory_variant.sku, minimum_inventory_variant_quantity: minimum_inventory_variant.inventoryQuantity, minimum_inventory_variant_bundle_quantity: minimum_inventory_variant_bundle_quantity %}
+
+  {% if bundle_delta == 0 %}
+    {% log "Lowest quantity component SKU had an inventory that was appropriate for the bundle's current inventory. No change needed." %}
+  {% else %}
+    {% action "shopify" %}
+      mutation {
+        inventoryAdjustQuantity(
+          input: {
+            inventoryLevelId: {{ bundle_variant.inventoryItem.inventoryLevels.edges.first.node.id | json }}
+            availableDelta: {{ bundle_delta | json }}
+          }
+        ) {
+          inventoryLevel {
+            id
+            available
+            item {
+              variant {
+                sku
+              }
+            }
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endif %}

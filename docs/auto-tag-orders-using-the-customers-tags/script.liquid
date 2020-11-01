@@ -1,0 +1,41 @@
+{% if event.preview %}
+  {% capture order_json %}
+    {
+      "admin_graphql_api_id": "gid://shopify/Order/1234567890",
+      "tags": "",
+      "customer": {
+        "tags": {{ options.only_copy_these_tags__array | join: ", " | default: "wholesale, approved" | json }}
+      }
+    }
+  {% endcapture %}
+
+  {% assign order = order_json | parse_json %}
+{% endif %}
+
+{% assign customer_tags = order.customer.tags | split: ", " %}
+{% assign order_tags = order.tags | split: ", " %}
+{% assign tags_to_add = array %}
+
+{% for tag in customer_tags %}
+  {% if options.only_copy_these_tags__array == blank or options.only_copy_these_tags__array contains tag %}
+    {% unless order_tags contains tag %}
+      {% assign tags_to_add[tags_to_add.size] = tag %}
+    {% endunless %}
+  {% endif %}
+{% endfor %}
+
+{% if tags_to_add != empty %}
+  {% action "shopify" %}
+    mutation {
+      tagsAdd(
+        id: {{ order.admin_graphql_api_id | json }}
+        tags: {{ tags_to_add | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}

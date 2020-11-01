@@ -1,0 +1,28 @@
+{% if event.preview %}
+  {% capture order_json %}
+    {
+      "admin_graphql_api_id": "gid://shopify/Order/12345",
+      "customer": {
+        "orders_count": 1
+      }
+    }
+  {% endcapture %}
+
+  {% assign order = order_json | parse_json %}
+{% endif %}
+
+{% if order.customer.orders_count == 1 %}
+  {% action "shopify" %}
+    mutation {
+      tagsAdd(
+        id: {{ order.admin_graphql_api_id | json }}
+        tags: {{ options.order_tag_to_add__required | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}

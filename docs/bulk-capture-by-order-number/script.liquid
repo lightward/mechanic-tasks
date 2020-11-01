@@ -1,0 +1,20 @@
+{% capture newline %}
+{% endcapture %}
+
+{% assign order_numbers = event.data | split: newline %}
+
+{% for authorized_order in shop.orders.authorized %}
+  {% capture order_number_string %}{{ authorized_order.order_number }}{% endcapture %}
+  {% if order_numbers contains order_number_string %}
+    {
+      "action": {
+        "type": "shopify",
+        "options": [
+          "post",
+          "/admin/orders/{{ authorized_order.id }}/transactions.json",
+          { "transaction": { "kind": "capture" } }
+        ]
+      }
+    }
+  {% endif %}
+{% endfor %}

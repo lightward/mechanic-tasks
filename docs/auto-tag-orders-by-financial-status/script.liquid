@@ -1,0 +1,63 @@
+{% if event.preview %}
+  {% assign order = hash %}
+  {% assign order["admin_graphql_api_id"] = "gid://shopify/Order/1234567890" %}
+  {% assign order["financial_status"] = options.financial_statuses_and_tags__required_keyval.first.first %}
+  {% assign order["tags"] = "" %}
+{% endif %}
+
+{% assign order_tags = order.tags | split: ", " %}
+{% assign tags_to_remove = array %}
+{% assign tag_to_add = nil %}
+{% assign valid_financial_statuses = "pending authorized partially_paid paid partially_refunded refunded voided" | split: " " %}
+
+{% for pair in options.financial_statuses_and_tags__required_keyval %}
+  {% assign financial_status = pair[0] %}
+  {% assign tag_for_financial_status = pair[1] %}
+
+  {% unless valid_financial_statuses contains financial_status %}
+    {% capture message -%}
+      The financial status {{ financial_status | json }} is not valid. Only these values are supported: {{ valid_financial_statuses | join: ", " }}.
+    {%- endcapture %}
+    {% error message %}
+  {% endunless %}
+
+  {% if order.financial_status == financial_status %}
+    {% if order_tags contains tag_for_financial_status %}
+      {% log message: "Order already has the right tag", financial_status: financial_status, tag: tag_for_financial_status %}
+    {% elsif tag_for_financial_status != blank %}
+      {% assign tag_to_add = tag_for_financial_status %}
+    {% endif %}
+  {% elsif options.remove_outdated_financial_status_tags__boolean and order_tags contains tag_for_financial_status %}
+    {% assign tags_to_remove[tags_to_remove.size] = tag_for_financial_status %}
+  {% endif %}
+{% endfor %}
+
+{% if tag_to_add or tags_to_remove != empty %}
+  {% action "shopify" %}
+    mutation {
+      {% if tag_to_add != blank %}
+        tagsAdd(
+          id: {{ order.admin_graphql_api_id | json }}
+          tags: {{ tag_to_add | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      {% endif %}
+      
+      {% if tags_to_remove != empty %}
+        tagsRemove(
+          id: {{ order.admin_graphql_api_id | json }}
+          tags: {{ tags_to_remove | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      {% endif %}
+    }
+  {% endaction %}
+{% endif %}

@@ -1,0 +1,28 @@
+{% assign line_items = array %}
+
+{% for item in event.data.cart.items %}
+  {% assign line_item = hash %}
+  {% assign line_item["variant_id"] = item.variant_id %}
+  {% assign line_item["quantity"] = item.quantity %}
+  {% assign line_items[line_items.size] = line_item %}
+{% endfor %}
+
+{% if event.data.customerId %}
+  {% assign expected_signature = event.data.customerId | hmac_sha256: options.shared_secret__required %}
+  {% if expected_signature == event.data.customerIdSignature %}
+    {% assign customer_id = event.data.customerId %}
+  {% endif %}
+{% endif %}
+
+{% action "shopify" %}
+  [
+    "create",
+    "draft_order",
+    {
+      "customer": {
+        "id": {{ customer_id | json }}
+      },
+      "line_items": {{ line_items | json }}
+    }
+  ]
+{% endaction %}

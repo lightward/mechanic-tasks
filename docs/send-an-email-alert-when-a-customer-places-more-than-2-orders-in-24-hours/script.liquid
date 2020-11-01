@@ -1,0 +1,56 @@
+{% if options.order_count_threshold__number_required > 250 or options.order_count_threshold__number_required <= 0 %}
+  {"error": "The 'Order count threshold' option must be between 1 and 250."}
+{% endif %}
+
+{% assign now_s = "now" | date: "%s" | times: 1 %}
+{% assign hour_s = 60 | times: 60 %}
+{% assign threshold_interval_s = hour_s | times: options.number_of_hours_to_look_back__number_required %}
+{% assign threshold_s = now_s | minus: threshold_interval_s %}
+
+{% capture query %}
+  query {
+    customer(
+      id: {{ order.customer.admin_graphql_api_id | json }}
+    ) {
+      orders(
+        first: {{ options.order_count_threshold__number_required | json }}
+        sortKey: CREATED_AT
+        reverse: true
+      ) {
+        edges {
+          node {
+            id
+            createdAt
+            name
+          }
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% assign order_count = 0 %}
+
+{% assign orderNodes = result.data.customer.orders.edges | map: "node" %}
+{% for orderNode in orderNodes %}
+  {% assign orderNode_createdAt_s = orderNode.createdAt | date: "%s" | times: 1 %}
+  {% if orderNode_createdAt_s >= threshold_s %}
+    {% assign order_count = order_count | plus: 1 %}
+  {% endif %}
+{% endfor %}
+
+{"log": {"order_count": {{ order_count | json }}}}
+
+{% if event.preview or order_count >= options.order_count_threshold__number_required %}
+  {% action "email" %}
+    {
+      "to": {{ options.email_recipient__email_required | json  }},
+      "subject": {{ options.email_subject__required | json }},
+      "body": {{ options.email_body__required_multiline | strip | newline_to_br | json }},
+      "reply_to": {{ shop.customer_email | json }},
+      "from_display_name": {{ shop.name | json }}
+    }
+  {% endaction %}
+{% endif %}

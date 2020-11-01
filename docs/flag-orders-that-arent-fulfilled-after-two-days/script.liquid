@@ -1,0 +1,80 @@
+{% if event.preview %}
+  {% assign order = hash %}
+  {% assign order["admin_graphql_api_id"] = "gid://shopify/Order/1234567890" %}
+  {% assign order["fulfillment_status"] = nil %}
+  {% assign order["cancelled_at"] = nil %}
+  {% assign order["email"] = "customer@example.com" %}
+  {% assign order["name"] = "#1234" %}
+{% else %}
+  {% assign order = order.reload %}
+{% endif %}
+
+{% assign order_qualifies = false %}
+
+{% if order.fulfillment_status == blank %}
+  {% assign order_qualifies = true %}
+{% elsif options.include_partially_fulfilled_orders__boolean and order.fulfillment_status == "partial" %}
+  {% assign order_qualifies = true %}
+{% endif %}
+
+{% if order.cancelled_at != blank %}
+  {% assign order_qualifies = false %}
+{% endif %}
+
+{% if order_qualifies %}
+  {% if options.tag_to_add != blank %}
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {{ order.admin_graphql_api_id | json }}
+          tags: {{ options.tag_to_add | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+
+  {% if options.staff_notification_recipient__email != blank %}
+    {% capture email_body %}
+      Hello,
+
+      Order {{ order.name }} (for {{ order.email | default: "unknown email" }}) is still unfulfilled. Manage this order:
+
+      https://{{ shop.domain }}/admin/orders/{{ order.id }}
+
+      Thanks,
+      Mechanic (for {{ shop.name }})
+    {% endcapture %}
+
+    {% action "email" %}
+      {
+        "to": {{ options.staff_notification_recipient__email | json }},
+        "subject": {{ "Order " | append: order.name | append: " is still unfulfilled" | json }},
+        "body": {{ email_body | strip | unindent | newline_to_br | json }},
+        "reply_to": {{ shop.customer_email | json }},
+        "from_display_name": {{ shop.name | json }}
+      }
+    {% endaction %}
+  {% endif %}
+
+  {% assign order_email_qualified = false %}
+  {% if event.preview or order.email != blank %}
+    {% assign order_email_qualified = true %}
+  {% endif %}
+
+  {% if options.send_the_customer_an_email__boolean and order_email_qualified %}
+    {% action "email" %}
+      {
+        "to": {{ order.email | json }},
+        "subject": {{ options.customer_email_subject | strip | json }},
+        "body": {{ options.customer_email_body__multiline | strip | newline_to_br | json }},
+        "reply_to": {{ shop.customer_email | json }},
+        "from_display_name": {{ shop.name | json }}
+      }
+    {% endaction %}
+  {% endif %}
+{% endif %}

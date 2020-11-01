@@ -1,0 +1,223 @@
+{% comment %}
+  Use 10/10 for a simple preview. Use 100/101 to demonstrate batching,
+  since we only get 100 inventory updates per mutation.
+{% endcomment %}
+{% assign starting_inventory_for_preview = 10 %}
+{% assign variant_count_for_preview = 100 %}
+
+{% assign search_query_parts = array %}
+{% for product_type in options.product_types_to_monitor__array_required %}
+  {% assign search_query_parts[search_query_parts.size] = product_type | json | prepend: "product_type:" %}
+{% endfor %}
+{% assign search_query = search_query_parts | join: " OR " %}
+
+{% assign variants_by_product = hash %}
+{% assign cursor = nil %}
+
+{% for n in (0..100) %}
+  {% capture variant_query %}
+    {
+      productVariants(
+        first: 250
+        query: {{ search_query | json }}
+        after: {{ cursor | json }}
+      ) {
+        pageInfo {
+          hasNextPage
+        }
+        edges {
+          node {
+            id
+            inventoryQuantity
+            inventoryItem {
+              id
+            }
+            product {
+              id
+            }
+          }
+          cursor
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign variant_query_result = variant_query | shopify %}
+
+  {% if event.preview %}
+    {% capture variant_query_result_json %}
+      {
+        "data": {
+          "productVariants": {
+            "pageInfo": {
+              "hasNextPage": false
+            },
+            "edges": [
+              {
+                "node": {
+                  "id": "gid://shopify/ProductVariant/1234567890",
+                  "inventoryQuantity": {{ starting_inventory_for_preview }},
+                  "inventoryItem": {
+                    "id": "gid://shopify/InventoryItem/1234567890"
+                  },
+                  "product": {
+                    "id": "gid://shopify/Product/1234567890"
+                  }
+                }
+              },
+              {% for n in (2..variant_count_for_preview) %}
+                {
+                  "node": {
+                    "id": "gid://shopify/ProductVariant/134567890-{{ n }}",
+                    "inventoryQuantity": {% if event.topic == "mechanic/user/trigger" %}{{ starting_inventory_for_preview }}{% else %}{{ starting_inventory_for_preview | minus: 1 }}{% endif %},
+                    "inventoryItem": {
+                      "id": "gid://shopify/InventoryItem/1234567890-{{ n}}"
+                    },
+                    "product": {
+                      "id": "gid://shopify/Product/1234567890"
+                    }
+                  }
+                }{% unless forloop.last %},{% endunless %}
+              {% endfor %}
+            ]
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign variant_query_result = variant_query_result_json | parse_json %}
+  {% endif %}
+
+  {% assign variant_nodes = variant_query_result.data.productVariants.edges | map: "node" %}
+  {% for variant_node in variant_nodes %}
+    {% assign product_id = variant_node.product.id %}
+    {% if variants_by_product[product_id] == nil %}
+      {% assign variants_by_product[product_id] = array %}
+    {% endif %}
+
+    {% assign index = variants_by_product[product_id].size %}
+    {% assign variants_by_product[product_id][index] = variant_node %}
+  {% endfor %}
+
+  {% if variant_query_result.data.productVariants.pageInfo.hasNextPage %}
+    {% assign cursor = variant_query_result.data.productVariants.edges.last.cursor %}
+    {% continue %}
+  {% endif %}
+
+  {% break %}
+{% endfor %}
+
+{% if variants_by_product == empty %}
+  {% log mesage: "No matching product variants found! Check your product type settings for this task.", search_query: search_query %}
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% for pair in variants_by_product %}
+    {% assign product_id = pair[0] %}
+    {% assign variants = pair[1] %}
+
+    {% assign unique_inventory_levels = variants | map: "inventoryQuantity" | uniq %}
+    {% if unique_inventory_levels.size != 1 %}
+      {% error message: "Ensure all products have even inventory levels across their variants, then try again.", product_id_with_mismatching_inventory_quantities: product_id %}
+      {% break %}
+    {% else %}
+      {% assign cache_key = "inventory_by_product:" | append: product_id %}
+      {% action "cache", "set", cache_key, variants.first.inventoryQuantity %}
+    {% endif %}
+  {% endfor %}
+{% elsif event.topic contains "mechanic/scheduler/" %}
+  {% assign inventory_item_adjustments = array %}
+
+  {% capture primary_location_query %}
+    {
+      location {
+        id
+      }
+    }
+  {% endcapture %}
+
+  {% assign primary_location_query_result = primary_location_query | shopify %}
+
+  {% if event.preview %}
+    {% capture primary_location_query_result_json %}
+      {
+        "data": {
+          "location": {
+            "id": "gid://shopify/Location/1234567890"
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign primary_location_query_result = primary_location_query_result_json | parse_json %}
+  {% endif %}
+
+  {% assign primary_location_id = primary_location_query_result.data.location.id %}
+
+  {% for pair in variants_by_product %}
+    {% assign product_id = pair[0] %}
+    {% assign variants = pair[1] %}
+
+    {% assign cache_key = "inventory_by_product:" | append: product_id %}
+    {% assign starting_inventory = cache[cache_key] %}
+
+    {% if event.preview %}
+      {% assign starting_inventory = starting_inventory_for_preview %}
+    {% endif %}
+
+    {% assign inventory_list = variants | map: "inventoryQuantity" %}
+    {% assign inventory_total = inventory_list | sum %}
+    {% assign inventory_diff = starting_inventory | times: inventory_list.size | minus: inventory_total %}
+    {% assign new_inventory = starting_inventory | minus: inventory_diff %}
+
+    {% if new_inventory == starting_inventory %}
+      {% log message: "No inventory adjustments needed for this product", product_id: product_id, inventory_available: starting_inventory %}
+    {% else %}
+      {% action "cache", "set", cache_key, new_inventory %}
+
+      {% for variant in variants %}
+        {% assign adjustment = hash %}
+        {% assign adjustment["inventoryItemId"] = variant.inventoryItem.id %}
+        {% assign adjustment["availableDelta"] = new_inventory | minus: variant.inventoryQuantity %}
+
+        {% if new_inventory == variant.inventoryQuantity %}
+          {% continue %}
+        {% endif %}
+
+        {% assign inventory_item_adjustments[inventory_item_adjustments.size] = adjustment %}
+      {% endfor %}
+    {% endif %}
+  {% endfor %}
+
+  {% if inventory_item_adjustments.size > 0 %}
+    {% assign batch_size = 100 %}
+    {% assign batch_count = inventory_item_adjustments.size | times: 1.0 | divided_by: batch_size | ceil %}
+
+    {% for n in (1..batch_count) %}
+      {% assign inventory_item_adjustments_batch = array %}
+      {% assign start_index = batch_size  | times: forloop.index0 %}
+      {% assign stop_index = start_index | plus: batch_size | minus: 1 %}
+
+      {% for m in (start_index..stop_index) %}
+        {% if inventory_item_adjustments[m] %}
+          {% assign inventory_item_adjustments_batch[inventory_item_adjustments_batch.size] = inventory_item_adjustments[m] %}
+        {% endif %}
+      {% endfor %}
+
+      {% action "shopify" %}
+        mutation {
+          inventoryBulkAdjustQuantityAtLocation(
+            inventoryItemAdjustments: {{ inventory_item_adjustments_batch | graphql_arguments }}
+            locationId: {{ primary_location_id | json }}
+          ) {
+            inventoryLevels {
+              id
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endfor %}
+  {% endif %}
+{% endif %}

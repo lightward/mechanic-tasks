@@ -1,0 +1,129 @@
+{% if event.preview %}
+  {% comment %}
+    Populate some preview/test data. Handling our preview this way allows
+    us to use the preview state *as a test stage* - which is perfect! The
+    entire task is exercised, every time a preview occurs.
+  {% endcomment %}
+
+  {% assign product_ids = array %}
+  {% assign product_ids[0] = 1234567890 %}
+  {% assign product_ids[1] = 3456789012 %}
+  {% assign product_ids[2] = 2345678901 %}
+  {% assign products = array %}
+
+  {% for product_id in product_ids %}
+    {% assign product = hash %}
+
+    {% for lookup in options.product_property_lookups__array_required reversed %}
+      {% if forloop.first %}
+        {% assign product[lookup] = product_id %}
+      {% else %}
+        {% assign temp = product %}
+        {% assign product = hash %}
+        {% assign product[lookup] = temp %}
+      {% endif %}
+    {% endfor %}
+
+    {% assign product["id"] = product_id %}
+    {% assign product["admin_graphql_api_id"] = "gid://shopify/Product/" | append: product_id %}
+    {% assign products[products.size] = product %}
+  {% endfor %}
+
+  {% capture shop_json %}
+    {
+      "collections": [
+        {
+          "title": {{ options.only_sort_these_collections__array[0] | default: "Some collection" | json }},
+          "admin_graphql_api_id": "gid://shopify/Collection/1234567890",
+          "sort_order": "manual",
+          "products": {{ products | json }}
+        }
+      ]
+    }
+  {% endcapture %}
+
+  {% assign shop = shop_json | parse_json %}
+{% endif %}
+
+{% if options.only_sort_these_collections__array != blank %}
+  {% assign collections = array %}
+
+  {% for some_collection in shop.collections %}
+    {% assign some_collection_id_string = "" | append: some_collection.id %}
+    {% if options.only_sort_these_collections__array contains some_collection_id_string or options.only_sort_these_collections__array contains some_collection.title %}
+      {% assign collections[collections.size] = some_collection %}
+    {% endif %}
+  {% endfor %}
+{% else %}
+  {% assign collections = shop.collections %}
+{% endif %}
+
+{% for collection in collections %}
+  {% if collection.sort_order != "manual" %}
+    {% log %}
+      {{ collection.title | json | append: " is not configured for manual sorting. Set this collection to be manually sorted, and try again." | json }}
+    {% endlog %}
+    {% continue %}
+  {% endif %}
+
+  {% assign moves = array %}
+  {% assign product_ids_and_positions = hash %}
+  {% assign product_ids_and_values = array %}
+
+  {% for product in collection.products %}
+    {% assign product_ids_and_positions[product.admin_graphql_api_id] = forloop.index0 %}
+
+    {% assign product_id_and_value = hash %}
+    {% assign product_id_and_value["id"] = product.admin_graphql_api_id %}
+
+    {% assign value = product %}
+    {% for lookup in options.product_property_lookups__array_required %}
+      {% assign value = value[lookup] %}
+    {% endfor %}
+
+    {% comment %}
+      Make sure this is always a serializable/sortable object
+    {% endcomment %}
+    {% assign product_id_and_value["value"] = value | json | parse_json %}
+
+    {% assign product_ids_and_values[product_ids_and_values.size] = product_id_and_value %}
+  {% endfor %}
+
+  {% assign sorted_product_values = product_ids_and_values | sort: "value" %}
+  {% assign sorted_product_ids = product_ids_and_values | sort: "value" | map: "id" %}
+  {% if options.reverse_sort__boolean %}
+    {% assign sorted_product_ids = sorted_product_ids | reverse %}
+  {% endif %}
+
+  {% for sorted_product_id in sorted_product_ids %}
+    {% if forloop.index0 != product_ids_and_positions[sorted_product_id] %}
+      {% assign move = hash %}
+      {% assign move["id"] = sorted_product_id %}
+      {% assign move["newPosition"] = "" | append: forloop.index0 %}
+      {% assign moves[moves.size] = move %}
+    {% endif %}
+  {% endfor %}
+
+  {% if moves == empty %}
+    {% log %}
+      {{ "No moves necessary for " | append: collection.title | append: " - everything is already in its appropriate sort order." | json }}
+    {% endlog %}
+  {% else %}
+    {% assign moves_in_groups = moves | in_groups_of: 250, fill_with: false %}
+    {% for move_group in moves_in_groups %}
+      {% action "shopify" %}
+        mutation {
+          collectionReorderProducts(
+            id: {{ collection.admin_graphql_api_id | json }}
+            moves: {{ move_group | graphql_arguments }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endfor %}
+  {% endif %}
+{% endfor %}

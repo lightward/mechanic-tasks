@@ -1,0 +1,34 @@
+{% if event.preview %}
+  {% assign order = hash %}
+  {% assign order["email"] = "customer@example.com" %}
+  {% assign order["tags"] = options.required_order_tags_at_the_time_of_payment__array | join: ", " %}
+{% endif %}
+
+{% assign order_qualifies = true %}
+
+{% if order.email == blank %}
+  {% log message: "Order is missing an email address; skipping" %}
+  {% assign order_qualifies = false %}
+{% endif %}
+
+{% if options.required_order_tags_at_the_time_of_payment__array != blank %}
+  {% assign order_tags = order.tags | split: ", " %}
+  {% for required_tag in options.required_order_tags_at_the_time_of_payment__array %}
+    {% unless order_tags contains required_tag %}
+      {% log message: "Order is missing a required tag; skipping", missing_tag: required_tag, order_tags: order_tags %}
+      {% assign order_qualifies = false %}
+    {% endunless %}
+  {% endfor %}
+{% endif %}
+
+{% if order_qualifies %}
+  {% action "email" %}
+    {
+      "to": {{ order.email | json }},
+      "subject": {{ options.email_subject__required | json }},
+      "body": {{ options.email_body__multiline_required | strip | newline_to_br | json }},
+      "reply_to": {{ shop.customer_email | json }},
+      "from_display_name": {{ shop.name | json }}
+    }
+  {% endaction %}
+{% endif %}

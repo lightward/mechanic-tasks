@@ -1,0 +1,41 @@
+{% if event.preview %}
+  {
+    "action": {
+      "type": "shopify",
+      "options": [
+        "update",
+        [
+          "product",
+          1234567890
+        ],
+        {
+          "published": true
+        }
+      ]
+    }
+  }
+{% else %}
+  {% assign dow_tag = "now" | date: "%A" | downcase %}
+  {"log": {{ "Publishing unpublished products tagged with '" | append: dow_tag | append: "'" | json }}}
+
+  {% for product in shop.products.unpublished %}
+    {% assign product_tags = product.tags | downcase | split: ", " %}
+    {% if product_tags contains dow_tag %}
+      {
+        "action": {
+          "type": "shopify",
+          "options": [
+            "update",
+            [
+              "product",
+              {{ product.id | json }}
+            ],
+            {
+              "published": true
+            }
+          ]
+        }
+      }
+    {% endif %}
+  {% endfor %}
+{% endif %}

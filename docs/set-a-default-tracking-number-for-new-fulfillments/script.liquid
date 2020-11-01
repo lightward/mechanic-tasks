@@ -1,0 +1,19 @@
+{% if event.preview or fulfillment.tracking_number == blank %}
+  {
+    "action": {
+      "type": "shopify",
+      "options": [
+        "update",
+        [
+          "order",
+          {{ fulfillment.order_id | json }},
+          "fulfillment",
+          {{ fulfillment.id | json }}
+        ],
+        {
+          "tracking_number": {{ options.default_tracking_number__required | json }}
+        }
+      ]
+    }
+  }
+{% endif %}

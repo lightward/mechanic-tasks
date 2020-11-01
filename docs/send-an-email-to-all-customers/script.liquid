@@ -1,0 +1,86 @@
+{% comment %}
+  Express an opinion about option order
+
+  {{ options.only_send_to_customers_having_this_tag }}
+  {{ options.email_subject__required }}
+  {{ options.email_body__required_multiline }}
+  {{ options.test_mode__boolean }}
+{% endcomment %}
+
+{% assign cursor = nil %}
+{% assign emails = array %}
+
+{% for n in (0..100) %}
+  {% capture query %}
+    query {
+      customers(
+        first: 250
+        after: {{ cursor | json }}
+        {% if options.only_send_to_customers_having_this_tag != blank %}
+          query: {{ options.only_send_to_customers_having_this_tag | json | prepend: "tag:" | json }}
+        {% endif %}
+      ) {
+        pageInfo {
+          hasNextPage
+        }
+        edges {
+          cursor
+          node {
+            email
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "customers": {
+            "edges": [
+              {
+                "node": {
+                  "email": "customer@example.com"
+                }
+              }
+            ]
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% for customer_edge in result.data.customers.edges %}
+    {% assign customer = customer_edge.node %}
+    {% if customer.email != blank %}
+      {% assign emails[emails.size] = customer.email %}
+    {% endif %}
+  {% endfor %}
+
+  {% if result.data.customers.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.customers.edges.last.cursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% if options.test_mode__boolean %}
+  {% action "echo" emails %}
+{% else %}
+  {% for email in emails %}
+    {% action "email" %}
+      {
+        "to": {{ email | json }},
+        "subject": {{ options.email_subject__required | strip | json }},
+        "body": {{ options.email_body__required_multiline | strip | newline_to_br | json }},
+        "reply_to": {{ shop.customer_email | json }},
+        "from_display_name": {{ shop.name | json }}
+      }
+    {% endaction %}
+  {% endfor %}
+{% endif %}

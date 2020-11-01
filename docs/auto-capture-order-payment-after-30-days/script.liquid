@@ -1,0 +1,19 @@
+{% comment %}
+  Since we're running on a delay, make sure we have up-to-date data.
+{% endcomment %}
+{% assign order = order.reload %}
+
+{% assign order_qualifies = false %}
+{% if order.financial_status == "authorized" and order.cancelled_at == blank %}
+  {% assign order_qualifies = true %}
+{% endif %}
+
+{% if event.preview or order_qualifies %}
+  {% action "shopify" %}
+    [
+      "post",
+      "/admin/orders/{{ order.id }}/transactions.json",
+      { "transaction": { "kind": "capture" } }
+    ]
+  {% endaction %}
+{% endif %}

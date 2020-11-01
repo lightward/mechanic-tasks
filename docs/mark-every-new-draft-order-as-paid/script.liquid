@@ -1,0 +1,16 @@
+{% action "shopify" %}
+  mutation {
+    draftOrderComplete(
+      id: {{ draft_order.admin_graphql_api_id | json }}
+      paymentPending: false
+    ) {
+      draftOrder {
+        order {
+          id
+          name
+          fullyPaid
+        }
+      }
+    }
+  }
+{% endaction %}

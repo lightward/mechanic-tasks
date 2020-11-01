@@ -1,0 +1,86 @@
+{% assign customers = array %}
+
+{% if event.topic contains "shopify/customers/" %}
+  {% if event.preview %}
+    {% assign customer = hash %}
+    {% assign customer["admin_graphql_api_id"] = "gid://shopify/Customer/1234567890" %}
+    {% assign customer["tags"] = "" %}
+  {% endif %}
+
+  {% assign customer_node = hash %}
+  {% assign customer_node["id"] = customer.admin_graphql_api_id %}
+  {% assign customer_node["tags"] = customer.tags | split: ", " %}
+  {% assign customers[0] = customer_node %}
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% capture bulk_operation_query %}
+    query {
+      customers {
+        edges {
+          node {
+            id
+            tags
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture objects_jsonl %}
+      {"id":"gid://shopify/Customer/1234567890","tags": []}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = objects_jsonl | parse_jsonl %}
+  {% endif %}
+
+  {% assign customers = bulkOperation.objects %}
+{% endif %}
+
+{% for customer in customers %}
+  {% assign add_tag = false %}
+  {% assign remove_tag = false %}
+
+  {% if customer.tags contains options.customer_tag_to_watch__required %}
+    {% if customer.tags contains options.customer_tag_to_use_when_missing__required %}
+      {% assign remove_tag = true %}
+    {% endif %}
+  {% else %}
+    {% unless customer.tags contains options.customer_tag_to_use_when_missing__required %}
+      {% assign add_tag = true %}
+    {% endunless %}
+  {% endif %}
+
+  {% if add_tag or remove_tag %}
+    {% action "shopify" %}
+      mutation {
+        tags{% if add_tag %}Add{% else %}Remove{% endif %}(
+          id: {{ customer.id | json }}
+          tags: {{ options.customer_tag_to_use_when_missing__required | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}

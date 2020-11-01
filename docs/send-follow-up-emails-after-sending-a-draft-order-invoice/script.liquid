@@ -1,0 +1,110 @@
+{% comment %}
+  This is here to make sure that this option sits at the top of the task form. :)
+{% endcomment %}
+{% assign _ = options.send_daily_emails__boolean %}
+
+{% if event.topic == "shopify/draft_orders/update" %}
+  {% assign five_minutes_ago_seconds = "now" | date: "%s" | divided_by: 1 | minus: 300 %}
+  {% assign draft_order_invoice_sent_at_seconds = draft_order.invoice_sent_at | date: "%s" | divided_by: 1 %}
+  {% capture draft_order_followup_cache_key %}draft-order-followup-{{ draft_order.id }}{% endcapture %}
+
+  {% comment %}
+    This being the draft update event, we only want to trigger the followup
+    loop if *all* of the following are true:
+
+    1. The draft has an email on file (because shopify doesn't report to us what
+       email was actually used to send the draft previously, making the draft's
+       on-file email our only option)
+    2. The draft's status is "invoice_sent" (because that's the only status that
+       we care about)
+    3. If the invoice was actually sent in the last five minutes (to avoid
+       triggering the loop for super old drafts that receive an update)
+    4. If we haven't cached a flag marking the draft as having gotten follow-up
+  {% endcomment %}
+  {% assign draft_order_qualifies = false %}
+  {% if draft_order.email == blank %}
+    {% capture log_message %}No email on file; not sending followup{% endcapture %}
+  {% elsif draft_order.status != "invoice_sent" %}
+    {% capture log_message %}Draft status is {{ draft_order.status }}, not "invoice_sent"; not sending followup{% endcapture %}
+  {% elsif draft_order_invoice_sent_at_seconds <= five_minutes_ago_seconds %}
+    {% capture log_message %}Draft was sent more than 5min ago, making that event appear stale; not sending followup{% endcapture %}
+  {% elsif cache[draft_order_followup_cache_key] != blank %}
+    {% capture log_message %}Mechanic has already set up followup for this draft; not sending followup{% endcapture %}
+  {% else %}
+    {% assign draft_order_qualifies = true %}
+  {% endif %}
+
+  {% if log_message != blank %}
+    {"log": {{ log_message | json }}}
+  {% endif %}
+
+  {% comment %}
+    The only thing we do here is kick off the followup loop, and flag the
+    draft in our cache.
+  {% endcomment %}
+  {% if event.preview or draft_order_qualifies %}
+    {
+      "action": {
+        "type": "event",
+        "options": {
+          "topic": "user/draft_orders/followup",
+          "data": {
+            "draft_order_id": {{ draft_order.id | json }}
+          }
+        }
+      }
+    }
+
+    {
+      "action": {
+        "type": "cache",
+        "options": {
+          "set": {
+            "key": {{ draft_order_followup_cache_key | json }},
+            "value": true
+          }
+        }
+      }
+    }
+  {% endif %}
+{% elsif event.topic == "user/draft_orders/followup" %}
+  {% assign draft_order = shop.draft_orders[event.data.draft_order_id] %}
+
+  {% assign draft_order_qualifies = false %}
+  {% if draft_order and draft_order.order_id == blank %}
+    {% assign draft_order_qualifies = true %}
+  {% endif %}
+
+  {% comment %}
+    This is the loop! We send the email, and - if looping is enabled, since
+    that's actually optional - we schedule the loop's next run.
+  {% endcomment %}
+  {% if event.preview or draft_order_qualifies %}
+    {
+      "action": {
+        "type": "email",
+        "options": {
+          "to": {{ draft_order.email | json }},
+          "subject": {{ options.email_subject__required | json }},
+          "body": {{ options.email_body__multiline_required | strip | newline_to_br | json }},
+          "reply_to": {{ shop.customer_email | json }},
+          "from_display_name": {{ shop.name | json }}
+        }
+      }
+    }
+
+    {% if options.send_daily_emails__boolean %}
+      {
+        "action": {
+          "type": "event",
+          "options": {
+            "topic": "user/draft_orders/followup",
+            "data": {
+              "draft_order_id": {{ draft_order.id | json }}
+            }
+          }
+        }
+      }
+    {% endif %}
+  {% endif %}
+{% endif %}

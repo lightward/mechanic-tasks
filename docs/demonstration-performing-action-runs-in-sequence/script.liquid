@@ -1,0 +1,7 @@
+{% for n in (1..10) %}
+  {% if options.fail_the_sixth_action__boolean and n == 6 %}
+    {% action "echo", n: n, __error: "!" %}
+  {% else %}
+    {% action "echo", n: n %}
+  {% endif %}
+{% endfor %}

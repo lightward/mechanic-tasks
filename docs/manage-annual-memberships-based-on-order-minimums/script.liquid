@@ -1,0 +1,102 @@
+{% if event.topic == "shopify/orders/paid" %}
+  {% assign order_qualifies = false %}
+
+  {% if order.customer %}
+    {% assign order_quantity_total = order.line_items | map: "quantity" | sum %}
+
+    {% if order_quantity_total >= options.minimum_qualifying_order_quantity__number_required %}
+      {% assign order_qualifies = true %}
+    {% endif %}
+  {% endif %}
+
+  {% if event.preview or order_qualifies %}
+    {% assign customer_is_member = false %}
+    {% assign customer_tags = customer.tags | split: ", " %}
+    {% if customer_tags contains options.membership_tag__required %}
+      {% assign customer_is_member = true %}
+      {"log": "Customer is already a member"}
+    {% endif %}
+
+    {% if event.preview or customer_is_member == false %}
+      {
+        "action": {
+          "type": "shopify",
+          "options": [
+            "update",
+            [
+              "customer",
+              {{ order.customer.id | default: 1234567890 | json }}
+            ],
+            {
+              "tags": {{ order.customer.tags | add_tag: options.membership_tag__required | json }}
+            }
+          ]
+        }
+      }
+
+      {
+        "action": {
+          "type": "event",
+          "options": {
+            "topic": "user/membership/renewal",
+            "data": {
+              "customer_id": {{ order.customer.id | default: 1234567890 | json }}
+            }
+          }
+        }
+      }
+    {% endif %}
+  {% endif %}
+{% elsif event.topic == "user/membership/renewal" %}
+  {% assign customer = shop.customers[event.data.customer_id] %}
+  {% assign customer_tags = customer.tags | split: ", " %}
+
+  {% if event.preview or customer_tags contains options.membership_tag__required %}
+    {% assign customer_order_quantity_total = 0 %}
+
+    {% assign seconds_in_a_month = 30 | times: 24 | times: 60 | times: 60 %}
+    {% assign seconds_of_order_history_to_consider = options.months_of_order_history_to_consider_for_renewal__number_required | times: seconds_in_a_month %}
+    {% assign order_date_minimum_s = "now" | date: "%s" | minus: seconds_of_order_history_to_consider %}
+
+    {% for order in customer.orders.any.paid %}
+      {% assign order_date_s = order.created_at | date: "%s" | times: 1 %}
+      {% if order_date_s < order_date_minimum_s %}
+        {% break %}
+      {% endif %}
+
+      {% assign customer_order_quantity_total = order.line_items | map: "quantity" | sum | plus: customer_order_quantity_total %}
+    {% endfor %}
+
+    {% if event.preview or customer_order_quantity_total < options.minimum_qualifying_order_quantity_for_renewal__number_required %}
+      {
+        "action": {
+          "type": "shopify",
+          "options": [
+            "update",
+            [
+              "customer",
+              {{ order.customer.id | default: 1234567890 | json }}
+            ],
+            {
+              "tags": {{ customer.tags | remove_tag: options.membership_tag__required | json }}
+            }
+          ]
+        }
+      }
+    {% else %}
+      {
+        "action": {
+          "type": "event",
+          "options": {
+            "topic": "user/membership/renewal",
+            "data": {
+              "customer_id": {{ order.customer.id | json }}
+            }
+          }
+        }
+      }
+    {% endif %}
+  {% else %}
+    {"log": "Customer does not have the membership tag; skipping renewal check"}
+  {% endif %}
+{% endif %}

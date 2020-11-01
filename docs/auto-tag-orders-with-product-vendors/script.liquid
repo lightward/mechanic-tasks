@@ -1,0 +1,55 @@
+{% if event.preview %}
+  {% capture order_json %}
+    {
+      "admin_graphql_api_id": "gid://shopify/Order/12345",
+      "tags": "Apple",
+      "line_items": [
+        {
+          "product": {
+            "vendor": "Apple"
+          }
+        },
+        {
+          "product": {
+            "vendor": "Nike"
+          }
+        },
+        {
+          "product": {
+            "vendor": null
+          }
+        }
+      ]
+    }
+  {% endcapture %}
+
+  {% assign order = order_json | parse_json %}
+{% endif %}
+
+{% assign product_vendors = order.line_items | map: "product" | map: "vendor" %}
+{% assign order_tags = order.tags | split: ", " %}
+{% assign tags_to_add = array %}
+
+{% for vendor in product_vendors %}
+  {% if vendor == blank or order_tags contains vendor %}
+    {% continue %}
+  {% endif %}
+
+  {% assign tags_to_add[tags_to_add.size] = vendor %}
+{% endfor %}
+
+{% if tags_to_add != blank %}
+  {% action "shopify" %}
+    mutation {
+      tagsAdd(
+        id: {{ order.admin_graphql_api_id | json }}
+        tags: {{ tags_to_add | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}

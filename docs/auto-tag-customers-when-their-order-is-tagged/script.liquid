@@ -1,0 +1,45 @@
+{% if event.preview %}
+  {% capture order_json %}
+    {
+      "tags": {{ options.order_tags_and_customer_tags__keyval_required.first.first | json }},
+      "customer": {
+        "admin_graphql_api_id": "gid://shopify/Customer/1234567890",
+        "tags": ""
+      }
+    }
+  {% endcapture %}
+
+  {% assign order = order_json | parse_json %}
+{% endif %}
+
+{% assign order_tags = order.tags | split: ", " %}
+{% assign customer_tags = order.customer.tags | split: ", " %}
+
+{% assign customer_tags_to_apply = array %}
+
+{% for order_tag in order_tags %}
+  {% assign customer_tag_to_apply = options.order_tags_and_customer_tags__keyval_required[order_tag] %}
+  {% if customer_tag_to_apply != blank %}
+    {% if customer_tags contains customer_tag_to_apply %}
+      {% log message: "Customer already has this tag; skipping", tag: customer_tag_to_apply %}
+    {% else %}
+      {% assign customer_tags_to_apply[customer_tags_to_apply.size] = customer_tag_to_apply %}
+    {% endif %}
+  {% endif %}
+{% endfor %}
+
+{% if customer_tags_to_apply != empty %}
+  {% action "shopify" %}
+    mutation {
+      tagsAdd(
+        id: {{ order.customer.admin_graphql_api_id | json }}
+        tags: {{ customer_tags_to_apply | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}

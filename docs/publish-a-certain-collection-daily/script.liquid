@@ -1,0 +1,37 @@
+{% if event.preview %}
+  {
+    "action": {
+      "type": "shopify",
+      "options": [
+        "update",
+        [
+          "product",
+          12345
+        ],
+        {
+          "published": true
+        }
+      ]
+    }
+  }
+{% else %}
+  {% assign collection = shop.collections[options.collection_id__required] %}
+
+  {% for product in collection.products %}
+    {
+      "action": {
+        "type": "shopify",
+        "options": [
+          "update",
+          [
+            "product",
+            {{ product.id }}
+          ],
+          {
+            "published": true
+          }
+        ]
+      }
+    }
+  {% endfor %}
+{% endif %}

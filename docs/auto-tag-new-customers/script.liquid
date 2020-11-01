@@ -1,0 +1,13 @@
+{% action "shopify" %}
+  mutation {
+    tagsAdd(
+      id: {{ customer.admin_graphql_api_id | default: "gid://shopify/Customer/1234567890" | json }}
+      tags: {{ options.tag__required | json }}
+    ) {
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+{% endaction %}

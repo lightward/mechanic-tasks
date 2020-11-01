@@ -1,0 +1,181 @@
+{% comment %}
+  Options order:
+
+  {{ options.discount_codes_and_tags__keyval_required }}
+  {{ options.untag_customers_instead_of_tagging_them__boolean }}
+{% endcomment %}
+
+{% if options.untag_customers_instead_of_tagging_them__boolean %}
+  {% assign tagging_mutation_name = "tagsRemove" %}
+{% else %}
+  {% assign tagging_mutation_name = "tagsAdd" %}
+{% endif %}
+
+{% if event.topic contains "shopify/orders/" %}
+  {% if event.preview %}
+    {% capture order_json %}
+      {
+        "discount_applications": [
+          {
+            "type": "discount_code",
+            "code": {{ options.discount_codes_and_tags__keyval_required.first[0] | json }}
+          }
+        ],
+        "customer": {
+          "admin_graphql_api_id": "gid://shopify/Customer/1234567890",
+          "tags": ""
+        }
+      }
+    {% endcapture %}
+
+    {% assign order = order_json | parse_json %}
+  {% endif %}
+
+  {% comment %}
+    Remember: only ever one discount code per order
+  {% endcomment %}
+  {% assign discount_code = order.discount_applications | where: "type", "discount_code" | map: "code" | first %}
+
+  {% if discount_code == blank %}
+    {% log "No discount code for this order; nothing to do." %}
+  {% else %}
+    {% assign tags = array %}
+
+    {% if options.allow_partial_matches_when_checking_for_discount_codes__boolean %}
+      {% for pair in options.discount_codes_and_tags__keyval_required %}
+        {% assign some_discount_code_portion = pair[0] %}
+        {% assign some_tag = pair[1] %}
+
+        {% if discount_code contains some_discount_code_portion %}
+          {% assign tags[tags.size] = some_tag %}
+        {% endif %}
+      {% endfor %}
+    {% elsif options.discount_codes_and_tags__keyval_required[discount_code] != blank %}
+      {% assign tags[0] = options.discount_codes_and_tags__keyval_required[discount_code] %}
+    {% endif %}
+
+    {% if tags == empty %}
+      {% log message: "No matching tags found; nothing to do", discount_code: discount_code %}
+    {% else %}
+      {% action "shopify" %}
+        mutation {
+          {{ tagging_mutation_name }}(
+            id: {{ order.customer.admin_graphql_api_id | json }}
+            tags: {{ tags | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endif %}
+  {% endif %}
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% assign query_parts = array %}
+  {% for keyval in options.discount_codes_and_tags__keyval_required %}
+    {% assign query_parts[query_parts.size] = "discount_code:" | append: keyval[0] %}
+  {% endfor %}
+  {% assign orders_query = query_parts | join: " " %}
+
+  {% assign orders_cursor = nil %}
+  {% for n in (0..100) %}
+    {% capture query %}
+      query {
+        orders(
+          first: 250
+          after: {{ orders_cursor | json }}
+          query: {{ orders_query | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+          }
+          edges {
+            cursor
+            node {
+              discountCode
+              customer {
+                id
+                tags
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "orders": {
+              "edges": [
+                {
+                  "node": {
+                    "discountCode": {{ options.discount_codes_and_tags__keyval_required.first[0] | json }},
+                    "customer": {
+                      "id": "gid://shopify/Customer/1234567890",
+                      "tags": []
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% for edge in result.data.orders.edges %}
+      {% assign order_node = edge.node %}
+      {% assign discount_code = order_node.discountCode %}
+
+      {% assign tags = array %}
+
+      {% if options.allow_partial_matches_when_checking_for_discount_codes__boolean %}
+        {% for pair in options.discount_codes_and_tags__keyval_required %}
+          {% assign some_discount_code_portion = pair[0] %}
+          {% assign some_tag = pair[1] %}
+
+          {% assign discount_code_downcase = discount_code | downcase %}
+          {% assign some_discount_code_portion_downcase = some_discount_code_portion | downcase %}
+
+          {% if discount_code_downcase contains some_discount_code_portion_downcase %}
+            {% unless order_node.customer.tags contains some_tag %}
+              {% assign tags[tags.size] = some_tag %}
+            {% endunless %}
+          {% endif %}
+        {% endfor %}
+      {% elsif options.discount_codes_and_tags__keyval_required[discount_code] != blank %}
+        {% assign tags[0] = options.discount_codes_and_tags__keyval_required[discount_code] %}
+      {% endif %}
+
+      {% if tags != empty %}
+        {% action "shopify" %}
+          mutation {
+            {{ tagging_mutation_name }}(
+              id: {{ order_node.customer.id | json }}
+              tags: {{ tags | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+      {% endif %}
+    {% endfor %}
+
+    {% if result.data.orders.pageInfo.hasNextPage %}
+      {% assign orders_cursor = result.data.orders.edges.last.cursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+{% endif %}

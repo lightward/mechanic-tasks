@@ -1,0 +1,109 @@
+{% if options.metafield_namespace == blank and options.metafield_key != blank %}
+  {% error "If you provide a metafield key, you must also provide a metafield namespace." %}
+{% endif %}
+
+{% if event.topic == "mechanic/user/trigger" %}
+  {% capture bulk_operation_query %}
+    query {
+      products {
+        edges {
+          node {
+            __typename
+            id
+            {% if options.metafield_key != blank %}
+              metafield(
+                namespace: {{ options.metafield_namespace | json }}
+                key: {{ options.metafield_key | json }}
+              ) {
+                __typename
+                id
+                description
+                namespace
+                key
+                value
+                valueType
+              }
+            {% else %}
+              metafields(
+                {% if options.metafield_namespace != blank %}
+                  namespace: {{ options.metafield_namespace | json }}
+                {% endif %}
+              ) {
+                edges {
+                  node {
+                    __typename
+                    id
+                    description
+                    namespace
+                    key
+                    value
+                    valueType
+                  }
+                }
+              }
+            {% endif %}
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture objects_jsonl %}
+      {% if options.metafield_key != blank %}
+        {"__typename":"Product","id":"gid:\/\/shopify\/Product\/1234567890","metafield":{"__typename":"Metafield","id":"gid:\/\/shopify\/Metafield\/1234567890"}}
+      {% else %}
+        {"__typename":"Metafield","id":"gid:\/\/shopify\/Metafield\/0987654321","__parentId":"gid:\/\/shopify\/Product\/0987654321"}
+      {% endif %}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = objects_jsonl | parse_jsonl %}
+  {% endif %}
+
+  {% assign metafield_ids = bulkOperation.objects | where: "__typename", "Metafield" | map: "id" %}
+  {% assign metafield_ids = bulkOperation.objects | where: "__typename", "Product" | where: "metafield" | map: "metafield" | map: "id" | concat: metafield_ids %}
+
+  {% assign product_ids = bulkOperation.objects | where: "__typename", "Metafield" | map: "__parentId" | uniq %}
+  {% assign product_ids = bulkOperation.objects | where: "__typename", "Product" | where: "metafield" | map: "id" | concat: product_ids %}
+
+  {% if options.test_mode__boolean %}
+    {% action "echo" metafields_found: metafield_ids.size, products_with_metafields_found: product_ids.size, metafield_ids: metafield_ids, product_with_metafields_ids: product_ids %}
+  {% else %}
+    {% log metafields_found: metafield_ids.size, products_with_metafields_found: product_ids.size, metafield_ids: metafield_ids, product_with_metafields_ids: product_ids %}
+
+    {% for metafield_id in metafield_ids %}
+      {% action "shopify" %}
+        mutation {
+          metafieldDelete(
+            input: {
+              id: {{ metafield_id | json }}
+            }
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endfor %}
+  {% endif %}
+{% endif %}

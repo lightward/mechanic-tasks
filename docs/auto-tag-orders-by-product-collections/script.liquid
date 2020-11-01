@@ -1,0 +1,71 @@
+{% assign orders = array %}
+
+{% if event.preview %}
+  {% action "shopify" %}
+    mutation {
+      tagsAdd(
+        id: "gid://shopify/Order/1234567890"
+        tags: {{ options.collections_and_tags__keyval_required.first.last | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% elsif event.topic contains "shopify/orders/" %}
+  {% assign orders[0] = order %}
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% assign orders = shop.orders.any %}
+{% endif %}
+
+{% for order in orders %}
+  {% assign existing_tags = order.tags | split: ", " %}
+  {% assign tags_to_add = array %}
+
+  {% unless event.preview %}
+    {% assign order_collections = nil %}
+    {% for line_item in order.line_items %}
+      {% if line_item.product_id != blank %}
+        {% assign order_collections = order_collections | concat: line_item.product.collections %}
+      {% endif %}
+    {% endfor %}
+    {% assign order_collection_ids = order_collections | map: "id" | join: "," | split: "," %}
+    {% assign order_collection_titles = order_collections | map: "title" %}
+    {% assign order_collection_handles = order_collections | map: "handle" %}
+  {% endunless %}
+
+  {% for pair in options.collections_and_tags__keyval_required %}
+    {% assign required_collection = pair[0] %}
+    {% assign tags = pair[1] | split: "," %}
+
+    {% if order_collection_ids contains required_collection
+          or order_collection_titles contains required_collection
+          or order_collection_handles contains required_collection
+    %}
+      {% for tag in tags %}
+        {% assign stripped_tag = tag | strip %}
+        {% unless existing_tags contains stripped_tag %}
+          {% assign tags_to_add[tags_to_add.size] = stripped_tag %}
+        {% endunless %}
+      {% endfor %}
+    {% endif %}
+  {% endfor %}
+
+  {% if tags_to_add != empty %}
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {{ order.admin_graphql_api_id | json }}
+          tags: {{ tags_to_add | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}

@@ -1,0 +1,280 @@
+{% assign product_ids_to_be_featured = options.product_ids_to_be_featured__number_array_required %}
+{% assign number_of_product_ids = product_ids_to_be_featured.size %}
+{% assign featured_collection_id = options.featured_collection_id__number_required %}
+{% assign number_of_products_to_feature_at_once = options.number_of_products_to_feature_at_once__required_number | round %}
+{% assign manage_product_publishing = options.manage_product_publishing__boolean %}
+{% assign max_feature_times = options.maximum_number_of_times_to_feature_a_product__number %}
+{% assign price_multiplier = options.price_multiplier_for_featured_products__number %}
+{% assign inverse_price_multiplier = nil %}
+{% if price_multiplier != blank %}
+  {% assign inverse_price_multiplier = 1.0 | divided_by: price_multiplier %}
+{% endif %}
+
+{% if event.preview %}
+  {
+    "action": {
+      "type": "shopify",
+      "options": [
+        "create",
+        "collect",
+        {
+          "product_id": 1234567890,
+          "collection_id": 1234567890,
+          "position": 0
+        }
+      ]
+    }
+  }
+
+  {% assign product_updates = "" %}
+
+  {% assign tags_to_save = nil %}
+  {% if max_feature_times != blank and options.tag_to_add_after_a_product_has_been_featured_for_the_last_time != blank %}
+    {% assign tags_to_save = options.tag_to_add_after_a_product_has_been_featured_for_the_last_time %}
+  {% endif %}
+
+  {% if tags_to_save %}
+    {% capture product_updates %}
+      {% if product_updates != blank %}{{ product_updates }}, {% endif %}
+      "tags": {{ tags_to_save | json }}
+    {% endcapture %}
+  {% endif %}
+
+  {% if manage_product_publishing %}
+    {% capture product_updates %}
+      {% if product_updates != blank %}{{ product_updates }}, {% endif %}
+      "published": true
+    {% endcapture %}
+  {% endif %}
+
+  {% if price_multiplier != blank %}
+    {% capture product_updates %}
+      {% if product_updates != blank %}{{ product_updates }}, {% endif %}
+      "variants": [
+        {
+          "id": 1234567890,
+          "price": {{ 10.0 | times: price_multiplier | json }}
+        }
+      ]
+    {% endcapture %}
+  {% endif %}
+
+  {% if product_updates != blank %}
+    {
+      "action": {
+        "type": "shopify",
+        "options": [
+          "update",
+          ["product", 1234567890],
+          {
+            {{ product_updates }}
+          }
+        ]
+      }
+    }
+  {% endif %}
+
+  {% if max_feature_times != blank %}
+    {
+      "action": {
+        "type": "shopify",
+        "options": [
+          "create",
+          "metafield",
+          {
+            "owner_resource": "product",
+            "owner_id": 1234567890,
+            "namespace": "mechanic",
+            "key": "feature_count",
+            "value_type": "integer",
+            "value": 1
+          }
+        ]
+      }
+    }
+  {% endif %}
+{% else %}
+  {% assign featured_collection = shop.collections[featured_collection_id] %}
+  {% assign currently_featured_collects = featured_collection.collects %}
+
+  {% if featured_collection == nil %}
+    {% capture message %}Collection {{ featured_collection_id | json }} not found - not going to do any work.{% endcapture %}
+    {"log": {{ message | json }}}
+  {% else %}
+    {% for collect in currently_featured_collects %}
+      {
+        "action": {
+          "type": "shopify",
+          "options": [
+            "delete",
+            ["collect", {{ collect.id | json }}]
+          ]
+        }
+      }
+
+      {% assign product = shop.products[collect.product_id] %}
+      {% assign product_updates = "" %}
+
+      {% assign tags_to_save = nil %}
+      {% if max_feature_times != blank and options.tag_to_add_after_a_product_has_been_featured_for_the_last_time != blank %}
+        {% assign current_feature_count = product.metafields.mechanic.feature_count | default: 0 %}
+        {% if current_feature_count >= max_feature_times %}
+          {% assign tags_to_save = product.tags | add_tag: options.tag_to_add_after_a_product_has_been_featured_for_the_last_time %}
+        {% endif %}
+      {% endif %}
+
+      {% if tags_to_save %}
+        {% capture product_updates %}
+          {% if product_updates != blank %}{{ product_updates }}, {% endif %}
+          "tags": {{ tags_to_save | json }}
+        {% endcapture %}
+      {% endif %}
+
+      {% if manage_product_publishing %}
+        {% capture product_updates %}
+          {% if product_updates != blank %}{{ product_updates }}, {% endif %}
+          "published": false
+        {% endcapture %}
+      {% endif %}
+
+      {% if inverse_price_multiplier != blank %}
+        {% capture product_updates %}
+          {% if product_updates != blank %}{{ product_updates }}, {% endif %}
+          "variants": [
+            {% for variant in product.variants %}
+              {
+                "id": {{ variant.id | json }},
+                "price": {{ variant.price | times: inverse_price_multiplier | json }}
+              }
+              {% unless forloop.last %},{% endunless %}
+            {% endfor %}
+          ]
+        {% endcapture %}
+      {% endif %}
+
+      {% if product_updates != blank %}
+        {
+          "action": {
+            "type": "shopify",
+            "options": [
+              "update",
+              ["product", {{ product.id | json }}],
+              {
+                {{ product_updates }}
+              }
+            ]
+          }
+        }
+      {% endif %}
+    {% endfor %}
+
+    {% assign last_featured_index = -1 %}
+    {% for collect in currently_featured_collects %}
+      {% for product_id_to_be_featured in product_ids_to_be_featured %}
+        {% if product_id_to_be_featured == collect.product_id and forloop.index0 > last_featured_index %}
+          {% assign last_featured_index = forloop.index0 %}
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+
+    {% if last_featured_index == -1 %}
+      {"log": "No matches found between the featured collection and the configured product ID list, so we're going to start by featuring the first product(s) in the list."}
+    {% elsif product_ids_to_be_featured[last_featured_index] == product_ids_to_be_featured.last %}
+      {"log": "We were previously at the end of the feature list; beginning again at the beginning"}
+      {% assign last_featured_index = -1 %}
+    {% endif %}
+
+    {% for n in (1..number_of_products_to_feature_at_once) %}
+      {% assign product_index_to_be_featured = last_featured_index | plus: n %}
+      {% assign product_id_to_be_featured = product_ids_to_be_featured[product_index_to_be_featured] %}
+
+      {% if product_id_to_be_featured == blank %}
+        {"log": "Reached the end of the product ID list - no more products to feature."}
+        {% break %}
+      {% endif %}
+
+      {% if max_feature_times != blank %}
+        {% assign current_feature_count = shop.products[product_id_to_be_featured].metafields.mechanic.feature_count | default: 0 %}
+        {% if current_feature_count >= max_feature_times %}
+          {% capture message %}Product {{ product_id_to_be_featured }} has already been published {{ current_feature_count }} time(s); skipping{% endcapture %}
+          {"log": {{ message | json }}}
+          {% continue %}
+        {% endif %}
+      {% endif %}
+
+      {
+        "action": {
+          "type": "shopify",
+          "options": [
+            "create",
+            "collect",
+            {
+              "product_id": {{ product_id_to_be_featured | json }},
+              "collection_id": {{ featured_collection_id | json }},
+              "position": {{ n | json }}
+            }
+          ]
+        }
+      }
+
+      {% assign product_updates = "" %}
+
+      {% if manage_product_publishing %}
+        {% capture product_updates %}
+          {% if product_updates != blank %}{{ product_updates }}, {% endif %}
+          "published": true
+        {% endcapture %}
+      {% endif %}
+
+      {% if price_multiplier != blank %}
+        {% capture product_updates %}
+          {% if product_updates != blank %}{{ product_updates }}, {% endif %}
+          "variants": [
+            {% for variant in shop.products[product_id_to_be_featured].variants %}
+              {
+                "id": {{ variant.id | json }},
+                "price": {{ variant.price | times: price_multiplier | json }}
+              }
+              {% unless forloop.last %},{% endunless %}
+            {% endfor %}
+          ]
+        {% endcapture %}
+      {% endif %}
+
+      {% if product_updates != blank %}
+        {
+          "action": {
+            "type": "shopify",
+            "options": [
+              "update",
+              ["product", {{ product_id_to_be_featured | json }}],
+              {
+                {{ product_updates }}
+              }
+            ]
+          }
+        }
+      {% endif %}
+
+      {% if max_feature_times != blank %}
+        {
+          "action": {
+            "type": "shopify",
+            "options": [
+              "create",
+              "metafield",
+              {
+                "owner_resource": "product",
+                "owner_id": {{ product_id_to_be_featured | json }},
+                "namespace": "mechanic",
+                "key": "feature_count",
+                "value_type": "integer",
+                "value": {{ current_feature_count | plus: 1 | json }}
+              }
+            ]
+          }
+        }
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+{% endif %}

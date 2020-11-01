@@ -1,0 +1,32 @@
+{% if event.preview %}
+  {% assign order = hash %}
+  {% assign order["admin_graphql_api_id"] = "gid://shopify/Order/123456780" %}
+  {% assign order["customer"] = hash %}
+  {% assign order["customer"]["tags"] = options.customer_tags_to_look_for_and_order_tags_to_add__keyval.first.first %}
+{% endif %}
+
+{% assign customer_tags = order.customer.tags | split: ", " %}
+{% assign tags_to_add = array %}
+{% assign tag_pairs = options.customer_tags_to_look_for_and_order_tags_to_add__keyval %}
+
+{% for pair in tag_pairs %}
+  {% if customer_tags contains pair.first %}
+    {% assign tags_to_add = tags_to_add | add_tag: pair.last %}
+  {% endif %}
+{% endfor %}
+
+{% if tags_to_add != empty %}
+ {% action "shopify" %}
+  mutation {
+    tagsAdd(
+      id: {{ order.admin_graphql_api_id | json }}
+      tags: {{ tags_to_add | json }}
+    ) {
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+ {% endaction %}
+{% endif %}

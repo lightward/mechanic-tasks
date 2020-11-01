@@ -1,0 +1,8 @@
+{% if options.redirect_url_when_resource_is_not_published != blank %}
+  {% assign resource_collection = options.resource_type__required | append: "s" %}
+  {% assign resource = shop[resource_collection][options.resource_id__number_required] %}
+
+  if (document.title.match(/404 Not Found/) && window.location.pathname.match({{ "/" | append: options.resource_type__required | append: "s/" | append: resource.handle | json }})) {
+    window.location.href = {{ options.redirect_url_when_resource_is_not_published | json }};
+  }
+{% endif %}

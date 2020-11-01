@@ -1,0 +1,26 @@
+{% if event.preview %}
+  {% assign order = order | json | parse_json %}
+  {% assign order["note_attributes"][0] = hash %}
+  {% assign order["note_attributes"][0]["name"] = options.cart_attribute_name__required %}
+  {% assign order["note_attributes"][0]["value"] = options.cart_attribute_values_and_email_addresses__keyval_email_required.first.first %}
+{% endif %}
+
+{% assign attribute = order.note_attributes | where: "name", options.cart_attribute_name__required | first %}
+{% assign attribute_value = attribute.value %}
+{% assign email = options.cart_attribute_values_and_email_addresses__keyval_email_required[attribute_value] %}
+
+{% if attribute == nil %}
+  {"log": {{ options.cart_attribute_name__required | json | prepend: "This order did not contain the attribute " |  json }}}
+{% elsif email == blank %}
+  {"log": {{ attribute_value | json | prepend: "There is no configured email corresponding with " |  json }}}
+{% else %}
+  {% action "email" %}
+    {
+      "to": {{ email | json }},
+      "subject": {{ options.email_subject__required | json }},
+      "body": {{ options.email_body__multiline_required | strip | newline_to_br | json }},
+      "reply_to": {{ shop.customer_email | json }},
+      "from_display_name": {{ shop.name | json }}
+    }
+  {% endaction %}
+{% endif %}

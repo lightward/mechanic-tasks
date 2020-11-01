@@ -1,0 +1,100 @@
+{% assign cursor = nil %}
+{% assign csv = array %}
+
+{% assign header = array %}
+{% assign header[0] = "Order number" %}
+{% assign header[1] = "First name" %}
+{% assign header[2] = "Last name" %}
+{% assign header[3] = "Company" %}
+{% assign header[4] = "Address1" %}
+{% assign header[5] = "Address2" %}
+{% assign header[6] = "City" %}
+{% assign header[7] = "Province" %}
+{% assign header[8] = "Zip" %}
+{% assign header[9] = "Country" %}
+{% assign header[10] = "Phone" %}
+{% assign header[11] = "Formatted" %}
+
+{% assign csv[0] = header %}
+
+{% for n in (0..100) %}
+  {% capture query %}
+    query {
+      orders(
+        first: 250
+        after: {{ cursor | json }}
+        query: {{ options.orders_search_query | json }}
+      ) {
+        pageInfo {
+          hasNextPage
+        }
+        edges {
+          cursor
+          node {
+            name
+            shippingAddress {
+              address1
+              address2
+              city
+              company
+              countryCodeV2
+              firstName
+              lastName
+              phone
+              provinceCode
+              zip
+              formatted(
+                withName: {{ options.include_name_in_formatted_address__boolean | json }}
+                withCompany: {{ options.include_company_in_formatted_address__boolean | json }}
+              )
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% for order_edge in result.data.orders.edges %}
+    {% assign order = order_edge.node %}
+
+    {% assign row = array %}
+
+    {% assign row[0] = order.name %}
+    {% assign row[1] = order.shippingAddress.firstName %}
+    {% assign row[2] = order.shippingAddress.lastName %}
+    {% assign row[3] = order.shippingAddress.company %}
+    {% assign row[4] = order.shippingAddress.address1 %}
+    {% assign row[5] = order.shippingAddress.address2 %}
+    {% assign row[6] = order.shippingAddress.city %}
+    {% assign row[7] = order.shippingAddress.provinceCode %}
+    {% assign row[8] = order.shippingAddress.zip %}
+    {% assign row[9] = order.shippingAddress.countryCodeV2 %}
+    {% assign row[10] = order.shippingAddress.phone %}
+    {% assign row[11] = order.shippingAddress.formatted | join: newline %}
+
+    {% assign csv[csv.size] = row %}
+  {% endfor %}
+
+  {% if result.data.orders.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.orders.edges.last.cursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% assign date = "now" | date: "%Y-%m-%d" %}
+
+{% action "email" %}
+  {
+    "to": {{ options.csv_email_recipient__email_required | json }},
+    "subject": {{ csv.size | minus: 1 | append: " order(s) exported on " | append: date | json }},
+    "body": {{ "Please see attached. Thanks!<br><br>-Mechanic, for " | append: shop.name | json }},
+    "reply_to": {{ shop.customer_email | json }},
+    "from_display_name": {{ shop.name | json }},
+    "attachments": {
+      "orders-{{ date }}.csv": {{ csv | csv | json }}
+    }
+  }
+{% endaction %}

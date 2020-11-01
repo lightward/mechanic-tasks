@@ -1,0 +1,124 @@
+{% assign tag_to_match = options.required_customer_tag__required | downcase %}
+
+{% if event.topic contains "shopify/orders" %}
+  {% assign customer_tags = order.customer.tags | downcase | split: ", " %}
+
+  {% capture order_query %}
+    query {
+      order(id: {{ order.admin_graphql_api_id | json }}) {
+        canMarkAsPaid
+      }
+    }
+  {% endcapture %}
+
+  {% assign order_result = order_query | shopify %}
+
+  {% if event.preview or customer_tags contains tag_to_match %}
+    {% if order_result.data.order.canMarkAsPaid == false %}
+      {"log": "Order cannot be manually marked as paid - skipping."}
+    {% else %}
+      {% action "shopify" %}
+        mutation {
+          orderMarkAsPaid(input: {
+            id: {{ order.admin_graphql_api_id | json }}
+          }) {
+            order {
+              fullyPaid
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+
+          {% if options.remove_tag_from_customer_after_processing_their_order__boolean %}
+            tagsRemove(
+              id: {% if event.preview %}"gid://shopify/Customer/1234567890"{% else %}{{ order.customer.admin_graphql_api_id | json }}{% endif %}
+              tags: {{ options.required_customer_tag__required | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          {% endif %}
+        }
+      {% endaction %}
+    {% endif %}
+  {% endif %}
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% assign cursor = nil %}
+
+  {% for n in (0..100) %}
+    {% capture orders_query %}
+      query {
+        orders(
+          first: 250
+          after: {{ cursor | json }}
+          query: "-financial_status:paid"
+        ) {
+          pageInfo {
+            hasNextPage
+          }
+          edges {
+            cursor
+            node {
+              id
+              canMarkAsPaid
+              customer {
+                id
+                tags
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign orders_result = orders_query | shopify %}
+
+    {% for edge in orders_result.data.orders.edges %}
+      {% assign order_node = edge.node %}
+
+      {% if order_node.canMarkAsPaid %}
+        {% assign customer_tags = order_node.customer.tags | join: ", " | downcase | split: ", " %}
+
+        {% if customer_tags contains tag_to_match %}
+          {% action "shopify" %}
+            mutation {
+              orderMarkAsPaid(input: {
+                id: {{ order_node.id | json }}
+              }) {
+                order {
+                  fullyPaid
+                }
+                userErrors {
+                  field
+                  message
+                }
+              }
+
+              {% if options.remove_tag_from_customer_after_processing_their_order__boolean %}
+                tagsRemove(
+                  id: {% if event.preview %}"gid://shopify/Customer/1234567890"{% else %}{{ order_node.customer.id | json }}{% endif %}
+                  tags: {{ options.required_customer_tag__required | json }}
+                ) {
+                  userErrors {
+                    field
+                    message
+                  }
+                }
+              {% endif %}
+            }
+          {% endaction %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+
+    {% if orders_result.data.orders.pageInfo.hasNextPage %}
+      {% assign cursor = orders_result.data.orders.edges.last.cursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+{% endif %}

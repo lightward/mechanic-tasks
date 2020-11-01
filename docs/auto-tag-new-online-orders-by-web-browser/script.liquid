@@ -1,0 +1,41 @@
+{% assign orders = array %}
+{% if event.preview %}
+  {% assign orders[0] = '{"admin_graphql_api_id":"gid://shopify/Order/1234567890"}' | parse_json %}
+{% elsif event.topic contains "shopify/orders/" %}
+  {% assign orders[0] = order %}
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% assign orders = shop.orders.any %}
+{% endif %}
+
+{% for order in orders %}
+  {% assign user_agent = order.client_details.user_agent %}
+
+  {% if event.preview and user_agent == blank %}
+    {% assign user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36" %}
+  {% elsif user_agent == blank %}
+    {% continue %}
+  {% endif %}
+
+  {% assign browser = user_agent | browser %}
+  {% assign order_tags = order.tags | split: ", " %}
+  {% assign tag_to_add = browser.name %}
+  {% if options.include_browser_version__boolean %}
+    {% assign tag_to_add = tag_to_add | append: " " | append: browser.version | strip %}
+  {% endif %}
+
+  {% unless order_tags contains tag_to_add %}
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {{ order.admin_graphql_api_id | json }}
+          tags: {{ tag_to_add | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endunless %}
+{% endfor %}

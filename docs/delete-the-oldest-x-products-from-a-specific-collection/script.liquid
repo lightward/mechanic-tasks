@@ -1,0 +1,46 @@
+{% assign collection = shop.collections[options.collection_id__number_required] %}
+
+{% if event.preview != true and collection == nil %}
+  {"error": {{ options.collection_id__number_required | json | prepend: "Unable to find collection " | json }}}
+{% endif %}
+
+{% assign products = collection.products %}
+
+{% if event.preview %}
+  {% assign products = array %}
+  {% assign products[0] = '{"id":12345,"created_at":"2000-01-01"}' | parse_json %}
+
+  {% comment %}
+    Uncomment me for more testing!
+    {% assign products[1] = '{"id":67890,"created_at":"2001-01-01"}' | parse_json %}
+  {% endcomment %}
+{% endif %}
+
+{% assign products_sorted = products | sort: "created_at" %}
+
+{% assign product_ids_to_delete = array %}
+{% for product in products_sorted %}
+  {% if forloop.index > options.number_of_products_to_delete_at_once__number_required %}
+    {% break %}
+  {% endif %}
+
+  {% assign product_ids_to_delete[product_ids_to_delete.size] = product.id %}
+{% endfor %}
+
+{% if options.test_mode__boolean %}
+  {% action "echo" %}
+    {"product_ids_to_delete": {{ product_ids_to_delete | json }}}
+  {% endaction %}
+{% else %}
+  {% for product_id in product_ids_to_delete %}
+    {% action "shopify" %}
+      [
+        "delete",
+        [
+          "product",
+          {{ product_id | json  }}
+        ]
+      ]
+    {% endaction %}
+  {% endfor %}
+{% endif %}

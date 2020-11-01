@@ -1,0 +1,344 @@
+{% if event.topic == "mechanic/user/trigger" or event.topic == "mechanic/scheduler/daily" %}
+  {% capture bulk_operation_query %}
+    query {
+      products {
+        edges {
+          node {
+            __typename
+            id
+            tags
+            variants {
+              edges {
+                node {
+                  __typename
+                  id
+                  inventoryQuantity
+                  selectedOptions {
+                    name
+                    value
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = array %}
+
+    {% assign product = hash %}
+    {% assign product["id"] = "gid://shopify/Product/1234567890" %}
+    {% assign product["__typename"] = "Product" %}
+    {% assign product["tags"] = array %}
+    {% assign product["tags"][0] = options.largest_size_tag_prefix__required | append: 99 %}
+
+    {% assign bulkOperation["objects"][0] = product %}
+
+    {% assign bulkOperation["objects"][1] = hash %}
+    {% assign bulkOperation["objects"][1]["id"] = "gid://shopify/ProductVariant/1234567890" %}
+    {% assign bulkOperation["objects"][1]["__typename"] = "ProductVariant" %}
+    {% assign bulkOperation["objects"][1]["inventoryQuantity"] = 1 %}
+    {% assign bulkOperation["objects"][1]["selectedOptions"] = array %}
+    {% assign bulkOperation["objects"][1]["selectedOptions"][0] = hash %}
+    {% assign bulkOperation["objects"][1]["selectedOptions"][0]["name"] = options.size_option_name__required %}
+    {% assign bulkOperation["objects"][1]["selectedOptions"][0]["value"] = "10" %}
+    {% assign bulkOperation["objects"][1]["__parentId"] = "gid://shopify/Product/1234567890" %}
+    {% assign bulkOperation["objects"][1]["__parent"] = product %}
+
+    {% assign bulkOperation["objects"][2] = hash %}
+    {% assign bulkOperation["objects"][2]["id"] = "gid://shopify/ProductVariant/2345678901" %}
+    {% assign bulkOperation["objects"][2]["__typename"] = "ProductVariant" %}
+    {% assign bulkOperation["objects"][2]["inventoryQuantity"] = 2 %}
+    {% assign bulkOperation["objects"][2]["selectedOptions"] = array %}
+    {% assign bulkOperation["objects"][2]["selectedOptions"][0] = hash %}
+    {% assign bulkOperation["objects"][2]["selectedOptions"][0]["name"] = options.size_option_name__required %}
+    {% assign bulkOperation["objects"][2]["selectedOptions"][0]["value"] = "11" %}
+    {% assign bulkOperation["objects"][2]["__parentId"] = "gid://shopify/Product/1234567890" %}
+    {% assign bulkOperation["objects"][2]["__parent"] = product %}
+
+    {% assign bulkOperation["objects"][3] = hash %}
+    {% assign bulkOperation["objects"][3]["id"] = "gid://shopify/ProductVariant/3456789012" %}
+    {% assign bulkOperation["objects"][3]["__typename"] = "ProductVariant" %}
+    {% assign bulkOperation["objects"][3]["inventoryQuantity"] = -3 %}
+    {% assign bulkOperation["objects"][3]["selectedOptions"] = array %}
+    {% assign bulkOperation["objects"][3]["selectedOptions"][0] = hash %}
+    {% assign bulkOperation["objects"][3]["selectedOptions"][0]["name"] = options.size_option_name__required %}
+    {% assign bulkOperation["objects"][3]["selectedOptions"][0]["value"] = "12" %}
+    {% assign bulkOperation["objects"][3]["__parentId"] = "gid://shopify/Product/1234567890" %}
+    {% assign bulkOperation["objects"][3]["__parent"] = product %}
+
+    {% assign bulkOperation["objects"][4] = hash %}
+    {% assign bulkOperation["objects"][4]["id"] = "gid://shopify/ProductVariant/4567890123" %}
+    {% assign bulkOperation["objects"][4]["__typename"] = "ProductVariant" %}
+    {% assign bulkOperation["objects"][4]["inventoryQuantity"] = 0 %}
+    {% assign bulkOperation["objects"][4]["selectedOptions"] = array %}
+    {% assign bulkOperation["objects"][4]["selectedOptions"][0] = hash %}
+    {% assign bulkOperation["objects"][4]["selectedOptions"][0]["name"] = options.size_option_name__required %}
+    {% assign bulkOperation["objects"][4]["selectedOptions"][0]["value"] = "15" %}
+    {% assign bulkOperation["objects"][4]["__parentId"] = "gid://shopify/Product/1234567890" %}
+    {% assign bulkOperation["objects"][4]["__parent"] = product %}
+  {% endif %}
+
+  {% assign largest_sizes_by_product_id = hash %}
+  {% assign variants_in_stock_counts_by_product_id = hash %}
+
+  {% for object in bulkOperation.objects %}
+    {% if object.__typename != "ProductVariant" %}
+      {% continue %}
+    {% endif %}
+
+    {% if object.inventoryQuantity <= 0 %}
+      {% continue %}
+    {% endif %}
+
+    {% assign variants_in_stock_counts_by_product_id[object.__parentId] = variants_in_stock_counts_by_product_id[object.__parentId] | plus: 1 %}
+    {% assign size_option = object.selectedOptions | where: "name", options.size_option_name__required | first %}
+
+    {% if size_option == nil %}
+      {% continue %}
+    {% endif %}
+
+    {% assign size = size_option.value | times: 1 %}
+
+    {% if largest_sizes_by_product_id[object.__parentId] == nil or size > largest_sizes_by_product_id[object.__parentId] %}
+      {% assign largest_sizes_by_product_id[object.__parentId] = size %}
+    {% endif %}
+  {% endfor %}
+
+  {% for object in bulkOperation.objects %}
+    {% if object.__typename != "Product" %}
+      {% continue %}
+    {% endif %}
+
+    {% assign variants_in_stock_count = variants_in_stock_counts_by_product_id[object.id] %}
+    {% assign largest_size = largest_sizes_by_product_id[object.id] %}
+
+    {% assign appropriate_largest_size_tag = nil %}
+    {% if variants_in_stock_count >= options.minimum_number_of_variants_in_stock_before_tagging__number_required %}
+      {% if largest_size %}
+        {% assign appropriate_largest_size_tag = options.largest_size_tag_prefix__required | append: largest_size %}
+      {% endif %}
+    {% endif %}
+
+    {% assign current_largest_size_tag = nil %}
+    {% assign prefix_length = options.largest_size_tag_prefix__required.size %}
+    {% for tag in object.tags %}
+      {% assign prefix = tag | slice: 0, prefix_length %}
+      {% if prefix == options.largest_size_tag_prefix__required %}
+        {% assign current_largest_size_tag = tag %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+
+    {% if appropriate_largest_size_tag != current_largest_size_tag %}
+      {% action "shopify" %}
+        mutation {
+          {% if appropriate_largest_size_tag %}
+            tagsAdd(
+              id: {{ object.id | json }}
+              tags: {{ appropriate_largest_size_tag | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          {% endif %}
+
+          {% if current_largest_size_tag %}
+            tagsRemove(
+              id: {{ object.id | json }}
+              tags: {{ current_largest_size_tag | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          {% endif %}
+        }
+      {% endaction %}
+    {% endif %}
+  {% endfor %}
+{% elsif event.topic contains "shopify/inventory_levels/" %}
+  {% assign product = inventory_level.variant.product %}
+
+  {% capture query %}
+    query {
+      product(
+        id: {{ product.admin_graphql_api_id | json }}
+      ) {
+        id
+        tags
+        variants(first: 250) {
+          edges {
+            node {
+              inventoryQuantity
+              selectedOptions {
+                name
+                value
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "product": {
+            "id": "gid://shopify/Product/1234567890",
+            "tags": [{{ options.largest_size_tag_prefix__required | append: 99 | json }}],
+            "variants": {
+              "edges": [
+                {
+                  "node": {
+                    "inventoryQuantity": 1,
+                    "selectedOptions": [
+                      {
+                        "name": {{ options.size_option_name__required | json }},
+                        "value": "10"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "node": {
+                    "inventoryQuantity": 2,
+                    "selectedOptions": [
+                      {
+                        "name": {{ options.size_option_name__required | json }},
+                        "value": "11"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "node": {
+                    "inventoryQuantity": -3,
+                    "selectedOptions": [
+                      {
+                        "name": {{ options.size_option_name__required | json }},
+                        "value": "12"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "node": {
+                    "inventoryQuantity": 0,
+                    "selectedOptions": [
+                      {
+                        "name": {{ options.size_option_name__required | json }},
+                        "value": "15"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign product_node = result.data.product %}
+  {% assign variant_nodes = product_node.variants.edges | map: "node" %}
+  {% assign variants_in_stock_count = 0 %}
+  {% assign largest_size = nil %}
+
+  {% for variant_node in variant_nodes %}
+    {% if variant_node.inventoryQuantity <= 0 %}
+      {% continue %}
+    {% endif %}
+
+    {% assign variants_in_stock_count = variants_in_stock_count | plus: 1 %}
+    {% assign size_option = variant_node.selectedOptions | where: "name", options.size_option_name__required | first %}
+
+    {% if size_option == nil %}
+      {% continue %}
+    {% endif %}
+
+    {% assign size = size_option.value | times: 1 %}
+
+    {% if largest_size == nil or size > largest_size %}
+      {% assign largest_size = size %}
+    {% endif %}
+  {% endfor %}
+
+  {% assign appropriate_largest_size_tag = nil %}
+  {% if variants_in_stock_count >= options.minimum_number_of_variants_in_stock_before_tagging__number_required %}
+    {% if largest_size %}
+      {% assign appropriate_largest_size_tag = options.largest_size_tag_prefix__required | append: largest_size %}
+    {% endif %}
+  {% endif %}
+
+  {% assign current_largest_size_tag = nil %}
+  {% assign prefix_length = options.largest_size_tag_prefix__required.size %}
+  {% for tag in product_node.tags %}
+    {% assign prefix = tag | slice: 0, prefix_length %}
+    {% if prefix == options.largest_size_tag_prefix__required %}
+      {% assign current_largest_size_tag = tag %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% if appropriate_largest_size_tag != current_largest_size_tag %}
+    {% action "shopify" %}
+      mutation {
+        {% if appropriate_largest_size_tag %}
+          tagsAdd(
+            id: {{ product_node.id | json }}
+            tags: {{ appropriate_largest_size_tag | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        {% endif %}
+
+        {% if current_largest_size_tag %}
+          tagsRemove(
+            id: {{ product_node.id | json }}
+            tags: {{ current_largest_size_tag | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        {% endif %}
+      }
+    {% endaction %}
+  {% endif %}
+{% endif %}

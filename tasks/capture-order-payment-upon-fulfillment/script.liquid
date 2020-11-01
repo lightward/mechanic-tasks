@@ -1,9 +1,0 @@
-{% if event.preview or order.financial_status == "authorized" %}
-  {% action "shopify" %}
-    [
-      "post",
-      "/admin/orders/{{ order.id }}/transactions.json",
-      { "transaction": { "kind": "capture" } }
-    ]
-  {% endaction %}
-{% endif %}

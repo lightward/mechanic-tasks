@@ -1,0 +1,137 @@
+{% if options.tag_to_add_when_published == blank and options.tag_to_add_when_unpublished == blank %}
+  {% error "Fill in at least one tag option to continue. :)" %}
+{% endif %}
+
+{% capture query %}
+  query {
+    publications(first: 250) {
+      edges {
+        node {
+          id
+          name
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% assign publications = result.data.publications.edges | map: "node" | where: "name", options.sales_channel_name__required | first %}
+{% assign publication = publications | where: "name", options.sales_channel_name__required | first %}
+
+{% assign cursor = nil %}
+{% assign mutations = array %}
+
+{% for n in (0..100) %}
+  {% capture query %}
+    query {
+      products(
+        first: 250
+        after: {{ cursor | json }}
+      ) {
+        pageInfo {
+          hasNextPage
+        }
+        edges {
+          cursor
+          node {
+            id
+            tags
+            published: publishedOnPublication(
+              publicationId: {{ publication.id | json }}
+            )
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "products": {
+            "edges": [
+              {
+                "node": {
+                  "id": "gid://shopify/Product/1234567890",
+                  "tags": [],
+                  "published": {% if options.tag_to_add_when_published != blank %}true{% else %}false{% endif %}
+                }
+              }
+            ]
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% for product_edge in result.data.products.edges %}
+    {% assign product = product_edge.node %}
+    {% assign tag_to_add = nil %}
+    {% assign tag_to_remove = nil %}
+
+    {% if options.tag_to_add_when_published != blank %}
+      {% if product.published %}
+        {% unless product.tags contains options.tag_to_add_when_published %}
+          {% assign tag_to_add = options.tag_to_add_when_published %}
+        {% endunless %}
+      {% elsif product.tags contains options.tag_to_add_when_published %}
+        {% assign tag_to_remove = options.tag_to_add_when_published %}
+      {% endif %}
+    {% endif %}
+
+    {% if options.tag_to_add_when_unpublished != blank %}
+      {% if product.published == false %}
+        {% unless product.tags contains options.tag_to_add_when_unpublished %}
+          {% assign tag_to_add = options.tag_to_add_when_unpublished %}
+        {% endunless %}
+      {% elsif product.tags contains options.tag_to_add_when_unpublished %}
+        {% assign tag_to_remove = options.tag_to_add_when_unpublished %}
+      {% endif %}
+    {% endif %}
+
+    {% if tag_to_add or tag_to_remove %}
+      {% log product: product %}
+
+      {% action "shopify" %}
+        mutation {
+          {% if tag_to_add %}
+            tagsAdd(
+              id: {{ product.id | json }}
+              tags: {{ tag_to_add | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          {% endif %}
+
+          {% if tag_to_remove %}
+            tagsRemove(
+              id: {{ product.id | json }}
+              tags: {{ tag_to_remove | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          {% endif %}
+        }
+      {% endaction %}
+    {% endif %}
+  {% endfor %}
+
+  {% if result.data.products.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.products.edges.last.cursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}

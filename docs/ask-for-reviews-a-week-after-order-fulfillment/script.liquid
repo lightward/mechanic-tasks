@@ -1,0 +1,105 @@
+{% comment %}
+  Option order:
+  {{ options.days_to_wait_before_emailing__number_required }}
+  {{ options.only_send_to_customers_who_have_accepted_marketing__boolean }}
+  {{ options.customer_tag_to_add_after_sending }}
+  {{ options.ignore_customers_having_this_tag }}
+  {{ options.ignore_orders_having_this_tag }}
+  {{ options.email_subject__required }}
+  {{ options.email_body__multiline_required }}
+{% endcomment %}
+
+{% assign send_email = true %}
+{% assign order = order.reload %}
+
+{% if event.preview %}
+  {% capture order_json %}
+    {
+      "line_items": [
+        {
+          "product_exists": true
+        }
+      ],
+      "email": "customer@example.com",
+      "tags": "",
+      "customer": {
+        "admin_graphql_api_id": "gid://shopify/Customer/1234567890",
+        "tags": "",
+        "accepts_marketing": true
+      }
+    }
+  {% endcapture %}
+
+  {% assign order = order_json | parse_json %}
+{% endif %}
+
+{% assign has_product = false %}
+{% for line_item in order.line_items %}
+  {% if line_item.product_exists %}
+    {% assign has_product = true %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% if has_product != true %}
+  {% log "Order has no products; skipping" %}
+  {% assign send_email = false %}
+{% endif %}
+
+{% if order.email == blank %}
+  {% assign send_email = false %}
+  {% log "Order has no email on file; skipping" %}
+{% endif %}
+
+{% if options.ignore_orders_having_this_tag != blank %}
+  {% assign order_tags = order.tags | split: ", " %}
+
+  {% if order_tags contains options.ignore_orders_having_this_tag %}
+    {% log message: "Order is currently tagged with the tag to ignore", tag: options.ignore_orders_having_this_tag %}
+    {% assign send_email = false %}
+  {% endif %}
+{% endif %}
+
+{% if order.customer and options.ignore_customers_having_this_tag != blank %}
+  {% assign customer_tags = order.customer.tags | split: ", " %}
+
+  {% if customer_tags contains options.ignore_customers_having_this_tag %}
+    {% log message: "Customer is currently tagged with the tag to ignore", tag: options.ignore_customers_having_this_tag %}
+    {% assign send_email = false %}
+  {% endif %}
+{% endif %}
+
+{% if options.only_send_to_customers_who_have_accepted_marketing__boolean %}
+  {% if order.customer.accepts_marketing != true %}
+    {% log "This customer does not accept marketing." %}
+    {% assign send_email = false %}
+  {% endif %}
+{% endif %}
+
+{% if send_email %}
+  {% action "email" %}
+    {
+      "to": {{ order.email | json }},
+      "subject": {{ options.email_subject__required | json }},
+      "body": {{ options.email_body__multiline_required | strip | json }},
+      "reply_to": {{ shop.customer_email | json }},
+      "from_display_name": {{ shop.name | json }}
+    }
+  {% endaction %}
+
+  {% if order.customer and options.customer_tag_to_add_after_sending != blank %}
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {{ order.customer.admin_graphql_api_id | json }}
+          tags: {{ options.customer_tag_to_add_after_sending | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endif %}

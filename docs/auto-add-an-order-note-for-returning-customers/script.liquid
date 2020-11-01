@@ -1,0 +1,103 @@
+{% if options.ignore_customers_who_previously_ordered_after_this_date != blank and options.ignore_customers_who_previously_ordered_less_than_x_days_ago__number != blank %}
+  {% error 'Choose only one "ignore" option at a time. Thanks! :)' %}
+{% endif %}
+
+{% capture query %}
+  query {
+    customer(id: {{ order.customer.admin_graphql_api_id | json }}) {
+      orders(first: 2, sortKey: CREATED_AT, reverse: true) {
+        edges {
+          node {
+            id
+            createdAt
+            name
+          }
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "customer": {
+          "orders": {
+            "edges": [
+              {
+                "node": {
+                  "id": "gid://shopify/Order/2345678901",
+                  "createdAt": "2020-00-00T00:00:00Z",
+                  "name": "#1235"
+                }
+              },
+              {
+                "node": {
+                  "id": "gid://shopify/Order/1234567890",
+                  "createdAt": "1900-00-00T00:00:00Z",
+                  "name": "#1234"
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% assign previous_order_node = result.data.customer.orders.edges[1].node %}
+
+{% log previous_order: previous_order_node %}
+
+{% if options.ignore_customers_who_previously_ordered_after_this_date != blank %}
+  {% assign nonsense_s = "asdf" | date: "%s" | times: 1 %}
+  {% assign previous_order_threshold_s = options.ignore_customers_who_previously_ordered_after_this_date | date: "%s" | times: 1 %}
+  {% if previous_order_threshold_s == nonsense_s %}
+    {% error %}{{ options.ignore_customers_who_previously_ordered_after_this_date | json | append: " was not recognized as a valid date" | json }}{% enderror %}
+  {% endif %}
+{% elsif options.ignore_customers_who_previously_ordered_less_than_x_days_ago__number != blank %}
+  {% assign time_window_s = options.ignore_customers_who_previously_ordered_less_than_x_days_ago__number | times: 24 | times: 60 | times: 60 %}
+  {% assign previous_order_threshold_s = "now" | date: "%s" | minus: time_window_s %}
+{% endif %}
+
+{% if previous_order_threshold_s %}
+  {% log %}{"previous_order_threshold": {{ previous_order_threshold_s | date: "%Y-%m-%d %T %Z" | json }}}{% endlog %}
+{% endif %}
+
+{% assign previous_order_qualifies = false %}
+{% if previous_order_threshold_s == nil %}
+  {% assign previous_order_qualifies = true %}
+{% else %}
+  {% if previous_order_node %}
+    {% assign previous_order_created_at_s = previous_order_node.createdAt | date: "%s" | times: 1 %}
+    {% if previous_order_created_at_s < previous_order_threshold_s %}
+      {% assign previous_order_qualifies = true %}
+    {% endif %}
+  {% endif %}
+{% endif %}
+
+{% if previous_order_created_at_s < previous_order_threshold_s %}
+  {% assign note = order.note | append: newline | append: newline | append: options.order_note_to_add__required_multiline | strip %}
+
+  {% action "shopify" %}
+    mutation {
+      orderUpdate(
+        input: {
+          id: {{ order.admin_graphql_api_id | json }}
+          note: {{ note | json }}
+        }
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}

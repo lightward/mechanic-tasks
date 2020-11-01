@@ -1,0 +1,82 @@
+{% comment %}
+  An opinion about option order:
+
+  {{ options.order_tag_to_watch_for__required }}
+  {{ options.vendors_and_email_addresses__keyval_required }}
+  {{ options.email_subject__required }}
+  {{ options.email_body__required_multiline }}
+  {{ options.ignore_orders_older_than_this_task__boolean }}
+{% endcomment %}
+
+{% if event.preview %}
+  {% assign order = hash %}
+  {% assign order["admin_graphql_api_id"] = "gid://shopify/Order/1234567890" %}
+  {% assign order["tags"] = options.order_tag_to_watch_for__required %}
+  {% assign order["line_items"] = array %}
+  {% assign order["line_items"][0] = hash %}
+  {% assign order["line_items"][0]["vendor"] = options.vendors_and_email_addresses__keyval_required.first.first %}
+{% endif %}
+
+{% assign emails_sent_tag = options.order_tag_to_watch_for__required | append: "-vendor-emails-sent" %}
+
+{% if event.preview %}
+  {% assign order_vendors = array %}
+  {% assign order_vendors[0] = options.vendors_and_email_addresses__keyval_required.first.first %}
+{% else %}
+  {% assign order_vendors = order.line_items | map: "vendor" | uniq %}
+{% endif %}
+
+{% assign order_qualifies = false %}
+
+{% assign order_tags = order.tags | split: ", " %}
+{% if order_tags contains options.order_tag_to_watch_for__required %}
+  {% if order_tags contains emails_sent_tag %}
+    {% log "Emails have already been sent for this order; nothing to do." %}
+  {% else %}
+    {% assign order_qualifies = true %}
+  {% endif %}
+{% endif %}
+
+{% unless event.preview %}
+  {% if options.ignore_orders_older_than_this_task__boolean %}
+    {% assign order_created_at_s = order.created_at | date: "%s" | times: 1 %}
+    {% assign task_created_at_s = task.created_at | date: "%s" | times: 1 %}
+    {% if order_created_at_s < task_created_at_s %}
+      {% assign order_qualifies = false %}
+    {% endif %}
+  {% endif %}
+{% endunless %}
+
+{% if order_qualifies %}
+  {% for vendor in order_vendors %}
+    {% assign vendor_email = options.vendors_and_email_addresses__keyval_required[vendor] %}
+    {% if vendor_email == blank %}
+      {% log %}{{ "No email address found for vendor " | append: vendor | json }}{% endlog %}
+      {% continue %}
+    {% endif %}
+
+    {% action "email" %}
+      {
+        "to": {{ vendor_email | json }},
+        "subject": {{ options.email_subject__required | json }},
+        "body": {{ options.email_body__required_multiline | strip | newline_to_br | json }},
+        "reply_to": {{ shop.customer_email | json }},
+        "from_display_name": {{ shop.name | json }}
+      }
+    {% endaction %}
+
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {{ order.admin_graphql_api_id | json }}
+          tags: {{ emails_sent_tag | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endfor %}
+{% endif %}

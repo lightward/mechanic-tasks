@@ -1,0 +1,156 @@
+{% assign order_ids_tags_and_product_tags = array %}
+
+{% if event.topic == "shopify/orders/create" %}
+  {% if event.preview %}
+    {% capture order_json %}
+      {
+        "admin_graphql_api_id": "gid://shopify/Order/12345",
+        "line_items": [
+          {
+            "product": {
+              "tags": {{ options.only_copy_these_tags__array | join: ", " | default: "preorder" | json }}
+            }
+          },
+          {
+            "product": {
+              "tags": {{ options.only_copy_tags_having_this_prefix | default: "important" | append: "-order" | json }}
+            }
+          }
+        ]
+      }
+    {% endcapture %}
+
+    {% assign order = order_json | parse_json %}
+  {% endif %}
+
+  {% assign order_product_tags = order.line_items | map: "product" | map: "tags" | join: ", " | split: ", " %}
+  {% assign item = array %}
+  {% assign item[0] = order.admin_graphql_api_id %}
+  {% assign item[1] = order.tags | split: ", " %}
+  {% assign item[2] = order_product_tags %}
+  {% assign order_ids_tags_and_product_tags[0] = item %}
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% capture bulk_operation_query %}
+    query {
+      orders {
+        edges {
+          node {
+            __typename
+            id
+            tags
+            lineItems {
+              edges {
+                node {
+                  __typename
+                  id
+                  product {
+                    tags
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture objects_jsonl %}
+      {"__typename":"Order","id":"gid:\/\/shopify\/Order\/1234567890","tags":[]}
+      {"__typename":"LineItem","__parentId":"gid:\/\/shopify\/Order\/1234567890","id":"gid:\/\/shopify\/LineItem\/1234567890","product":{"tags":{{ options.only_copy_these_tags__array | join: "," | default: "preorder" | split: "," | json }}},"__parentId":"gid:\/\/shopify\/Order\/1234567890"}
+      {"__typename":"LineItem","__parentId":"gid:\/\/shopify\/Order\/1234567890","id":"gid:\/\/shopify\/LineItem\/2345678901","product":{"tags":[{{ options.only_copy_tags_having_this_prefix | default: "important" | append: "-order" | json }}]},"__parentId":"gid:\/\/shopify\/Order\/1234567890"}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = objects_jsonl | parse_jsonl %}
+  {% endif %}
+
+  {% assign orders = bulkOperation.objects | where: "__typename", "Order" %}
+  {% assign lineItems = bulkOperation.objects | where: "__typename", "LineItem" %}
+
+  {% for order in orders %}
+    {% assign order_products = lineItems | where: "__parentId", order.id | map: "product" | compact %}
+    {% assign order_product_tags = array %}
+    {% for product in order_products %}
+      {% assign order_product_tags = order_product_tags | concat: product.tags | uniq %}
+    {% endfor %}
+
+    {% assign item = array %}
+    {% assign item[0] = order.id %}
+    {% assign item[1] = order.tags %}
+    {% assign item[2] = order_product_tags %}
+    {% assign order_ids_tags_and_product_tags[order_ids_tags_and_product_tags.size] = item %}
+  {% endfor %}
+{% endif %}
+
+{% for item in order_ids_tags_and_product_tags %}
+  {% assign order_id = item[0] %}
+  {% assign order_tags = item[1] %}
+  {% assign order_product_tags = item[2] %}
+
+  {% assign tags_to_add = array %}
+
+  {% for tag in order_product_tags %}
+    {% if order_tags contains tag %}
+      {% continue %}
+    {% endif %}
+
+    {% if options.only_copy_these_tags__array != blank %}
+      {% if options.only_copy_these_tags__array contains nil %}
+        {% error "'Only copy these tags' must not contain any blank items. If you don't want to use this option, remove its remaining items." %}
+      {% endif %}
+
+      {% unless options.only_copy_these_tags__array contains tag %}
+        {% continue %}
+      {% endunless %}
+    {% endif %}
+
+    {% if options.only_copy_tags_having_this_prefix != blank %}
+      {% assign prefix_length = options.only_copy_tags_having_this_prefix.size %}
+      {% assign tag_substr = tag | slice: 0, prefix_length %}
+      {% if tag_substr != options.only_copy_tags_having_this_prefix %}
+        {% continue %}
+      {% endif %}
+    {% endif %}
+
+    {% assign tags_to_add[tags_to_add.size] = tag %}
+  {% endfor %}
+
+  {% if event.preview and tags_to_add == empty %}
+    {% error "It looks like you have conflicting options configured. Please double-check your options, and try again. :)" %}
+  {% endif %}
+
+  {% if tags_to_add != empty %}
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {{ order_id | json }}
+          tags: {{ tags_to_add | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}

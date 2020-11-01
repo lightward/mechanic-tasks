@@ -1,0 +1,78 @@
+{% if event.preview %}
+  {% assign now_s = "now" | date: "%s" | times: 1 %}
+  {% assign preview_interval_s = options.product_tags_and_maximum_age_in_days__keyval_number_required.first.last | times: 24 | times: 60 | times: 60 %}
+  {% assign preview_time = now_s | minus: preview_interval_s | plus: 86400 | date: "%Y-%m-%d" %}
+
+  {% assign products = array %}
+  {% assign products[0] = '{"admin_graphql_api_id":"gid://shopify/Product/1234567890"}' | parse_json %}
+  {% assign products[0]["created_at"] = preview_time %}
+  {% assign products[0]["published_at"] = preview_time %}
+{% else %}
+  {% assign products = shop.products %}
+{% endif %}
+
+{% assign now_s = "now" | date: "%s" | times: 1 %}
+
+{% for product in products %}
+  {% assign product_tags = product.tags | split: ", " %}
+
+  {% assign product_timestamp_s = product.created_at | date: "%s" | times: 1 %}
+  {% if options.use_product_publish_times_instead_of_creation_times__boolean %}
+    {% assign product_timestamp_s = product.published_at | date: "%s" | times: 1 %}
+  {% endif %}
+
+  {% assign tags_to_add = array %}
+  {% assign tags_to_remove = array %}
+
+  {% for keyval in options.product_tags_and_maximum_age_in_days__keyval_number_required %}
+    {% assign tag = keyval[0] %}
+    {% assign maximum_age_d = keyval[1] %}
+    {% assign maximum_age_s = maximum_age_d | times: 24 | times: 60 | times: 60 %}
+
+    {% assign threshold_timestamp_s = now_s | minus: maximum_age_s %}
+
+    {% comment %}
+      0 happens when we didn't have a valid datetime string to begin with. Happens
+      when there's no published_at value.
+    {% endcomment %}
+    {% if product_timestamp_s != 0 and product_timestamp_s > threshold_timestamp_s %}
+      {% unless product_tags contains tag %}
+        {% assign tags_to_add[tags_to_add.size] = tag %}
+      {% endunless %}
+    {% else %}
+      {% if product_tags contains tag %}
+        {% assign tags_to_remove[tags_to_remove.size] = tag %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+
+  {% if tags_to_add != empty or tags_to_remove != empty %}
+    {% action "shopify" %}
+      mutation {
+        {% if tags_to_add != empty %}
+          tagsAdd(
+            id: {{ product.admin_graphql_api_id | json }}
+            tags: {{ tags_to_add | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        {% endif %}
+
+        {% if tags_to_remove != empty %}
+          tagsRemove(
+            id: {{ product.admin_graphql_api_id | json }}
+            tags: {{ tags_to_remove | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        {% endif %}
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}

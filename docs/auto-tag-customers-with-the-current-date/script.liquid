@@ -1,0 +1,20 @@
+{% assign tag = "now" | date: options.tag_date_format__required | prepend: options.tag_prefix | append: options.tag_suffix %}
+
+{% if event.preview %}
+  {% assign customer = hash %}
+  {% assign customer["admin_graphql_api_id"] = "gid://shopify/Customer/12345" %}
+{% endif %}
+
+{% action "shopify" %}
+  mutation {
+    tagsAdd(
+      id: {{ customer.admin_graphql_api_id | json }}
+      tags: {{ tag | json }}
+    ) {
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+{% endaction %}

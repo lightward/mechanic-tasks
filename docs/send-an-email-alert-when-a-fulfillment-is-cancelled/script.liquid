@@ -1,0 +1,20 @@
+{% assign fulfillment_qualifies = false %}
+{% assign cache_key = task.id | append: fulfillment.id | sha256 %}
+
+{% if fulfillment.status == "cancelled" and cache[cache_key] == blank %}
+  {% assign fulfillment_qualifies = true %}
+{% endif %}
+
+{% if event.preview or fulfillment_qualifies %}
+  {% action "email" %}
+    {
+      "to": {{ options.email_recipient__email_required | json }},
+      "subject": {{ options.email_subject__required | json }},
+      "body": {{ options.email_body__multiline_required | strip | newline_to_br | json }},
+      "reply_to": {{ shop.customer_email | json }},
+      "from_display_name": {{ shop.name | json }}
+    }
+  {% endaction %}
+
+  {% action "cache", "set", cache_key, true %}
+{% endif %}

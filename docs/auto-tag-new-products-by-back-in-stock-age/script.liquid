@@ -1,0 +1,205 @@
+{% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler" %}
+  {% capture bulk_operation_query %}
+    query {
+      products {
+        edges {
+          node {
+            __typename
+            id
+            tags
+            totalInventory
+            metafield(
+              namespace: "mechanic"
+              key: "back_in_stock_s"
+            ) {
+              value
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = array %}
+
+    {% assign bulkOperation["objects"][0] = hash %}
+    {% assign bulkOperation["objects"][0]["id"] = "gid://shopify/Product/1234567890" %}
+    {% assign bulkOperation["objects"][0]["totalInventory"] = options.back_in_stock_inventory_level__number_required | plus: 10 %}
+    {% assign bulkOperation["objects"][0]["tags"] = array %}
+    {% assign bulkOperation["objects"][0]["metafield"] = hash %}
+    {% assign bulkOperation["objects"][0]["metafield"]["value"] = "now" | date: "%s" | minus: 1000 %}
+
+    {% assign bulkOperation["objects"][1] = hash %}
+    {% assign bulkOperation["objects"][1]["id"] = "gid://shopify/Product/2345678901" %}
+    {% assign bulkOperation["objects"][1]["totalInventory"] = options.back_in_stock_inventory_level__number_required | minus: 10 %}
+    {% assign bulkOperation["objects"][1]["tags"] = array %}
+    {% assign bulkOperation["objects"][1]["tags"][0] = options.product_tags_and_maximum_age_in_days__keyval_number_required.first.first %}
+    {% assign bulkOperation["objects"][1]["metafield"] = nil %}
+  {% endif %}
+
+  {% for object in bulkOperation.objects %}
+    {% assign product_timestamp_s = object.metafield.value | times: 1 %}
+
+    {% assign tags_to_add = array %}
+    {% assign tags_to_remove = array %}
+
+    {% for keyval in options.product_tags_and_maximum_age_in_days__keyval_number_required %}
+      {% assign tag = keyval[0] %}
+      {% assign maximum_age_d = keyval[1] %}
+      {% assign maximum_age_s = maximum_age_d | times: 24 | times: 60 | times: 60 %}
+
+      {% assign threshold_timestamp_s = now_s | minus: maximum_age_s %}
+
+      {% comment %}
+        0 happens when we didn't have a valid datetime string to begin with. Happens
+        when there's no published_at value.
+      {% endcomment %}
+      {% if product_timestamp_s != 0 and product_timestamp_s > threshold_timestamp_s %}
+        {% unless object.tags contains tag %}
+          {% assign tags_to_add[tags_to_add.size] = tag %}
+        {% endunless %}
+      {% else %}
+        {% if object.tags contains tag %}
+          {% assign tags_to_remove[tags_to_remove.size] = tag %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+
+    {% if tags_to_add != empty or tags_to_remove != empty %}
+      {% action "shopify" %}
+        mutation {
+          {% if tags_to_add != empty %}
+            tagsAdd(
+              id: {{ object.id | json }}
+              tags: {{ tags_to_add | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          {% endif %}
+
+          {% if tags_to_remove != empty %}
+            tagsRemove(
+              id: {{ object.id | json }}
+              tags: {{ tags_to_remove | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          {% endif %}
+        }
+      {% endaction %}
+    {% endif %}
+  {% endfor %}
+{% elsif event.topic contains "shopify/inventory_levels/" %}
+  {% capture query %}
+    query {
+      inventoryLevel(id: {{ inventory_level.admin_graphql_api_id | json }}) {
+        item {
+          variant {
+            product {
+              id
+              totalInventory
+              metafield(
+                namespace: "mechanic"
+                key: "back_in_stock_s"
+              ) {
+                id
+                value
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "inventoryLevel": {
+            "item": {
+              "variant": {
+                "product": {
+                  "id": "gid://shopify/Product/1234567890",
+                  "totalInventory": {{ options.back_in_stock_inventory_level__number_required | plus: 1 }},
+                  "metafield": null
+                }
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign productNode = result.data.inventoryLevel.item.variant.product %}
+
+  {% if productNode.metafield == nil and productNode.totalInventory >= options.back_in_stock_inventory_level__number_required %}
+    {% action "shopify" %}
+      mutation {
+        productUpdate(
+          input: {
+            id: {{ productNode.id | json }}
+            metafields: [
+              {
+                namespace: "mechanic"
+                key: "back_in_stock_s"
+                valueType: INTEGER
+                value: {{ "now" | date: "%s" | json }}
+              }
+            ]
+          }
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% elsif productNode.metafield != nil and productNode.totalInventory < options.back_in_stock_inventory_level__number_required %}
+    {% action "shopify" %}
+      mutation {
+        metafieldDelete(
+          input: {
+            id: {{ productNode.metafield.id | json }}
+          }
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endif %}

@@ -1,0 +1,33 @@
+{% if event.preview %}
+  {% assign fulfillment = hash %}
+  {% assign fulfillment["tracking_number"] = "1234567890" %}
+  {% assign fulfillment["admin_graphql_api_id"] = "gid://shopify/Fulfillment/1234567890" %}
+{% endif %}
+
+{% if fulfillment.tracking_number == blank %}
+  {"log": "This fullfilment has no tracking number; can't add a prefix"}
+{% else %}
+  {% action "shopify" %}
+    mutation {
+      fulfillmentTrackingInfoUpdate(
+        fulfillmentId: {{ fulfillment.admin_graphql_api_id | json }}
+        trackingInfoUpdateInput: {
+          trackingDetails: {
+            number: {{ fulfillment.tracking_number | prepend: options.tracking_number_prefix_to_add__required | json }}
+          }
+          notifyCustomer: {{ options.notify_customer__boolean | json }}
+        }
+      ) {
+        fulfillment {
+          trackingInfo {
+            number
+          }
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}

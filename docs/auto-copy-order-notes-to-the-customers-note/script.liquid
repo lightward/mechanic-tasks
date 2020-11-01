@@ -1,0 +1,48 @@
+{% assign order_qualifies = false %}
+
+{% if order.note != blank %}
+  {% unless order.customer.note contains order.note %}
+    {% assign order_qualifies = true %}
+  {% endunless %}
+{% endif %}
+
+{% if event.preview or order_qualifies %}
+  {% assign new_order_note = order.customer.note | append: newline | append: newline | append: options.note_prefix | append: order.note | strip %}
+
+  {% if event.preview or new_order_note.size <= 5000 %}
+    {% action "shopify" %}
+      [
+        "update",
+        [
+          "customer",
+          {{ order.customer.id | json }}
+        ],
+        {
+          "note": {{ new_order_note | json }}
+        }
+      ]
+    {% endaction %}
+  {% else %}
+    {% capture error_body %}
+      Hello,
+          
+      Mechanic was unable to add to the customer note for the following customer, for the following related order:
+
+      Customer: https://{{ shop.domain }}/admin/customers/{{ order.customer.id }}
+      Order: https://{{ shop.domain }}/admin/orders/{{ order.id }}
+
+      Thanks,
+      Mechanic
+    {% endcapture %}
+
+    {% action "email" %}
+      {
+        "to": {{ shop.email | json }},
+        "subject": {{ "Mechanic error: customer note too long for order " | append: order.name | json }},
+        "body": {{ error_body | unindent | strip | newline_to_br | json }},
+        "reply_to": {{ shop.customer_email | json }},
+        "from_display_name": {{ shop.name | json }}
+      }
+    {% endaction %}
+  {% endif %}
+{% endif %}

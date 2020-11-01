@@ -1,0 +1,81 @@
+{% if event.preview %}
+  {% assign order = hash %}
+  {% assign order["admin_graphql_api_id"] = "gid://shopify/Order/1234567890" %}
+  {% assign order["total_price"] = options.minimum_order_total__number | plus: 1 | append: "" %}
+{% endif %}
+
+{% if event.topic == "shopify/orders/create" %}
+  {% if options.minimum_order_total__number != blank %}
+    {% assign total_price = order.total_price | times: 1 %}
+    {% if total_price >= options.minimum_order_total__number %}
+      {% assign order_qualifies = true %}
+    {% else %}
+      {% log message: "The order did not meet the order total minimum", minimum_order_total: options.minimum_order_total__number, actual_order_total: total_price %}
+    {% endif %}
+  {% else %}
+    {% assign order_qualifies = true %}
+  {% endif %}
+
+  {% if order_qualifies %}
+    {% action "shopify" %}
+      mutation {
+       orderEditBegin(id: {{ order.admin_graphql_api_id | json }}) {
+          calculatedOrder{
+            id
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% elsif event.topic == "mechanic/actions/perform" %}
+  {% assign data = action.run.result.data %}
+
+  {% if data.orderEditBegin %}
+    {% assign calculated_order_id = data.orderEditBegin.calculatedOrder.id %}
+
+    {% action "shopify" %}
+      mutation {
+        orderEditAddVariant(
+          id: {{ calculated_order_id | json }}
+          variantId: "gid://shopify/ProductVariant/{{ options.variant_id_to_add__number_required | round | json }}"
+          quantity: {{ options.quantity_to_add__number_required | round | json }}
+        ){
+          calculatedOrder {
+            id
+            addedLineItems(first: 1) {
+              edges {
+                node {
+                  id
+                }
+              }
+            }
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% elsif data.orderEditAddVariant %}
+    {% assign calculated_order_id = data.orderEditAddVariant.calculatedOrder.id %}
+
+    {% action "shopify" %}
+      mutation {
+        orderEditCommit(
+          id: {{ calculated_order_id | json }}
+          notifyCustomer: {{ options.notify_customer__boolean | json }}
+          staffNote: {{ options.staff_note__required | json }}
+        ) {
+          order {
+            id
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endif %}

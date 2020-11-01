@@ -1,0 +1,176 @@
+{% comment %}
+  Hello, developer friend! :) Here's the PayPal IPN variable reference:
+
+  https://developer.paypal.com/docs/classic/ipn/integration-guide/IPNandPDTVariables
+
+  ... and here's their IPN payload simulator:
+
+  https://developer.paypal.com/developer/ipnSimulator/
+
+  Their default payment_date value doesn't even meet *their* standard, so change it to
+  something like "22:03:27 Sep 28, 2018 PDT" if you need to test that value. <3
+{% endcomment %}
+
+{% if event.preview %}
+  {% capture event_data_json %}
+    {
+      "mc_gross": "-132.29",
+      "invoice": "CF customer@example.com_[12345]_12345",
+      "settle_amount": "92.59",
+      "protection_eligibility": "Eligible",
+      "item_number1": "",
+      "payer_id": "ABCDEFABCDEF",
+      "address_street": "1234 Street Lane",
+      "payment_date": "00:00:00 Jan 01, 2000 UTC",
+      "payment_status": "Completed",
+      "charset": "windows-1252",
+      "address_zip": "12345",
+      "mc_shipping": "0.00",
+      "mc_handling": "0.00",
+      "first_name": "Customer",
+      "mc_fee": "-6.78",
+      "address_country_code": "US",
+      "exchange_rate": "0.737685",
+      "address_name": "Customer Name",
+      "notify_version": "3.9",
+      "reason_code": null,
+      "settle_currency": "GBP",
+      "custom": "",
+      "business": "customer@example.com",
+      "address_country": "",
+      "mc_handling1": "0.00",
+      "address_city": "Billingsly",
+      "verify_sign": "B8xyEug85joDO4J7jO5XTilRUzIiAZ.xQozW-0M7PB9q4Z117AtHGEtx",
+      "payer_email": "customer@example.com",
+      "mc_shipping1": "0.00",
+      "tax1": "0.00",
+      "parent_txn_id": "ABC123ABC123ABC123ABC123",
+      "txn_id": "123ABC123ABC123ABC123ABC",
+      "payment_type": {{ options.only_import_these_transaction_types__array.first | default: "invoice_payment" | json }},
+      "last_name": "Customer",
+      "address_state": "ST",
+      "item_name1": "Item name",
+      "receiver_email": "customer@example.com",
+      "payment_fee": "-6.78",
+      "shipping_discount": "0.00",
+      "quantity1": "1",
+      "insurance_amount": "0.00",
+      "receiver_id": "ABCDEFABCDEF",
+      "pending_reason": null,
+      "discount": "0.00",
+      "mc_gross_1": "132.29",
+      "mc_currency": "USD",
+      "residence_country": "US",
+      "shipping_method": "",
+      "transaction_subject": "",
+      "payment_gross": "-132.29",
+      "ipn_track_id": "abcdef123456"
+    }
+  {% endcapture %}
+
+  {% assign event = hash %}
+  {% assign event["data"] = event_data_json | parse_json %}
+{% endif %}
+
+{% assign import_order = true %}
+
+{% if options.only_import_completed_transactions__boolean and event.data.payment_status != "Completed" %}
+  {% log message: "This transaction's payment status is not Completed; skipping", payment_status: event.data.payment_status %}
+  {% assign import_order = false %}
+{% endif %}
+
+{% comment %}Some notifications have a txn_type, some have a payment_type.{% endcomment %}
+{% assign transaction_type = event.data.txn_type | default: event.data.payment_type %}
+
+{% if options.only_import_these_transaction_types__array != blank %}
+  {% unless options.only_import_these_transaction_types__array contains transaction_type %}
+    {% log message: "This transaction's type was not on the list; skipping", transaction_type: transaction_type %}
+    {% assign import_order = false %}
+  {% endunless %}
+{% endif %}
+
+{% if import_order %}
+  {% comment %}
+    PayPal's date format is non-standard: `HH:MM:SS Mmm DD, YYYY PDT`, per their docs.
+    We reformat it here, to ensure that Liquid can parse it for Shopify-ready formatting.
+  {% endcomment %}
+  {% assign date_parts = event.data.payment_date | replace: ",", "" | split: " " %}
+  {% capture sane_payment_date %}{{ date_parts[3] }} {{ date_parts[1] }} {{ date_parts[2] }} {{ date_parts[0] }} {{ date_parts[4] }}{% endcapture %}
+
+  {% action "shopify" %}
+    [
+      "create",
+      "order",
+      {
+        "email": {{ event.data.payer_email | json }},
+        "send_receipt": {{ options.send_receipt__boolean | json }},
+        "processed_at": {{ sane_payment_date | date: "%Y-%m-%dT%H:%M:%S.%L%z" | json }},
+        "financial_status": "paid",
+        "currency": {{ event.data.mc_currency | json }},
+        "line_items": [
+          {
+            "title": {{ event.data.memo | default: options.default_memo | default: "(no memo given)" | json }},
+            "price": {{ event.data.mc_gross | divided_by: 1.0 | json }},
+            "requires_shipping": {{ options.order_requires_shipping__boolean | json }},
+            "quantity": 1,
+            "taxable": false
+          }
+        ],
+        "fulfillment_status": {% if options.mark_as_fulfilled__boolean %}"fulfilled"{% else %}null{% endif %},
+        "send_fulfillment_receipt": {{ options.send_fulfillment_receipt__boolean | json }},
+        "transactions": [
+          {
+            "kind": "sale",
+            "status": "success",
+            "amount": {{ event.data.mc_gross | divided_by: 1.0 | json }}
+          }
+        ],
+        "customer": {
+          "id": {{ shop.customers[event.data.payer_email].id | json }}
+        },
+        "billing_address": {
+          "first_name": {{ event.data.first_name | json }},
+          "last_name": {{ event.data.last_name | json }},
+          "address1": {{ event.data.address_street | json }},
+          "city": {{ event.data.address_city | json }},
+          "province": {{ event.data.address_state | json }},
+          "country": {{ event.data.address_country | json }},
+          "zip": {{ event.data.address_zip | json }}
+        },
+        {% if options.order_requires_shipping__boolean %}
+          "shipping_address": {
+            "first_name": {{ event.data.first_name | json }},
+            "last_name": {{ event.data.last_name | json }},
+            "address1": {{ event.data.address_street | json }},
+            "city": {{ event.data.address_city | json }},
+            "province": {{ event.data.address_state | json }},
+            "country": {{ event.data.address_country | json }},
+            "zip": {{ event.data.address_zip | json }}
+          },
+        {% endif %}
+        "note_attributes": [
+          {
+            "name": "PayPal protection eligibility",
+            "value": {{ event.data.protection_eligibility | json }}
+          },
+          {
+            "name": "PayPal payer ID",
+            "value": {{ event.data.payer_id | json }}
+          },
+          {
+            "name": "PayPal transaction ID",
+            "value": {{ event.data.txn_id | json }}
+          },
+          {
+            "name": "PayPal receiver ID",
+            "value": {{ event.data.receiver_id | json }}
+          },
+          {
+            "name": "PayPal transaction type",
+            "value": {{ event.data.txn_type | json }}
+          }
+        ]
+      }
+    ]
+  {% endaction %}
+{% endif %}

@@ -1,0 +1,109 @@
+{% comment %}
+  Option order:
+
+  {{ options.minimum_quantity_threshold__number_required }}
+  {{ options.evaluate_threshold_per_line_item__boolean }}
+  {{ options.only_monitor_these_skus__array }}
+  {{ options.order_tag_to_apply }}
+  {{ options.email_notification_recipient__email }}
+{% endcomment %}
+
+{% if options.order_tag_to_apply == blank and options.email_notification_recipient__email == blank %}
+  {"error": "Fill in at least one of 'Order tag to apply' and 'Email notification recipient'. :)"}
+{% endif %}
+
+{% assign line_item_summaries = array %}
+{% assign skus = array %}
+{% assign total_quantity = 0 %}
+{% assign total_line_items = 0 %}
+{% assign order_qualifies = false %}
+
+{% for line_item in order.line_items %}
+  {% if event.preview or options.only_monitor_these_skus__array == blank or options.only_monitor_these_skus__array contains line_item.sku %}
+    {% assign total_quantity = total_quantity | plus: line_item.quantity %}
+
+    {% assign line_item_qualifies = false %}
+    {% if options.evaluate_threshold_per_line_item__boolean %}
+      {% if event.preview or line_item.quantity >= options.minimum_quantity_threshold__number_required %}
+        {% assign line_item_qualifies = true %}
+      {% endif %}
+    {% else %}
+      {% assign line_item_qualifies = true %}
+    {% endif %}
+
+    {% if line_item_qualifies %}
+      {% assign total_line_items = total_line_items | plus: 1 %}
+
+      {% unless options.only_monitor_these_skus__array == blank %}
+        {% assign skus[skus.size] = line_item.sku %}
+      {% endunless %}
+
+      {% assign line_item_summaries[line_item_summaries.size] = line_item.quantity | append: "x " | append: line_item.sku | append: " (" | append: line_item.title | append: ")" %}
+    {% endif %}
+  {% endif %}
+{% endfor %}
+
+{% if options.evaluate_threshold_per_line_item__boolean %}
+  {% if line_item_summaries != blank %}
+    {% assign order_qualifies = true %}
+  {% endif %}
+{% else %}
+  {% if total_quantity >= options.minimum_quantity_threshold__number_required %}
+    {% assign order_qualifies = true %}
+  {% endif %}
+{% endif %}
+
+{% if event.preview or order_qualifies %}
+  {% if options.order_tag_to_apply != blank %}
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {% if event.preview %}"gid://shopify/Order/1234567890"{% else %}{{ order.admin_graphql_api_id | json }}{% endif %}
+          tags: {{ options.order_tag_to_apply | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+
+  {% if options.email_notification_recipient__email != blank %}
+    {% capture at_least_x_of -%}
+      at least {{ options.minimum_quantity_threshold__number_required }} {% if total_line_items > 1 %}{% if options.evaluate_threshold_per_line_item__boolean %} each{% else %}total{% endif %}{% endif %} of
+    {%- endcapture %}
+
+    {% capture email_body %}
+      Hi there,
+
+      Order {{ order.name }} contained {{ at_least_x_of }} {{ total_line_items | pluralize: "this item", "these items" }}:
+
+      {{ line_item_summaries | join: "<br>" }}
+
+      See this order in Shopify:
+
+      https://{{ shop.domain }}/admin/orders/{{ order.id }}
+
+      Thanks,
+      Mechanic, for {{ shop.name }}
+    {% endcapture %}
+
+    {% if options.only_monitor_these_skus__array == blank %}
+      {% assign qualifying_items_descriptor = "qualifying item(s)" %}
+    {% else %}
+      {% assign qualifying_items_descriptor = skus | join: ", " %}
+    {% endif %}
+
+    {% action "email" %}
+      {
+        "to": {{ options.email_notification_recipient__email | json }},
+        "subject": {{ "Order " | append: order.name | append: " contained " | append: at_least_x_of | append: " " | append: qualifying_items_descriptor | json }},
+        "body": {{ email_body | unindent | newline_to_br | json }},
+        "reply_to": {{ shop.customer_email | json }},
+        "from_display_name": {{ shop.name | json }}
+      }
+    {% endaction %}
+  {% endif %}
+{% endif %}

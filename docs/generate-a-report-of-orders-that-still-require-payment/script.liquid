@@ -1,0 +1,41 @@
+{% assign orders = shop.orders %}
+
+{% if options.include_closed_orders__boolean %}
+  {% assign orders = orders.any %}
+{% endif %}
+
+{% assign orders_to_report = orders.unpaid | concat: orders.partially_paid | concat: orders.pending %}
+
+{% if orders_to_report == empty and event.preview != true %}
+  {% log "Zero orders found - skipping email. :)" %}
+{% else %}
+  {% assign rows = array %}
+  {% assign header = array %}
+  {% assign header[0] = "Order number" %}
+  {% assign header[1] = "Date" %}
+  {% assign header[2] = "Customer name" %}
+  {% assign header[3] = "Order total" %}
+  {% assign rows[0] = header %}
+
+  {% for order in orders_to_report %}
+    {% assign row = array %}
+    {% assign row[0] = order.name %}
+    {% assign row[1] = order.processed_at | date: "%F" %}
+    {% assign row[2] = order.customer.first_name | append: " " | append: order.customer.last_name | strip %}
+    {% assign row[3] = order.total_price | money_with_currency %}
+    {% assign rows[rows.size] = row %}
+  {% endfor %}
+
+  {% action "email" %}
+    {
+      "to": {{ options.recipient_email_address__email_required | json }},
+      "subject": {{ options.email_subject__required | json }},
+      "body": {{ options.email_body__required_multiline | strip | newline_to_br | json }},
+      "reply_to": {{ shop.customer_email | json }},
+      "from_display_name": {{ shop.name | json }},
+      "attachments": {
+        {{ options.csv_attachment_filename__required | replace: ".csv", "" | append: ".csv" | json }}: {{ rows | csv | json }}
+      }
+    }
+  {% endaction %}
+{% endif %}

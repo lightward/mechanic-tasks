@@ -1,0 +1,111 @@
+{% capture query %}
+  query {
+    publications(first: 250) {
+      edges {
+        node {
+          id
+          name
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% assign publications = array %}
+
+{% for publication_edge in result.data.publications.edges %}
+  {% if options.sales_channel_names__required_array contains publication_edge.node.name %}
+    {% assign publications[publications.size] = publication_edge.node %}
+  {% endif %}
+{% endfor%}
+
+{% if event.preview != true and publications.size != options.sales_channel_names__required_array.size %}
+  {% log publications_named: options.sales_channel_names__required_array, publications_available: result.data.publications.edges,  publications_matched: publications %}
+  {% error "Unable to find all named publications. Double-check your task configuration." %}
+{% endif %}
+
+{% assign cursor = nil %}
+{% assign product_ids_and_publication_ids = array %}
+
+{% for n in (0..100) %}
+  {% capture query %}
+    query {
+      products(
+        first: 250
+        query: {{ options.only_publish_products_matching_this_query | json }}
+        after: {{ cursor | json }}
+      ) {
+        pageInfo {
+          hasNextPage
+        }
+        edges {
+          cursor
+          node {
+            id
+            {% for publication in publications %}
+              publishedOnPublication{{ forloop.index }}: publishedOnPublication(
+                publicationId: {{ publication.id | json }}
+              )
+            {% endfor %}
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% for product_edge in result.data.products.edges %}
+    {% assign product = product_edge.node %}
+    {% for publication in publications %}
+      {% assign published_key = "publishedOnPublication" | append: forloop.index %}
+      {% unless product[published_key] %}
+        {% assign pair = array %}
+        {% assign pair[0] = product.id %}
+        {% assign pair[1] = publication.id %}
+        {% assign product_ids_and_publication_ids[product_ids_and_publication_ids.size] = pair %}
+      {% endunless %}
+    {% endfor %}
+  {% endfor %}
+
+  {% if result.data.products.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.products.edges.last.cursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% if event.preview %}
+  {% assign product_ids_and_publication_ids[0] = array %}
+  {% assign product_ids_and_publication_ids[0] = "gid://shopify/Product/1234567890" %}
+  {% assign product_ids_and_publication_ids[0] = "gid://shopify/Publication/1234567890" %}
+{% endif %}
+
+{% if options.test_mode__boolean %}
+  {% action "echo" %}
+    {
+      "message": "Found {{ product_ids_and_publication_ids.size }} publishing actions",
+      "product_ids_and_publication_ids": {{ product_ids_and_publication_ids | json }}
+    }
+  {% endaction %}
+{% else %}
+  {% for product_id_and_publication_id in product_ids_and_publication_ids %}
+    {% action "shopify" %}
+      mutation {
+        publishablePublish(
+          id: {{ product_id_and_publication_id[0] | json }}
+          input: {
+            publicationId: {{ product_id_and_publication_id[1] | json }}
+          }
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endfor %}
+{% endif %}

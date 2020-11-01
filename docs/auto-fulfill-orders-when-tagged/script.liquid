@@ -1,0 +1,37 @@
+{% if event.preview %}
+  {% assign order = hash %}
+  {% assign order["id"] = 1234567890 %}
+  {% assign order["tags"] = options.order_tag_to_watch_for__required %}
+{% endif %}
+
+{% assign order_qualifies = false %}
+
+{% if order.fulfillment_status == nil or order.fulfillment_status == "partial" %}
+  {% assign order_tags = order.tags | split: ", " %}
+  {% if order_tags contains options.order_tag_to_watch_for__required %}
+    {% assign order_qualifies = true %}
+  {% endif %}
+
+  {% if order_qualifies and options.ignore_if_this_order_tag_is_found != blank %}
+    {% if order_tags contains options.ignore_if_this_order_tag_is_found %}
+      {% log message: "Order had the tag to watch for, but it also had the ignore tag. Skipping.", order_tags: order_tags, task_options: options %}
+      {% assign order_qualifies = false %}
+    {% endif %}
+  {% endif %}
+{% endif %}
+
+{% if order_qualifies %}
+  {% action "shopify" %}
+    [
+      "post",
+      "/admin/orders/{{ order.id }}/fulfillments.json",
+      {
+        "fulfillment": {
+          "location_id": {{ shop.primary_location_id | json }},
+          "notify_customer": {{ options.notify_customer_on_fulfillment__boolean | json }},
+          "status": "success"
+        }
+      }
+    ]
+  {% endaction %}
+{% endif %}

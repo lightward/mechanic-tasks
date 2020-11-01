@@ -1,0 +1,32 @@
+{% assign order = order.reload %}
+
+{% if event.preview or order.email != blank %}
+  {% assign variant_string = "" %}
+
+  {% for line_item in order.line_items %}
+    {% if line_item.variant_id %}
+      {% capture variant_string %}{% if variant_string != blank %}{{ variant_string }},{% endif %}{{ line_item.variant_id }}:{{ line_item.quantity }}{% endcapture %}
+    {% endif %}
+  {% endfor %}
+
+  {% if event.preview and variant_string == blank %}
+    {% assign variant_string = "1234567890:1,0987654321:2" %}
+  {% endif %}
+
+  {% if variant_string != blank %}
+    {% capture reorder_url %}https://{{ shop.domain }}/cart/{{ variant_string }}?{% if options.order_referral_code != blank %}ref={{ options.order_referral_code | url_param_escape }}&{% endif %}checkout[email]={{ order.email | url_param_escape }}{% endcapture %}
+
+    {
+      "action": {
+        "type": "email",
+        "options": {
+          "to": {{ order.email | json }},
+          "subject": {{ options.email_subject__required | strip | json }},
+          "body": {{ options.email_body__multiline_required | replace: "REORDER_URL", reorder_url | strip | newline_to_br | json }},
+          "reply_to": {{ shop.customer_email | json }},
+          "from_display_name": {{ shop.name | json }}
+        }
+      }
+    }
+  {% endif %}
+{% endif %}

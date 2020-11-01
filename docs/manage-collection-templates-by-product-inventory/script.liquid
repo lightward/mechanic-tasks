@@ -1,0 +1,208 @@
+{% if event.topic contains "shopify/inventory_levels/" %}
+  {% assign collections = inventory_level.variant.product.collections %}
+
+  {% if event.preview %}
+    {% capture collections_json %}
+      [
+        {
+          "admin_graphql_api_id": "gid://shopify/Collection/1234567890",
+          "template_suffix": null,
+          "products": [
+            {
+              "variants": [
+                {
+                  "inventory_quantity": 0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    {% endcapture %}
+
+    {% assign collections = collections_json | parse_json %}
+  {% endif %}
+
+  {% for collection in collections %}
+    {% assign current_template_suffix = collection.template_suffix %}
+
+    {% comment %}
+      Shopify stores this as *either* an empty string or as nil. Mechanic auto-nils
+      empty strings for task options, so we coerce blanks to nils here.
+    {% endcomment %}
+    {% if current_template_suffix == blank %}
+      {% assign current_template_suffix = nil %}
+    {% endif %}
+
+    {% assign total_inventory = 0 %}
+
+    {% assign set_template_suffix = false %}
+    {% assign new_template_suffix = nil %}
+
+    {% for product in collection.products %}
+      {% assign product_total_inventory = product.variants | map: "inventory_quantity" | sum %}
+      {% assign total_inventory = total_inventory | plus: product_total_inventory %}
+    {% endfor %}
+
+    {% if total_inventory <= 0 %}
+      {% if current_template_suffix != options.collection_template_suffix_when_all_products_are_out_of_stock__required %}
+        {% assign set_template_suffix = true %}
+        {% assign new_template_suffix = options.collection_template_suffix_when_all_products_are_out_of_stock__required %}
+      {% endif %}
+    {% else %}
+      {% if current_template_suffix != options.default_collection_template_suffix %}
+        {% assign set_template_suffix = true %}
+        {% assign new_template_suffix = options.default_collection_template_suffix %}
+      {% endif %}
+    {% endif %}
+
+    {
+      "log": {
+        "collection_id": {{ collection.admin_graphql_api_id | json }},
+        "total_inventory": {{ total_inventory | json }},
+        "current_template_suffix": {{ current_template_suffix | json }},
+        "set_template_suffix": {{ set_template_suffix | json }},
+        "new_template_suffix": {{ new_template_suffix | json }}
+      }
+    }
+
+    {% if set_template_suffix %}
+      {% action "shopify" %}
+        mutation {
+          collectionUpdate(
+            input: {
+              id: {{ collection.admin_graphql_api_id | json }}
+              templateSuffix: {{ new_template_suffix | json }}
+            }
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endif %}
+  {% endfor %}
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% assign collection_object = '{"__typename":"Collection","id":"gid://shopify/Collection/1234567890","templateSuffix":null}' | parse_json %}
+    {% assign product_object = '{"__typename":"Product","id":"gid://shopify/Product/1234567890","__parentId":"gid://shopify/Collection/1234567890","totalInventory":0}' | parse_json %}
+
+    {% assign objects = array %}
+    {% assign objects[0] = collection_object %}
+    {% assign objects[1] = product_object %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = objects %}
+  {% endif %}
+
+  {% assign collection_suffixes = hash %}
+  {% assign collection_total_inventory = hash %}
+
+  {% for object in bulkOperation.objects %}
+    {% case object.__typename %}
+    {% when "Collection" %}
+      {% assign collection_suffixes[object.id] = object.templateSuffix %}
+    {% when "Product" %}
+      {% assign collection_total_inventory[object.__parentId] = collection_total_inventory[object.__parentId] | default: 0 | plus: object.totalInventory %}
+    {% endcase %}
+  {% endfor %}
+
+  {% for keyval in collection_total_inventory %}
+    {% assign collection_id = keyval[0] %}
+    {% assign total_inventory = keyval[1] %}
+    {% assign current_template_suffix = collection_suffixes[collection_id] %}
+
+    {% comment %}
+      Shopify stores this as *either* an empty string or as nil. Mechanic auto-nils
+      empty strings for task options, so we coerce blanks to nils here.
+    {% endcomment %}
+    {% if current_template_suffix == blank %}
+      {% assign current_template_suffix = nil %}
+    {% endif %}
+
+    {% assign set_template_suffix = false %}
+    {% assign new_template_suffix = nil %}
+
+    {% if total_inventory <= 0 %}
+      {% if current_template_suffix != options.collection_template_suffix_when_all_products_are_out_of_stock__required %}
+        {% assign set_template_suffix = true %}
+        {% assign new_template_suffix = options.collection_template_suffix_when_all_products_are_out_of_stock__required %}
+      {% endif %}
+    {% else %}
+      {% if current_template_suffix != options.default_collection_template_suffix %}
+        {% assign set_template_suffix = true %}
+        {% assign new_template_suffix = options.default_collection_template_suffix %}
+      {% endif %}
+    {% endif %}
+
+    {
+      "log": {
+        "collection_id": {{ collection_id | json }},
+        "total_inventory": {{ total_inventory | json }},
+        "current_template_suffix": {{ current_template_suffix | json }},
+        "set_template_suffix": {{ set_template_suffix | json }},
+        "new_template_suffix": {{ new_template_suffix | json }}
+      }
+    }
+
+    {% if set_template_suffix %}
+      {% action "shopify" %}
+        mutation {
+          collectionUpdate(
+            input: {
+              id: {{ collection_id | json }}
+              templateSuffix: {{ new_template_suffix | json }}
+            }
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endif %}
+  {% endfor %}
+{% else %}
+  {% capture bulk_operation_query %}
+    query {
+      collections {
+        edges {
+          node {
+            __typename
+            id
+            templateSuffix
+            products {
+              edges {
+                node {
+                  __typename
+                  id
+                  totalInventory
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}

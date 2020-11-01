@@ -1,0 +1,62 @@
+{% assign fulfillment_statuses_to_cancel = "" %}
+
+{% if options.cancel_pending_fulfillments__boolean %}
+  {% assign fulfillment_statuses_to_cancel = fulfillment_statuses_to_cancel | add_tag: "pending" %}
+{% endif %}
+
+{% if options.cancel_open_fulfillments__boolean %}
+  {% assign fulfillment_statuses_to_cancel = fulfillment_statuses_to_cancel | add_tag: "open" %}
+{% endif %}
+
+{% if options.cancel_successful_fulfillments__boolean %}
+  {% assign fulfillment_statuses_to_cancel = fulfillment_statuses_to_cancel | add_tag: "success" %}
+{% endif %}
+
+{% assign fulfillment_statuses_to_cancel = fulfillment_statuses_to_cancel | split: ", " %}
+
+{% if fulfillment_statuses_to_cancel.size == 0 %}
+  {"log": "Please select at least one fulfillment status for cancellation."}
+{% elsif event.preview %}
+  {
+    "action": {
+      "type": "shopify",
+      "options": [
+        "post",
+        "/admin/orders/1234567890/fulfillments/1234567890/cancel.json",
+        {}
+      ]
+    }
+  }
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% for order in shop.orders.any.refunded %}
+    {% for fulfillment in order.fulfillments %}
+      {% if fulfillment_statuses_to_cancel contains fulfillment.status %}
+        {
+          "action": {
+            "type": "shopify",
+            "options": [
+              "post",
+              "/admin/orders/{{ order.id }}/fulfillments/{{ fulfillment.id }}/cancel.json",
+              {}
+            ]
+          }
+        }
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+{% elsif refund.order.financial_status == "refunded" %}
+  {% for fulfillment in refund.order.fulfillments %}
+    {% if fulfillment_statuses_to_cancel contains fulfillment.status %}
+      {
+        "action": {
+          "type": "shopify",
+          "options": [
+            "post",
+            "/admin/orders/{{ refund.order.id }}/fulfillments/{{ fulfillment.id }}/cancel.json",
+            {}
+          ]
+        }
+      }
+    {% endif %}
+  {% endfor %}
+{% endif %}

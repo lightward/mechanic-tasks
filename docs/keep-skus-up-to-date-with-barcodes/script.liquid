@@ -1,0 +1,39 @@
+{% if event.preview %}
+  {% capture product_json %}
+    {
+      "variants": [
+        {
+          "admin_graphql_api_id": "gid://shopify/ProductVariant/1234567890",
+          "barcode": "ABC123",
+          "sku": ""
+        }
+      ]
+    }
+  {% endcapture %}
+
+  {% assign product = product_json | parse_json %}
+{% endif %}
+
+{% for variant in product.variants %}
+  {% if variant.barcode != blank and variant.sku != variant.barcode %}
+    {% action "shopify" %}
+      mutation {
+        productVariantUpdate(
+          input: {
+            id: {{ variant.admin_graphql_api_id | json }}
+            sku: {{ variant.barcode | json }}
+          }
+        ) {
+          productVariant {
+            barcode
+            sku
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}

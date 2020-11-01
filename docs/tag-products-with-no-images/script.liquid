@@ -1,0 +1,89 @@
+{% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% capture bulk_operation_query %}
+    query {
+      products {
+        edges {
+          node {
+            __typename
+            id
+            tags
+            images {
+              edges {
+                node {
+                  __typename
+                  id
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture bulkOperation_objects_jsonl %}
+      {"__typename":"Product","id":"gid:\/\/shopify\/Product\/1234567890","tags":[]}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = bulkOperation_objects_jsonl | parse_jsonl %}
+  {% endif %}
+
+  {% assign products = bulkOperation.objects | where: "__typename", "Product" %}
+  {% assign images = bulkOperation.objects | where: "__typename", "Image" %}
+  
+  {% for product in products %}
+    {% assign product_images = images | where: "__parentId", product.id %}
+    {% if product_images.size == 0 %}
+      {% unless product.tags contains options.product_tag_to_add__required %}
+        {% action "shopify" %}
+          mutation {
+            tagsAdd(
+              id: {{ product.id | json }}
+              tags: {{ options.product_tag_to_add__required | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+      {% endunless %}
+    {% else %}
+      {% if product.tags contains options.product_tag_to_add__required and options.remove_product_tag_if_images_are_found__boolean %}
+        {% action "shopify" %}
+          mutation {
+            tagsRemove(
+              id: {{ product.id | json }}
+              tags: {{ options.product_tag_to_add__required | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
