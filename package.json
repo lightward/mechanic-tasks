@@ -1,0 +1,12 @@
+{
+  "private": true,
+  "repository": "git@github.com:lightward/mechanic-tasks.git",
+  "author": "Isaac Bowen <isaac@lightward.com>",
+  "license": "MIT",
+  "dependencies": {
+    "glob": "^7.1.6"
+  },
+  "engines": {
+    "node": ">=12.10.0"
+  }
+}
