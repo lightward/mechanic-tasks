@@ -1,1 +1,15 @@
-{"name":"Generate a simple product catalog PDF","options":{},"subscriptions":["mechanic/user/trigger"],"subscriptions_template":"mechanic/user/trigger","script":"{% capture html %}\n  \u003ch1\u003eProduct catalog\u003c/h1\u003e\n  \u003cul\u003e\n  {% for product in shop.products %}\n    {% assign image = product | img_url: \"300x300\", crop: \"center\" %}\n    \u003cli\u003e\n      \u003cb\u003e{{ product.title }}\u003c/b\u003e\n      \u003cbr\u003e\n      {% if image %}\n        \u003cimg src=\"{{ image }}\"/\u003e\n      {% else %}\n        (no image)\n      {% endif %}\n    \u003c/li\u003e\n  {% endfor %}\n{% endcapture %}\n\n{% action \"files\" %}\n  {\n    \"catalog.pdf\": {\n      \"pdf\": {\n        \"html\": {{ html | json }}\n      }\n    }\n  }\n{% endaction %}","docs":null,"halt_action_run_sequence_on_error":false,"online_store_javascript":null,"order_status_javascript":null,"perform_action_runs_in_sequence":false}
+{
+  "name": "Generate a simple product catalog PDF",
+  "options": {
+  },
+  "subscriptions": [
+    "mechanic/user/trigger"
+  ],
+  "subscriptions_template": "mechanic/user/trigger",
+  "script": "{% capture html %}\n  <h1>Product catalog</h1>\n  <ul>\n  {% for product in shop.products %}\n    {% assign image = product | img_url: \"300x300\", crop: \"center\" %}\n    <li>\n      <b>{{ product.title }}</b>\n      <br>\n      {% if image %}\n        <img src=\"{{ image }}\"/>\n      {% else %}\n        (no image)\n      {% endif %}\n    </li>\n  {% endfor %}\n{% endcapture %}\n\n{% action \"files\" %}\n  {\n    \"catalog.pdf\": {\n      \"pdf\": {\n        \"html\": {{ html | json }}\n      }\n    }\n  }\n{% endaction %}",
+  "docs": null,
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false
+}

@@ -1,1 +1,18 @@
-{"name":"Auto-tag orders based on customer account tags","options":{"customer_tags_to_look_for_and_order_tags_to_add__keyval":{"wholesale-customer":"wholesale-order"}},"subscriptions":["shopify/orders/create"],"subscriptions_template":"shopify/orders/create","script":"{% if event.preview %}\n  {% assign order = hash %}\n  {% assign order[\"admin_graphql_api_id\"] = \"gid://shopify/Order/123456780\" %}\n  {% assign order[\"customer\"] = hash %}\n  {% assign order[\"customer\"][\"tags\"] = options.customer_tags_to_look_for_and_order_tags_to_add__keyval.first.first %}\n{% endif %}\n\n{% assign customer_tags = order.customer.tags | split: \", \" %}\n{% assign tags_to_add = array %}\n{% assign tag_pairs = options.customer_tags_to_look_for_and_order_tags_to_add__keyval %}\n\n{% for pair in tag_pairs %}\n  {% if customer_tags contains pair.first %}\n    {% assign tags_to_add = tags_to_add | add_tag: pair.last %}\n  {% endif %}\n{% endfor %}\n\n{% if tags_to_add != empty %}\n {% action \"shopify\" %}\n  mutation {\n    tagsAdd(\n      id: {{ order.admin_graphql_api_id | json }}\n      tags: {{ tags_to_add | json }}\n    ) {\n      userErrors {\n        field\n        message\n      }\n    }\n  }\n {% endaction %}\n{% endif %}","docs":null,"halt_action_run_sequence_on_error":false,"online_store_javascript":null,"order_status_javascript":null,"perform_action_runs_in_sequence":false}
+{
+  "name": "Auto-tag orders based on customer account tags",
+  "options": {
+    "customer_tags_to_look_for_and_order_tags_to_add__keyval": {
+      "wholesale-customer": "wholesale-order"
+    }
+  },
+  "subscriptions": [
+    "shopify/orders/create"
+  ],
+  "subscriptions_template": "shopify/orders/create",
+  "script": "{% if event.preview %}\n  {% assign order = hash %}\n  {% assign order[\"admin_graphql_api_id\"] = \"gid://shopify/Order/123456780\" %}\n  {% assign order[\"customer\"] = hash %}\n  {% assign order[\"customer\"][\"tags\"] = options.customer_tags_to_look_for_and_order_tags_to_add__keyval.first.first %}\n{% endif %}\n\n{% assign customer_tags = order.customer.tags | split: \", \" %}\n{% assign tags_to_add = array %}\n{% assign tag_pairs = options.customer_tags_to_look_for_and_order_tags_to_add__keyval %}\n\n{% for pair in tag_pairs %}\n  {% if customer_tags contains pair.first %}\n    {% assign tags_to_add = tags_to_add | add_tag: pair.last %}\n  {% endif %}\n{% endfor %}\n\n{% if tags_to_add != empty %}\n {% action \"shopify\" %}\n  mutation {\n    tagsAdd(\n      id: {{ order.admin_graphql_api_id | json }}\n      tags: {{ tags_to_add | json }}\n    ) {\n      userErrors {\n        field\n        message\n      }\n    }\n  }\n {% endaction %}\n{% endif %}",
+  "docs": null,
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false
+}

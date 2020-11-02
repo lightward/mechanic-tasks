@@ -1,1 +1,18 @@
-{"name":"Auto-capture order payment based on shipping method","options":{"allowed_shipping_methods__required_array":[]},"subscriptions":["shopify/orders/create"],"subscriptions_template":"shopify/orders/create","script":"{% assign order_qualifies = false %}\n\n{% if options.allowed_shipping_methods__required_array contains order.shipping_lines.first.title and order.financial_status == \"authorized\" %}\n  {% assign order_qualifies = true %}\n{% endif %}\n\n{% if event.preview or order_qualifies %}\n  {\n    \"action\": {\n      \"type\": \"shopify\",\n      \"options\": [\n        \"post\",\n        \"/admin/orders/{{ order.id }}/transactions.json\",\n        { \"transaction\": { \"kind\": \"capture\" } }\n      ]\n    }\n  }\n{% endif %}","docs":"This task auto-captures payment if the customer has selected a certain shipping method. Useful for expedited order fulfillments.\n\nFor expected results, be sure to enable \"Manually capture payment for orders\" in Shopify, [using this guide](https://help.shopify.com/en/manual/payments/payment-authorization#set-up-manual-capture-of-credit-card-payments).\r\n\r\nPlease note: This task will *only* capture payment for orders that have the financial status \"authorized\". You are responsible for ensuring that fulfillment occurs within the order payment's authorization period.","halt_action_run_sequence_on_error":false,"online_store_javascript":null,"order_status_javascript":null,"perform_action_runs_in_sequence":false}
+{
+  "name": "Auto-capture order payment based on shipping method",
+  "options": {
+    "allowed_shipping_methods__required_array": [
+
+    ]
+  },
+  "subscriptions": [
+    "shopify/orders/create"
+  ],
+  "subscriptions_template": "shopify/orders/create",
+  "script": "{% assign order_qualifies = false %}\n\n{% if options.allowed_shipping_methods__required_array contains order.shipping_lines.first.title and order.financial_status == \"authorized\" %}\n  {% assign order_qualifies = true %}\n{% endif %}\n\n{% if event.preview or order_qualifies %}\n  {\n    \"action\": {\n      \"type\": \"shopify\",\n      \"options\": [\n        \"post\",\n        \"/admin/orders/{{ order.id }}/transactions.json\",\n        { \"transaction\": { \"kind\": \"capture\" } }\n      ]\n    }\n  }\n{% endif %}",
+  "docs": "This task auto-captures payment if the customer has selected a certain shipping method. Useful for expedited order fulfillments.\n\nFor expected results, be sure to enable \"Manually capture payment for orders\" in Shopify, [using this guide](https://help.shopify.com/en/manual/payments/payment-authorization#set-up-manual-capture-of-credit-card-payments).\r\n\r\nPlease note: This task will *only* capture payment for orders that have the financial status \"authorized\". You are responsible for ensuring that fulfillment occurs within the order payment's authorization period.",
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false
+}

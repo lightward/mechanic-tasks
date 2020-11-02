@@ -1,1 +1,16 @@
-{"name":"Auto-archive orders after fulfillment","options":{"days_to_wait_after_fulfillment_before_archiving__number":null},"subscriptions":["shopify/orders/fulfilled"],"subscriptions_template":"shopify/orders/fulfilled{% if options.days_to_wait_after_fulfillment_before_archiving__number %}+{{ options.days_to_wait_after_fulfillment_before_archiving__number }}.days{% endif %}","script":"{% if options.days_to_wait_after_fulfillment_before_archiving__number %}\n  {% if options.days_to_wait_after_fulfillment_before_archiving__number \u003c= 0 %}\n    {\"error\": \"'Days to wait after fulfillment before archiving', if set, must be greater than zero. :)\"}\n  {% endif %}\n{% endif %}\n\n{% if event.preview %}\n  {% assign order = '{\"admin_graphql_api_id\": \"gid://shopify/Order/1234567890\",\"closed_at\":null}' | parse_json %}\n{% else %}\n  {% assign order = order.reload %}\n{% endif %}\n\n{% if order.closed_at == blank %}\n  {% action \"shopify\" %}\n    mutation {\n      orderClose(\n        input: {\n          id: {{ order.admin_graphql_api_id | json }}\n        }\n      ) {\n        order {\n          closed\n          closedAt\n        }\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}","docs":"Just as it says. :) Archives orders immediately upon fulfillment, or after a configurable number of days.","halt_action_run_sequence_on_error":false,"online_store_javascript":null,"order_status_javascript":null,"perform_action_runs_in_sequence":false}
+{
+  "name": "Auto-archive orders after fulfillment",
+  "options": {
+    "days_to_wait_after_fulfillment_before_archiving__number": null
+  },
+  "subscriptions": [
+    "shopify/orders/fulfilled"
+  ],
+  "subscriptions_template": "shopify/orders/fulfilled{% if options.days_to_wait_after_fulfillment_before_archiving__number %}+{{ options.days_to_wait_after_fulfillment_before_archiving__number }}.days{% endif %}",
+  "script": "{% if options.days_to_wait_after_fulfillment_before_archiving__number %}\n  {% if options.days_to_wait_after_fulfillment_before_archiving__number <= 0 %}\n    {\"error\": \"'Days to wait after fulfillment before archiving', if set, must be greater than zero. :)\"}\n  {% endif %}\n{% endif %}\n\n{% if event.preview %}\n  {% assign order = '{\"admin_graphql_api_id\": \"gid://shopify/Order/1234567890\",\"closed_at\":null}' | parse_json %}\n{% else %}\n  {% assign order = order.reload %}\n{% endif %}\n\n{% if order.closed_at == blank %}\n  {% action \"shopify\" %}\n    mutation {\n      orderClose(\n        input: {\n          id: {{ order.admin_graphql_api_id | json }}\n        }\n      ) {\n        order {\n          closed\n          closedAt\n        }\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}",
+  "docs": "Just as it says. :) Archives orders immediately upon fulfillment, or after a configurable number of days.",
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false
+}

@@ -1,1 +1,19 @@
-{"name":"Notify a team when a tagged product is ordered","options":{"required_product_tag__required":"requires-art","team_email__required":"art-department@example.com","email_subject__required":"Order {{ order.order_number }} requires custom artwork","email_body__multiline_required":"Hello,\n\nPlease see details for order {{ order.order_number }}:\n\nhttps://{{ shop.myshopify_domain }}/admin/orders/{{ order.id }}\n\nThanks,\n- Mechanic, for {{ shop.name }}"},"subscriptions":["shopify/orders/create"],"subscriptions_template":"shopify/orders/create","script":"{% assign order_qualifies = false %}\n{% assign order_product_tags = order.line_items | map: \"product\" | map: \"tags\" | join: \", \" | split: \", \" | sort | uniq %}\n{% if order_product_tags contains options.required_product_tag__required %}\n  {% assign order_qualifies = true %}\n{% endif %}\n\n{% if event.preview or order_qualifies %}\n  {\n    \"action\": {\n      \"type\": \"email\",\n      \"options\": {\n        \"to\": {{ options.team_email__required | json }},\n        \"subject\": {{ options.email_subject__required | json }},\n        \"body\": {{ options.email_body__multiline_required | strip | newline_to_br | json }},\n        \"reply_to\": {{ shop.customer_email | json }},\n        \"from_display_name\": {{ shop.name | json }}\n      }\n    }\n  }\n{% elsif order_qualifies == false %}\n  {% capture log_message %}Order tags did not include {{ options.required_product_tag__required | json }} (found {{ order_product_tags | json }}){% endcapture %}\n  {\"log\": {{ log_message }}}\n{% endif %}","docs":"Quickly route order notifications to whichever teams need be alerted for a given order. Use product tags to mark products according to which team needs the alert, and add multiple copies of this task to alert different teams for different tags.","halt_action_run_sequence_on_error":false,"online_store_javascript":null,"order_status_javascript":null,"perform_action_runs_in_sequence":false}
+{
+  "name": "Notify a team when a tagged product is ordered",
+  "options": {
+    "required_product_tag__required": "requires-art",
+    "team_email__required": "art-department@example.com",
+    "email_subject__required": "Order {{ order.order_number }} requires custom artwork",
+    "email_body__multiline_required": "Hello,\n\nPlease see details for order {{ order.order_number }}:\n\nhttps://{{ shop.myshopify_domain }}/admin/orders/{{ order.id }}\n\nThanks,\n- Mechanic, for {{ shop.name }}"
+  },
+  "subscriptions": [
+    "shopify/orders/create"
+  ],
+  "subscriptions_template": "shopify/orders/create",
+  "script": "{% assign order_qualifies = false %}\n{% assign order_product_tags = order.line_items | map: \"product\" | map: \"tags\" | join: \", \" | split: \", \" | sort | uniq %}\n{% if order_product_tags contains options.required_product_tag__required %}\n  {% assign order_qualifies = true %}\n{% endif %}\n\n{% if event.preview or order_qualifies %}\n  {\n    \"action\": {\n      \"type\": \"email\",\n      \"options\": {\n        \"to\": {{ options.team_email__required | json }},\n        \"subject\": {{ options.email_subject__required | json }},\n        \"body\": {{ options.email_body__multiline_required | strip | newline_to_br | json }},\n        \"reply_to\": {{ shop.customer_email | json }},\n        \"from_display_name\": {{ shop.name | json }}\n      }\n    }\n  }\n{% elsif order_qualifies == false %}\n  {% capture log_message %}Order tags did not include {{ options.required_product_tag__required | json }} (found {{ order_product_tags | json }}){% endcapture %}\n  {\"log\": {{ log_message }}}\n{% endif %}",
+  "docs": "Quickly route order notifications to whichever teams need be alerted for a given order. Use product tags to mark products according to which team needs the alert, and add multiple copies of this task to alert different teams for different tags.",
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false
+}

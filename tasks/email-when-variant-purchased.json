@@ -1,1 +1,20 @@
-{"name":"Email someone when a certain variant is purchased","options":{"email_address__required":null,"email_subject__required":null,"email_body__multiline_required":null,"reply_to_email_address":null,"variant_id__number_required":null},"subscriptions":["shopify/orders/paid"],"subscriptions_template":"shopify/orders/paid","script":"{% capture email_action %}\n  {\n    \"action\": {\n      \"type\": \"email\",\n      \"options\": {\n        \"to\": {{ options.email_address__required | json }},\n        \"subject\": {{ options.email_subject__required | json }},\n        \"body\": {{ options.email_body__multiline_required | strip | newline_to_br | json }},\n        \"reply_to\": {{ options.reply_to_email_address | json }},\n        \"from_display_name\": {{ shop.name | json }}\n      }\n    }\n  }\n{% endcapture %}\n\n{% if event.preview %}\n  {{ email_action }}\n{% else %}\n  {% for line_item in order.line_items %}\n    {% if line_item.variant_id == options.variant_id__number_required %}\n      {{ email_action }}\n      {% break %}\n    {% endif %}\n  {% endfor %}\n{% endif %}","docs":"This task allows you to send an email to someone when a certain variant is purchased. Requires the variant ID.\n\nThis task requires that you enter the variant ID. You can find the variant id using this method: \r\nhttps://help.shopify.com/en/themes/customization/products/variants/find-variant-id","halt_action_run_sequence_on_error":false,"online_store_javascript":null,"order_status_javascript":null,"perform_action_runs_in_sequence":false}
+{
+  "name": "Email someone when a certain variant is purchased",
+  "options": {
+    "email_address__required": null,
+    "email_subject__required": null,
+    "email_body__multiline_required": null,
+    "reply_to_email_address": null,
+    "variant_id__number_required": null
+  },
+  "subscriptions": [
+    "shopify/orders/paid"
+  ],
+  "subscriptions_template": "shopify/orders/paid",
+  "script": "{% capture email_action %}\n  {\n    \"action\": {\n      \"type\": \"email\",\n      \"options\": {\n        \"to\": {{ options.email_address__required | json }},\n        \"subject\": {{ options.email_subject__required | json }},\n        \"body\": {{ options.email_body__multiline_required | strip | newline_to_br | json }},\n        \"reply_to\": {{ options.reply_to_email_address | json }},\n        \"from_display_name\": {{ shop.name | json }}\n      }\n    }\n  }\n{% endcapture %}\n\n{% if event.preview %}\n  {{ email_action }}\n{% else %}\n  {% for line_item in order.line_items %}\n    {% if line_item.variant_id == options.variant_id__number_required %}\n      {{ email_action }}\n      {% break %}\n    {% endif %}\n  {% endfor %}\n{% endif %}",
+  "docs": "This task allows you to send an email to someone when a certain variant is purchased. Requires the variant ID.\n\nThis task requires that you enter the variant ID. You can find the variant id using this method: \r\nhttps://help.shopify.com/en/themes/customization/products/variants/find-variant-id",
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false
+}

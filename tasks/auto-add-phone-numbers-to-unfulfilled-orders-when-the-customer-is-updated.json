@@ -1,1 +1,15 @@
-{"name":"Auto-add phone numbers to unfulfilled orders, when the customer is updated","options":{},"subscriptions":["shopify/customers/update"],"subscriptions_template":"shopify/customers/update","script":"{% if event.preview %}\n  {% action \"shopify\" %}\n    [\n      \"update\",\n      [\"order\", {{ order.id | json }}],\n      {\"phone\": {{ customer.phone | json }}}\n    ]\n  {% endaction %}\n{% elsif customer.phone != blank %}\n  {% assign orders = customer.orders.any.unshipped | concat: customer.orders.any.partial %}\n\n  {% for order in orders %}\n    {% if order.phone != blank %}\n      {% continue %}\n    {% endif %}\n\n    {% action \"shopify\" %}\n      [\n        \"update\",\n        [\"order\", {{ order.id | json }}],\n        {\"phone\": {{ customer.phone | json }}}\n      ]\n    {% endaction %}\n  {% endfor %}\n{% endif %}","docs":null,"halt_action_run_sequence_on_error":false,"online_store_javascript":null,"order_status_javascript":null,"perform_action_runs_in_sequence":false}
+{
+  "name": "Auto-add phone numbers to unfulfilled orders, when the customer is updated",
+  "options": {
+  },
+  "subscriptions": [
+    "shopify/customers/update"
+  ],
+  "subscriptions_template": "shopify/customers/update",
+  "script": "{% if event.preview %}\n  {% action \"shopify\" %}\n    [\n      \"update\",\n      [\"order\", {{ order.id | json }}],\n      {\"phone\": {{ customer.phone | json }}}\n    ]\n  {% endaction %}\n{% elsif customer.phone != blank %}\n  {% assign orders = customer.orders.any.unshipped | concat: customer.orders.any.partial %}\n\n  {% for order in orders %}\n    {% if order.phone != blank %}\n      {% continue %}\n    {% endif %}\n\n    {% action \"shopify\" %}\n      [\n        \"update\",\n        [\"order\", {{ order.id | json }}],\n        {\"phone\": {{ customer.phone | json }}}\n      ]\n    {% endaction %}\n  {% endfor %}\n{% endif %}",
+  "docs": null,
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false
+}

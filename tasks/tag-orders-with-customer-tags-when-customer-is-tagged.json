@@ -1,1 +1,15 @@
-{"name":"Auto-tag orders with customer tags when new customer tags are added","options":{},"subscriptions":["shopify/customers/update"],"subscriptions_template":"shopify/customers/update","script":"{% assign customer_tags = customer.tags | split: \", \" %}\n\n{% if event.preview %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: \"gid://shopify/Order/123456\"\n        tags: [\"foo\"]\n      ) { \n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% else %}\n  {% for order in customer.orders.any %}\n    {% assign order_tags = order.tags | split: \", \" %}\n    {% assign tags_to_add = array %}\n\n    {% for tag in customer_tags %}\n      {% unless order_tags contains tag %}\n        {% assign tags_to_add[tags_to_add.size] = tag %}\n      {% endunless %}\n    {% endfor %}\n\n    {% if tags_to_add != empty %}\n      {% action \"shopify\" %}\n        mutation {\n          tagsAdd(\n            id: {{ order.admin_graphql_api_id | json }}\n            tags: {{ tags_to_add | json }}\n          ) { \n            userErrors {\n              field\n              message\n            }\n          }\n        }\n      {% endaction %}\n    {% endif %}\n  {% endfor %}\n{% endif %}","docs":null,"halt_action_run_sequence_on_error":false,"online_store_javascript":null,"order_status_javascript":null,"perform_action_runs_in_sequence":false}
+{
+  "name": "Auto-tag orders with customer tags when new customer tags are added",
+  "options": {
+  },
+  "subscriptions": [
+    "shopify/customers/update"
+  ],
+  "subscriptions_template": "shopify/customers/update",
+  "script": "{% assign customer_tags = customer.tags | split: \", \" %}\n\n{% if event.preview %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: \"gid://shopify/Order/123456\"\n        tags: [\"foo\"]\n      ) { \n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% else %}\n  {% for order in customer.orders.any %}\n    {% assign order_tags = order.tags | split: \", \" %}\n    {% assign tags_to_add = array %}\n\n    {% for tag in customer_tags %}\n      {% unless order_tags contains tag %}\n        {% assign tags_to_add[tags_to_add.size] = tag %}\n      {% endunless %}\n    {% endfor %}\n\n    {% if tags_to_add != empty %}\n      {% action \"shopify\" %}\n        mutation {\n          tagsAdd(\n            id: {{ order.admin_graphql_api_id | json }}\n            tags: {{ tags_to_add | json }}\n          ) { \n            userErrors {\n              field\n              message\n            }\n          }\n        }\n      {% endaction %}\n    {% endif %}\n  {% endfor %}\n{% endif %}",
+  "docs": null,
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false
+}

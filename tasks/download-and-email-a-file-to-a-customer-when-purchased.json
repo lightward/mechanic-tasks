@@ -1,1 +1,20 @@
-{"name":"Download and email a file to a customer, when purchased","options":{"required_line_item_title__required":"Course","email_subject__required":"Here's your purchased course! (Order {{ order.name }})","email_body__required_multiline":"Hey there! Thanks for purchasing this course. You'll find the PDF attached to this email. :)\n\nThanks,\n{{ shop.name }}","attachment_filename__required":"Course for order {{ order.name }}.pdf","attachment_url__required":"https://example.com/course.pdf"},"subscriptions":["shopify/orders/paid"],"subscriptions_template":"shopify/orders/paid","script":"{% if event.preview %}\n  {% capture order_json %}\n    {\n      \"line_items\": [\n        {\n          \"title\": {{ options.required_line_item_title__required | json }}\n        }\n      ]\n    }\n  {% endcapture %}\n\n  {% assign order = order_json | parse_json %}\n{% endif %}\n\n{% assign line_item_titles = order.line_items | map: \"title\" %}\n\n{% if line_item_titles contains options.required_line_item_title__required %}\n  {% action \"email\" %}\n    {\n      \"to\": {{ order.email | json }},\n      \"subject\": {{ options.email_subject__required | json }},\n      \"body\": {{ options.email_body__required_multiline | newline_to_br | json }},\n      \"reply_to\": {{ shop.customer_email | json }},\n      \"from_display_name\": {{ shop.name | json }},\n      \"attachments\": {\n        {{ options.attachment_filename__required | json }}: {\n          \"url\": {{ options.attachment_url__required | json }}\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}","docs":null,"halt_action_run_sequence_on_error":false,"online_store_javascript":null,"order_status_javascript":null,"perform_action_runs_in_sequence":false}
+{
+  "name": "Download and email a file to a customer, when purchased",
+  "options": {
+    "required_line_item_title__required": "Course",
+    "email_subject__required": "Here's your purchased course! (Order {{ order.name }})",
+    "email_body__required_multiline": "Hey there! Thanks for purchasing this course. You'll find the PDF attached to this email. :)\n\nThanks,\n{{ shop.name }}",
+    "attachment_filename__required": "Course for order {{ order.name }}.pdf",
+    "attachment_url__required": "https://example.com/course.pdf"
+  },
+  "subscriptions": [
+    "shopify/orders/paid"
+  ],
+  "subscriptions_template": "shopify/orders/paid",
+  "script": "{% if event.preview %}\n  {% capture order_json %}\n    {\n      \"line_items\": [\n        {\n          \"title\": {{ options.required_line_item_title__required | json }}\n        }\n      ]\n    }\n  {% endcapture %}\n\n  {% assign order = order_json | parse_json %}\n{% endif %}\n\n{% assign line_item_titles = order.line_items | map: \"title\" %}\n\n{% if line_item_titles contains options.required_line_item_title__required %}\n  {% action \"email\" %}\n    {\n      \"to\": {{ order.email | json }},\n      \"subject\": {{ options.email_subject__required | json }},\n      \"body\": {{ options.email_body__required_multiline | newline_to_br | json }},\n      \"reply_to\": {{ shop.customer_email | json }},\n      \"from_display_name\": {{ shop.name | json }},\n      \"attachments\": {\n        {{ options.attachment_filename__required | json }}: {\n          \"url\": {{ options.attachment_url__required | json }}\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}",
+  "docs": null,
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false
+}
