@@ -3,7 +3,7 @@
 * [task.json](../../tasks/accept-a-maximum-number-of-orders-per-day.json) (for import/export)
 * [Task script](./script.liquid)
 
-This task works by monitoring the number of orders created per day, and clearing the inventory for all in-stock items when the daily order limit is reached. Optionally, this task can restore inventory to its original levels at midnight the next day, or on demand.
+This task works by setting your inventory to zero when the order limit is reached. (Specifically, this means setting inventory levels to 0 for all items that have a greater-than-zero inventory level.) There are no popups, or any specific messaging - your inventory will simply be dropped to zero, and if your shop is configured to stop selling out-of-stock products, your customers will be prevented from making additional purchases.
 
 ## Default options
 
@@ -11,6 +11,7 @@ This task works by monitoring the number of orders created per day, and clearing
 {
   "maximum_daily_orders__number_required": "10",
   "only_clear_inventory_for_products_with_this_tag": "",
+  "prepend_this_html_to_product_description__multiline": "",
   "restore_inventory_levels_the_next_day__boolean": true,
   "restore_inventory_levels_on_demand__boolean": false
 }
@@ -32,11 +33,9 @@ shopify/orders/create
 
 ## Documentation
 
-This task works by monitoring the number of orders created per day, and clearing the inventory for all in-stock items when the daily order limit is reached. Optionally, this task can restore inventory to its original levels at midnight the next day, or on demand.
-
 This task works by setting your inventory to zero when the order limit is reached. (Specifically, this means setting inventory levels to 0 for all items that have a greater-than-zero inventory level.) There are no popups, or any specific messaging - your inventory will simply be dropped to zero, and if your shop is configured to stop selling out-of-stock products, your customers will be prevented from making additional purchases.
 
-Optionally, this task can restore inventory to its original levels at midnight the next day, or on demand. (Restore levels on demand by enabling this option, then using the "Run task" button.)
+Optionally, this task can restore inventory to its original levels at midnight the next day, or on demand. (Restore levels on demand by enabling this option, then using the "Run task" button.). You may also choose to prepend an HTML string to the product description for each product whose inventory levels are dropped to zero by this task. The original product description will be restored whenever the inventory levels are restored by this task. 
 
 ### Important notes
 
