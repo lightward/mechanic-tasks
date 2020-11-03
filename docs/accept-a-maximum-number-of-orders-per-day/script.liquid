@@ -3,7 +3,7 @@
 
   {{ options.maximum_daily_orders__number_required }}
   {{ options.only_clear_inventory_for_products_with_this_tag }}
-  {{ options.prepend_this_html_to_product_description__multiline }}
+  {{ options.prepend_this_html_to_product_description_when_order_limit_is_reached__multiline }}
   {{ options.restore_inventory_levels_the_next_day__boolean }}
   {{ options.restore_inventory_levels_on_demand__boolean }}
 {% endcomment %}
@@ -181,8 +181,8 @@
           {% assign inventory_levels_to_zero[inventoryLevel_edge.node.id] = inventoryLevel_edge.node.available %}
         {% endfor %}
 
-        {% if options.prepend_this_html_to_product_description__multiline != blank %}
-          {% unless inventoryItem_edge.node.variant.product.descriptionHtml contains options.prepend_this_html_to_product_description__multiline %}
+        {% if options.prepend_this_html_to_product_description_when_order_limit_is_reached__multiline != blank %}
+          {% unless inventoryItem_edge.node.variant.product.descriptionHtml contains options.prepend_this_html_to_product_description_when_order_limit_is_reached__multiline %}
             {% assign products_to_update[inventoryItem_edge.node.variant.product.id] = inventoryItem_edge.node.variant.product.descriptionHtml %}
           {% endunless %}
         {% endif %}
@@ -228,7 +228,7 @@
     {% if products_to_update.size > 0 %}
       {% for keyval in products_to_update %}
         {% assign product_id = keyval[0] %}
-        {% assign product_description_html = keyval[1] | prepend: options.prepend_this_html_to_product_description__multiline %}
+        {% assign product_description_html = keyval[1] | prepend: options.prepend_this_html_to_product_description_when_order_limit_is_reached__multiline %}
 
         {% action "shopify" %}
           mutation {
