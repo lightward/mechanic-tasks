@@ -1,1 +1,18 @@
-{"name":"Catalog update email","options":{"recipient_email__required_email":null},"subscriptions":["shopify/products/create","shopify/products/delete","shopify/products/update"],"subscriptions_template":"shopify/products/create\nshopify/products/delete\nshopify/products/update","script":"{% assign verb = event.topic | split: \"/\" | last %}\n\n{% capture email_subject %}Product {{ product.id }} {{ verb }}d{% endcapture %}\n\n{% capture email_body %}\nHello,\n\nA product was just {{ verb }}d. Here's what we know:\n\n{{ product | json }}\n\nThanks,\n\n-Mechanic (for {{ shop.name }})\n{% endcapture %}\n\n{\n  \"action\": {\n    \"type\": \"email\",\n    \"options\": {\n      \"to\": {{ options.recipient_email__required_email | json }},\n      \"subject\": {{ email_subject | json }},\n      \"body\": {{ email_body | strip | newline_to_br | json }},\n      \"from_display_name\": {{ shop.name | json }}\n    }\n  }\n}","docs":"Get an email alert whenever a product is created, updated, or deleted. This makes it easy to keep tabs on updates to your catalog – useful if you need a precise audit trail.","halt_action_run_sequence_on_error":false,"online_store_javascript":null,"order_status_javascript":null,"perform_action_runs_in_sequence":false}
+{
+  "name": "Catalog update email",
+  "options": {
+    "recipient_email__required_email": null
+  },
+  "subscriptions": [
+    "shopify/products/create",
+    "shopify/products/delete",
+    "shopify/products/update"
+  ],
+  "subscriptions_template": "shopify/products/create\nshopify/products/delete\nshopify/products/update",
+  "script": "{% assign verb = event.topic | split: \"/\" | last %}\n\n{% capture email_subject %}Product {{ product.id }} {{ verb }}d{% endcapture %}\n\n{% capture email_body %}\nHello,\n\nA product was just {{ verb }}d. Here's what we know:\n\n{{ product | json }}\n\nThanks,\n\n-Mechanic (for {{ shop.name }})\n{% endcapture %}\n\n{\n  \"action\": {\n    \"type\": \"email\",\n    \"options\": {\n      \"to\": {{ options.recipient_email__required_email | json }},\n      \"subject\": {{ email_subject | json }},\n      \"body\": {{ email_body | strip | newline_to_br | json }},\n      \"from_display_name\": {{ shop.name | json }}\n    }\n  }\n}",
+  "docs": "Get an email alert whenever a product is created, updated, or deleted. This makes it easy to keep tabs on updates to your catalog – useful if you need a precise audit trail.",
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false
+}

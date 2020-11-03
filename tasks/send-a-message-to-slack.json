@@ -1,1 +1,16 @@
-{"name":"Send a message to Slack","options":{"slack_incoming_webhook_url__required":null},"subscriptions":["mechanic/user/trigger"],"subscriptions_template":"mechanic/user/trigger","script":"{% action \"http\" %}\n  {\n    \"method\": \"post\",\n    \"url\": {{ options.slack_incoming_webhook_url__required | json }},\n    \"body\": {\n      \"text\": \"hello, world!\"\n    }\n  }\n{% endaction %}","docs":null,"halt_action_run_sequence_on_error":false,"online_store_javascript":null,"order_status_javascript":null,"perform_action_runs_in_sequence":false}
+{
+  "name": "Send a message to Slack",
+  "options": {
+    "slack_incoming_webhook_url__required": null
+  },
+  "subscriptions": [
+    "mechanic/user/trigger"
+  ],
+  "subscriptions_template": "mechanic/user/trigger",
+  "script": "{% action \"http\" %}\n  {\n    \"method\": \"post\",\n    \"url\": {{ options.slack_incoming_webhook_url__required | json }},\n    \"body\": {\n      \"text\": \"hello, world!\"\n    }\n  }\n{% endaction %}",
+  "docs": null,
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false
+}

@@ -1,1 +1,19 @@
-{"name":"Send a follow-up email after order cancellation","options":{"only_send_for_first_time_customers__boolean":false,"hours_to_wait_after_cancellation__number":null,"email_subject__required":"Following up on order {{ order.name }}","email_body__multiline_required":"Hello,\n\nWe received your cancellation. Is there anything else we can do for you?\n\nThanks,\n{{ shop.name  }}"},"subscriptions":["shopify/orders/cancelled"],"subscriptions_template":"shopify/orders/cancelled{% if options.hours_to_wait_after_cancellation__number != blank %}+{{ options.hours_to_wait_after_cancellation__number }}.hours{% endif %}","script":"{% comment %}\n  Preferred option order:\n\n  {{ options.only_send_for_first_time_customers__boolean }}\n  {{ options.hours_to_wait_after_cancellation__number }}\n  {{ options.email_subject__required }}\n  {{ options.email_body__multiline_required }}\n{% endcomment %}\n\n{% assign order_qualifies = false %}\n\n{% if order.email != blank %}\n  {% if options.only_send_for_first_time_customers__boolean %}\n    {% if order.customer.reload.orders_count == 1 %}\n      {% assign order_qualifies = true %}\n    {% endif %}\n  {% else %}\n    {% assign order_qualifies = true %}\n  {% endif %}\n{% endif %}\n\n{% if event.preview or order_qualifies %}\n  {% action \"email\" %}\n    {\n      \"to\": {{ order.email | json }},\n      \"subject\": {{ options.email_subject__required | json }},\n      \"body\": {{ options.email_body__multiline_required | newline_to_br | json  }},\n      \"reply_to\": {{ shop.customer_email | json }},\n      \"from_display_name\": {{ shop.name | json }}\n    }\n  {% endaction %}\n{% endif %}","docs":null,"halt_action_run_sequence_on_error":false,"online_store_javascript":null,"order_status_javascript":null,"perform_action_runs_in_sequence":false}
+{
+  "name": "Send a follow-up email after order cancellation",
+  "options": {
+    "only_send_for_first_time_customers__boolean": false,
+    "hours_to_wait_after_cancellation__number": null,
+    "email_subject__required": "Following up on order {{ order.name }}",
+    "email_body__multiline_required": "Hello,\n\nWe received your cancellation. Is there anything else we can do for you?\n\nThanks,\n{{ shop.name  }}"
+  },
+  "subscriptions": [
+    "shopify/orders/cancelled"
+  ],
+  "subscriptions_template": "shopify/orders/cancelled{% if options.hours_to_wait_after_cancellation__number != blank %}+{{ options.hours_to_wait_after_cancellation__number }}.hours{% endif %}",
+  "script": "{% comment %}\n  Preferred option order:\n\n  {{ options.only_send_for_first_time_customers__boolean }}\n  {{ options.hours_to_wait_after_cancellation__number }}\n  {{ options.email_subject__required }}\n  {{ options.email_body__multiline_required }}\n{% endcomment %}\n\n{% assign order_qualifies = false %}\n\n{% if order.email != blank %}\n  {% if options.only_send_for_first_time_customers__boolean %}\n    {% if order.customer.reload.orders_count == 1 %}\n      {% assign order_qualifies = true %}\n    {% endif %}\n  {% else %}\n    {% assign order_qualifies = true %}\n  {% endif %}\n{% endif %}\n\n{% if event.preview or order_qualifies %}\n  {% action \"email\" %}\n    {\n      \"to\": {{ order.email | json }},\n      \"subject\": {{ options.email_subject__required | json }},\n      \"body\": {{ options.email_body__multiline_required | newline_to_br | json  }},\n      \"reply_to\": {{ shop.customer_email | json }},\n      \"from_display_name\": {{ shop.name | json }}\n    }\n  {% endaction %}\n{% endif %}",
+  "docs": null,
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false
+}

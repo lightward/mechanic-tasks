@@ -1,1 +1,15 @@
-{"name":"Auto-tag orders with product vendors","options":{},"subscriptions":["shopify/orders/create"],"subscriptions_template":"shopify/orders/create","script":"{% if event.preview %}\n  {% capture order_json %}\n    {\n      \"admin_graphql_api_id\": \"gid://shopify/Order/12345\",\n      \"tags\": \"Apple\",\n      \"line_items\": [\n        {\n          \"product\": {\n            \"vendor\": \"Apple\"\n          }\n        },\n        {\n          \"product\": {\n            \"vendor\": \"Nike\"\n          }\n        },\n        {\n          \"product\": {\n            \"vendor\": null\n          }\n        }\n      ]\n    }\n  {% endcapture %}\n\n  {% assign order = order_json | parse_json %}\n{% endif %}\n\n{% assign product_vendors = order.line_items | map: \"product\" | map: \"vendor\" %}\n{% assign order_tags = order.tags | split: \", \" %}\n{% assign tags_to_add = array %}\n\n{% for vendor in product_vendors %}\n  {% if vendor == blank or order_tags contains vendor %}\n    {% continue %}\n  {% endif %}\n\n  {% assign tags_to_add[tags_to_add.size] = vendor %}\n{% endfor %}\n\n{% if tags_to_add != blank %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ order.admin_graphql_api_id | json }}\n        tags: {{ tags_to_add | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}","docs":null,"halt_action_run_sequence_on_error":false,"online_store_javascript":null,"order_status_javascript":null,"perform_action_runs_in_sequence":false}
+{
+  "name": "Auto-tag orders with product vendors",
+  "options": {
+  },
+  "subscriptions": [
+    "shopify/orders/create"
+  ],
+  "subscriptions_template": "shopify/orders/create",
+  "script": "{% if event.preview %}\n  {% capture order_json %}\n    {\n      \"admin_graphql_api_id\": \"gid://shopify/Order/12345\",\n      \"tags\": \"Apple\",\n      \"line_items\": [\n        {\n          \"product\": {\n            \"vendor\": \"Apple\"\n          }\n        },\n        {\n          \"product\": {\n            \"vendor\": \"Nike\"\n          }\n        },\n        {\n          \"product\": {\n            \"vendor\": null\n          }\n        }\n      ]\n    }\n  {% endcapture %}\n\n  {% assign order = order_json | parse_json %}\n{% endif %}\n\n{% assign product_vendors = order.line_items | map: \"product\" | map: \"vendor\" %}\n{% assign order_tags = order.tags | split: \", \" %}\n{% assign tags_to_add = array %}\n\n{% for vendor in product_vendors %}\n  {% if vendor == blank or order_tags contains vendor %}\n    {% continue %}\n  {% endif %}\n\n  {% assign tags_to_add[tags_to_add.size] = vendor %}\n{% endfor %}\n\n{% if tags_to_add != blank %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ order.admin_graphql_api_id | json }}\n        tags: {{ tags_to_add | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}",
+  "docs": null,
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false
+}

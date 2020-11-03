@@ -1,1 +1,18 @@
-{"name":"Send a customer signup email","options":{"to__email_required":"","subject__required":"New customer: {% if customer.email %}{{ customer.email }}{% else %}#{{ customer.id }}{% endif %}","body__multiline_required":"Hey there! A new customer has signed up. Here are their details:\n\nName: {% capture full_name %}{{ customer.first_name }} {{ customer.last_name }}{% endcapture %}{% if full_name != blank %}{{ full_name | strip }}{% else %}(none){% endif %}\nEmail: {{ customer.email | default: \"(none)\" }}\nPhone: {{ customer.phone | default: \"(none)\" }}\n{{ customer.note | strip }}\n\n\u003ca href=\"https://{{ shop.myshopify_domain }}/admin/customers/{{ customer.id }}\" target=\"_blank\"\u003eManage in Shopify\u003c/a\u003e\n\nThanks,\n- Mechanic, for {{ shop.name }}"},"subscriptions":["shopify/customers/create"],"subscriptions_template":"shopify/customers/create","script":"{\n  \"action\": {\n    \"type\": \"email\",\n    \"options\": {\n      \"to\": {{ options.to__email_required | json }},\n      \"subject\": {{ options.subject__required | json }},\n      \"body\": {{ options.body__multiline_required | strip | newline_to_br | json }}\n    }\n  }\n}","docs":"Super basic, super useful. :) Get an email alert whenever a customer account is created.","halt_action_run_sequence_on_error":false,"online_store_javascript":null,"order_status_javascript":null,"perform_action_runs_in_sequence":false}
+{
+  "name": "Send a customer signup email",
+  "options": {
+    "to__email_required": "",
+    "subject__required": "New customer: {% if customer.email %}{{ customer.email }}{% else %}#{{ customer.id }}{% endif %}",
+    "body__multiline_required": "Hey there! A new customer has signed up. Here are their details:\n\nName: {% capture full_name %}{{ customer.first_name }} {{ customer.last_name }}{% endcapture %}{% if full_name != blank %}{{ full_name | strip }}{% else %}(none){% endif %}\nEmail: {{ customer.email | default: \"(none)\" }}\nPhone: {{ customer.phone | default: \"(none)\" }}\n{{ customer.note | strip }}\n\n<a href=\"https://{{ shop.myshopify_domain }}/admin/customers/{{ customer.id }}\" target=\"_blank\">Manage in Shopify</a>\n\nThanks,\n- Mechanic, for {{ shop.name }}"
+  },
+  "subscriptions": [
+    "shopify/customers/create"
+  ],
+  "subscriptions_template": "shopify/customers/create",
+  "script": "{\n  \"action\": {\n    \"type\": \"email\",\n    \"options\": {\n      \"to\": {{ options.to__email_required | json }},\n      \"subject\": {{ options.subject__required | json }},\n      \"body\": {{ options.body__multiline_required | strip | newline_to_br | json }}\n    }\n  }\n}",
+  "docs": "Super basic, super useful. :) Get an email alert whenever a customer account is created.",
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false
+}

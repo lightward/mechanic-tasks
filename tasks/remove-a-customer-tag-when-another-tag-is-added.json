@@ -1,1 +1,18 @@
-{"name":"Remove a customer tag when another tag is added","options":{"customer_tag_to_watch_for__required":null,"customer_tag_to_remove__required":null,"ignore_tag_case__boolean":true},"subscriptions":["shopify/customers/update"],"subscriptions_template":"shopify/customers/update","script":"{% if event.preview %}\n  {% assign customer = hash %}\n  {% assign customer[\"admin_graphql_api_id\"] = \"gid://shopify/Customer/1234567890\" %}\n  {% assign customer[\"tags\"] = options.customer_tag_to_watch_for__required | append: \", \" | append: options.customer_tag_to_remove__required %}\n{% endif %}\n\n{% assign customer_tags = customer.tags | split: \", \" %}\n{% assign tag_to_match = options.customer_tag_to_watch_for__required %}\n{% assign tag_to_remove = options.customer_tag_to_remove__required %}\n\n{% if options.ignore_tag_case__boolean %}\n  {% assign customer_tags = customer.tags | downcase | split: \", \" %}\n  {% assign tag_to_match = options.customer_tag_to_watch_for__required | downcase %}\n  {% assign tag_to_remove = options.customer_tag_to_remove__required | downcase %}\n{% endif %}\n\n{% if customer_tags contains tag_to_match and customer_tags contains tag_to_remove %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsRemove(\n        id: {{ customer.admin_graphql_api_id | json }}\n        tags: {{ options.customer_tag_to_remove__required | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}","docs":"Does exactly as it says. :)","halt_action_run_sequence_on_error":false,"online_store_javascript":null,"order_status_javascript":null,"perform_action_runs_in_sequence":false}
+{
+  "name": "Remove a customer tag when another tag is added",
+  "options": {
+    "customer_tag_to_watch_for__required": null,
+    "customer_tag_to_remove__required": null,
+    "ignore_tag_case__boolean": true
+  },
+  "subscriptions": [
+    "shopify/customers/update"
+  ],
+  "subscriptions_template": "shopify/customers/update",
+  "script": "{% if event.preview %}\n  {% assign customer = hash %}\n  {% assign customer[\"admin_graphql_api_id\"] = \"gid://shopify/Customer/1234567890\" %}\n  {% assign customer[\"tags\"] = options.customer_tag_to_watch_for__required | append: \", \" | append: options.customer_tag_to_remove__required %}\n{% endif %}\n\n{% assign customer_tags = customer.tags | split: \", \" %}\n{% assign tag_to_match = options.customer_tag_to_watch_for__required %}\n{% assign tag_to_remove = options.customer_tag_to_remove__required %}\n\n{% if options.ignore_tag_case__boolean %}\n  {% assign customer_tags = customer.tags | downcase | split: \", \" %}\n  {% assign tag_to_match = options.customer_tag_to_watch_for__required | downcase %}\n  {% assign tag_to_remove = options.customer_tag_to_remove__required | downcase %}\n{% endif %}\n\n{% if customer_tags contains tag_to_match and customer_tags contains tag_to_remove %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsRemove(\n        id: {{ customer.admin_graphql_api_id | json }}\n        tags: {{ options.customer_tag_to_remove__required | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}",
+  "docs": "Does exactly as it says. :)",
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false
+}

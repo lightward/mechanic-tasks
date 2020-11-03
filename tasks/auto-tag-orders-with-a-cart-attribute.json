@@ -1,1 +1,16 @@
-{"name":"Auto-tag orders with a cart attribute","options":{"cart_attribute_to_monitor__required":null},"subscriptions":["shopify/orders/create"],"subscriptions_template":"shopify/orders/create","script":"{% if event.preview %}\n  {% capture order_json %}\n    {\n      \"admin_graphql_api_id\": \"gid://shopify/Order/12345\",\n      \"tags\": \"\",\n      \"note_attributes\": {\n        {{ options.cart_attribute_to_monitor__required | json }}: \"Hello!\"\n      }\n    }\n  {% endcapture %}\n\n  {% assign order = order_json | parse_json %}\n{% endif %}\n\n{% assign order_tags = order.tags | split: \", \" %}\n{% assign attribute_name = options.cart_attribute_to_monitor__required %}\n{% assign attribute_value = order.note_attributes[attribute_name] %}\n\n{% if attribute_value == blank %}\n  {% log \"Attribute is not present\" %}\n{% elsif order_tags contains attribute_value %}\n  {% log message: \"Order is already tagged\", tag: attribute_value %}\n{% else %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ order.admin_graphql_api_id | json }}\n        tags: {{ attribute_value | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}","docs":null,"halt_action_run_sequence_on_error":false,"online_store_javascript":null,"order_status_javascript":null,"perform_action_runs_in_sequence":false}
+{
+  "name": "Auto-tag orders with a cart attribute",
+  "options": {
+    "cart_attribute_to_monitor__required": null
+  },
+  "subscriptions": [
+    "shopify/orders/create"
+  ],
+  "subscriptions_template": "shopify/orders/create",
+  "script": "{% if event.preview %}\n  {% capture order_json %}\n    {\n      \"admin_graphql_api_id\": \"gid://shopify/Order/12345\",\n      \"tags\": \"\",\n      \"note_attributes\": {\n        {{ options.cart_attribute_to_monitor__required | json }}: \"Hello!\"\n      }\n    }\n  {% endcapture %}\n\n  {% assign order = order_json | parse_json %}\n{% endif %}\n\n{% assign order_tags = order.tags | split: \", \" %}\n{% assign attribute_name = options.cart_attribute_to_monitor__required %}\n{% assign attribute_value = order.note_attributes[attribute_name] %}\n\n{% if attribute_value == blank %}\n  {% log \"Attribute is not present\" %}\n{% elsif order_tags contains attribute_value %}\n  {% log message: \"Order is already tagged\", tag: attribute_value %}\n{% else %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ order.admin_graphql_api_id | json }}\n        tags: {{ attribute_value | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}",
+  "docs": null,
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false
+}

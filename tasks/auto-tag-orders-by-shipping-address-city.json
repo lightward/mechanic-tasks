@@ -1,1 +1,17 @@
-{"name":"Auto-tag orders by shipping address city","options":{"city__required":null,"tag_to_apply__required":null},"subscriptions":["shopify/orders/create"],"subscriptions_template":"shopify/orders/create","script":"{% if event.preview %}\n  {% assign order = '{\"admin_graphql_api_id\": \"gid://shopify/Order/1234567890\"}' | parse_json %}\n  {% assign order['shipping_address'] = hash %}\n  {% assign order['shipping_address']['city'] = options.city__required %}\n{% endif %}\n\n{% assign order_address_city_downcased = order.shipping_address.city | downcase %}\n{% assign required_city_downcased = options.city__required | downcase %}\n\n{% if order_address_city_downcased == required_city_downcased %}\n\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ order.admin_graphql_api_id | json }}\n        tags: {{ options.tag_to_apply__required | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n\n{% endif %}","docs":"This task automatically tags orders based on the city in the shipping address. Within this key you define the city and the tag on the order.","halt_action_run_sequence_on_error":false,"online_store_javascript":null,"order_status_javascript":null,"perform_action_runs_in_sequence":false}
+{
+  "name": "Auto-tag orders by shipping address city",
+  "options": {
+    "city__required": null,
+    "tag_to_apply__required": null
+  },
+  "subscriptions": [
+    "shopify/orders/create"
+  ],
+  "subscriptions_template": "shopify/orders/create",
+  "script": "{% if event.preview %}\n  {% assign order = '{\"admin_graphql_api_id\": \"gid://shopify/Order/1234567890\"}' | parse_json %}\n  {% assign order['shipping_address'] = hash %}\n  {% assign order['shipping_address']['city'] = options.city__required %}\n{% endif %}\n\n{% assign order_address_city_downcased = order.shipping_address.city | downcase %}\n{% assign required_city_downcased = options.city__required | downcase %}\n\n{% if order_address_city_downcased == required_city_downcased %}\n\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ order.admin_graphql_api_id | json }}\n        tags: {{ options.tag_to_apply__required | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n\n{% endif %}",
+  "docs": "This task automatically tags orders based on the city in the shipping address. Within this key you define the city and the tag on the order.",
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false
+}

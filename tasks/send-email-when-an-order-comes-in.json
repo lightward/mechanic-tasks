@@ -1,1 +1,20 @@
-{"name":"Send email when an order comes in","options":{"only_for_paid_orders__boolean":false,"only_for_orders_including_this_product_tag":null,"email_recipients__required":"sales@example.com, production@example.com","email_subject__required":"New {{ order.financial_status }} order: {{ order.name }}","email_body__required_multiline":"Hi team,\n\nPlease see details for order {{ order.name }}:\n\nhttps://{{ shop.myshopify_domain }}/admin/orders/{{ order.id }}\n\nThanks,\n- Mechanic, for {{ shop.name }}"},"subscriptions":["shopify/orders/create"],"subscriptions_template":"{% if options.only_for_paid_orders__boolean %}\r\n  shopify/orders/paid\r\n{% else %}\r\n  shopify/orders/create\r\n{% endif %}","script":"{% assign order_qualifies = false %}\n{% if options.only_for_orders_including_this_product_tag == blank %}\n  {% assign order_qualifies = true %}\n{% else %}\n  {% assign order_product_tags = order.line_items | map: \"product\" | map: \"tags\" | join: \", \" | split: \", \" | sort | uniq %}\n  {% if order_product_tags contains options.only_for_orders_including_this_product_tag %}\n    {% assign order_qualifies = true %}\n  {% endif %}\n{% endif %}\n\n{% if event.preview or order_qualifies %}\n  {\n    \"action\": {\n      \"type\": \"email\",\n      \"options\": {\n        \"to\": {{ options.email_recipients__required | json }},\n        \"subject\": {{ options.email_subject__required | strip | json }},\n        \"body\": {{ options.email_body__required_multiline | newline_to_br | strip | json }},\n        \"reply_to\": {{ shop.customer_email | json }},\n        \"from_display_name\": {{ shop.name | json }}\n      }\n    }\n  }\n{% endif %}","docs":"Use this task to notify staff (or suppliers, or anyone!) of incoming orders. Optionally, choose to only be notified when orders are paid, or only for orders that contain at least one product with a certain tag.","halt_action_run_sequence_on_error":false,"online_store_javascript":null,"order_status_javascript":null,"perform_action_runs_in_sequence":false}
+{
+  "name": "Send email when an order comes in",
+  "options": {
+    "only_for_paid_orders__boolean": false,
+    "only_for_orders_including_this_product_tag": null,
+    "email_recipients__required": "sales@example.com, production@example.com",
+    "email_subject__required": "New {{ order.financial_status }} order: {{ order.name }}",
+    "email_body__required_multiline": "Hi team,\n\nPlease see details for order {{ order.name }}:\n\nhttps://{{ shop.myshopify_domain }}/admin/orders/{{ order.id }}\n\nThanks,\n- Mechanic, for {{ shop.name }}"
+  },
+  "subscriptions": [
+    "shopify/orders/create"
+  ],
+  "subscriptions_template": "{% if options.only_for_paid_orders__boolean %}\r\n  shopify/orders/paid\r\n{% else %}\r\n  shopify/orders/create\r\n{% endif %}",
+  "script": "{% assign order_qualifies = false %}\n{% if options.only_for_orders_including_this_product_tag == blank %}\n  {% assign order_qualifies = true %}\n{% else %}\n  {% assign order_product_tags = order.line_items | map: \"product\" | map: \"tags\" | join: \", \" | split: \", \" | sort | uniq %}\n  {% if order_product_tags contains options.only_for_orders_including_this_product_tag %}\n    {% assign order_qualifies = true %}\n  {% endif %}\n{% endif %}\n\n{% if event.preview or order_qualifies %}\n  {\n    \"action\": {\n      \"type\": \"email\",\n      \"options\": {\n        \"to\": {{ options.email_recipients__required | json }},\n        \"subject\": {{ options.email_subject__required | strip | json }},\n        \"body\": {{ options.email_body__required_multiline | newline_to_br | strip | json }},\n        \"reply_to\": {{ shop.customer_email | json }},\n        \"from_display_name\": {{ shop.name | json }}\n      }\n    }\n  }\n{% endif %}",
+  "docs": "Use this task to notify staff (or suppliers, or anyone!) of incoming orders. Optionally, choose to only be notified when orders are paid, or only for orders that contain at least one product with a certain tag.",
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false
+}

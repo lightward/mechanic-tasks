@@ -1,1 +1,18 @@
-{"name":"Email customer when their order is paid","options":{"required_order_tags_at_the_time_of_payment__array":null,"email_subject__required":"Order #{{ order.order_number }} is paid - thank you!","email_body__multiline_required":null},"subscriptions":["shopify/orders/paid"],"subscriptions_template":"shopify/orders/paid","script":"{% if event.preview %}\n  {% assign order = hash %}\n  {% assign order[\"email\"] = \"customer@example.com\" %}\n  {% assign order[\"tags\"] = options.required_order_tags_at_the_time_of_payment__array | join: \", \" %}\n{% endif %}\n\n{% assign order_qualifies = true %}\n\n{% if order.email == blank %}\n  {% log message: \"Order is missing an email address; skipping\" %}\n  {% assign order_qualifies = false %}\n{% endif %}\n\n{% if options.required_order_tags_at_the_time_of_payment__array != blank %}\n  {% assign order_tags = order.tags | split: \", \" %}\n  {% for required_tag in options.required_order_tags_at_the_time_of_payment__array %}\n    {% unless order_tags contains required_tag %}\n      {% log message: \"Order is missing a required tag; skipping\", missing_tag: required_tag, order_tags: order_tags %}\n      {% assign order_qualifies = false %}\n    {% endunless %}\n  {% endfor %}\n{% endif %}\n\n{% if order_qualifies %}\n  {% action \"email\" %}\n    {\n      \"to\": {{ order.email | json }},\n      \"subject\": {{ options.email_subject__required | json }},\n      \"body\": {{ options.email_body__multiline_required | strip | newline_to_br | json }},\n      \"reply_to\": {{ shop.customer_email | json }},\n      \"from_display_name\": {{ shop.name | json }}\n    }\n  {% endaction %}\n{% endif %}","docs":null,"halt_action_run_sequence_on_error":false,"online_store_javascript":null,"order_status_javascript":null,"perform_action_runs_in_sequence":false}
+{
+  "name": "Email customer when their order is paid",
+  "options": {
+    "required_order_tags_at_the_time_of_payment__array": null,
+    "email_subject__required": "Order #{{ order.order_number }} is paid - thank you!",
+    "email_body__multiline_required": null
+  },
+  "subscriptions": [
+    "shopify/orders/paid"
+  ],
+  "subscriptions_template": "shopify/orders/paid",
+  "script": "{% if event.preview %}\n  {% assign order = hash %}\n  {% assign order[\"email\"] = \"customer@example.com\" %}\n  {% assign order[\"tags\"] = options.required_order_tags_at_the_time_of_payment__array | join: \", \" %}\n{% endif %}\n\n{% assign order_qualifies = true %}\n\n{% if order.email == blank %}\n  {% log message: \"Order is missing an email address; skipping\" %}\n  {% assign order_qualifies = false %}\n{% endif %}\n\n{% if options.required_order_tags_at_the_time_of_payment__array != blank %}\n  {% assign order_tags = order.tags | split: \", \" %}\n  {% for required_tag in options.required_order_tags_at_the_time_of_payment__array %}\n    {% unless order_tags contains required_tag %}\n      {% log message: \"Order is missing a required tag; skipping\", missing_tag: required_tag, order_tags: order_tags %}\n      {% assign order_qualifies = false %}\n    {% endunless %}\n  {% endfor %}\n{% endif %}\n\n{% if order_qualifies %}\n  {% action \"email\" %}\n    {\n      \"to\": {{ order.email | json }},\n      \"subject\": {{ options.email_subject__required | json }},\n      \"body\": {{ options.email_body__multiline_required | strip | newline_to_br | json }},\n      \"reply_to\": {{ shop.customer_email | json }},\n      \"from_display_name\": {{ shop.name | json }}\n    }\n  {% endaction %}\n{% endif %}",
+  "docs": null,
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false
+}
