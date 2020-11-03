@@ -4,7 +4,11 @@
   "author": "Isaac Bowen <isaac@lightward.com>",
   "license": "MIT",
   "dependencies": {
+    "dir-compare": "^2.3.0",
     "glob": "^7.1.6"
+  },
+  "scripts": {
+    "test": "node ./test.js"
   },
   "engines": {
     "node": ">=12.10.0"
