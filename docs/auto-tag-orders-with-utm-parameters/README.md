@@ -3,7 +3,7 @@
 * [task.json](../../tasks/auto-tag-orders-with-utm-parameters.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task automatically tags incoming orders with the UTM campaign, content, medium, source, and/or term associated with the customer's visit. Run this task manually to tag your existing orders.
 
 ## Default options
 
@@ -27,4 +27,4 @@ mechanic/shopify/bulk_operation
 
 ## Documentation
 
-null
+This task automatically tags incoming orders with the UTM campaign, content, medium, source, and/or term associated with the customer's visit. Run this task manually to tag your existing orders.

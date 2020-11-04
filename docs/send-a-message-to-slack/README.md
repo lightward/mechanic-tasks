@@ -3,7 +3,7 @@
 * [task.json](../../tasks/send-a-message-to-slack.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+Purely for demonstration purposes, this task illustrates how one might set up a script to send Slack messages. As written, this task requires a Slack incoming webhook URL - [learn how to generate this](https://api.slack.com/incoming-webhooks#getting-started). Then, [learn more about sending to Slack with Mechanic](https://help.usemechanic.com/en/articles/3297438-can-i-send-messages-to-slack).
 
 ## Default options
 
@@ -21,4 +21,4 @@ mechanic/user/trigger
 
 ## Documentation
 
-null
+Purely for demonstration purposes, this task illustrates how one might set up a script to send Slack messages. As written, this task requires a Slack incoming webhook URL - [learn how to generate this](https://api.slack.com/incoming-webhooks#getting-started). Then, [learn more about sending to Slack with Mechanic](https://help.usemechanic.com/en/articles/3297438-can-i-send-messages-to-slack).

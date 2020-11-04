@@ -3,7 +3,7 @@
 * [task.json](../../tasks/tag-customers-when-their-last-order-is-before-after-x-days-ago.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+Running daily, hourly, or manually, this task scans all customers and tags them based on the date of their last order. Choose between tagging customers whose orders are before x days ago, or after x days ago.
 
 ## Default options
 
@@ -33,4 +33,4 @@ mechanic/shopify/bulk_operation
 
 ## Documentation
 
-null
+Running daily, hourly, or manually, this task scans all customers and tags them based on the date of their last order. Choose between tagging customers whose orders are before x days ago, or after x days ago.

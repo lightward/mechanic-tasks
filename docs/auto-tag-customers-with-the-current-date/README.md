@@ -3,7 +3,7 @@
 * [task.json](../../tasks/auto-tag-customers-with-the-current-date.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+Use this task to tag incoming customers with the current date/time, using the format of your choice, and optionally a prefix and suffix. If you like, enable "Wait until the customer is enabled" to apply the tag when the customer's online account is activated, rather than when the customer is first created.
 
 ## Default options
 
@@ -29,4 +29,6 @@ shopify/customers/create
 
 ## Documentation
 
-null
+Use this task to tag incoming customers with the current date/time, using the format of your choice, and optionally a prefix and suffix. If you like, enable "Wait until the customer is enabled" to apply the tag when the customer's online account is activated, rather than when the customer is first created.
+
+To customize the date/time format, use an "strftime" reference, like [www.strfti.me](http://www.strfti.me/).

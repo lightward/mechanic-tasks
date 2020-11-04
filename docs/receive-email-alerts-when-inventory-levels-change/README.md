@@ -3,7 +3,7 @@
 * [task.json](../../tasks/receive-email-alerts-when-inventory-levels-change.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+Use this task to receive immediate email notifications whenever inventory/stock levels are adjusted, whether manually or as a result of a transfer or customer order.
 
 ## Default options
 
@@ -24,4 +24,6 @@ shopify/inventory_levels/connect
 
 ## Documentation
 
-null
+Use this task to receive immediate email notifications whenever inventory/stock levels are adjusted, whether manually or as a result of a transfer or customer order.
+
+Please note: Mechanic will start sending emails the _second_ time inventory is adjusted for a particular item.

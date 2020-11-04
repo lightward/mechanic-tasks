@@ -7,7 +7,7 @@
   ],
   "subscriptions_template": "shopify/draft_orders/create",
   "script": "{% action \"shopify\" %}\n  mutation {\n    draftOrderComplete(\n      id: {{ draft_order.admin_graphql_api_id | json }}\n      paymentPending: false\n    ) {\n      draftOrder {\n        order {\n          id\n          name\n          fullyPaid\n        }\n      }\n    }\n  }\n{% endaction %}",
-  "docs": null,
+  "docs": "This task monitors for newly-created draft orders, and converts each one into a completed, fully-paid order. Nothing more, nothing less. :)",
   "halt_action_run_sequence_on_error": false,
   "online_store_javascript": null,
   "order_status_javascript": null,

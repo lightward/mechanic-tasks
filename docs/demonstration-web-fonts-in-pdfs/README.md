@@ -3,7 +3,7 @@
 * [task.json](../../tasks/demonstration-web-fonts-in-pdfs.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task illustrates how to use a typeface from Google Fonts, embedding it in a generated PDF which is then emailed to the recipient of your choice.
 
 ## Default options
 
@@ -21,4 +21,4 @@ mechanic/user/trigger
 
 ## Documentation
 
-null
+This task illustrates how to use a typeface from Google Fonts, embedding it in a generated PDF which is then emailed to the recipient of your choice.

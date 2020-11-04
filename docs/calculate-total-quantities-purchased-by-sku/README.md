@@ -3,7 +3,7 @@
 * [task.json](../../tasks/calculate-total-quantities-purchased-by-sku.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task scans all orders, regardless of status, and counts up the lifetime quantity purchased for each SKU, listing each SKU with its quantity and all related order names. This task demonstrates Shopify's bulk operations API.
 
 ## Subscriptions
 
@@ -14,4 +14,4 @@ mechanic/shopify/bulk_operation
 
 ## Documentation
 
-null
+This task scans all orders, regardless of status, and counts up the lifetime quantity purchased for each SKU, listing each SKU with its quantity and all related order names. This task demonstrates Shopify's bulk operations API.

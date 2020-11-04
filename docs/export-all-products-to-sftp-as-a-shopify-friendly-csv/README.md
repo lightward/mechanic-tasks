@@ -3,7 +3,7 @@
 * [task.json](../../tasks/export-all-products-to-sftp-as-a-shopify-friendly-csv.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+On a configurable schedule, this task generates a Shopify-friendly CSV of all your products, and uploads it to the SFTP destination of your choice. This is a convenient way to keep regular backups of your entire product catalog: simply import a CSV to restore your products to that point in time. ([Learn more about CSV imports and exports of Shopify products.](https://help.shopify.com/en/manual/products/import-export/using-csv))
 
 ## Default options
 
@@ -33,4 +33,6 @@ mechanic/shopify/bulk_operation
 
 ## Documentation
 
-null
+On a configurable schedule, this task generates a Shopify-friendly CSV of all your products, and uploads it to the SFTP destination of your choice. This is a convenient way to keep regular backups of your entire product catalog: simply import a CSV to restore your products to that point in time. ([Learn more about CSV imports and exports of Shopify products.](https://help.shopify.com/en/manual/products/import-export/using-csv))
+
+To only export certain products, set the "Only export products matching this query" option to a search query that works with Shopify's product admin area. For example, to only export products tagged "backmeup", use the search query "tag:backmeup".

@@ -3,7 +3,7 @@
 * [task.json](../../tasks/send-a-follow-up-email-after-order-cancellation.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+Use this task to easily check in on customers, after an order of theirs is cancelled. Optionally, queue up the email for a certain number of hours from the time of cancellation.
 
 ## Default options
 
@@ -24,4 +24,4 @@ shopify/orders/cancelled{% if options.hours_to_wait_after_cancellation__number !
 
 ## Documentation
 
-null
+Use this task to easily check in on customers, after an order of theirs is cancelled. Optionally, queue up the email for a certain number of hours from the time of cancellation.

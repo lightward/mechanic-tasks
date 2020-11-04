@@ -3,7 +3,7 @@
 * [task.json](../../tasks/auto-tag-customers-by-sales-channel.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+Use this task to tag customers, as their orders come in, based on which sales channel they used for their purchase. Run this task manually to backfill tags for customers based on their historical orders. Use test mode to see what this task _would_ do, if test mode wasn't enabled. :)
 
 ## Default options
 
@@ -27,4 +27,6 @@ mechanic/shopify/bulk_operation
 
 ## Documentation
 
-null
+Use this task to tag customers, as their orders come in, based on which sales channel they used for their purchase. Run this task manually to backfill tags for customers based on their historical orders. Use test mode to see what this task _would_ do, if test mode wasn't enabled. :)
+
+[YouTube: Watch the development video!](https://youtu.be/TN13-eX1ops)

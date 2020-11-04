@@ -3,7 +3,7 @@
 * [task.json](../../tasks/auto-tag-products-by-largest-available-size.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task watches for incoming updates to inventory levels, and auto-tags the product according to the largest in-stock size. This task is specifically made to work with numeric variant options (e.g. "10", "11", "12", etc). This task can also be run manually, and can be configured to run daily.
 
 ## Default options
 
@@ -30,4 +30,6 @@ mechanic/shopify/bulk_operation
 
 ## Documentation
 
-null
+This task watches for incoming updates to inventory levels, and auto-tags the product according to the largest in-stock size. This task is specifically made to work with numeric variant options (e.g. "10", "11", "12", etc). This task can also be run manually, and can be configured to run daily.
+
+Please note: when running in response to inventory updates, this task only works with up to 250 variants per product. This limit does not apply when running manually, or daily.

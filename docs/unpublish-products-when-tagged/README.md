@@ -3,7 +3,7 @@
 * [task.json](../../tasks/unpublish-products-when-tagged.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task watches for certain product tags, and removes the product from the selected sales channel(s) when those tags are found.
 
 ## Default options
 
@@ -25,4 +25,4 @@ shopify/products/update
 
 ## Documentation
 
-null
+This task watches for certain product tags, and removes the product from the selected sales channel(s) when those tags are found.

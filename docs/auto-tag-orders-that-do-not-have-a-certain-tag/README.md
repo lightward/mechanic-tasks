@@ -3,7 +3,7 @@
 * [task.json](../../tasks/auto-tag-orders-that-do-not-have-a-certain-tag.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task monitors for new and updated orders, adding a tag if a certain other tag is found missing. If and when the order does receive that certain other tag, the task's tag will be removed.
 
 ## Default options
 
@@ -23,4 +23,4 @@ shopify/orders/updated
 
 ## Documentation
 
-null
+This task monitors for new and updated orders, adding a tag if a certain other tag is found missing. If and when the order does receive that certain other tag, the task's tag will be removed.

@@ -3,7 +3,7 @@
 * [task.json](../../tasks/tag-orders-that-have-at-least-x-of-a-certain-product.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+Use this task to monitor for orders that meet a certain quantity threshold, per line item or totaled up, optionally only looking at certain SKUs. Optionally, send yourself an email notification when such an order comes in.
 
 ## Default options
 
@@ -25,4 +25,4 @@ shopify/orders/paid
 
 ## Documentation
 
-null
+Use this task to monitor for orders that meet a certain quantity threshold, per line item or totaled up, optionally only looking at certain SKUs. Optionally, send yourself an email notification when such an order comes in.

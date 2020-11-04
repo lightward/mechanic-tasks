@@ -3,7 +3,7 @@
 * [task.json](../../tasks/auto-tag-orders-created-from-drafts.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task monitors for newly-created orders, and auto-tags any that were originally based on a Shopify draft order, using the tag of your choice.
 
 ## Default options
 
@@ -21,4 +21,4 @@ shopify/orders/create
 
 ## Documentation
 
-null
+This task monitors for newly-created orders, and auto-tags any that were originally based on a Shopify draft order, using the tag of your choice.

@@ -9,7 +9,7 @@
   ],
   "subscriptions_template": "shopify/orders/create",
   "script": "{% if event.preview %}\n  {% capture order_json %}\n    {\n      \"admin_graphql_api_id\": \"gid://shopify/Order/12345\",\n      \"payment_gateway_names\": {{ options.payment_gateway_name__required | json }}\n    }\n  {% endcapture %}\n\n  {% assign order = order_json | parse_json %}\n{% endif %}\n\n{% if order.payment_gateway_names contains options.payment_gateway_name__required %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ order.admin_graphql_api_id | json }}\n        tags: {{ options.order_tag_to_add__required | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% else %}\n  {% log order_payment_gateway_names: order.payment_gateway_names %}\n{% endif %}",
-  "docs": null,
+  "docs": "This task checks the payment method for new orders immediately upon order creation, and tags the order accordingly.\r\n\r\nTip: to tag orders paid with a gift card, fill in \"Payment gateway name\" with \"gift_card\".",
   "halt_action_run_sequence_on_error": false,
   "online_store_javascript": null,
   "order_status_javascript": null,

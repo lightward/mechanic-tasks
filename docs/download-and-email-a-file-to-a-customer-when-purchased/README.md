@@ -3,7 +3,7 @@
 * [task.json](../../tasks/download-and-email-a-file-to-a-customer-when-purchased.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task watches for newly-paid orders. When an order contains a certain line item, this task retrieves a file from the URL of your choice, and emails that file to the customer. Because URLs are easier to share, this makes for a safer way to distribute downloadable materials.
 
 ## Default options
 
@@ -25,4 +25,6 @@ shopify/orders/paid
 
 ## Documentation
 
-null
+This task watches for newly-paid orders. When an order contains a certain line item, this task retrieves a file from the URL of your choice, and emails that file to the customer. Because URLs are easier to share, this makes for a safer way to distribute downloadable materials.
+
+Shopify allows file uploads via the "Files" page. Once uploaded, you'll receive a URL which can be used for this task. [Learn how to upload files to Shopify.](https://help.shopify.com/en/manual/sell-online/online-store/file-uploads#upload-a-file-on-the-files-page)

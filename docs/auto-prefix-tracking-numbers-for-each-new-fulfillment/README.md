@@ -3,7 +3,7 @@
 * [task.json](../../tasks/auto-prefix-tracking-numbers-for-each-new-fulfillment.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task runs immediately after each new fulfillment is created, and adds a prefix to its tracking number, if a tracking number is present.
 
 ## Default options
 
@@ -22,4 +22,4 @@ shopify/fulfillments/create
 
 ## Documentation
 
-null
+This task runs immediately after each new fulfillment is created, and adds a prefix to its tracking number, if a tracking number is present.

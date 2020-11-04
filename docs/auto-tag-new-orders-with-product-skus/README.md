@@ -3,7 +3,7 @@
 * [task.json](../../tasks/auto-tag-new-orders-with-product-skus.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task watches for new orders, and tags each order with all line item SKUs found in that order.
 
 ## Subscriptions
 
@@ -13,4 +13,4 @@ shopify/orders/create
 
 ## Documentation
 
-null
+This task watches for new orders, and tags each order with all line item SKUs found in that order.

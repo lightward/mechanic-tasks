@@ -3,7 +3,7 @@
 * [task.json](../../tasks/auto-delete-customers-that-are-created-without-orders.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+Useful for stores that are subjected to bot abuse, this task watches for newly-created customers, and deletes any that don't come with an associated order. Optionally, choose to ignore any customers that are created with a certain tag – helpful if you create customers yourself, via the Shopify admin.
 
 ## Default options
 
@@ -21,4 +21,4 @@ shopify/customers/create
 
 ## Documentation
 
-null
+Useful for stores that are subjected to bot abuse, this task watches for newly-created customers, and deletes any that don't come with an associated order. Optionally, choose to ignore any customers that are created with a certain tag – helpful if you create customers yourself, via the Shopify admin.

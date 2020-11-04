@@ -3,7 +3,7 @@
 * [task.json](../../tasks/auto-add-default-custom-attributes-to-new-orders.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+Shopify allows orders to have custom attributes associated with them – and these attributes can be edited from within Shopify. Use this task to configure default attributes to be added to all new orders, providing an attribute name and (optionally) a value. Feel free to leave the value blank if you know you'll want to add your own values later, within Shopify.
 
 ## Default options
 
@@ -23,4 +23,4 @@ shopify/orders/create
 
 ## Documentation
 
-null
+Shopify allows orders to have custom attributes associated with them – and these attributes can be edited from within Shopify. Use this task to configure default attributes to be added to all new orders, providing an attribute name and (optionally) a value. Feel free to leave the value blank if you know you'll want to add your own values later, within Shopify.

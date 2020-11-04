@@ -3,7 +3,7 @@
 * [task.json](../../tasks/auto-add-the-draft-order-id-to-an-orders-attributes.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+When a new order is created from a draft order, this task will automatically add the draft order ID to the custom attributes of the new order.
 
 ## Default options
 
@@ -21,4 +21,4 @@ shopify/orders/create
 
 ## Documentation
 
-null
+When a new order is created from a draft order, this task will automatically add the draft order ID to the custom attributes of the new order.

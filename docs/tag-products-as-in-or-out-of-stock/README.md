@@ -3,7 +3,7 @@
 * [task.json](../../tasks/tag-products-as-in-or-out-of-stock.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task scans your products, in bulk, and tags them according to whether or not they're in stock. Optionally, configure this task to monitor products for live auto-tagging.
 
 ## Default options
 
@@ -29,4 +29,6 @@ mechanic/shopify/bulk_operation
 
 ## Documentation
 
-null
+This task scans your products, in bulk, and tags them according to whether or not they're in stock. Optionally, configure this task to monitor products for live auto-tagging.
+
+For the purposes of this task, "in stock" means "having a total inventory of greater than zero, when added up for all variants across all locations".

@@ -3,7 +3,7 @@
 * [task.json](../../tasks/automatically-cancel-orders-with-certain-risk-indicators.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task auto-cancels incoming orders when it finds all of a certain set of risk indicator messages. Risk messages must match exactly, so double-check your configuration!
 
 ## Default options
 
@@ -26,4 +26,4 @@ shopify/orders/updated
 
 ## Documentation
 
-null
+This task auto-cancels incoming orders when it finds all of a certain set of risk indicator messages. Risk messages must match exactly, so double-check your configuration!

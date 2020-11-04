@@ -3,7 +3,7 @@
 * [task.json](../../tasks/auto-add-phone-numbers-to-unfulfilled-orders-when-the-customer-is-updated.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+When a customer update occurs, if the customer has a phone number on file, this task will look for unshipped or partially shipped orders that don't yet have a phone number on file, and will add the customer's phone number to those orders.
 
 ## Subscriptions
 
@@ -13,4 +13,4 @@ shopify/customers/update
 
 ## Documentation
 
-null
+When a customer update occurs, if the customer has a phone number on file, this task will look for unshipped or partially shipped orders that don't yet have a phone number on file, and will add the customer's phone number to those orders.

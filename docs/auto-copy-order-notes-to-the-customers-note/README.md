@@ -3,7 +3,7 @@
 * [task.json](../../tasks/auto-copy-order-notes-to-the-customers-note.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task appends order notes to the related customer's note, whenever the order note changes.
 
 ## Default options
 
@@ -22,4 +22,4 @@ shopify/orders/updated
 
 ## Documentation
 
-null
+This task appends order notes to the related customer's note, whenever the order note changes.

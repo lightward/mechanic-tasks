@@ -3,7 +3,7 @@
 * [task.json](../../tasks/remind-customers-after-x-days-about-unpaid-orders.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task wait for a configurable number of days (or hours!) after an order placed, and – if the order is still unpaid – emails the customer, and optionally adds a tag to the order. This task only sends one email – it does not send repeating reminders.
 
 ## Default options
 
@@ -25,4 +25,4 @@ shopify/orders/create+{{ options.number_of_days_to_wait__number_required | defau
 
 ## Documentation
 
-null
+This task wait for a configurable number of days (or hours!) after an order placed, and – if the order is still unpaid – emails the customer, and optionally adds a tag to the order. This task only sends one email – it does not send repeating reminders.

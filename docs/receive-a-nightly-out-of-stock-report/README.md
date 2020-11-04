@@ -3,7 +3,7 @@
 * [task.json](../../tasks/receive-a-nightly-out-of-stock-report.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+Based on an out-of-stock threshold you define, this task sends you an email summary (with CSV attachment) of all variants that are out of stock in any location. Run this task manually to receive the report on demand.
 
 ## Default options
 
@@ -24,4 +24,4 @@ mechanic/scheduler/daily
 
 ## Documentation
 
-null
+Based on an out-of-stock threshold you define, this task sends you an email summary (with CSV attachment) of all variants that are out of stock in any location. Run this task manually to receive the report on demand.

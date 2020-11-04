@@ -3,7 +3,7 @@
 * [task.json](../../tasks/manage-collection-templates-by-product-inventory.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+Use this task to automatically switch collections over to an appropriate theme template, when every product in the collection has gone completely out of stock, and to switch them back when inventory arrives.
 
 ## Default options
 
@@ -29,4 +29,6 @@ mechanic/shopify/bulk_operation
 
 ## Documentation
 
-null
+Use this task to automatically switch collections over to an appropriate theme template, when every product in the collection has gone completely out of stock, and to switch them back when inventory arrives.
+
+This task can be run manually (using the "Run task" button), or be configured to run daily/hourly. If you encounter performance issues when running every time an inventory level is updated, disable this option.

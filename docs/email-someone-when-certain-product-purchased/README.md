@@ -3,7 +3,7 @@
 * [task.json](../../tasks/email-someone-when-certain-product-purchased.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task sends an email notification, immediately after an order is paid - if a product in the order has a title matching the product title you configure. Optionally, configure this task with a delay, in days, to wait before sending the email. (The task will not send any emails for orders that have since been cancelled.)
 
 ## Default options
 
@@ -27,4 +27,6 @@ shopify/orders/paid{% if delay_days != blank %}+{{ delay_days }}.days{% endif %}
 
 ## Documentation
 
-null
+This task sends an email notification, immediately after an order is paid - if a product in the order has a title matching the product title you configure. Optionally, configure this task with a delay, in days, to wait before sending the email. (The task will not send any emails for orders that have since been cancelled.)
+
+[YouTube: See the upgrade process for this task!](https://youtu.be/xT9j0yMXPDM)

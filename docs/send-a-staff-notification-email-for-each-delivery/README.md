@@ -3,7 +3,7 @@
 * [task.json](../../tasks/send-a-staff-notification-email-for-each-delivery.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+Use this task to send a staff email, the moment Shopify registers a successful delivery.
 
 ## Default options
 
@@ -23,4 +23,4 @@ shopify/fulfillment_events/create
 
 ## Documentation
 
-null
+Use this task to send a staff email, the moment Shopify registers a successful delivery.

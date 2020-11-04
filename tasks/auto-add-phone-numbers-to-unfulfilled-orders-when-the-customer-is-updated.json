@@ -7,7 +7,7 @@
   ],
   "subscriptions_template": "shopify/customers/update",
   "script": "{% if event.preview %}\n  {% action \"shopify\" %}\n    [\n      \"update\",\n      [\"order\", {{ order.id | json }}],\n      {\"phone\": {{ customer.phone | json }}}\n    ]\n  {% endaction %}\n{% elsif customer.phone != blank %}\n  {% assign orders = customer.orders.any.unshipped | concat: customer.orders.any.partial %}\n\n  {% for order in orders %}\n    {% if order.phone != blank %}\n      {% continue %}\n    {% endif %}\n\n    {% action \"shopify\" %}\n      [\n        \"update\",\n        [\"order\", {{ order.id | json }}],\n        {\"phone\": {{ customer.phone | json }}}\n      ]\n    {% endaction %}\n  {% endfor %}\n{% endif %}",
-  "docs": null,
+  "docs": "When a customer update occurs, if the customer has a phone number on file, this task will look for unshipped or partially shipped orders that don't yet have a phone number on file, and will add the customer's phone number to those orders.",
   "halt_action_run_sequence_on_error": false,
   "online_store_javascript": null,
   "order_status_javascript": null,

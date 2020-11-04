@@ -3,7 +3,7 @@
 * [task.json](../../tasks/auto-tag-orders-by-discount-code.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task watches for newly-created orders, and copies any discount codes present to the order's tags.
 
 ## Subscriptions
 
@@ -13,4 +13,4 @@ shopify/orders/create
 
 ## Documentation
 
-null
+This task watches for newly-created orders, and copies any discount codes present to the order's tags.

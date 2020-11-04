@@ -7,7 +7,7 @@
   ],
   "subscriptions_template": "shopify/orders/create",
   "script": "{% if event.preview %}\n  {% assign order = hash %}\n  {% assign order[\"admin_graphql_api_id\"] = \"gid://shopify/Order/1234567890\" %}\n  {% assign order[\"discount_codes\"] = array %}\n  {% assign order[\"discount_codes\"][0] = hash %}\n  {% assign order[\"discount_codes\"][0][\"code\"] = \"ABC123\" %}\n{% endif %}\n\n{% if order.discount_codes != blank %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ order.admin_graphql_api_id | json }}\n        tags: {{ order.discount_codes | map: \"code\" | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}",
-  "docs": null,
+  "docs": "This task watches for newly-created orders, and copies any discount codes present to the order's tags.",
   "halt_action_run_sequence_on_error": false,
   "online_store_javascript": null,
   "order_status_javascript": null,

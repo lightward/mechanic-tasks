@@ -3,7 +3,7 @@
 * [task.json](../../tasks/unpaid-order-reminders.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task sends recurring unpaid order reminders to customers, emailing them on a configurable schedule, until the order is no longer "pending" or until the order is cancelled.
 
 ## Default options
 
@@ -30,4 +30,12 @@ mechanic/scheduler/hourly
 
 ## Documentation
 
-null
+This task sends recurring unpaid order reminders to customers, emailing them on a configurable schedule, until the order is no longer "pending" or until the order is cancelled.
+
+Use the variables ORDER_NUMBER, AMOUNT_DUE, and TAX_LINES to insert each of these values in to your email subject or body.
+
+​To have the task _only_ email for fulfilled orders, set the "Limit to orders matching this query" option to "fulfillment_status:shipped".
+
+Use test mode to have this task report what emails it _would_ send, if test mode were not enabled. It's a good idea to start with this. :)
+
+[YouTube: Watch the development video!](https://youtu.be/IhLJHfIYrgg)

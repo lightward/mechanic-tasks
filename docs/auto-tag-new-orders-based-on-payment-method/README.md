@@ -3,7 +3,7 @@
 * [task.json](../../tasks/auto-tag-new-orders-based-on-payment-method.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task checks the payment method for new orders immediately upon order creation, and tags the order accordingly.
 
 ## Default options
 
@@ -22,4 +22,6 @@ shopify/orders/create
 
 ## Documentation
 
-null
+This task checks the payment method for new orders immediately upon order creation, and tags the order accordingly.
+
+Tip: to tag orders paid with a gift card, fill in "Payment gateway name" with "gift_card".

@@ -8,7 +8,7 @@
   ],
   "subscriptions_template": "shopify/orders/create",
   "script": "{% if event.preview or order.source_name == \"shopify_draft_order\" %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ order.admin_graphql_api_id | default: \"gid://shopify/Order/1234567890\" | json }}\n        tags: {{ options.tag_to_add__required | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}",
-  "docs": null,
+  "docs": "This task monitors for newly-created orders, and auto-tags any that were originally based on a Shopify draft order, using the tag of your choice.",
   "halt_action_run_sequence_on_error": false,
   "online_store_javascript": null,
   "order_status_javascript": null,

@@ -3,7 +3,7 @@
 * [task.json](../../tasks/auto-tag-new-orders-using-liquid.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task offers an introduction to using Liquid to dynamically update your orders. This task comes with example Liquid code, showing you how to tag an order as "even" or "odd", based on whether the order number is even or odd; replace this Liquid with whatever suits your purposes. :)
 
 ## Default options
 
@@ -21,4 +21,4 @@ shopify/orders/create
 
 ## Documentation
 
-null
+This task offers an introduction to using Liquid to dynamically update your orders. This task comes with example Liquid code, showing you how to tag an order as "even" or "odd", based on whether the order number is even or odd; replace this Liquid with whatever suits your purposes. :)

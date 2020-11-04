@@ -3,7 +3,7 @@
 * [task.json](../../tasks/generate-a-simple-product-catalog-pdf.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task is a simple demonstration of pulling product titles and images into a PDF, resulting in a simple catalog of the products available in your store. Use it as a starting point for building something more complex.
 
 ## Subscriptions
 
@@ -13,4 +13,6 @@ mechanic/user/trigger
 
 ## Documentation
 
-null
+This task is a simple demonstration of pulling product titles and images into a PDF, resulting in a simple catalog of the products available in your store. Use it as a starting point for building something more complex.
+
+Run this task manually to generate the PDF.

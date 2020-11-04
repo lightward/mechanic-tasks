@@ -8,7 +8,7 @@
   ],
   "subscriptions_template": "shopify/orders/create",
   "script": "{% if event.preview %}\n  {% capture order_json %}\n    {\n      \"admin_graphql_api_id\": \"gid://shopify/Order/12345\",\n      \"customer\": {\n        \"orders_count\": 1\n      }\n    }\n  {% endcapture %}\n\n  {% assign order = order_json | parse_json %}\n{% endif %}\n\n{% if order.customer.orders_count == 1 %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ order.admin_graphql_api_id | json }}\n        tags: {{ options.order_tag_to_add__required | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}",
-  "docs": null,
+  "docs": "Watches for incoming orders that are the very first order on file for the related customer, and adds the tag of your choice.",
   "halt_action_run_sequence_on_error": false,
   "online_store_javascript": null,
   "order_status_javascript": null,

@@ -3,7 +3,7 @@
 * [task.json](../../tasks/mark-every-new-draft-order-as-paid.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task monitors for newly-created draft orders, and converts each one into a completed, fully-paid order. Nothing more, nothing less. :)
 
 ## Subscriptions
 
@@ -13,4 +13,4 @@ shopify/draft_orders/create
 
 ## Documentation
 
-null
+This task monitors for newly-created draft orders, and converts each one into a completed, fully-paid order. Nothing more, nothing less. :)

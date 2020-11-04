@@ -3,7 +3,7 @@
 * [task.json](../../tasks/standardize-uk-shipping-postcodes.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task watches for incoming orders for the United Kingdom, and reformats any address postcodes that are not in the standard formats "XX XXX", "XXX XXX", and "XXXX XXX".
 
 ## Default options
 
@@ -24,4 +24,6 @@ mechanic/user/trigger
 
 ## Documentation
 
-null
+This task watches for incoming orders for the United Kingdom, and reformats any address postcodes that are not in the standard formats "XX XXX", "XXX XXX", and "XXXX XXX".
+
+Run this task manually to scan _all_ orders in your store's records. Mechanic will update address postcodes for United Kingdom orders, as described above. If you have a large number of orders in your store, this may take some time.

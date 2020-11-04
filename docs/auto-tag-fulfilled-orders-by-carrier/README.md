@@ -3,7 +3,7 @@
 * [task.json](../../tasks/auto-tag-fulfilled-orders-by-carrier.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+When an order is fulfilled, this task will scan the tracking information for each fulfillment. The name of each tracking company on file – i.e. the fulfillment carrier – will be used to look up a new order tag to apply, per the task's configuration.
 
 ## Default options
 
@@ -23,4 +23,4 @@ shopify/orders/fulfilled
 
 ## Documentation
 
-null
+When an order is fulfilled, this task will scan the tracking information for each fulfillment. The name of each tracking company on file – i.e. the fulfillment carrier – will be used to look up a new order tag to apply, per the task's configuration.

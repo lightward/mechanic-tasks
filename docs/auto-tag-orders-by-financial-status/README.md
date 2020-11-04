@@ -3,7 +3,7 @@
 * [task.json](../../tasks/auto-tag-orders-by-financial-status.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task watches new and updated orders, and updates their tags according to their financial status.
 
 ## Default options
 
@@ -31,4 +31,4 @@ shopify/orders/updated
 
 ## Documentation
 
-null
+This task watches new and updated orders, and updates their tags according to their financial status.

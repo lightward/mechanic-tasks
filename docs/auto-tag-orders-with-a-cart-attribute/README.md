@@ -3,7 +3,7 @@
 * [task.json](../../tasks/auto-tag-orders-with-a-cart-attribute.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task checks for incoming orders, watching for orders that have a specific cart attribute filled in. When present, the task then copies that attribute over to the order's tags.
 
 ## Default options
 
@@ -21,4 +21,4 @@ shopify/orders/create
 
 ## Documentation
 
-null
+This task checks for incoming orders, watching for orders that have a specific cart attribute filled in. When present, the task then copies that attribute over to the order's tags.

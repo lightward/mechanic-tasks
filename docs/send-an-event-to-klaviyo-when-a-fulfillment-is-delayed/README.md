@@ -3,7 +3,7 @@
 * [task.json](../../tasks/send-an-event-to-klaviyo-when-a-fulfillment-is-delayed.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task will watch for new order fulfillments, waiting a configurable number of days after each one. When the waiting period is over, if the fulfillment's status matches an item in the list, this task will send an event to Klaviyo, allowing you to use Klaviyo to contact the customer appropriately.
 
 ## Default options
 
@@ -33,4 +33,8 @@ null
 
 ## Documentation
 
-null
+This task will watch for new order fulfillments, waiting a configurable number of days after each one. When the waiting period is over, if the fulfillment's status matches an item in the list, this task will send an event to Klaviyo, allowing you to use Klaviyo to contact the customer appropriately.
+
+Configure the "Qualifying fulfillment statuses" option with values [from Shopify's "shipment_status" documentation](https://help.shopify.com/en/api/reference/shipping-and-fulfillment/fulfillment#shipment-status-property-2019-07).
+
+Enable "Test mode" to make available a "Run task" button - press this button to have Mechanic send a test event to Klaviyo, allowing you to verify that everything's connected properly.

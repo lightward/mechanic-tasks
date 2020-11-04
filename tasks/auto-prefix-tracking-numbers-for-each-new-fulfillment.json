@@ -9,7 +9,7 @@
   ],
   "subscriptions_template": "shopify/fulfillments/create",
   "script": "{% if event.preview %}\n  {% assign fulfillment = hash %}\n  {% assign fulfillment[\"tracking_number\"] = \"1234567890\" %}\n  {% assign fulfillment[\"admin_graphql_api_id\"] = \"gid://shopify/Fulfillment/1234567890\" %}\n{% endif %}\n\n{% if fulfillment.tracking_number == blank %}\n  {\"log\": \"This fullfilment has no tracking number; can't add a prefix\"}\n{% else %}\n  {% action \"shopify\" %}\n    mutation {\n      fulfillmentTrackingInfoUpdate(\n        fulfillmentId: {{ fulfillment.admin_graphql_api_id | json }}\n        trackingInfoUpdateInput: {\n          trackingDetails: {\n            number: {{ fulfillment.tracking_number | prepend: options.tracking_number_prefix_to_add__required | json }}\n          }\n          notifyCustomer: {{ options.notify_customer__boolean | json }}\n        }\n      ) {\n        fulfillment {\n          trackingInfo {\n            number\n          }\n        }\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}",
-  "docs": null,
+  "docs": "This task runs immediately after each new fulfillment is created, and adds a prefix to its tracking number, if a tracking number is present.",
   "halt_action_run_sequence_on_error": false,
   "online_store_javascript": null,
   "order_status_javascript": null,

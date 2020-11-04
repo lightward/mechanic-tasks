@@ -3,7 +3,7 @@
 * [task.json](../../tasks/maintain-a-tag-for-orders-processed-today.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task auto-tags today's new orders, as they're processed, and auto-untags them when the date changes. Optionally, choose to untag outside of a rolling 24-hour window, instead of untagging yesterday's orders at midnight.
 
 ## Default options
 
@@ -28,4 +28,6 @@ shopify/orders/create
 
 ## Documentation
 
-null
+This task auto-tags today's new orders, as they're processed, and auto-untags them when the date changes. Optionally, choose to untag outside of a rolling 24-hour window, instead of untagging yesterday's orders at midnight.
+
+[YouTube: See the development video for this task!](https://youtu.be/1BzhNUZ8Efo)

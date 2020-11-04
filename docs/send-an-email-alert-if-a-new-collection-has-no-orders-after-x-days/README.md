@@ -3,7 +3,7 @@
 * [task.json](../../tasks/send-an-email-alert-if-a-new-collection-has-no-orders-after-x-days.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task watches for newly-created collections, waits a configurable number of days, and then sends a staff email if no orders have been placed for products that are in the new collection.
 
 ## Default options
 
@@ -24,4 +24,4 @@ shopify/collections/create+{{ options.days_to_wait_before_checking__number_requi
 
 ## Documentation
 
-null
+This task watches for newly-created collections, waits a configurable number of days, and then sends a staff email if no orders have been placed for products that are in the new collection.

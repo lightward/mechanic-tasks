@@ -3,7 +3,7 @@
 * [task.json](../../tasks/auto-verify-customer-email-addresses.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+Use this task to perform an extra verification step for your newly-created customers, in which a verification code is emailed to them, along with a link to a form on your online storefront where they can enter the code for verification. Once verified, the customer will be tagged, and sent a confirmation email.
 
 ## Default options
 
@@ -27,4 +27,34 @@ shopify/customers/create
 
 ## Documentation
 
-null
+Use this task to perform an extra verification step for your newly-created customers, in which a verification code is emailed to them, along with a link to a form on your online storefront where they can enter the code for verification. Once verified, the customer will be tagged, and sent a confirmation email.
+
+### Setting up
+
+1.  Install this task! :) Customize the email content to taste.
+2.  Navigate to your Mechanic account settings, and use the "Webhooks" section to create a new webhook, named "Customer verification" (or another name of your choosing), and using the event topic "user/customers/verify_webhook". Make a note of the webhook URL that Mechanic generates for you.
+3.  Adapt and use the following code sample on your online store, perhaps using a new page and [editing its HTML](https://help.shopify.com/en/manual/sell-online/online-store/pages#add-content-to-a-webpage). Make sure to replace the `mechanicWebhookUrl` javascript variable with the webhook URL that Mechanic generated for you earlier.
+
+    ```
+    <p>Please verify your account:</p>
+
+    <form id="verify">
+      <p><label>Email address: <input type="email" name="customer_email" required></label>
+      <p><label>Verification code: <input type="text" name="verification_code" required></label>
+      <p><button type="submit">Submit</button></p>
+    </form>
+
+    <script>
+      var mechanicWebhookUrl = 'https://usemechanic.com/webhook/00000000-0000-0000-0000-000000000000';
+      window.addEventListener('load', function () {
+        $('#verify').on('submit', function (e) {
+          e.preventDefault();
+          $.post(mechanicWebhookUrl + '?' + $(this).serialize());
+          alert('Your information has been submitted. If verification was successful, you will receive a confirmation email.');
+        });
+      });
+    </script>
+    ```
+4. You're done! Perform a test to make sure everything works as intended.
+
+Please note: the team at Mechanic can help with debugging the Mechanic side of things, but we can't help with adapting the code above. Work with a web designer or developer to create the right experience for your store.

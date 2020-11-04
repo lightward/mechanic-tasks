@@ -3,7 +3,7 @@
 * [task.json](../../tasks/auto-tag-products-based-on-their-publishing-status.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task manages tagging for products, according to whether or not they're published for the sales channel of your choice. Choose a tag to use when the product is published, and/or a tag for when the product is unpublished.
 
 ## Default options
 
@@ -34,4 +34,6 @@ mechanic/user/trigger
 
 ## Documentation
 
-null
+This task manages tagging for products, according to whether or not they're published for the sales channel of your choice. Choose a tag to use when the product is published, and/or a tag for when the product is unpublished.
+
+Run this task manually to scan and update your entire product catalog, on demand. Otherwise, configure this task to perform this same scan on a schedule. (Note: It's not possible for a task to respond instantly to publishing or unpublishing a product. Instead, configure a run schedule.)

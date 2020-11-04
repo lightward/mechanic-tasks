@@ -3,7 +3,7 @@
 * [task.json](../../tasks/auto-tag-orders-by-sales-channel.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+Use this task to tag orders as they come in, based on which sales channel created them. Run this task manually to backfill tags for customers based on their historical orders.
 
 ## Default options
 
@@ -26,4 +26,4 @@ mechanic/shopify/bulk_operation
 
 ## Documentation
 
-null
+Use this task to tag orders as they come in, based on which sales channel created them. Run this task manually to backfill tags for customers based on their historical orders.

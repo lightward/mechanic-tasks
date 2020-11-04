@@ -3,7 +3,7 @@
 * [task.json](../../tasks/auto-tag-cancelled-orders.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task watches for order cancellations, and adds or removes tags according to your preference. Run this task manually to update tags for existing cancelled orders.
 
 ## Default options
 
@@ -25,4 +25,4 @@ mechanic/user/trigger
 
 ## Documentation
 
-null
+This task watches for order cancellations, and adds or removes tags according to your preference. Run this task manually to update tags for existing cancelled orders.

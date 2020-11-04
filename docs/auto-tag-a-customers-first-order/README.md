@@ -3,7 +3,7 @@
 * [task.json](../../tasks/auto-tag-a-customers-first-order.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+Watches for incoming orders that are the very first order on file for the related customer, and adds the tag of your choice.
 
 ## Default options
 
@@ -21,4 +21,4 @@ shopify/orders/create
 
 ## Documentation
 
-null
+Watches for incoming orders that are the very first order on file for the related customer, and adds the tag of your choice.

@@ -3,7 +3,7 @@
 * [task.json](../../tasks/auto-tag-orders-with-product-vendors.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+Use this task to automatically tag incoming orders with the vendor of each product in the order.
 
 ## Subscriptions
 
@@ -13,4 +13,4 @@ shopify/orders/create
 
 ## Documentation
 
-null
+Use this task to automatically tag incoming orders with the vendor of each product in the order.

@@ -3,7 +3,7 @@
 * [task.json](../../tasks/generate-a-report-of-orders-that-still-require-payment.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+This task generates a CSV spreadsheet, listing orders that are unpaid, partially paid, or pending payment. The resulting report is emailed to the recipient of your choice. Optionally, choose to have this report  generated hourly, or daily.
 
 ## Default options
 
@@ -33,4 +33,4 @@ mechanic/user/trigger
 
 ## Documentation
 
-null
+This task generates a CSV spreadsheet, listing orders that are unpaid, partially paid, or pending payment. The resulting report is emailed to the recipient of your choice. Optionally, choose to have this report  generated hourly, or daily.

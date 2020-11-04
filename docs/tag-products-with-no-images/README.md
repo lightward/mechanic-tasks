@@ -3,7 +3,7 @@
 * [task.json](../../tasks/tag-products-with-no-images.json) (for import/export)
 * [Task script](./script.liquid)
 
-null
+Running manually or on a schedule, this task scans all products in your store, and adds a tag to any products that have no images. Optionally, choose to have this task remove that tag from any products that are found to have an image.
 
 ## Default options
 
@@ -35,4 +35,4 @@ mechanic/shopify/bulk_operation
 
 ## Documentation
 
-null
+Running manually or on a schedule, this task scans all products in your store, and adds a tag to any products that have no images. Optionally, choose to have this task remove that tag from any products that are found to have an image.

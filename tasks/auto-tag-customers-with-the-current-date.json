@@ -12,7 +12,7 @@
   ],
   "subscriptions_template": "{% if options.wait_until_the_customer_is_enabled__boolean %}\n  shopify/customers/enable\n{% else %}\n  shopify/customers/create\n{% endif %}\nshopify/customers/create",
   "script": "{% assign tag = \"now\" | date: options.tag_date_format__required | prepend: options.tag_prefix | append: options.tag_suffix %}\n\n{% if event.preview %}\n  {% assign customer = hash %}\n  {% assign customer[\"admin_graphql_api_id\"] = \"gid://shopify/Customer/12345\" %}\n{% endif %}\n\n{% action \"shopify\" %}\n  mutation {\n    tagsAdd(\n      id: {{ customer.admin_graphql_api_id | json }}\n      tags: {{ tag | json }}\n    ) {\n      userErrors {\n        field\n        message\n      }\n    }\n  }\n{% endaction %}",
-  "docs": null,
+  "docs": "Use this task to tag incoming customers with the current date/time, using the format of your choice, and optionally a prefix and suffix. If you like, enable \"Wait until the customer is enabled\" to apply the tag when the customer's online account is activated, rather than when the customer is first created.\r\n\r\nTo customize the date/time format, use an \"strftime\" reference, like [www.strfti.me](http://www.strfti.me/).",
   "halt_action_run_sequence_on_error": false,
   "online_store_javascript": null,
   "order_status_javascript": null,
