@@ -1,0 +1,49 @@
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "options": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9_]*$"
+      }
+    },
+    "subscriptions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "subscriptions_template": {
+      "type": "string"
+    },
+    "script": {
+      "type": "string"
+    },
+    "docs": {
+      "type": "string"
+    },
+    "halt_action_run_sequence_on_error": {
+      "type": "boolean"
+    },
+    "online_store_javascript": {
+      "type": ["string", "null"]
+    },
+    "order_status_javascript": {
+      "type": ["string", "null"]
+    },
+    "perform_action_runs_in_sequence": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "options",
+    "subscriptions_template",
+    "script",
+    "docs"
+  ],
+  "additionalProperties": false
+}

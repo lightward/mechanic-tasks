@@ -1,11 +1,37 @@
+const Ajv = require('ajv')
 const fs = require('fs')
 const glob = require('glob')
 const path = require('path')
 
+const taskSchema = require('./task_schema.json')
+const ajv = new Ajv({async: false})
+const validateTask = ajv.compile(taskSchema)
+
 module.exports = {}
 
-module.exports.buildDocs = (docsDir = 'docs', options = {}) =>{
-  const taskExports = glob.sync('tasks/*.json')
+module.exports.validateTasks = () => {
+  const tasks = glob.sync('tasks/*.json')
+
+  tasks.forEach(taskPath => {
+    const taskJson = fs.readFileSync(taskPath, 'UTF-8')
+    const task = JSON.parse(taskJson)
+
+    if (!validateTask(task)) {
+      for (const err of validateTask.errors) {
+        console.log(err)
+      }
+
+      throw `Found an invalid task JSON file in ${taskPath}`
+    }
+  })
+}
+
+module.exports.buildDocs = (docsDir = 'docs', options = {}) => {
+  if (options.validate !== false) {
+    module.exports.validateTasks()
+  }
+
+  const tasks = glob.sync('tasks/*.json')
   const taskIndexMdLines = []
 
   if (fs.existsSync(docsDir)) {
@@ -14,10 +40,10 @@ module.exports.buildDocs = (docsDir = 'docs', options = {}) =>{
 
   fs.mkdirSync(docsDir)
 
-  taskExports.forEach(taskJsonPath => {
+  tasks.forEach(taskPath => {
     try {
-      const taskJson = fs.readFileSync(taskJsonPath, 'UTF-8')
-      const taskHandle = taskJsonPath.match(/\/([\w-]+)\.json$/)[1]
+      const taskJson = fs.readFileSync(taskPath, 'UTF-8')
+      const taskHandle = taskPath.match(/\/([\w-]+)\.json$/)[1]
       const taskDocsDir = `${docsDir}/${taskHandle}`
       const task = JSON.parse(taskJson)
 
@@ -78,7 +104,7 @@ module.exports.buildDocs = (docsDir = 'docs', options = {}) =>{
       }
 
     } catch (error) {
-      console.error(`Error during ${taskJsonPath}: ${error}`)
+      console.error(`Error during ${taskPath}: ${error}`)
     }
   })
 

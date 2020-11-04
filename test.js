@@ -33,8 +33,10 @@ tasksFiles.forEach(path => {
   }
 })
 
+util.validateTasks()
+
 try {
-  util.buildDocs('.test-docs', {silent: true})
+  util.buildDocs('.test-docs', {silent: true, validate: false})
 } catch (error) {
   fs.rmdirSync('.test-docs', {recursive: true})
 
