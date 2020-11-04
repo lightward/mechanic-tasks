@@ -9,7 +9,8 @@
     "glob": "^7.1.6"
   },
   "scripts": {
-    "test": "node ./test.js"
+    "test": "node ./lib/test.js",
+    "build": "node ./lib/build.js"
   },
   "engines": {
     "node": ">=12.10.0"

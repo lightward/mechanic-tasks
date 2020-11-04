@@ -17,6 +17,7 @@ To learn about contributing to this task repository, see [CONTRIBUTING.md](./CON
 Building the docs requires node >=12.10.0, and yarn.
 
 ```sh
-yarn            # install dependencies
-node ./build.js # compile docs
+yarn          # install dependencies
+npm run build # compile docs
+npm run test  # apply sanity checks
 ```
