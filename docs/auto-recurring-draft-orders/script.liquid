@@ -49,7 +49,10 @@
             email: "customer@example.com"
             lineItems: [
               {
-                grams: 5
+                weight: {
+                  unit: GRAMS
+                  value: 5
+                }
                 originalUnitPrice: "5.0"
                 quantity: 2
                 requiresShipping: false
@@ -150,7 +153,6 @@
                         key
                         value
                       }
-                      grams
                       originalUnitPrice
                       quantity
                       sku
