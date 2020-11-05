@@ -1,9 +1,10 @@
 # Backfill customer names from order addresses
 
-* [task.json](../../tasks/backfill-customer-names-from-order.json) (for import/export)
-* [Task script](./script.liquid)
-
 The merchant who requested this task removed the first- and last-name fields from their storefront's registration form, to speed up the customer signup process. This task fills in those blanks by copying the customer's name from the billing or shipping address (whichever is available), upon their first purchase.
+
+* View in the task library: [usemechanic.com/task/backfill-customer-names-from-order](https://usemechanic.com/task/backfill-customer-names-from-order)
+* Task JSON, for direct import: [task.json](../../tasks/backfill-customer-names-from-order.json)
+* Preview task code: [script.liquid](./script.liquid)
 
 ## Subscriptions
 
@@ -11,6 +12,16 @@ The merchant who requested this task removed the first- and last-name fields fro
 shopify/orders/create
 ```
 
+[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+
 ## Documentation
 
 The merchant who requested this task removed the first- and last-name fields from their storefront's registration form, to speed up the customer signup process. This task fills in those blanks by copying the customer's name from the billing or shipping address (whichever is available), upon their first purchase.
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/backfill-customer-names-from-order), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/backfill-customer-names-from-order.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).

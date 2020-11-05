@@ -1,9 +1,10 @@
 # Auto-tag orders with their tracking numbers
 
-* [task.json](../../tasks/auto-tag-orders-with-their-tracking-numbers.json) (for import/export)
-* [Task script](./script.liquid)
-
 Tracking numbers aren't generally searchable within Shopify. Use this task to fix that, by copying all fulfillment tracking numbers over to the order itself, as (searchable!) order tags.
+
+* View in the task library: [usemechanic.com/task/auto-tag-orders-with-their-tracking-numbers](https://usemechanic.com/task/auto-tag-orders-with-their-tracking-numbers)
+* Task JSON, for direct import: [task.json](../../tasks/auto-tag-orders-with-their-tracking-numbers.json)
+* Preview task code: [script.liquid](./script.liquid)
 
 ## Subscriptions
 
@@ -14,6 +15,8 @@ mechanic/user/trigger
 mechanic/shopify/bulk_operation
 ```
 
+[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+
 ## Documentation
 
 Tracking numbers aren't generally searchable within Shopify. Use this task to fix that, by copying all fulfillment tracking numbers over to the order itself, as (searchable!) order tags.
@@ -23,3 +26,11 @@ This task runs when fulfillments are created or updated, adding the fulfillment'
 Please note: any special characters in the tracking number may be ignored by Shopify.
 
 [YouTube: Watch the development video!](https://youtu.be/qNsdDaPYl24)
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-orders-with-their-tracking-numbers), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-orders-with-their-tracking-numbers.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).

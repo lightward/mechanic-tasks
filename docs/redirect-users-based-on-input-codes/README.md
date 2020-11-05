@@ -1,9 +1,10 @@
 # Redirect users based on input codes
 
-* [task.json](../../tasks/redirect-users-based-on-input-codes.json) (for import/export)
-* [Task online store javascript](./online_store_javascript.js.liquid)
-
 Use this task to prompt your users for a code, redirecting them to an appropriate destination based on what they enter. Some assembly required, with sample Javascript and HTML provided. :)
+
+* View in the task library: [usemechanic.com/task/redirect-users-based-on-input-codes](https://usemechanic.com/task/redirect-users-based-on-input-codes)
+* Task JSON, for direct import: [task.json](../../tasks/redirect-users-based-on-input-codes.json)
+* Preview task code: [online_store_javascript.js.liquid](./online_store_javascript.js.liquid)
 
 ## Default options
 
@@ -18,6 +19,8 @@ Use this task to prompt your users for a code, redirecting them to an appropriat
   "invalid_code_message__required": "That code wasn't valid - try again."
 }
 ```
+
+[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
 
 ## Documentation
 
@@ -49,3 +52,11 @@ Or, modify this HTML to set up a form for your users:
   };
 </script>
 ```
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/redirect-users-based-on-input-codes), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/redirect-users-based-on-input-codes.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).

@@ -1,9 +1,10 @@
 # Maintain a collection of recently purchased products
 
-* [task.json](../../tasks/maintain-a-collection-of-recently-purchased-products.json) (for import/export)
-* [Task script](./script.liquid)
-
 This task watches for newly-paid orders (or newly-fulfilled orders, if you choose), and adds or moves the purchased products to the top of the collection of your choice. Optionally, ignore products that are sold out. Useful for "trending products" functionality. :)
+
+* View in the task library: [usemechanic.com/task/maintain-a-collection-of-recently-purchased-products](https://usemechanic.com/task/maintain-a-collection-of-recently-purchased-products)
+* Task JSON, for direct import: [task.json](../../tasks/maintain-a-collection-of-recently-purchased-products.json)
+* Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
 
@@ -16,6 +17,8 @@ This task watches for newly-paid orders (or newly-fulfilled orders, if you choos
 }
 ```
 
+[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+
 ## Subscriptions
 
 ```liquid
@@ -26,6 +29,8 @@ This task watches for newly-paid orders (or newly-fulfilled orders, if you choos
 {% endif %}
 ```
 
+[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+
 ## Documentation
 
 This task watches for newly-paid orders (or newly-fulfilled orders, if you choose), and adds or moves the purchased products to the top of the collection of your choice. Optionally, ignore products that are sold out. Useful for "trending products" functionality. :)
@@ -35,3 +40,11 @@ This task watches for newly-paid orders (or newly-fulfilled orders, if you choos
 Provide this task with ID of a manual collection, which you've configured to be manually sorted. ([Learn how to find the collection ID.](https://help.usemechanic.com/en/articles/2946120-how-do-i-find-an-id-for-a-product-collection-order-or-something-else))
 
 [YouTube: Watch the development video!](https://youtu.be/89rxU1D5tFM)
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/maintain-a-collection-of-recently-purchased-products), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/maintain-a-collection-of-recently-purchased-products.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).

@@ -1,10 +1,12 @@
 # Create a draft order from the cart
 
-* [task.json](../../tasks/create-a-draft-order-from-the-cart.json) (for import/export)
-* [Task script](./script.liquid)
-* [Task online store javascript](./online_store_javascript.js.liquid)
-
 Use this task as a starting point, for allowing visitors to submit their carts to be transformed into draft orders, associated with their customer account. Installing and customizing this task requires some level of comfort with Liquid, HTML, and JavaScript.
+
+* View in the task library: [usemechanic.com/task/create-a-draft-order-from-the-cart](https://usemechanic.com/task/create-a-draft-order-from-the-cart)
+* Task JSON, for direct import: [task.json](../../tasks/create-a-draft-order-from-the-cart.json)
+* Preview task code:
+  * [script.liquid](./script.liquid)
+  * [online_store_javascript.js.liquid](./online_store_javascript.js.liquid)
 
 ## Default options
 
@@ -16,11 +18,15 @@ Use this task as a starting point, for allowing visitors to submit their carts t
 }
 ```
 
+[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+
 ## Subscriptions
 
 ```liquid
 {{ options.mechanic_webhook_event_topic__required }}
 ```
+
+[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
 
 ## Documentation
 
@@ -44,3 +50,11 @@ Use this task as a starting point, for allowing visitors to submit their carts t
 
     Note the `"secret!"` - this must match the "Shared secret" option you choose in the task's configuration.
 3.  Adjust to taste. :) The code in the task script and in the online storefront JavaScript are meant to be a beginning point, as you build out the experience you're looking for. If you have any questions about the Mechanic side of this, get in touch!
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/create-a-draft-order-from-the-cart), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/create-a-draft-order-from-the-cart.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).

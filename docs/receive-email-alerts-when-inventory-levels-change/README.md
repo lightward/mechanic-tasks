@@ -1,9 +1,10 @@
 # Receive email alerts when inventory levels change
 
-* [task.json](../../tasks/receive-email-alerts-when-inventory-levels-change.json) (for import/export)
-* [Task script](./script.liquid)
-
 Use this task to receive immediate email notifications whenever inventory/stock levels are adjusted, whether manually or as a result of a transfer or customer order.
+
+* View in the task library: [usemechanic.com/task/receive-email-alerts-when-inventory-levels-change](https://usemechanic.com/task/receive-email-alerts-when-inventory-levels-change)
+* Task JSON, for direct import: [task.json](../../tasks/receive-email-alerts-when-inventory-levels-change.json)
+* Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
 
@@ -15,6 +16,8 @@ Use this task to receive immediate email notifications whenever inventory/stock 
 }
 ```
 
+[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+
 ## Subscriptions
 
 ```liquid
@@ -22,8 +25,18 @@ shopify/inventory_levels/update
 shopify/inventory_levels/connect
 ```
 
+[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+
 ## Documentation
 
 Use this task to receive immediate email notifications whenever inventory/stock levels are adjusted, whether manually or as a result of a transfer or customer order.
 
 Please note: Mechanic will start sending emails the _second_ time inventory is adjusted for a particular item.
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/receive-email-alerts-when-inventory-levels-change), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/receive-email-alerts-when-inventory-levels-change.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).

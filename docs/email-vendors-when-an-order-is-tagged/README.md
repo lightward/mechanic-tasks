@@ -1,9 +1,10 @@
 # Email vendors when an order is tagged
 
-* [task.json](../../tasks/email-vendors-when-an-order-is-tagged.json) (for import/export)
-* [Task script](./script.liquid)
-
 Use this task to automatically keep vendors up to date as an order evolves. Configure this task with a list of known vendor names and their email addresses, and this task will email them whenever it notices the tag of your choice on the order.
+
+* View in the task library: [usemechanic.com/task/email-vendors-when-an-order-is-tagged](https://usemechanic.com/task/email-vendors-when-an-order-is-tagged)
+* Task JSON, for direct import: [task.json](../../tasks/email-vendors-when-an-order-is-tagged.json)
+* Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
 
@@ -20,12 +21,16 @@ Use this task to automatically keep vendors up to date as an order evolves. Conf
 }
 ```
 
+[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+
 ## Subscriptions
 
 ```liquid
 shopify/orders/create
 shopify/orders/updated
 ```
+
+[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
 
 ## Documentation
 
@@ -36,3 +41,11 @@ This task watches for new and updated orders, and sends an email to all known ve
 Configure the "Vendors and email addresses" options with vendor names on the left, and vendor email addresses on the right.
 
 Important note: Because Shopify doesn't let apps know _what_ has changed about an order, it's safest to use the "Ignore orders older than this task" option. This way, this task is guaranteed to receive _every_ update for the order since the order is created, allowing it to know for sure when an order has been tagged. Without this option, orders that are _already_ tagged run the risk of having emails sent for them.
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/email-vendors-when-an-order-is-tagged), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-vendors-when-an-order-is-tagged.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).

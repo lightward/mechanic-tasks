@@ -1,9 +1,10 @@
 # Tag customers by order tier
 
-* [task.json](../../tasks/tag-customers-by-order-tier.json) (for import/export)
-* [Task script](./script.liquid)
-
 Use this task to tag customers by tier, based on how many orders they've placed or by the sum of all their order totals (i.e. total spend). Optionally, configure an order query, specifying for things like a rolling time period, or fulfillment status. Useful for rewarding customers who establish or maintain a specific spend level.
+
+* View in the task library: [usemechanic.com/task/tag-customers-by-order-tier](https://usemechanic.com/task/tag-customers-by-order-tier)
+* Task JSON, for direct import: [task.json](../../tasks/tag-customers-by-order-tier.json)
+* Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
 
@@ -23,6 +24,8 @@ Use this task to tag customers by tier, based on how many orders they've placed 
 }
 ```
 
+[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+
 ## Subscriptions
 
 ```liquid
@@ -37,6 +40,8 @@ mechanic/user/trigger
 mechanic/shopify/bulk_operation
 ```
 
+[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+
 ## Documentation
 
 Use this task to tag customers by tier, based on how many orders they've placed or by the sum of all their order totals (i.e. total spend). Optionally, configure an order query, specifying for things like a rolling time period, or fulfillment status. Useful for rewarding customers who establish or maintain a specific spend level.
@@ -48,3 +53,11 @@ The "Only count orders matching this query" option uses the same query syntax as
 ```
 financial_status:paid created_at:>={{ "now" | date: "%s" | minus: 31536000 | date: "%Y-%m-%d" }}
 ```
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/tag-customers-by-order-tier), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/tag-customers-by-order-tier.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).

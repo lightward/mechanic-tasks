@@ -1,9 +1,10 @@
 # Email a report of customers who haven't ordered in X days
 
-* [task.json](../../tasks/email-a-report-of-customers-who-havent-ordered-in-x-days.json) (for import/export)
-* [Task script](./script.liquid)
-
 Use this task to request or schedule an email digest of customers, having a certain tag, who haven't placed an order in a certain number of days.
+
+* View in the task library: [usemechanic.com/task/email-a-report-of-customers-who-havent-ordered-in-x-days](https://usemechanic.com/task/email-a-report-of-customers-who-havent-ordered-in-x-days)
+* Task JSON, for direct import: [task.json](../../tasks/email-a-report-of-customers-who-havent-ordered-in-x-days.json)
+* Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
 
@@ -18,6 +19,8 @@ Use this task to request or schedule an email digest of customers, having a cert
   "send_email_every_monday__boolean": null
 }
 ```
+
+[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
 
 ## Subscriptions
 
@@ -35,6 +38,8 @@ mechanic/user/trigger
 {% endif %}
 ```
 
+[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+
 ## Documentation
 
 Use this task to request or schedule an email digest of customers, having a certain tag, who haven't placed an order in a certain number of days.
@@ -42,3 +47,11 @@ Use this task to request or schedule an email digest of customers, having a cert
 Run this task manually to request a report immediately, or configure the task to run automatically on a schedule.
 
 [YouTube: Watch the development video!](https://youtu.be/y1fV3aQrS1g)
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/email-a-report-of-customers-who-havent-ordered-in-x-days), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-a-report-of-customers-who-havent-ordered-in-x-days.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).

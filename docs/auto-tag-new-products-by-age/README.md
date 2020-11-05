@@ -1,9 +1,10 @@
 # Auto-tag new products by age
 
-* [task.json](../../tasks/auto-tag-new-products-by-age.json) (for import/export)
-* [Task script](./script.liquid)
-
 This task scans every product in your store, and adds or removes the tags you configure, according to how many days have passed since the product was created. (Or published, if you prefer!)
+
+* View in the task library: [usemechanic.com/task/auto-tag-new-products-by-age](https://usemechanic.com/task/auto-tag-new-products-by-age)
+* Task JSON, for direct import: [task.json](../../tasks/auto-tag-new-products-by-age.json)
+* Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
 
@@ -20,6 +21,8 @@ This task scans every product in your store, and adds or removes the tags you co
 }
 ```
 
+[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+
 ## Subscriptions
 
 ```liquid
@@ -27,6 +30,8 @@ mechanic/user/trigger
 {% if options.run_daily__boolean %}mechanic/scheduler/daily{% endif %}
 {% if options.run_hourly__boolean %}mechanic/scheduler/hourly{% endif %}
 ```
+
+[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
 
 ## Documentation
 
@@ -39,3 +44,11 @@ Enable "Use product publish times instead of creation times" to have this task l
 Configure "Product tags and maximum age in days" with product tags on the left, and the maximum product age to consider on the right. For example, a product tag of "new-5" with a maximum age in days of "5" will be added to all products that were created/published within the last 5 days. Once a product ages beyond that threshold, running this task will remove that tag.
 
 Run this task manually to scan your store's products on demand, or configure the task to run daily/hourly.
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-new-products-by-age), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-new-products-by-age.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).

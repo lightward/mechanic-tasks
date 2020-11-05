@@ -1,9 +1,10 @@
 # Trigger order emails with a tag
 
-* [task.json](../../tasks/trigger-order-emails-with-a-tag.json) (for import/export)
-* [Task script](./script.liquid)
-
 This task monitors order tags, and sends out an email that you configure whenever a certain tag is added. Supports email templates, and sending to custom recipients.
+
+* View in the task library: [usemechanic.com/task/trigger-order-emails-with-a-tag](https://usemechanic.com/task/trigger-order-emails-with-a-tag)
+* Task JSON, for direct import: [task.json](../../tasks/trigger-order-emails-with-a-tag.json)
+* Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
 
@@ -16,11 +17,15 @@ This task monitors order tags, and sends out an email that you configure wheneve
 }
 ```
 
+[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+
 ## Subscriptions
 
 ```liquid
 shopify/orders/updated
 ```
+
+[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
 
 ## Documentation
 
@@ -37,3 +42,11 @@ Feel free to tag the order with multiple trigger tags at once, e.g. "email", "em
 Please note: Shopify restricts order tags to 40 characters in length.
 
 To re-use your store's confirmation email template, or to use any other email template, [configure your email template with Mechanic](https://help.usemechanic.com/en/articles/2722264-add-an-email-template), and add the Mechanic email template name to your task.
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/trigger-order-emails-with-a-tag), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/trigger-order-emails-with-a-tag.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).

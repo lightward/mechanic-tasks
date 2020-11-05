@@ -1,9 +1,10 @@
 # Add fulfillment tracking when an order is tagged
 
-* [task.json](../../tasks/add-fulfillment-tracking-when-an-order-is-tagged.json) (for import/export)
-* [Task script](./script.liquid)
-
 Configure this tag with a mapping of country codes to tracking companies and URL templates, and/or default companies and URL templates. When an order is tagged, this task will apply the appropriate values to each fulfillment that has a tracking number.
+
+* View in the task library: [usemechanic.com/task/add-fulfillment-tracking-when-an-order-is-tagged](https://usemechanic.com/task/add-fulfillment-tracking-when-an-order-is-tagged)
+* Task JSON, for direct import: [task.json](../../tasks/add-fulfillment-tracking-when-an-order-is-tagged.json)
+* Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
 
@@ -31,12 +32,16 @@ Configure this tag with a mapping of country codes to tracking companies and URL
 }
 ```
 
+[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+
 ## Subscriptions
 
 ```liquid
 shopify/orders/create
 shopify/orders/updated
 ```
+
+[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
 
 ## Documentation
 
@@ -45,3 +50,11 @@ Configure this tag with a mapping of country codes to tracking companies and URL
 Configure this tag with mappings of two-character country codes to tracking companies, and tracking URL templates. Both companies and URL templates support a default value as well, which will be used for orders that don't have a mapped country in the task's configuration. When an order is tagged, this task will apply the appropriate values to each fulfillment that has a tracking number.
 
 If "Notify customers" is enabled, this task will request that Shopify send a notification email when the fulfillment update is processed.
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/add-fulfillment-tracking-when-an-order-is-tagged), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/add-fulfillment-tracking-when-an-order-is-tagged.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).

@@ -1,9 +1,10 @@
 # Auto-tag orders based on shipping method
 
-* [task.json](../../tasks/auto-tag-orders-based-on-shipping-method.json) (for import/export)
-* [Task script](./script.liquid)
-
 Quickly identify and sort orders based on their shipping method, using automatic order tags. This task supports auto-tagging incoming orders, and can be run manually to tag historical orders.
+
+* View in the task library: [usemechanic.com/task/auto-tag-orders-based-on-shipping-method](https://usemechanic.com/task/auto-tag-orders-based-on-shipping-method)
+* Task JSON, for direct import: [task.json](../../tasks/auto-tag-orders-based-on-shipping-method.json)
+* Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
 
@@ -18,12 +19,16 @@ Quickly identify and sort orders based on their shipping method, using automatic
 }
 ```
 
+[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+
 ## Subscriptions
 
 ```liquid
 shopify/orders/create
 mechanic/user/trigger
 ```
+
+[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
 
 ## Documentation
 
@@ -34,3 +39,11 @@ To use this task, populate the "Shipping method titles and tags" list with shipp
 This task will run automatically on incoming orders. Use the "Run task" button to scan and tag older orders. To process orders older than 60 days, [enable "Read all orders"](https://help.usemechanic.com/tutorials/enabling-read_all_orders).
 
 Enable "Allow partial matches for shipping method titles" for more flexibility. With this option enabled, Mechanic will look for the first value in the "Shipping method titles and tags" list that is found within the order's shipping method title, and apply the corresponding tag.
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-orders-based-on-shipping-method), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-orders-based-on-shipping-method.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).

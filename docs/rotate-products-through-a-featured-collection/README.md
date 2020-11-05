@@ -1,9 +1,10 @@
 # Rotate products through a featured collection
 
-* [task.json](../../tasks/rotate-products-through-a-featured-collection.json) (for import/export)
-* [Task script](./script.liquid)
-
 This task features products on a schedule, optionally publishing/unpublishing as they're featured/unfeatured. Use this task to make available exclusive products on the hourly/daily/etc, or simply to showcase a rotating selection of your best products.
+
+* View in the task library: [usemechanic.com/task/rotate-products-through-a-featured-collection](https://usemechanic.com/task/rotate-products-through-a-featured-collection)
+* Task JSON, for direct import: [task.json](../../tasks/rotate-products-through-a-featured-collection.json)
+* Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
 
@@ -21,6 +22,8 @@ This task features products on a schedule, optionally publishing/unpublishing as
 }
 ```
 
+[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+
 ## Subscriptions
 
 ```liquid
@@ -28,6 +31,8 @@ mechanic/user/trigger
 {% if options.run_hourly__boolean %}mechanic/scheduler/hourly{% endif %}
 {% if options.run_daily_at_midnight__boolean %}mechanic/scheduler/daily{% endif %}
 ```
+
+[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
 
 ## Documentation
 
@@ -48,3 +53,11 @@ Configure "Price multiplier for featured products" to control pricing adjustment
 *To find IDs for your products or collections, navigate to the product or collection in the Shopify admin area, and use the number at the very end of the URL in your browser's address bar.
 
 For example, a product located at example.myshopify.com/admin/products/1234567890 would have a product ID of 1234567890.
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/rotate-products-through-a-featured-collection), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/rotate-products-through-a-featured-collection.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).

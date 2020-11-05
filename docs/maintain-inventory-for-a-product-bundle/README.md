@@ -1,9 +1,10 @@
 # Maintain inventory for a product bundle
 
-* [task.json](../../tasks/maintain-inventory-for-a-product-bundle.json) (for import/export)
-* [Task script](./script.liquid)
-
 Use this task to automatically sync inventory for a simple product bundle – no theme modifications required. When configured with unique SKUs for the bundle and its components, and with quantities needed from each component for each bundle unit, this task keeps the bundle inventory set to the greatest possible value, given the quantities of its components. It also appropriately subtracts from component inventory whenever the bundle is ordered, and appropriately raises component inventory when a bundle order is refunded.
+
+* View in the task library: [usemechanic.com/task/maintain-inventory-for-a-product-bundle](https://usemechanic.com/task/maintain-inventory-for-a-product-bundle)
+* Task JSON, for direct import: [task.json](../../tasks/maintain-inventory-for-a-product-bundle.json)
+* Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
 
@@ -19,6 +20,8 @@ Use this task to automatically sync inventory for a simple product bundle – no
 }
 ```
 
+[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+
 ## Subscriptions
 
 ```liquid
@@ -27,6 +30,8 @@ shopify/refunds/create
 shopify/inventory_levels/update
 mechanic/user/trigger
 ```
+
+[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
 
 ## Documentation
 
@@ -48,3 +53,11 @@ Notes:
 * Whenever this task runs, manual inventory updates to the bundle product will be overwritten.
 * Feel free to manually adjust inventory for component products. The bundle product's inventory will be synced appropriately.
 * Use the "Inventory buffer quantity" option to artificially keep the bundle product's inventory lower than the actual available quantity.
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/maintain-inventory-for-a-product-bundle), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/maintain-inventory-for-a-product-bundle.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).

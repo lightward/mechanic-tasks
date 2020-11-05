@@ -1,9 +1,10 @@
 # Manage fulfillment status using order tags
 
-* [task.json](../../tasks/manage-fulfillment-status-using-order-tags.json) (for import/export)
-* [Task script](./script.liquid)
-
 Use this task to easily set the shipment status of your single-fulfillment orders. Just add a tag, and a new fulfillment event will be recorded, using the corresponding shipment status.
+
+* View in the task library: [usemechanic.com/task/manage-fulfillment-status-using-order-tags](https://usemechanic.com/task/manage-fulfillment-status-using-order-tags)
+* Task JSON, for direct import: [task.json](../../tasks/manage-fulfillment-status-using-order-tags.json)
+* Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
 
@@ -23,11 +24,15 @@ Use this task to easily set the shipment status of your single-fulfillment order
 }
 ```
 
+[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+
 ## Subscriptions
 
 ```liquid
 shopify/orders/updated
 ```
+
+[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
 
 ## Documentation
 
@@ -38,3 +43,11 @@ This task monitors order tags. For an order that has a single (non-cancelled) fu
 This task comes pre-configured with Shopify's shipment status identifiers on the right, and friendly order tags on the left. Feel free to update the tag names on the left-hand side. Do not modify the labels on the right! These must correspond directly to shipment statuses, as they're recorded by Shopify.
 
 For a complete description of all Shopify shipment statuses, [see Shopify's "shipment_status" documentation](https://help.shopify.com/en/api/reference/shipping-and-fulfillment/fulfillment#shipment-status-property).
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/manage-fulfillment-status-using-order-tags), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/manage-fulfillment-status-using-order-tags.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).

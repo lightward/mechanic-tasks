@@ -1,9 +1,10 @@
 # Send recurring reminders about unpaid orders
 
-* [task.json](../../tasks/unpaid-order-reminders.json) (for import/export)
-* [Task script](./script.liquid)
-
 This task sends recurring unpaid order reminders to customers, emailing them on a configurable schedule, until the order is no longer "pending" or until the order is cancelled.
+
+* View in the task library: [usemechanic.com/task/unpaid-order-reminders](https://usemechanic.com/task/unpaid-order-reminders)
+* Task JSON, for direct import: [task.json](../../tasks/unpaid-order-reminders.json)
+* Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
 
@@ -22,11 +23,15 @@ This task sends recurring unpaid order reminders to customers, emailing them on 
 }
 ```
 
+[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+
 ## Subscriptions
 
 ```liquid
 mechanic/scheduler/hourly
 ```
+
+[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
 
 ## Documentation
 
@@ -39,3 +44,11 @@ Use the variables ORDER_NUMBER, AMOUNT_DUE, and TAX_LINES to insert each of thes
 Use test mode to have this task report what emails it _would_ send, if test mode were not enabled. It's a good idea to start with this. :)
 
 [YouTube: Watch the development video!](https://youtu.be/IhLJHfIYrgg)
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/unpaid-order-reminders), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/unpaid-order-reminders.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).

@@ -1,9 +1,10 @@
 # Generate a discount code when a certain product is purchased
 
-* [task.json](../../tasks/generate-a-discount-code-when-a-certain-product-is-purchased.json) (for import/export)
-* [Task script](./script.liquid)
-
 This task watches for newly-paid orders, and if the configured product is purchased, sends the customer a discount code that's just for them. Optionally, configure the discounts to only apply to a certain collection of products, and to only last for a certain number of days.
+
+* View in the task library: [usemechanic.com/task/generate-a-discount-code-when-a-certain-product-is-purchased](https://usemechanic.com/task/generate-a-discount-code-when-a-certain-product-is-purchased)
+* Task JSON, for direct import: [task.json](../../tasks/generate-a-discount-code-when-a-certain-product-is-purchased.json)
+* Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
 
@@ -22,11 +23,15 @@ This task watches for newly-paid orders, and if the configured product is purcha
 }
 ```
 
+[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+
 ## Subscriptions
 
 ```liquid
 shopify/orders/paid
 ```
+
+[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
 
 ## Documentation
 
@@ -45,3 +50,11 @@ This task watches for newly-paid orders, and if the configured product is purcha
 * **Discount lifetime in days:** How long the discount should be active.
 * **Discount can be used by anyone:** If enabled, the discount code can be used by anyone. If disabled, the discount code can only be used by the purchasing customer.
 * **Email subject, body:** The content to email to the customer. Use "DISCOUNT_CODE" as a placeholder for the generated discount code.
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/generate-a-discount-code-when-a-certain-product-is-purchased), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/generate-a-discount-code-when-a-certain-product-is-purchased.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).

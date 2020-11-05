@@ -1,9 +1,10 @@
 # Add all products to a certain sales channel
 
-* [task.json](../../tasks/add-all-products-to-a-certain-sales-channel.json) (for import/export)
-* [Task script](./script.liquid)
-
 Does exactly as it says: this task will publish all products to the sales channel(s) of your choice, on demand. Optionally, filter products by a search query, or choose to have this task run every ten minutes, hourly, or daily.
+
+* View in the task library: [usemechanic.com/task/add-all-products-to-a-certain-sales-channel](https://usemechanic.com/task/add-all-products-to-a-certain-sales-channel)
+* Task JSON, for direct import: [task.json](../../tasks/add-all-products-to-a-certain-sales-channel.json)
+* Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
 
@@ -20,6 +21,8 @@ Does exactly as it says: this task will publish all products to the sales channe
 }
 ```
 
+[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+
 ## Subscriptions
 
 ```liquid
@@ -29,6 +32,16 @@ mechanic/user/trigger
 {% if options.run_daily__boolean  %}mechanic/scheduler/daily{% endif %}
 ```
 
+[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+
 ## Documentation
 
 Does exactly as it says: this task will publish all products to the sales channel(s) of your choice, on demand. Optionally, filter products by a search query, or choose to have this task run every ten minutes, hourly, or daily.
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/add-all-products-to-a-certain-sales-channel), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/add-all-products-to-a-certain-sales-channel.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).

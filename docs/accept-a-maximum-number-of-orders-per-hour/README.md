@@ -1,9 +1,10 @@
 # Accept a maximum number of orders per hour
 
-* [task.json](../../tasks/accept-a-maximum-number-of-orders-per-hour.json) (for import/export)
-* [Task script](./script.liquid)
-
 This task works by monitoring the number of orders created per hour, and clearing the inventory for all in-stock items when the hourly order limit is reached. Optionally, this task can restore inventory to its original levels at minute zero of the next hour, or on demand.
+
+* View in the task library: [usemechanic.com/task/accept-a-maximum-number-of-orders-per-hour](https://usemechanic.com/task/accept-a-maximum-number-of-orders-per-hour)
+* Task JSON, for direct import: [task.json](../../tasks/accept-a-maximum-number-of-orders-per-hour.json)
+* Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
 
@@ -15,6 +16,8 @@ This task works by monitoring the number of orders created per hour, and clearin
   "restore_inventory_levels_on_demand__boolean": null
 }
 ```
+
+[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
 
 ## Subscriptions
 
@@ -30,6 +33,8 @@ shopify/orders/create
 {% endif %}
 ```
 
+[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+
 ## Documentation
 
 This task works by monitoring the number of orders created per hour, and clearing the inventory for all in-stock items when the hourly order limit is reached. Optionally, this task can restore inventory to its original levels at minute zero of the next hour, or on demand.
@@ -39,3 +44,11 @@ This task works by setting your inventory to zero when the hourly order limit is
 Optionally, this task can restore inventory to its original levels at midnight the next hour, or on demand. (Restore levels on demand by enabling this option, then using the "Run task" button.)
 ​
 **This task _does not_ work well when you have multiple orders per minute, and we do not recommend using it for high-volume stores.** It works by counting the current hour's orders, at the time of each purchase - if the current count exactly equals your maximum, it performs the inventory reset. Because that counting process can take a few seconds, receiving multiple orders per minute can result in missing that very specific window when the current count exactly equals your maximum.
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/accept-a-maximum-number-of-orders-per-hour), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/accept-a-maximum-number-of-orders-per-hour.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).

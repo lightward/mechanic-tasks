@@ -1,9 +1,10 @@
 # Move out-of-stock products to the end of a collection
 
-* [task.json](../../tasks/move-out-of-stock-products-to-the-end-of-a-collection.json) (for import/export)
-* [Task script](./script.liquid)
-
 This task re-sorts your collections, beginning with the sort order of your choice (alphabetically, best selling first, etc), and then moving all out-of-stock products to the very end of the collection.
+
+* View in the task library: [usemechanic.com/task/move-out-of-stock-products-to-the-end-of-a-collection](https://usemechanic.com/task/move-out-of-stock-products-to-the-end-of-a-collection)
+* Task JSON, for direct import: [task.json](../../tasks/move-out-of-stock-products-to-the-end-of-a-collection.json)
+* Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
 
@@ -16,6 +17,8 @@ This task re-sorts your collections, beginning with the sort order of your choic
 }
 ```
 
+[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+
 ## Subscriptions
 
 ```liquid
@@ -25,6 +28,8 @@ mechanic/user/trigger
 user/reorder_collection/stage_2
 user/reorder_collection/stage_3
 ```
+
+[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
 
 ## Documentation
 
@@ -48,3 +53,11 @@ You may use any of these options for the base sort order:
 * PRICE_ASC
 * CREATED_DESC
 * CREATED
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/move-out-of-stock-products-to-the-end-of-a-collection), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/move-out-of-stock-products-to-the-end-of-a-collection.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).

@@ -1,9 +1,10 @@
 # Send an SMS via Nexmo when a product is created
 
-* [task.json](../../tasks/send-an-sms-via-nexmo-when-a-product-is-created.json) (for import/export)
-* [Task script](./script.liquid)
-
 This task is a demonstration of sending text messages via Nexmo. In this task, we monitor for newly-created products, and we send a text message about the product to a phone number stored in that product's metafield.
+
+* View in the task library: [usemechanic.com/task/send-an-sms-via-nexmo-when-a-product-is-created](https://usemechanic.com/task/send-an-sms-via-nexmo-when-a-product-is-created)
+* Task JSON, for direct import: [task.json](../../tasks/send-an-sms-via-nexmo-when-a-product-is-created.json)
+* Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
 
@@ -21,11 +22,15 @@ This task is a demonstration of sending text messages via Nexmo. In this task, w
 }
 ```
 
+[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+
 ## Subscriptions
 
 ```liquid
 shopify/products/create{% if options.minutes_to_wait_before_sending__number != blank %}+{{ options.minutes_to_wait_before_sending__number }}.minutes{% endif %}
 ```
+
+[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
 
 ## Documentation
 
@@ -38,3 +43,11 @@ Notes:
 * Nexmo requires all phone numbers to have a country code. If a phone number encountered appears to be an invalid international number, this task will try to add whatever value you've got in the "Default country code" option.
 * Your Nexmo information (API key/secret, and SMS phone number) can be found [on the Nexmo dashboard's "Getting started" page](https://dashboard.nexmo.com/getting-started-guide)
 * Use test mode to have this task report the message that it _would_ send, if test mode was not enabled
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/send-an-sms-via-nexmo-when-a-product-is-created), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/send-an-sms-via-nexmo-when-a-product-is-created.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).

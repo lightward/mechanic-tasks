@@ -1,9 +1,10 @@
 # Email all customers who made a purchase
 
-* [task.json](../../tasks/email-customers-who-purchased-product.json) (for import/export)
-* [Task script](./script.liquid)
-
 Need to reach customers who made a specific purchase? This task scans your order history, looking for orders that match the conditions you specify. For each qualifying order, the task sends an email to the customer, optionally linking to the product(s) ordered.
+
+* View in the task library: [usemechanic.com/task/email-customers-who-purchased-product](https://usemechanic.com/task/email-customers-who-purchased-product)
+* Task JSON, for direct import: [task.json](../../tasks/email-customers-who-purchased-product.json)
+* Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
 
@@ -20,12 +21,16 @@ Need to reach customers who made a specific purchase? This task scans your order
 }
 ```
 
+[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+
 ## Subscriptions
 
 ```liquid
 mechanic/user/trigger
 mechanic/shopify/bulk_operation
 ```
+
+[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
 
 ## Documentation
 
@@ -44,3 +49,11 @@ Use `ORDER_NAME` in the email subject or body, to insert the name of the order (
 Use "Test mode" to have Mechanic show you what emails it _would_ send, if test mode were disabled.
 
 This task requires you to certify that the messages sent are directly related to customer activity. Our email provider, Postmark, does not allow bulk messaging. [Read more about their policy.](https://postmarkapp.com/blog/bulk-vs-transactional)
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/email-customers-who-purchased-product), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-customers-who-purchased-product.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).

@@ -1,9 +1,10 @@
 # Email customers a unique discount code, two weeks after order fulfillment
 
-* [task.json](../../tasks/email-customers-a-unique-discount-code-two-weeks-after-order-fulfillment.json) (for import/export)
-* [Task script](./script.liquid)
-
 This task generates a brand new discount code (copying configuration from another code, of your choice), and emails it to the customer, after waiting a configurable number of days after order fulfillment.
+
+* View in the task library: [usemechanic.com/task/email-customers-a-unique-discount-code-two-weeks-after-order-fulfillment](https://usemechanic.com/task/email-customers-a-unique-discount-code-two-weeks-after-order-fulfillment)
+* Task JSON, for direct import: [task.json](../../tasks/email-customers-a-unique-discount-code-two-weeks-after-order-fulfillment.json)
+* Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
 
@@ -19,11 +20,15 @@ This task generates a brand new discount code (copying configuration from anothe
 }
 ```
 
+[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+
 ## Subscriptions
 
 ```liquid
 shopify/orders/fulfilled{% if options.days_to_wait_after_order_fulfillment__number != blank %}+{{ options.days_to_wait_after_order_fulfillment__number }}.days{% endif %}
 ```
+
+[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
 
 ## Documentation
 
@@ -34,3 +39,11 @@ Configure this task by first creating a discount code in your store, representat
 Configure with a number of days to wait after fulfillment, or remove this value completely to have the discount generated and sent immediately upon fulfillment.
 
 Use the text "DISCOUNT_CODE" to have the generated discount code inserted into your email to the customer, in either the subject or body.
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/email-customers-a-unique-discount-code-two-weeks-after-order-fulfillment), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-customers-a-unique-discount-code-two-weeks-after-order-fulfillment.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).

@@ -1,9 +1,10 @@
 # Abandoned checkout emails
 
-* [task.json](../../tasks/abandoned-checkout-emails.json) (for import/export)
-* [Task script](./script.liquid)
-
 Roll your own abandoned checkout emails with this task – or, modify it to perform any other actions that your business needs when a checkout is let go. :) Out of the box, this task sends customers a recovery link, with an emails subject and message that you can easily customize.
+
+* View in the task library: [usemechanic.com/task/abandoned-checkout-emails](https://usemechanic.com/task/abandoned-checkout-emails)
+* Task JSON, for direct import: [task.json](../../tasks/abandoned-checkout-emails.json)
+* Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
 
@@ -15,6 +16,8 @@ Roll your own abandoned checkout emails with this task – or, modify it to perf
 }
 ```
 
+[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+
 ## Subscriptions
 
 ```liquid
@@ -23,6 +26,8 @@ shopify/checkouts/create
 shopify/checkouts/update
 shopify/orders/create
 ```
+
+[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
 
 ## Documentation
 
@@ -33,3 +38,11 @@ This task monitors checkouts in your store, and kicks off an email a day after a
 To change the followup time from 1 day to something else, click the "Show Advanced" link, and tweak the subscriptions with the time interval that suits your business.
 
 Please note! While the full checkout details are stored, it'll require some custom code to substitute in more details than the checkout recovery URL. Click the "Show Advanced" link in the task editor to dig into the task script, and feel free to message support if you have any questions.
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/abandoned-checkout-emails), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/abandoned-checkout-emails.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).

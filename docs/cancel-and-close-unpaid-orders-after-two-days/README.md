@@ -1,9 +1,10 @@
 # Cancel and close unpaid orders after x hours/days
 
-* [task.json](../../tasks/cancel-and-close-unpaid-orders-after-two-days.json) (for import/export)
-* [Task script](./script.liquid)
-
 Clear the clutter in your orders list, automatically! On a scheduled basis or on-demand, this task scans for orders that are more than x days or hours old, and cancels and closes/archives the order if its financial status is still marked "pending".
+
+* View in the task library: [usemechanic.com/task/cancel-and-close-unpaid-orders-after-two-days](https://usemechanic.com/task/cancel-and-close-unpaid-orders-after-two-days)
+* Task JSON, for direct import: [task.json](../../tasks/cancel-and-close-unpaid-orders-after-two-days.json)
+* Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
 
@@ -22,6 +23,8 @@ Clear the clutter in your orders list, automatically! On a scheduled basis or on
 }
 ```
 
+[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+
 ## Subscriptions
 
 ```liquid
@@ -34,6 +37,8 @@ Clear the clutter in your orders list, automatically! On a scheduled basis or on
 mechanic/user/trigger
 ```
 
+[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+
 ## Documentation
 
 Clear the clutter in your orders list, automatically! On a scheduled basis or on-demand, this task scans for orders that are more than x days or hours old, and cancels and closes/archives the order if its financial status is still marked "pending".
@@ -45,3 +50,11 @@ Run first using test mode, to ensure expected results before running without it.
 If configured with an interval in hours, this task will run hourly. If configured with an interval in days, the task will run every night at midnight, in your store's local timezone. Run this task manually to perform the scan on demand.
 
 Tip: To easily see which orders this task has cancelled, fill in the "Tag to add to the order" option.
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/cancel-and-close-unpaid-orders-after-two-days), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/cancel-and-close-unpaid-orders-after-two-days.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).

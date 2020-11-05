@@ -1,9 +1,10 @@
 # Import PayPal transactions as Shopify orders
 
-* [task.json](../../tasks/import-paypal-transactions-as-shopify-orders.json) (for import/export)
-* [Task script](./script.liquid)
-
 Use this task when you want to record your external PayPal transactions as Shopify orders. Are you using PayPal subscriptions? Or receiving direct payments you'd like to record in Shopify? Use this task, or file a task request to have it modified for more purpose-specific uses. :) Again, this isn't for PayPal as a Shopify payment provider – it's for any time you might be using PayPal *outside* of your Shopify store.
+
+* View in the task library: [usemechanic.com/task/import-paypal-transactions-as-shopify-orders](https://usemechanic.com/task/import-paypal-transactions-as-shopify-orders)
+* Task JSON, for direct import: [task.json](../../tasks/import-paypal-transactions-as-shopify-orders.json)
+* Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
 
@@ -19,11 +20,15 @@ Use this task when you want to record your external PayPal transactions as Shopi
 }
 ```
 
+[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+
 ## Subscriptions
 
 ```liquid
 user/paypal/ipn
 ```
+
+[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
 
 ## Documentation
 
@@ -34,3 +39,11 @@ Use this task when you want to record your external PayPal transactions as Shopi
 Then, configure to taste. :) Mechanic will use the PayPal order memo as the sole line item in the orders that are created, falling back to your "Default memo" setting.
 
 Out of the box, this task will only create orders for transactions in which payment successfully went through. To modify this task to perform extra functionality (like auto-tagging based on subscription events, for example), file a task request from your Mechanic home screen.
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/import-paypal-transactions-as-shopify-orders), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/import-paypal-transactions-as-shopify-orders.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).

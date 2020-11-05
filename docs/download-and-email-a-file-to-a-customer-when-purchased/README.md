@@ -1,9 +1,10 @@
 # Download and email a file to a customer, when purchased
 
-* [task.json](../../tasks/download-and-email-a-file-to-a-customer-when-purchased.json) (for import/export)
-* [Task script](./script.liquid)
-
 This task watches for newly-paid orders. When an order contains a certain line item, this task retrieves a file from the URL of your choice, and emails that file to the customer. Because URLs are easier to share, this makes for a safer way to distribute downloadable materials.
+
+* View in the task library: [usemechanic.com/task/download-and-email-a-file-to-a-customer-when-purchased](https://usemechanic.com/task/download-and-email-a-file-to-a-customer-when-purchased)
+* Task JSON, for direct import: [task.json](../../tasks/download-and-email-a-file-to-a-customer-when-purchased.json)
+* Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
 
@@ -17,14 +18,26 @@ This task watches for newly-paid orders. When an order contains a certain line i
 }
 ```
 
+[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+
 ## Subscriptions
 
 ```liquid
 shopify/orders/paid
 ```
 
+[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+
 ## Documentation
 
 This task watches for newly-paid orders. When an order contains a certain line item, this task retrieves a file from the URL of your choice, and emails that file to the customer. Because URLs are easier to share, this makes for a safer way to distribute downloadable materials.
 
 Shopify allows file uploads via the "Files" page. Once uploaded, you'll receive a URL which can be used for this task. [Learn how to upload files to Shopify.](https://help.shopify.com/en/manual/sell-online/online-store/file-uploads#upload-a-file-on-the-files-page)
+
+## Installing this task
+
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/download-and-email-a-file-to-a-customer-when-purchased), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/download-and-email-a-file-to-a-customer-when-purchased.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+
+## Contributions
+
+Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).
