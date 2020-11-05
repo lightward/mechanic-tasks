@@ -1,7 +1,6 @@
 {
   "name": "Auto-tag new orders with their fulfillment locations",
-  "options": {
-  },
+  "options": {},
   "subscriptions": [
     "shopify/orders/create"
   ],

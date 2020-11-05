@@ -1,7 +1,6 @@
 {
   "name": "Tag orders in bulk by order name",
-  "options": {
-  },
+  "options": {},
   "subscriptions": [
     "mechanic/user/text"
   ],

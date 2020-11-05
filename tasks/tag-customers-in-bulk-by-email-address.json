@@ -1,7 +1,6 @@
 {
   "name": "Tag customers in bulk by email address",
-  "options": {
-  },
+  "options": {},
   "subscriptions": [
     "mechanic/user/text"
   ],

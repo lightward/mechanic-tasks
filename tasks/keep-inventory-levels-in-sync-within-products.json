@@ -1,12 +1,8 @@
 {
   "name": "Keep inventory levels in sync within products",
   "options": {
-    "filter_by_these_location_names__array": [
-
-    ],
-    "filter_by_these_product_types__array": [
-
-    ]
+    "filter_by_these_location_names__array": [],
+    "filter_by_these_product_types__array": []
   },
   "subscriptions": [
     "shopify/inventory_levels/update"

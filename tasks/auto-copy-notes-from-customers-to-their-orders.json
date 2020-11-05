@@ -1,7 +1,6 @@
 {
   "name": "Auto-copy notes from customers to their orders",
-  "options": {
-  },
+  "options": {},
   "subscriptions": [
     "shopify/orders/create",
     "mechanic/user/trigger"

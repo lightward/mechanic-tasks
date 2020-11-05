@@ -1,7 +1,6 @@
 {
   "name": "Auto-update inventory policy based on a \"preorder\" tag",
-  "options": {
-  },
+  "options": {},
   "subscriptions": [
     "mechanic/scheduler/daily",
     "mechanic/user/trigger"

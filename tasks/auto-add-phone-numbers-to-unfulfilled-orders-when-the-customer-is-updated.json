@@ -1,7 +1,6 @@
 {
   "name": "Auto-add phone numbers to unfulfilled orders, when the customer is updated",
-  "options": {
-  },
+  "options": {},
   "subscriptions": [
     "shopify/customers/update"
   ],

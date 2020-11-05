@@ -1,9 +1,7 @@
 {
   "name": "Automatically cancel orders with certain risk indicators",
   "options": {
-    "required_risk_indicator_messages__array_required": [
-
-    ],
+    "required_risk_indicator_messages__array_required": [],
     "cancellation_reason": null,
     "ignore_unpaid_orders__boolean": null,
     "attempt_to_void_or_refund_payment_for_cancelled_orders__boolean": null,

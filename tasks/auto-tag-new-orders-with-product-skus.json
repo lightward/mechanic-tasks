@@ -1,7 +1,6 @@
 {
   "name": "Auto-tag new orders with product SKUs",
-  "options": {
-  },
+  "options": {},
   "subscriptions": [
     "shopify/orders/create"
   ],

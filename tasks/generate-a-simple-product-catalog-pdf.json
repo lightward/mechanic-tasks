@@ -1,7 +1,6 @@
 {
   "name": "Generate a simple product catalog PDF",
-  "options": {
-  },
+  "options": {},
   "subscriptions": [
     "mechanic/user/trigger"
   ],

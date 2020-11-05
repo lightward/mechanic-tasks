@@ -1,7 +1,6 @@
 {
   "name": "Backfill customer names from order addresses",
-  "options": {
-  },
+  "options": {},
   "subscriptions": [
     "shopify/orders/create"
   ],

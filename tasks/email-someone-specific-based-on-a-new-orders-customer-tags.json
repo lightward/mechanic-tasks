@@ -1,8 +1,7 @@
 {
   "name": "Email someone specific based on a new order's customer tags",
   "options": {
-    "customer_tags_and_assigned_email_recipients__keyval_required": {
-    },
+    "customer_tags_and_assigned_email_recipients__keyval_required": {},
     "email_subject__required": "Order {{ order.name }} from your customer, {{ order.email }}",
     "email_body__required_multiline": "Hello,\n\nOrder {{ order.name }} has arrived from {{ order.customer.first_name | default: \"(first name)\" }} {{ order.customer.last_name | default: \"(last name)\" }} ({{ order.email }}).\n\n<a href=\"https://{{ shop.domain }}/admin/orders/{{ order.id }}\">View this order in Shopify</a>\n\nThanks,\nMechanic, for {{ shop.name }}"
   },

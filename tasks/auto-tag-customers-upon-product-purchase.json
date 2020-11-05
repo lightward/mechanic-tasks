@@ -4,9 +4,7 @@
     "search_query__required": "sku:ABC123",
     "search_for_products__boolean": false,
     "search_for_product_variants__boolean": true,
-    "customer_tags_to_apply__required_array": [
-
-    ],
+    "customer_tags_to_apply__required_array": [],
     "test_mode__boolean": true
   },
   "subscriptions": [

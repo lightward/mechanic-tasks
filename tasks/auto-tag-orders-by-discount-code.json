@@ -1,7 +1,6 @@
 {
   "name": "Auto-tag orders by discount code",
-  "options": {
-  },
+  "options": {},
   "subscriptions": [
     "shopify/orders/create"
   ],

@@ -1,8 +1,7 @@
 {
   "name": "Auto-tag customers based on discount codes used",
   "options": {
-    "discount_codes_and_tags__keyval_required": {
-    },
+    "discount_codes_and_tags__keyval_required": {},
     "untag_customers_instead_of_tagging_them__boolean": null,
     "allow_partial_matches_when_checking_for_discount_codes__boolean": null
   },

@@ -1,7 +1,6 @@
 {
   "name": "Archive orders when fulfilled",
-  "options": {
-  },
+  "options": {},
   "subscriptions": [
     "shopify/orders/fulfilled",
     "mechanic/user/trigger"

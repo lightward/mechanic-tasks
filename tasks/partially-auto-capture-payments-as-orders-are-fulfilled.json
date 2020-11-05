@@ -1,7 +1,6 @@
 {
   "name": "Partially auto-capture payments as orders are fulfilled",
-  "options": {
-  },
+  "options": {},
   "subscriptions": [
     "shopify/orders/updated"
   ],

@@ -1,7 +1,6 @@
 {
   "name": "Auto-tag orders with customer tags when new customer tags are added",
-  "options": {
-  },
+  "options": {},
   "subscriptions": [
     "shopify/customers/update"
   ],

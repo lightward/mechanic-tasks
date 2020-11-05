@@ -1,7 +1,6 @@
 {
   "name": "Archive orders on delivery",
-  "options": {
-  },
+  "options": {},
   "subscriptions": [
     "shopify/fulfillment_events/create"
   ],

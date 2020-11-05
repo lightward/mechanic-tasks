@@ -1,7 +1,6 @@
 {
   "name": "Capture order payment upon fulfillment",
-  "options": {
-  },
+  "options": {},
   "subscriptions": [
     "shopify/orders/fulfilled"
   ],

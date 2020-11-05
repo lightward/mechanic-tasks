@@ -1,7 +1,6 @@
 {
   "name": "Auto-tag customers with vendors after ordering",
-  "options": {
-  },
+  "options": {},
   "subscriptions": [
     "shopify/orders/create",
     "mechanic/user/trigger"

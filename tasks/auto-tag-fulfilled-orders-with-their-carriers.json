@@ -1,7 +1,6 @@
 {
   "name": "Auto-tag fulfilled orders with their carriers",
-  "options": {
-  },
+  "options": {},
   "subscriptions": [
     "shopify/orders/fulfilled"
   ],

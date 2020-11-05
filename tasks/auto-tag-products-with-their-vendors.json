@@ -1,7 +1,6 @@
 {
   "name": "Auto-tag products with their vendors",
-  "options": {
-  },
+  "options": {},
   "subscriptions": [
     "shopify/products/create",
     "shopify/products/update",

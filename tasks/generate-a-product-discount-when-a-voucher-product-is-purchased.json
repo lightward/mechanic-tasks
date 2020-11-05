@@ -1,8 +1,7 @@
 {
   "name": "Generate a product discount when a voucher product is purchased",
   "options": {
-    "voucher_product_ids_and_entitled_product_ids__keyval_number_required": {
-    },
+    "voucher_product_ids_and_entitled_product_ids__keyval_number_required": {},
     "discount_code_prefix__required": "HOORAY",
     "discount_value__number_required": "-5",
     "email_subject__required": "[Order {{ order.name }}] Thanks! Your discount is attached.",

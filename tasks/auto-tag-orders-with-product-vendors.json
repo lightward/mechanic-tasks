@@ -1,7 +1,6 @@
 {
   "name": "Auto-tag orders with product vendors",
-  "options": {
-  },
+  "options": {},
   "subscriptions": [
     "shopify/orders/create"
   ],

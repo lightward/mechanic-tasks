@@ -1,7 +1,6 @@
 {
   "name": "Auto-tag orders with their tracking numbers",
-  "options": {
-  },
+  "options": {},
   "subscriptions": [
     "shopify/fulfillments/create",
     "shopify/fulfillments/update",

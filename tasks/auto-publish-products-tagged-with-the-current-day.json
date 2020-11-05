@@ -1,7 +1,6 @@
 {
   "name": "Auto-publish products tagged with the current day",
-  "options": {
-  },
+  "options": {},
   "subscriptions": [
     "mechanic/scheduler/daily",
     "mechanic/user/trigger"

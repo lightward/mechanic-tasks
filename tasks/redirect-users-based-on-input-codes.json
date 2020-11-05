@@ -9,9 +9,7 @@
     "require_case_sensitive_codes__boolean": false,
     "invalid_code_message__required": "That code wasn't valid - try again."
   },
-  "subscriptions": [
-
-  ],
+  "subscriptions": [],
   "subscriptions_template": "",
   "script": "",
   "docs": "Use this task to prompt your users for a code, redirecting them to an appropriate destination based on what they enter. Some assembly required, with sample Javascript and HTML provided. :)\n\nConfigure this task by filling in redirect URLs on the left, and a series of codes for each redirect on the right. The intent is to route users to the appropriate redirect, based on the code they enter.\r\n\r\nThis task doesn't run automatically. Instead, it generates some Javascript that's automatically embedded into your online storefront, redirecting the user when they enter a code that matches one of the redirects you've configured.\r\n\r\nYou can prompt the user for a code yourself, and pass the result to the function `attemptRedirectByCode`, like this:\r\n\r\n```js\r\n<script>\r\n  attemptRedirectByCode(prompt('Enter your code here:'))\r\n</script>\r\n```\r\n\r\nOr, modify this HTML to set up a form for your users:\r\n\r\n```\r\n<form id=\"redirect-form\">\r\n  <input type=\"text\" placeholder=\"Enter your code here\">\r\n</form>\r\n<script>\r\n  document.getElementById('redirect-form').onsubmit = function (event) {\r\n    event.preventDefault();\r\n    var input = event.target.children[0];\r\n    attemptRedirectByCode(input.value) || input.select();\r\n  };\r\n</script>\r\n```",

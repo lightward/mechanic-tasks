@@ -1,7 +1,6 @@
 {
   "name": "Calculate total quantities purchased by SKU",
-  "options": {
-  },
+  "options": {},
   "subscriptions": [
     "mechanic/user/trigger",
     "mechanic/shopify/bulk_operation"

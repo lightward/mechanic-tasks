@@ -5,9 +5,7 @@
     "only_monitor_products_matching_this_search_query": "shirt",
     "send_email_for_out_of_stock_products__boolean": true,
     "send_email_for_back_in_stock_products__boolean": true,
-    "stock_update_email_recipients__email_array_required": [
-
-    ]
+    "stock_update_email_recipients__email_array_required": []
   },
   "subscriptions": [
     "shopify/inventory_levels/update",

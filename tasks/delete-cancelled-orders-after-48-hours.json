@@ -1,7 +1,6 @@
 {
   "name": "Delete cancelled orders after 48 hours",
-  "options": {
-  },
+  "options": {},
   "subscriptions": [
     "shopify/orders/updated",
     "user/orders/delete_cancelled+48.hours"

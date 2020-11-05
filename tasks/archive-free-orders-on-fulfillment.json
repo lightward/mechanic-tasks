@@ -1,7 +1,6 @@
 {
   "name": "Archive free orders on fulfillment",
-  "options": {
-  },
+  "options": {},
   "subscriptions": [
     "shopify/orders/fulfilled"
   ],

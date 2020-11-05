@@ -1,7 +1,6 @@
 {
   "name": "Bulk capture orders by order number",
-  "options": {
-  },
+  "options": {},
   "subscriptions": [
     "mechanic/user/text"
   ],

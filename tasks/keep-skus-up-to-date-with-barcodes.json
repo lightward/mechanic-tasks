@@ -1,7 +1,6 @@
 {
   "name": "Keep SKUs up to date with barcodes",
-  "options": {
-  },
+  "options": {},
   "subscriptions": [
     "shopify/products/create",
     "shopify/products/update"

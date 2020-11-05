@@ -1,9 +1,7 @@
 {
   "name": "Auto-capture order payment based on shipping method",
   "options": {
-    "allowed_shipping_methods__required_array": [
-
-    ]
+    "allowed_shipping_methods__required_array": []
   },
   "subscriptions": [
     "shopify/orders/create"

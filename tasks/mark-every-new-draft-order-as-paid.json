@@ -1,7 +1,6 @@
 {
   "name": "Mark every new draft order as paid",
-  "options": {
-  },
+  "options": {},
   "subscriptions": [
     "shopify/draft_orders/create"
   ],
