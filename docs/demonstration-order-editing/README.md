@@ -1,6 +1,6 @@
 # Demonstration: Order editing
 
-This task demonstrates order editing, by automatically adding a product to orders that (optionally) meet an order minimum. Configure this task using a variant ID. (To learn how to find this, see [How do I find an ID for a product, collection, order, or something else?](https://docs.usemechanic.com/article/360-how-do-i-find-an-id-for-a-product-collection-order-or-something-else).)
+This task demonstrates Shopify's ability to edit orders through the admin API. It's intended to be a starting place for developing more specific functionality. Out of the box, this task automatically adds a product to orders that (optionally) meet an order minimum.
 
 * View in the task library: [usemechanic.com/task/demonstration-order-editing](https://usemechanic.com/task/demonstration-order-editing)
 * Task JSON, for direct import: [task.json](../../tasks/demonstration-order-editing.json)
@@ -31,9 +31,9 @@ mechanic/actions/perform
 
 ## Documentation
 
-This task demonstrates order editing, by automatically adding a product to orders that (optionally) meet an order minimum. Configure this task using a variant ID. (To learn how to find this, see [How do I find an ID for a product, collection, order, or something else?](https://docs.usemechanic.com/article/360-how-do-i-find-an-id-for-a-product-collection-order-or-something-else).)
+This task demonstrates Shopify's ability to edit orders through the admin API. It's intended to be a starting place for developing more specific functionality. Out of the box, this task automatically adds a product to orders that (optionally) meet an order minimum.
 
-Note: This task requires a minimum Shopify API version of 2020-01. To learn how to set this, see [Choosing a Shopify API version](https://docs.usemechanic.com/article/352-choosing-a-shopify-api-version).
+Configure this task using a variant ID. (To learn how to find this, see [How do I find an ID for a product, collection, order, or something else?](https://docs.usemechanic.com/article/360-how-do-i-find-an-id-for-a-product-collection-order-or-something-else).)
 
 ## Installing this task
 
