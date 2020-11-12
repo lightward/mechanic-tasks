@@ -15,15 +15,19 @@
         id
         name
         tags
-        customerJourney {
-          moments {
-            ... on CustomerVisit {
-              utmParameters {
-                campaign
-                content
-                medium
-                source
-                term
+        customerJourneySummary {
+          moments (first: 250) {
+            edges {
+              node {
+                ... on CustomerVisit {
+                  utmParameters {
+                    campaign
+                    content
+                    medium
+                    source
+                    term
+                  }
+                }
               }
             }
           }
@@ -42,18 +46,22 @@
             "id": "gid://shopify/Order/1234567890",
             "name": "#1234",
             "tags": [],
-            "customerJourney": {
-              "moments": [
-                {
-                  "utmParameters": {
-                    "campaign": "Google Shopping",
-                    "content": "shoppingcontent",
-                    "medium": "cpc",
-                    "source": "google",
-                    "term": "shoppingterm"
+            "customerJourneySummary": {
+              "moments": {
+                "edges": [
+                  {
+                    "node": {
+                      "utmParameters": {
+                        "campaign": "Google Shopping",
+                        "content": "shoppingcontent",
+                        "medium": "cpc",
+                        "source": "google",
+                        "term": "shoppingterm"
+                      }
+                    }
                   }
-                }
-              ]
+                ]
+              }
             }
           }
         }
@@ -64,6 +72,7 @@
   {% endif %}
 
   {% assign orders[orders.size] = result.data.order %}
+
 {% elsif event.topic == "mechanic/user/trigger" %}
   {% capture bulk_operation_query %}
     query {
@@ -74,15 +83,20 @@
             id
             name
             tags
-            customerJourney {
+            customerJourneySummary {
               moments {
-                ... on CustomerVisit {
-                  utmParameters {
-                    campaign
-                    content
-                    medium
-                    source
-                    term
+                edges {
+                  node {
+                    __typename
+                    ... on CustomerVisit {
+                      utmParameters {
+                        campaign
+                        content
+                        medium
+                        source
+                        term
+                      }
+                    }
                   }
                 }
               }
@@ -112,14 +126,36 @@
 {% elsif event.topic == "mechanic/shopify/bulk_operation" %}
   {% if event.preview %}
     {% capture bulkOperation_objects_json %}
-      {"__typename":"Order","id":"gid:\/\/shopify\/Order\/1234567890","name":"#1234","tags":[],"customerJourney":{"moments":[{"utmParameters":{"campaign":"Google Shopping","content":"shoppingcontent","medium":"cpc","source":"google","term":"shoppingterm"}}]}}
+      {"__typename":"Order","id":"gid:\/\/shopify\/Order\/1234567890","name":"#1234","tags":[],"customerJourneySummary":{}}
+      {"__typename":"CustomerVisit","utmParameters":{"campaign":"New Campaign 001","content":null,"medium":"email","source":"newsletter","term":null},"__parentId":"gid:\/\/shopify\/Order\/1234567890"}
+      {"__typename":"CustomerVisit","utmParameters":{"campaign":"New Campaign 001","content":"cta_link","medium":"email","source":"drip","term":"automation+shopify"},"__parentId":"gid:\/\/shopify\/Order\/1234567890"}
     {% endcapture %}
 
     {% assign bulkOperation = hash %}
     {% assign bulkOperation["objects"] = bulkOperation_objects_json | parse_jsonl %}
   {% endif %}
 
-  {% assign orders = bulkOperation.objects %}
+  {% for bulk_operation_object in bulkOperation.objects %}
+    {% if bulk_operation_object.__typename == "Order" %}
+      {% assign order = bulk_operation_object | json | parse_json %}
+      {% assign order["customerJourneySummary"]["moments"] = hash %}
+      {% assign order["customerJourneySummary"]["moments"]["edges"] = array %}
+      {% assign orders[orders.size] = order %}
+
+    {% elsif bulk_operation_object.__typename == "CustomerVisit" %}
+      {% for order in orders %}
+        {% if order.id == bulk_operation_object.__parentId %}
+          {% assign moments_edge = hash %}
+          {% assign moments_edge["node"] = bulk_operation_object %}
+          {% assign order = order %}
+          {% assign moments_edges = order.customerJourneySummary.moments.edges %}
+          {% assign moments_edges[moments_edges.size] = moments_edge %}
+          {% assign order["customerJourneySummary"]["moments"]["edges"] = moments_edges %}
+          {% break %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  {% endfor %}
 {% endif %}
 
 {% assign parameter_names = "campaign,content,medium,source,term" | split: "," %}
@@ -127,7 +163,7 @@
 {% for order in orders %}
   {% assign tags_to_add = array %}
 
-  {% assign parameter_sets = order.customerJourney.moments | map: "utmParameters" %}
+  {% assign parameter_sets = order.customerJourneySummary.moments.edges | map: "node" | map: "utmParameters" %}
   {% for parameter_set in parameter_sets %}
     {% for parameter_name in parameter_names %}
       {% assign key = "tag_with_utm_" | append: parameter_name | append: "__boolean" %}
@@ -138,7 +174,7 @@
         {% log message: "Order already has this parameter value as a tag", order_id: order.id, order_name: order.name, order_tags: order.tags, parameter_name: parameter_name, parameter_value: parameter_set[parameter_name] %}
         {% continue %}
       {% endif %}
-      
+
       {% assign tags_to_add[tags_to_add.size] = parameter_set[parameter_name] %}
     {% endfor %}
   {% endfor %}
@@ -148,7 +184,7 @@
       mutation {
         tagsAdd(
           id: {{ order.id | json }}
-          tags: {{ tags_to_add | json }}
+          tags: {{ tags_to_add | uniq | json }}
         ) {
           userErrors {
             field
