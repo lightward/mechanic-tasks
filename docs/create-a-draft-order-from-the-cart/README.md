@@ -34,7 +34,7 @@ Use this task as a starting point, for allowing visitors to submit their carts t
 
 ### Installation
 
-1.  Create a Mechanic webhook ([learn how](https://help.usemechanic.com/en/articles/2637727-getting-started-with-webhooks)), and update this task's options to reflect the webhook's configuration.
+1.  Create a Mechanic webhook ([learn how](https://help.usemechanic.com/en/articles/2637727-getting-started-with-webhooks)), and update this task's options to reflect the webhook's configuration. Use whatever event topic you like - "user/carts/draft_order", for example. :)
 2.  In an appropriate place in your cart template, add a button to send the cart data to Mechanic. Use the following code to get started:
 
     ```
@@ -48,7 +48,7 @@ Use this task as a starting point, for allowing visitors to submit their carts t
     >
     ```
 
-    Note the `"secret!"` - this must match the "Shared secret" option you choose in the task's configuration.
+    Note the `"secret!"` - this must match the "Shared secret" option you choose in the task's configuration. It can be any value you like, as long as it's exactly equal between your task configuration and your theme code.
 3.  Adjust to taste. :) The code in the task script and in the online storefront JavaScript are meant to be a beginning point, as you build out the experience you're looking for. If you have any questions about the Mechanic side of this, get in touch!
 
 ## Installing this task
