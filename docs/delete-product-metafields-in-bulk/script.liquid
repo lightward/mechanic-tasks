@@ -105,5 +105,28 @@
         }
       {% endaction %}
     {% endfor %}
+
+    {% if event.preview %}
+      {% comment %}
+        As a rule, preview events should render realistic
+        action definitions. However, because Mechanic derives
+        a task's required permissions from these definitions,
+        and because a metafieldDelete mutation doesn't include
+        anything indicating what kind of resource the
+        metafield belongs to, we have to render an additional
+        spurious preview-only mutation to nudge Mechanic into
+        giving us write access to products.
+      {% endcomment %}
+
+      {% action "shopify" %}
+        mutation {
+          productUpdate(
+            id: "gid://requesting/write_products"
+          ) {
+            thisMutationWillNotRunForLiveEvents
+          }
+        }
+      {% endaction %}
+    {% endif %}
   {% endif %}
 {% endif %}
