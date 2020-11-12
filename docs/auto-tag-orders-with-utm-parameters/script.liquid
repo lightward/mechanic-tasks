@@ -16,7 +16,7 @@
         name
         tags
         customerJourneySummary {
-          moments (first: 250) {
+          moments(first: 250) {
             edges {
               node {
                 ... on CustomerVisit {
@@ -135,27 +135,7 @@
     {% assign bulkOperation["objects"] = bulkOperation_objects_json | parse_jsonl %}
   {% endif %}
 
-  {% for bulk_operation_object in bulkOperation.objects %}
-    {% if bulk_operation_object.__typename == "Order" %}
-      {% assign order = bulk_operation_object | json | parse_json %}
-      {% assign order["customerJourneySummary"]["moments"] = hash %}
-      {% assign order["customerJourneySummary"]["moments"]["edges"] = array %}
-      {% assign orders[orders.size] = order %}
-
-    {% elsif bulk_operation_object.__typename == "CustomerVisit" %}
-      {% for order in orders %}
-        {% if order.id == bulk_operation_object.__parentId %}
-          {% assign moments_edge = hash %}
-          {% assign moments_edge["node"] = bulk_operation_object %}
-          {% assign order = order %}
-          {% assign moments_edges = order.customerJourneySummary.moments.edges %}
-          {% assign moments_edges[moments_edges.size] = moments_edge %}
-          {% assign order["customerJourneySummary"]["moments"]["edges"] = moments_edges %}
-          {% break %}
-        {% endif %}
-      {% endfor %}
-    {% endif %}
-  {% endfor %}
+  {% assign orders = bulkOperation.objects | where: "__typename", "Order" %}
 {% endif %}
 
 {% assign parameter_names = "campaign,content,medium,source,term" | split: "," %}
@@ -163,7 +143,12 @@
 {% for order in orders %}
   {% assign tags_to_add = array %}
 
-  {% assign parameter_sets = order.customerJourneySummary.moments.edges | map: "node" | map: "utmParameters" %}
+  {% if event.topic contains "shopify/orders/" %}
+    {% assign parameter_sets = order.customerJourneySummary.moments.edges | map: "node" | map: "utmParameters" %}
+  {% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+    {% assign parameter_sets = bulkOperation.objects | where: "__typename", "CustomerVisit" | where: "__parentId", order.id | map: "utmParameters" %}
+  {% endif %}
+
   {% for parameter_set in parameter_sets %}
     {% for parameter_name in parameter_names %}
       {% assign key = "tag_with_utm_" | append: parameter_name | append: "__boolean" %}
