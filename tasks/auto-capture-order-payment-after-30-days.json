@@ -1,5 +1,5 @@
 {
-  "name": "Auto-capture order payment after 30 days",
+  "name": "Auto-capture order payment after x days",
   "options": {
     "days_to_wait_before_capturing__number_required": 30
   },

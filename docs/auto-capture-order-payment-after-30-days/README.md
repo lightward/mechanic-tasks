@@ -1,4 +1,4 @@
-# Auto-capture order payment after 30 days
+# Auto-capture order payment after x days
 
 Short and simple. Captures order payment for un-cancelled orders that have a financial status of "authorized", after waiting 30 days (or another timespan of your choice).
 
