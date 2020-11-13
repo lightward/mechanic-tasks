@@ -125,14 +125,14 @@
   {% endaction %}
 {% elsif event.topic == "mechanic/shopify/bulk_operation" %}
   {% if event.preview %}
-    {% capture bulkOperation_objects_json %}
+    {% capture bulkOperation_objects_jsonl %}
       {"__typename":"Order","id":"gid:\/\/shopify\/Order\/1234567890","name":"#1234","tags":[],"customerJourneySummary":{}}
       {"__typename":"CustomerVisit","utmParameters":{"campaign":"New Campaign 001","content":null,"medium":"email","source":"newsletter","term":null},"__parentId":"gid:\/\/shopify\/Order\/1234567890"}
       {"__typename":"CustomerVisit","utmParameters":{"campaign":"New Campaign 001","content":"cta_link","medium":"email","source":"drip","term":"automation+shopify"},"__parentId":"gid:\/\/shopify\/Order\/1234567890"}
     {% endcapture %}
 
     {% assign bulkOperation = hash %}
-    {% assign bulkOperation["objects"] = bulkOperation_objects_json | parse_jsonl %}
+    {% assign bulkOperation["objects"] = bulkOperation_objects_jsonl | parse_jsonl %}
   {% endif %}
 
   {% assign orders = bulkOperation.objects | where: "__typename", "Order" %}
