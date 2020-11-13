@@ -15,15 +15,19 @@
         id
         name
         tags
-        customerJourney {
-          moments {
-            ... on CustomerVisit {
-              utmParameters {
-                campaign
-                content
-                medium
-                source
-                term
+        customerJourneySummary {
+          moments(first: 250) {
+            edges {
+              node {
+                ... on CustomerVisit {
+                  utmParameters {
+                    campaign
+                    content
+                    medium
+                    source
+                    term
+                  }
+                }
               }
             }
           }
@@ -42,18 +46,22 @@
             "id": "gid://shopify/Order/1234567890",
             "name": "#1234",
             "tags": [],
-            "customerJourney": {
-              "moments": [
-                {
-                  "utmParameters": {
-                    "campaign": "Google Shopping",
-                    "content": "shoppingcontent",
-                    "medium": "cpc",
-                    "source": "google",
-                    "term": "shoppingterm"
+            "customerJourneySummary": {
+              "moments": {
+                "edges": [
+                  {
+                    "node": {
+                      "utmParameters": {
+                        "campaign": "Google Shopping",
+                        "content": "shoppingcontent",
+                        "medium": "cpc",
+                        "source": "google",
+                        "term": "shoppingterm"
+                      }
+                    }
                   }
-                }
-              ]
+                ]
+              }
             }
           }
         }
@@ -64,6 +72,7 @@
   {% endif %}
 
   {% assign orders[orders.size] = result.data.order %}
+
 {% elsif event.topic == "mechanic/user/trigger" %}
   {% capture bulk_operation_query %}
     query {
@@ -74,15 +83,20 @@
             id
             name
             tags
-            customerJourney {
+            customerJourneySummary {
               moments {
-                ... on CustomerVisit {
-                  utmParameters {
-                    campaign
-                    content
-                    medium
-                    source
-                    term
+                edges {
+                  node {
+                    __typename
+                    ... on CustomerVisit {
+                      utmParameters {
+                        campaign
+                        content
+                        medium
+                        source
+                        term
+                      }
+                    }
                   }
                 }
               }
@@ -111,15 +125,17 @@
   {% endaction %}
 {% elsif event.topic == "mechanic/shopify/bulk_operation" %}
   {% if event.preview %}
-    {% capture bulkOperation_objects_json %}
-      {"__typename":"Order","id":"gid:\/\/shopify\/Order\/1234567890","name":"#1234","tags":[],"customerJourney":{"moments":[{"utmParameters":{"campaign":"Google Shopping","content":"shoppingcontent","medium":"cpc","source":"google","term":"shoppingterm"}}]}}
+    {% capture bulkOperation_objects_jsonl %}
+      {"__typename":"Order","id":"gid:\/\/shopify\/Order\/1234567890","name":"#1234","tags":[],"customerJourneySummary":{}}
+      {"__typename":"CustomerVisit","utmParameters":{"campaign":"New Campaign 001","content":null,"medium":"email","source":"newsletter","term":null},"__parentId":"gid:\/\/shopify\/Order\/1234567890"}
+      {"__typename":"CustomerVisit","utmParameters":{"campaign":"New Campaign 001","content":"cta_link","medium":"email","source":"drip","term":"automation+shopify"},"__parentId":"gid:\/\/shopify\/Order\/1234567890"}
     {% endcapture %}
 
     {% assign bulkOperation = hash %}
-    {% assign bulkOperation["objects"] = bulkOperation_objects_json | parse_jsonl %}
+    {% assign bulkOperation["objects"] = bulkOperation_objects_jsonl | parse_jsonl %}
   {% endif %}
 
-  {% assign orders = bulkOperation.objects %}
+  {% assign orders = bulkOperation.objects | where: "__typename", "Order" %}
 {% endif %}
 
 {% assign parameter_names = "campaign,content,medium,source,term" | split: "," %}
@@ -127,7 +143,12 @@
 {% for order in orders %}
   {% assign tags_to_add = array %}
 
-  {% assign parameter_sets = order.customerJourney.moments | map: "utmParameters" %}
+  {% if event.topic contains "shopify/orders/" %}
+    {% assign parameter_sets = order.customerJourneySummary.moments.edges | map: "node" | map: "utmParameters" %}
+  {% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+    {% assign parameter_sets = bulkOperation.objects | where: "__typename", "CustomerVisit" | where: "__parentId", order.id | map: "utmParameters" %}
+  {% endif %}
+
   {% for parameter_set in parameter_sets %}
     {% for parameter_name in parameter_names %}
       {% assign key = "tag_with_utm_" | append: parameter_name | append: "__boolean" %}
@@ -138,7 +159,7 @@
         {% log message: "Order already has this parameter value as a tag", order_id: order.id, order_name: order.name, order_tags: order.tags, parameter_name: parameter_name, parameter_value: parameter_set[parameter_name] %}
         {% continue %}
       {% endif %}
-      
+
       {% assign tags_to_add[tags_to_add.size] = parameter_set[parameter_name] %}
     {% endfor %}
   {% endfor %}
@@ -148,7 +169,7 @@
       mutation {
         tagsAdd(
           id: {{ order.id | json }}
-          tags: {{ tags_to_add | json }}
+          tags: {{ tags_to_add | uniq | json }}
         ) {
           userErrors {
             field
