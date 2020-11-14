@@ -30,15 +30,6 @@
   {% endif %}
 
   {% for collection in collections %}
-    {% if collection.sort_order != "manual" %}
-      {% error %}
-        {{ collection.title | json | append: " is not configured for manual sorting. Set this collection to be manually sorted, and try again." | json }}
-      {% enderror %}
-      {% assign collections = array %}
-    {% endif %}
-  {% endfor %}
-
-  {% for collection in collections %}
     {% action "shopify" %}
       mutation {
         collectionUpdate(
@@ -65,9 +56,27 @@
     {% endaction %}
   {% endfor %}
 {% elsif event.topic == "user/reorder_collection/stage_2" %}
+  {% assign collection_id = event.data.collection_id %}
+
   {% if event.preview %}
-    {% assign event = '{"data": {"collection_id": "gid://shopify/Collection/1234567890"}}' | parse_json %}
+    {% assign collection_id = "gid://shopify/Collection/1234567890" %}
   {% endif %}
+
+  {% action "shopify" %}
+    mutation {
+      collectionUpdate(
+        input: {
+          id: {{ collection_id | json }}
+          sortOrder: MANUAL
+        }
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
 
   {% assign in_stock_product_ids = array %}
   {% assign out_of_stock_product_ids = array %}
@@ -76,7 +85,7 @@
   {% for n in (0..100) %}
     {% capture query %}
       query {
-        collection(id: {{ event.data.collection_id | json }}) {
+        collection(id: {{ collection_id | json }}) {
           products(
             sortKey: COLLECTION_DEFAULT
             first: 250
@@ -117,54 +126,24 @@
 
   {% assign all_product_ids = in_stock_product_ids | concat: out_of_stock_product_ids %}
 
-  {% action "shopify" %}
-    mutation {
-      collectionUpdate(
-        input: {
-          id: {{ event.data.collection_id | json }}
-          sortOrder: MANUAL
-        }
-      ) {
-        userErrors {
-          field
-          message
-        }
-      }
-    }
-  {% endaction %}
-
-  {% action "event" %}
-    {
-      "topic": "user/reorder_collection/stage_3",
-      "data": {
-        "collection_id": {{ event.data.collection_id | json }},
-        "ordered_product_ids": {{ all_product_ids | json }}
-      }
-    }
-  {% endaction %}
-{% elsif event.topic == "user/reorder_collection/stage_3" %}
   {% if event.preview %}
-    {% capture event_json %}
-      {
-        "data": {
-          "collection_id": "gid://shopify/Collection/1234567890",
-          "ordered_product_ids": [
-            "gid://shopify/Product/1234567890",
-            "gid://shopify/Product/2345678901",
-            "gid://shopify/Product/3456789012",
-            "gid://shopify/Product/4567890123",
-            "gid://shopify/Product/5678901234",
-            "gid://shopify/Product/6789012345"
-          ]
-        }
-      }
+    {% capture all_product_ids_json %}
+      [
+        "gid://shopify/Product/1234567890",
+        "gid://shopify/Product/2345678901",
+        "gid://shopify/Product/3456789012",
+        "gid://shopify/Product/4567890123",
+        "gid://shopify/Product/5678901234",
+        "gid://shopify/Product/6789012345"
+      ]
     {% endcapture %}
 
-    {% assign event = event_json | parse_json %}
+    {% assign all_product_ids = all_product_ids_json | parse_json %}
   {% endif %}
 
   {% assign moves = array %}
-  {% for product_id in event.data.ordered_product_ids %}
+
+  {% for product_id in all_product_ids %}
     {% assign move = hash %}
     {% assign move["id"] = product_id %}
     {% assign move["newPosition"] = forloop.index0 | append: "" %}
@@ -177,7 +156,7 @@
     {% action "shopify" %}
       mutation {
         collectionReorderProducts(
-          id: {{ event.data.collection_id | json }}
+          id: {{ collection_id | json }}
           moves: {{ move_group | graphql_arguments }}
         ) {
           userErrors {
