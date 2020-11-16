@@ -7,6 +7,22 @@
 {% endunless %}
 
 {% if event.topic contains "mechanic/" %}
+  {% if event.preview %}
+    {% capture shop_json %}
+      {
+        "collections": [
+          {
+            "id": {{ options.collection_titles_or_ids__array_required.first | json }},
+            "admin_graphql_api_id": "gid://shopify/Collection/1234567890"
+
+          }
+        ]
+      }
+    {% endcapture %}
+
+    {% assign shop = shop_json | parse_json %}
+  {% endif %}
+
   {% assign collections = array %}
 
   {% for some_collection in shop.collections %}
@@ -15,19 +31,6 @@
       {% assign collections[collections.size] = some_collection %}
     {% endif %}
   {% endfor %}
-
-  {% if event.preview %}
-    {% capture collections_json %}
-      [
-        {
-          "admin_graphql_api_id": "gid://shopify/Collection/1234567890",
-          "sort_order": "manual"
-        }
-      ]
-    {% endcapture %}
-
-    {% assign collections = collections_json | parse_json %}
-  {% endif %}
 
   {% for collection in collections %}
     {% action "shopify" %}
@@ -56,27 +59,18 @@
     {% endaction %}
   {% endfor %}
 {% elsif event.topic == "user/reorder_collection/stage_2" %}
-  {% assign collection_id = event.data.collection_id %}
-
   {% if event.preview %}
-    {% assign collection_id = "gid://shopify/Collection/1234567890" %}
-  {% endif %}
-
-  {% action "shopify" %}
-    mutation {
-      collectionUpdate(
-        input: {
-          id: {{ collection_id | json }}
-          sortOrder: MANUAL
-        }
-      ) {
-        userErrors {
-          field
-          message
+    {% capture event_json %}
+      {
+        "preview": true,
+        "data": {
+          "collection_id": "gid://shopify/Collection/1234567890"
         }
       }
-    }
-  {% endaction %}
+    {% endcapture %}
+
+    {% assign event = event_json | parse_json %}
+  {% endif %}
 
   {% assign in_stock_product_ids = array %}
   {% assign out_of_stock_product_ids = array %}
@@ -85,7 +79,7 @@
   {% for n in (0..100) %}
     {% capture query %}
       query {
-        collection(id: {{ collection_id | json }}) {
+        collection(id: {{ event.data.collection_id | json }}) {
           products(
             sortKey: COLLECTION_DEFAULT
             first: 250
@@ -109,6 +103,51 @@
 
     {% assign result = query | shopify %}
 
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "collection": {
+              "products": {
+                "edges": [
+                  {
+                    "node": {
+                      "id": "gid://shopify/Product/1234567890",
+                      "tracksInventory": true,
+                      "totalInventory": 1
+                    }
+                  },
+                  {
+                    "node": {
+                      "id": "gid://shopify/Product/2345678901",
+                      "tracksInventory": true,
+                      "totalInventory": 0
+                    }
+                  },
+                  {
+                    "node": {
+                      "id": "gid://shopify/Product/3456789012",
+                      "tracksInventory": false,
+                      "totalInventory": null
+                    }
+                  },
+                  {
+                    "node": {
+                      "id": "gid://shopify/Product/4567890123",
+                      "tracksInventory": true,
+                      "totalInventory": 2
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
     {% for product_edge in result.data.collection.products.edges %}
       {% if product_edge.node.tracksInventory and product_edge.node.totalInventory <= 0 %}
         {% assign out_of_stock_product_ids[out_of_stock_product_ids.size] = product_edge.node.id %}
@@ -126,21 +165,6 @@
 
   {% assign all_product_ids = in_stock_product_ids | concat: out_of_stock_product_ids %}
 
-  {% if event.preview %}
-    {% capture all_product_ids_json %}
-      [
-        "gid://shopify/Product/1234567890",
-        "gid://shopify/Product/2345678901",
-        "gid://shopify/Product/3456789012",
-        "gid://shopify/Product/4567890123",
-        "gid://shopify/Product/5678901234",
-        "gid://shopify/Product/6789012345"
-      ]
-    {% endcapture %}
-
-    {% assign all_product_ids = all_product_ids_json | parse_json %}
-  {% endif %}
-
   {% assign moves = array %}
 
   {% for product_id in all_product_ids %}
@@ -150,13 +174,29 @@
     {% assign moves[moves.size] = move %}
   {% endfor %}
 
+  {% action "shopify" %}
+    mutation {
+      collectionUpdate(
+        input: {
+          id: {{ event.data.collection_id | json }}
+          sortOrder: MANUAL
+        }
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
   {% assign move_groups = moves | in_groups_of: 250, fill_with: false %}
 
   {% for move_group in move_groups %}
     {% action "shopify" %}
       mutation {
         collectionReorderProducts(
-          id: {{ collection_id | json }}
+          id: {{ event.data.collection_id | json }}
           moves: {{ move_group | graphql_arguments }}
         ) {
           userErrors {
