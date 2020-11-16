@@ -1,6 +1,6 @@
 # Move out-of-stock products to the end of a collection
 
-This task re-sorts your collections, beginning with the sort order of your choice (alphabetically, best selling first, etc), and then moving all out-of-stock products to the very end of the collection. 
+This task re-sorts your collections, beginning with the sort order of your choice (alphabetically, best selling first, etc), and then moving all out-of-stock products to the very end of the collection.
 
 * View in the task library: [usemechanic.com/task/move-out-of-stock-products-to-the-end-of-a-collection](https://usemechanic.com/task/move-out-of-stock-products-to-the-end-of-a-collection)
 * Task JSON, for direct import: [task.json](../../tasks/move-out-of-stock-products-to-the-end-of-a-collection.json)
@@ -32,7 +32,7 @@ user/reorder_collection/stage_2
 
 ## Documentation
 
-This task re-sorts your collections, beginning with the sort order of your choice (alphabetically, best selling first, etc), and then moving all out-of-stock products to the very end of the collection. 
+This task re-sorts your collections, beginning with the sort order of your choice (alphabetically, best selling first, etc), and then moving all out-of-stock products to the very end of the collection.
 
 Run this task manually to re-sort your collections on demand. Optionally, configure this task to run hourly or nightly as well.
 
