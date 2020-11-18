@@ -1,7 +1,15 @@
 {% if event.topic == "mechanic/user/trigger" %}
+  {% assign customers_query = nil %}
+
+  {% if options.limit_to_customers_matching_this_query_for_manual_runs != blank %}
+    {% assign customers_query = options.limit_to_customers_matching_this_query_for_manual_runs %}
+  {% endif %}
+
   {% capture bulk_operation_query %}
     query {
-      customers {
+      customers(
+        query: {{ customers_query | json }}
+      ) {
         edges {
           node {
             __typename
