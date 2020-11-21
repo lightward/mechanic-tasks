@@ -11,6 +11,10 @@
 {% endif %}
 
 {% if event.topic contains "shopify/orders/" %}
+  {% if order_edit %}
+    {% assign order = shop.orders[order_edit.order_id] %}
+  {% endif %}
+
   {% if event.preview %}
     {% assign order = hash %}
     {% assign order["admin_graphql_api_id"] = "gid://shopify/Order/1234567890" %}
@@ -25,6 +29,7 @@
     {% endif %}
 
     {% assign order["line_items"][0] = hash %}
+    {% assign order["line_items"][0]["fulfillable_quantity"] = 1 %}
     {% assign order["line_items"][0]["product"] = product %}
   {% endif %}
 
@@ -32,7 +37,15 @@
   {% assign order_qualifies_by_tag = nil %}
   {% assign order_qualifies_by_title = nil %}
 
-  {% assign order_products = order.line_items | map: "product" %}
+  {% assign fulfillable_line_items = array %}
+
+  {% for line_item in order.line_items %}
+    {% if line_item.fulfillable_quantity > 0 %}
+      {% assign fulfillable_line_items[fulfillable_line_items.size] = line_item %}
+    {% endif %}
+  {% endfor %}
+
+  {% assign order_products = fulfillable_line_items | map: "product" %}
 
   {% if options.required_product_title != blank %}
     {% assign order_qualifies_by_title = false %}
@@ -87,6 +100,27 @@
         }
       }
     {% endaction %}
+  {% else %}
+    {% assign order_tags = order.tags | split: ", "%}
+
+    {% for order_tag_to_apply in options.order_tags_to_apply__required_array %}
+      {% if order_tags contains order_tag_to_apply %}
+        {% action "shopify" %}
+          mutation {
+            tagsRemove(
+              id: {{ order.admin_graphql_api_id | json }}
+              tags: {{ options.order_tags_to_apply__required_array | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+        {% break %}
+      {% endif%}
+    {% endfor %}
   {% endif %}
 {% elsif event.topic == "mechanic/user/trigger" %}
   {% capture bulk_operation_query %}
@@ -102,6 +136,7 @@
                 node {
                   __typename
                   id
+                  fulfillableQuantity
                   product {
                     id
                     title
@@ -149,6 +184,7 @@
     {% assign lineItem = hash %}
     {% assign lineItem["__typename"] = "LineItem" %}
     {% assign lineItem["__parent"] = order %}
+    {% assign lineItem["fulfillableQuantity"] = 1 %}
     {% assign lineItem["product"] = product %}
 
     {% assign bulkOperation["objects"][0] = order %}
@@ -206,7 +242,7 @@
         {% endif %}
       {% endif %}
 
-      {% if product_qualifies %}
+      {% if product_qualifies and object.fulfillableQuantity > 0 %}
         {% assign qualifying_order_ids[qualifying_order_ids.size] = object.__parent.id %}
       {% endif %}
     {% endcase %}
@@ -220,6 +256,24 @@
       {% action "shopify" %}
         mutation {
           tagsAdd(
+            id: {{ order_id | json }}
+            tags: {{ options.order_tags_to_apply__required_array | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endunless %}
+  {% endfor %}
+
+  {% for order_id in order_ids_that_already_have_tags %}
+    {% unless qualifying_order_ids contains order_id %}
+      {% action "shopify" %}
+        mutation {
+          tagsRemove(
             id: {{ order_id | json }}
             tags: {{ options.order_tags_to_apply__required_array | json }}
           ) {

@@ -1,6 +1,6 @@
 # Auto-tag orders that contain a matching product
 
-This task watches for incoming orders, and tags them if they contain a product that matches by title or by product tags. Run this task manually to scan your store's order history, tagging older orders that qualify.
+This task watches for incoming orders, and tags them if they contain a product that matches by title or by product tags. Additionally, edited orders will have tags added or removed in line with product additions or removals. Run this task manually to scan your store's order history, tagging older orders that qualify, and untagging those that have been edited and no longer do.
 
 * View in the task library: [usemechanic.com/task/auto-tag-orders-that-contain-a-matching-product](https://usemechanic.com/task/auto-tag-orders-that-contain-a-matching-product)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-orders-that-contain-a-matching-product.json)
@@ -22,6 +22,7 @@ This task watches for incoming orders, and tags them if they contain a product t
 
 ```liquid
 shopify/orders/create
+shopify/orders/edited
 mechanic/user/trigger
 mechanic/shopify/bulk_operation
 ```
@@ -30,7 +31,7 @@ mechanic/shopify/bulk_operation
 
 ## Documentation
 
-This task watches for incoming orders, and tags them if they contain a product that matches by title or by product tags. Run this task manually to scan your store's order history, tagging older orders that qualify.
+This task watches for incoming orders, and tags them if they contain a product that matches by title or by product tags. Additionally, edited orders will have tags added or removed in line with product additions or removals. Run this task manually to scan your store's order history, tagging older orders that qualify, and untagging those that have been edited and no longer do.
 
 Note: If more than one required product tag is specified, this task will look for products that _individually_ contain _all_ of the tags provided.
 
