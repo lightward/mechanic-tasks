@@ -12,7 +12,7 @@
 
 {% if event.topic contains "shopify/orders/" %}
   {% if order_edit %}
-    {% assign order = shop.orders[order_edit.order_id] %}
+    {% assign order = order_edit.order %}
   {% endif %}
 
   {% if event.preview %}
