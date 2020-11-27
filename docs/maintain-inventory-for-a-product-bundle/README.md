@@ -50,7 +50,7 @@ Requirements:
 
 Notes:
 
-* Whenever this task runs, manual inventory updates to the bundle product will be overwritten.
+* Whenever this task runs, any inventory updates to the bundle product will be overwritten. For the purposes of this task, the bundle's inventory is exclusively derived from the inventory of its components. (This also means that this task does not support "nested" bundles, in which a bundle component product is itself a bundle managed by another copy of this task.)
 * Feel free to manually adjust inventory for component products. The bundle product's inventory will be synced appropriately.
 * Use the "Inventory buffer quantity" option to artificially keep the bundle product's inventory lower than the actual available quantity.
 
