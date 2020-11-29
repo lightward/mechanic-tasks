@@ -8,38 +8,10 @@
   {{ options.period_to_wait_is_in_days__boolean }}
   {{ options.tag_to_add_to_the_order }}
   {{ options.void_payment_when_possible__boolean }}
-  {{ options.cancel_fulfillment_and_restock_to_default_location__boolean }}
+  {{ options.restock_line_items__boolean }}
   {{ options.send_cancellation_email_to_customer__boolean }}
   {{ options.test_mode__boolean }}
 {% endcomment %}
-
-{% if event.preview %}
-  {% capture orders_json %}
-    [
-      {
-        "id": 1234567890,
-        "name": "#1234",
-        "admin_graphql_api_id": "gid://shopify/Order/1234567890",
-        "processed_at": "1990-01-01",
-        "tags": {{ options.only_process_orders_having_this_tag | json }},
-        "line_items": [
-          {
-            "id": 1234567890,
-            "fulfillable_quantity": 5,
-            "variant_inventory_management": "shopify"
-          }
-        ]
-      }
-    ]
-  {% endcapture %}
-  {% assign orders = orders_json | parse_json %}
-{% else %}
-  {% assign orders = shop.orders.any.pending %}
-{% endif %}
-
-{% if options.test_mode__boolean %}
-  {% assign test_mode_summaries = array %}
-{% endif %}
 
 {% if options.period_to_wait_before_checking_each_order__number_required <= 0 %}
   {% error "Period must be positive! :)" %}
@@ -56,96 +28,207 @@
 {% assign period_s = period_unit | times: options.period_to_wait_before_checking_each_order__number_required %}
 {% assign maximum_date_s = "now" | date: "%s" | minus: period_s %}
 
-{% for order in orders %}
-  {% assign order_tags = order.tags | split: ", " %}
+{% if options.test_mode__boolean %}
+  {% assign test_mode_summaries = array %}
+{% endif %}
 
+{% capture orders_query %}
+  financial_status:pending
   {% if options.only_process_orders_having_this_tag != blank %}
-    {% unless order_tags contains options.only_process_orders_having_this_tag %}
-      {% continue %}
-    {% endunless %}
+    AND tag:{{ options.only_process_orders_having_this_tag | strip | json }}
+  {% endif %}
+  {% if options.ignore_orders_having_this_tag != blank %}
+    AND -tag:{{ options.ignore_orders_having_this_tag | strip | json }}
+  {% endif %}
+{% endcapture %}
+
+{% assign orders_query = orders_query | strip_newlines %}
+
+{% log orders_query: orders_query %}
+
+{% assign cursor = nil %}
+
+{% for n in (0..1000) %}
+  {% capture query %}
+    query {
+      orders(
+        first: 5
+        after: {{ cursor | json }}
+        query: {{ orders_query | json }}
+      ) {
+        pageInfo {
+          hasNextPage
+        }
+        edges {
+          cursor
+          node {
+            id
+            name
+            createdAt
+            processedAt
+            cancelledAt
+            closedAt
+            tags
+            lineItems(first: 25) {
+              edges {
+                node {
+                  id
+                  fulfillableQuantity
+                  quantity
+                  variant {
+                    fulfillmentService {
+                      location {
+                        id
+                      }
+                    }
+                    inventoryItem {
+                      tracked
+                    }
+                  }
+                }
+              }
+            }
+            transactions {
+              id
+              gateway
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "orders": {
+            "edges": [
+              {
+                "node": {
+                  "id": "gid://shopify/Order/1234567890",
+                  "name": "#1234",
+                  "processedAt": "1990-01-01",
+                  "cancelledAt": null,
+                  "closedAt": null,
+                  "tags": [
+                    {{ options.only_process_orders_having_this_tag | strip | json }}
+                  ],
+                  "lineItems": {
+                    "edges": [
+                      {
+                        "node": {
+                          "id": "gid://shopify/LineItem/1234567890",
+                          "fulfillableQuantity": 5,
+                          "variant": {
+                            "fulfillmentService": {
+                              "location": {
+                                "id": "gid://shopify/Location/1234567890"
+                              }
+                            },
+                            "inventoryItem": {
+                              "tracked": true
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "transactions": [
+                    {
+                      "id": "gid://shopify/OrderTransaction/3450649575529",
+                      "gateway": "manual"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
   {% endif %}
 
-  {% if options.ignore_orders_having_this_tag != blank %}
-    {% if order_tags contains options.ignore_orders_having_this_tag %}
+  {% for edge in result.data.orders.edges %}
+    {% assign order = edge.node %}
+
+    {% assign processed_at_s = order.processedAt | default: order.createdAt | date: "%s" | times: 1 %}
+
+    {% if processed_at_s > maximum_date_s %}
       {% continue %}
     {% endif %}
-  {% endif %}
 
-  {% assign processed_at_s = order.processed_at | default: order.created_at | date: "%s" | times: 1 %}
+    {% assign summary = hash %}
+    {% assign summary["order_name"] = order.name %}
+    {% assign summary["order_id"] = order.id %}
+    {% assign summary["order_processed_at"] = processed_at_s | date: "%FT%T%:z" %}
+    {% assign summary["threshold_processed_at"] = maximum_date_s | date: "%FT%T%:z" %}
 
-  {% if processed_at_s > maximum_date_s %}
-    {% continue %}
-  {% endif %}
+    {% if order.cancelledAt == blank %}
+      {% assign summary["qualifies_for_cancellation"] = true %}
+    {% else %}
+      {% assign summary["qualifies_for_cancellation"] = false %}
+    {% endif %}
 
-  {% assign summary = hash %}
-  {% assign summary["order_name"] = order.name %}
-  {% assign summary["order_id"] = order.id %}
-  {% assign summary["order_processed_at"] = processed_at_s | date: "%FT%T%:z" %}
-  {% assign summary["threshold_processed_at"] = maximum_date_s | date: "%FT%T%:z" %}
+    {% if order.closedAt == blank %}
+      {% assign summary["qualifies_for_closing"] = true %}
+    {% else %}
+      {% assign summary["qualifies_for_closing"] = false %}
+    {% endif %}
 
-  {% if order.cancelled_at == blank %}
-    {% assign summary["qualifies_for_cancellation"] = true %}
-  {% else %}
-    {% assign summary["qualifies_for_cancellation"] = false %}
-  {% endif %}
+    {% assign summary["qualifies_for_tagging"] = false %}
+    {% if options.tag_to_add_to_the_order != blank %}
+      {% assign order_tags = order.tags | downcase %}
+      {% assign order_tag_to_match = options.tag_to_add_to_the_order | downcase | strip %}
+      {% unless order_tags contains order_tag_to_match %}
+        {% assign summary["qualifies_for_tagging"] = true %}
+      {% endunless %}
+    {% endif %}
 
-  {% if order.closed_at == blank %}
-    {% assign summary["qualifies_for_closing"] = true %}
-  {% else %}
-    {% assign summary["qualifies_for_closing"] = false %}
-  {% endif %}
-
-  {% assign summary["qualifies_for_tagging"] = false %}
-  {% if options.tag_to_add_to_the_order != blank %}
-    {% assign order_tags = order.tags | downcase | split: ", " %}
-    {% assign order_tag_to_match = options.tag_to_add_to_the_order | downcase | strip %}
-    {% unless order_tags contains order_tag_to_match %}
-      {% assign summary["qualifies_for_tagging"] = true %}
+    {% unless summary.qualifies_for_cancellation or summary.qualifies_for_closing or summary.qualifies_for_tagging %}
+      {% continue %}
     {% endunless %}
-  {% endif %}
 
-  {% unless summary.qualifies_for_cancellation or summary.qualifies_for_closing or summary.qualifies_for_tagging %}
-    {% continue %}
-  {% endunless %}
+    {% if options.test_mode__boolean %}
+      {% assign test_mode_summaries[test_mode_summaries.size] = summary %}
+      {% continue %}
+    {% endif %}
 
-  {% if options.test_mode__boolean %}
-    {% assign test_mode_summaries[test_mode_summaries.size] = summary %}
-    {% continue %}
-  {% endif %}
+    {% log summary %}
 
-  {% log summary %}
-
-  {% if summary.qualifies_for_cancellation %}
-    {% action "shopify" %}
-      [
-        "post",
-        "/admin/orders/{{ order.id }}/cancel.json",
-        {
-          "refund": {
-            "note": {{ task.name | json }},
+    {% if summary.qualifies_for_cancellation %}
+      {% action "shopify" %}
+        mutation {
+          refundCreate(input: {
+            orderId: {{ order.id | json }}
             {% assign transaction = order.transactions.first %}
             {% if options.void_payment_when_possible__boolean and transaction != nil %}
-              "transactions": [
+              transactions: [
                 {
-                  "parent_id": {{ transaction.id | json }},
-                  "amount": "0.0",
-                  "kind": "void",
-                  "gateway": {{ transaction.gateway | json }}
+                  amount: "0.0"
+                  gateway: {{ transaction.gateway | json }}
+                  kind: VOID
+                  orderId: {{ order.id | json }}
+                  parentId: {{ transaction.id | json }}
                 }
-              ],
+              ]
             {% endif %}
-            "refund_line_items": [
-              {% for line_item in order.line_items %}
+            refundLineItems: [
+              {% assign line_items = order.lineItems.edges | map: "node" %}
+              {% for line_item in line_items %}
                 {
-                  "line_item_id": {{ line_item.id | json }},
-
-                  {% if options.cancel_fulfillment_and_restock_to_default_location__boolean and line_item.variant_inventory_management == "shopify" %}
-                    "restock_type": "cancel",
-                    "quantity": {{ line_item.fulfillable_quantity | default: line_item.quantity | json }},
-                    "location_id": {{ shop.primary_location_id | json }}
+                  lineItemId: {{ line_item.id | json }}
+                  {% if options.restock_line_items__boolean and line_item.variant.inventoryItem.tracked %}
+                    locationId: {{ line_item.variant.fulfillmentService.location.id | json }}
+                    quantity: {{ line_item.fulfillableQuantity | default: line_item.quantity | json }}
+                    restockType: RETURN
                   {% else %}
-                    "restock_type": "no_restock",
-                    "quantity": 0
+                    quantity: 0
+                    restockType: NO_RESTOCK
                   {% endif %}
                 }
                 {% unless forloop.last %}
@@ -153,46 +236,58 @@
                 {% endunless %}
               {% endfor %}
             ]
-          },
-          "email": {{ options.send_cancellation_email_to_customer__boolean | json }}
+            notify: {{ options.send_cancellation_email_to_customer__boolean | json }}
+            note: {{ task.name | json }}
+          }) {
+            userErrors {
+              field
+              message
+            }
+          }
         }
-      ]
-    {% endaction %}
-  {% endif %}
+      {% endaction %}
+    {% endif %}
 
-  {% if summary.qualifies_for_closing or summary.qualifies_for_tagging %}
-    {% action "shopify" %}
-      mutation {
-        {% if summary.qualifies_for_closing %}
-          orderClose(
-            input: {
-              id: {{ order.admin_graphql_api_id | json }}
+    {% if summary.qualifies_for_closing or summary.qualifies_for_tagging %}
+      {% action "shopify" %}
+        mutation {
+          {% if summary.qualifies_for_closing %}
+            orderClose(
+              input: {
+                id: {{ order.id | json }}
+              }
+            ) {
+              order {
+                closed
+                closedAt
+              }
+              userErrors {
+                field
+                message
+              }
             }
-          ) {
-            order {
-              closed
-              closedAt
-            }
-            userErrors {
-              field
-              message
-            }
-          }
-        {% endif %}
+          {% endif %}
 
-        {% if summary.qualifies_for_tagging %}
-          tagsAdd(
-            id: {{ order.admin_graphql_api_id | json }}
-            tags: {{ options.tag_to_add_to_the_order | json }}
-          ) {
-            userErrors {
-              field
-              message
+          {% if summary.qualifies_for_tagging %}
+            tagsAdd(
+              id: {{ order.id | json }}
+              tags: {{ options.tag_to_add_to_the_order | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
             }
-          }
-        {% endif %}
-      }
-    {% endaction %}
+          {% endif %}
+        }
+      {% endaction %}
+    {% endif %}
+  {% endfor %}
+
+  {% if result.data.orders.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.orders.edges.last.cursor %}
+  {% else %}
+    {% break %}
   {% endif %}
 {% endfor %}
 
