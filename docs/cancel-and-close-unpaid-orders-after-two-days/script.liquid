@@ -170,7 +170,7 @@
 
     {% assign summary["qualifies_for_tagging"] = false %}
     {% if options.tag_to_add_to_the_order != blank %}
-      {% assign order_tags = order.tags | downcase %}
+      {% assign order_tags = order.tags | join: "," | downcase | split: "," %}
       {% assign order_tag_to_match = options.tag_to_add_to_the_order | downcase | strip %}
       {% unless order_tags contains order_tag_to_match %}
         {% assign summary["qualifies_for_tagging"] = true %}
