@@ -1,3 +1,32 @@
+{% unless event.preview %}
+  {% capture query %}
+    query {
+      publications(first: 250) {
+        edges {
+          node {
+            id
+            name
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% assign available_channels = result.data.publications.edges | map: "node" | map: "name" %}
+
+  {% assign sales_channel_names = array %}
+
+  {% for keyval in options.sales_channel_names_and_tags__keyval_required %}
+    {% assign sales_channel_names[sales_channel_names.size] = keyval.first %}
+  {% endfor %}
+
+  {% if available_channels.size != sales_channel_names.size %}
+    {% error message: "Didn't find all configured sales channels. Please check the list of available channels, and compare it with the list of configured channels.", available_channels: available_channels, configured_channels: sales_channel_names %}
+  {% endif %}
+{% endunless %}
+
 {% assign orders = array %}
 
 {% if event.topic contains "shopify/orders/" %}
@@ -122,4 +151,9 @@
       }
     {% endaction %}
   {% endif %}
+
+  {% if tag_to_add == blank %}
+    {% log message: "No tag found for this channel. Skipping.", publication_name: publication_name %}
+  {% endif %}
+
 {% endfor %}
