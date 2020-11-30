@@ -36,7 +36,7 @@ Use this task with the companion unpublishing task (see this task's documentatio
 
 For best results, pair this task with [Unpublish a certain collection, daily](https://usemechanic.com/task/unpublish-a-certain-collection-daily), from our task library.
 
-To configure this task, navigate to the collection you'd like to use in the Shopify admin. Copy _just_ the numeric portion from the URL (e.g. `12345`, if the collection URL is `https://example.myshopify.com/admin/collections/12345`), and use this as the "Collection ID" setting for this task.
+To configure this task, enter the "Collection ID" for the collection you wish to publish. Refer to this [article](https://docs.usemechanic.com/article/360-how-do-i-find-an-id-for-a-product-collection-order-or-something-else) for assistance on finding Shopify object IDs.
 
 Out of the box, this task will publish everything in this collection at 9am on weekdays, and 10am on weekends. To adjust this, click the "Show Advanced" link, and tweak the "Subscriptions" setting to taste. Each line represents midnight in your shop's local timezone, plus whatever number of hours you prefer. For example, `mechanic/scheduler/tuesday+13.hours` would mean Tuesday at 1pm.
 
