@@ -48,11 +48,11 @@
 
 {% assign cursor = nil %}
 
-{% for n in (0..1000) %}
+{% for n in (0..100) %}
   {% capture query %}
     query {
       orders(
-        first: 5
+        first: 50
         after: {{ cursor | json }}
         query: {{ orders_query | json }}
       ) {
@@ -69,22 +69,16 @@
             cancelledAt
             closedAt
             tags
-            lineItems(first: 25) {
-              edges {
-                node {
+            suggestedRefund(suggestFullRefund: true) {
+              refundLineItems {
+                lineItem {
                   id
                   fulfillableQuantity
                   quantity
-                  variant {
-                    fulfillmentService {
-                      location {
-                        id
-                      }
-                    }
-                    inventoryItem {
-                      tracked
-                    }
-                  }
+                  restockable
+                }
+                location {
+                  id
                 }
               }
             }
@@ -116,30 +110,24 @@
                   "tags": [
                     {{ options.only_process_orders_having_this_tag | strip | json }}
                   ],
-                  "lineItems": {
-                    "edges": [
+                  "suggestedRefund": {
+                    "refundLineItems": [
                       {
-                        "node": {
+                        "lineItem": {
                           "id": "gid://shopify/LineItem/1234567890",
                           "fulfillableQuantity": 5,
-                          "variant": {
-                            "fulfillmentService": {
-                              "location": {
-                                "id": "gid://shopify/Location/1234567890"
-                              }
-                            },
-                            "inventoryItem": {
-                              "tracked": true
-                            }
-                          }
+                          "restockable": true
+                        },
+                        "location": {
+                          "id": "gid://shopify/Location/1234567890"
                         }
                       }
                     ]
                   },
                   "transactions": [
                     {
-                      "id": "gid://shopify/OrderTransaction/3450649575529",
-                      "gateway": "manual"
+                      "id": "gid://shopify/OrderTransaction/1234567890",
+                      "gateway": "bogus"
                     }
                   ]
                 }
@@ -218,12 +206,12 @@
               ]
             {% endif %}
             refundLineItems: [
-              {% assign line_items = order.lineItems.edges | map: "node" %}
-              {% for line_item in line_items %}
+              {% for refund_line_item in order.suggestedRefund.refundLineItems %}
+                {% assign line_item = refund_line_item.lineItem %}
                 {
                   lineItemId: {{ line_item.id | json }}
-                  {% if options.restock_line_items__boolean and line_item.variant.inventoryItem.tracked %}
-                    locationId: {{ line_item.variant.fulfillmentService.location.id | json }}
+                  {% if options.restock_line_items__boolean and line_item.restockable %}
+                    locationId: {{ refund_line_item.location.id | json }}
                     quantity: {{ line_item.fulfillableQuantity | default: line_item.quantity | json }}
                     restockType: RETURN
                   {% else %}
