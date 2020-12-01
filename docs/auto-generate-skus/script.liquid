@@ -1,17 +1,39 @@
 {% if event.preview %}
-  {% action "shopify" %}
-    [
-      "update",
-      ["variant", 1234567890],
-      {
-        "sku": "503-XL-H"
-      }
-    ]
-  {% endaction %}
-{% elsif product.variants.size == 1 %}
-  {"log": "The product only has one variant, and therefore has no product options from which a SKU can be generated; skipping update"}
+  {% capture product_json %}
+    {
+      "handle": "stylish-shirt-503",
+      "variants": [
+        {
+          "sku": "503-L-B",
+          "option1": "L",
+          "option2": "Black",
+          "admin_graphql_api_id": "gid://shopify/ProductVariant/1234567890"
+        },
+        {
+          "sku": "503-XL-G",
+          "option1": "XL",
+          "option2": "Heather Grey",
+          "admin_graphql_api_id": "gid://shopify/ProductVariant/2345678901"
+        }
+      ],
+      "options": [
+        {
+          "name": "Size"
+        },
+        {
+          "name": "Color"
+        }
+      ]
+    }
+  {% endcapture %}
+
+  {% assign product = product_json | parse_json %}
+{% endif %}
+
+{% if product.variants.size == 1 %}
+  {% log "The product only has one variant, and therefore has no product options from which a SKU can be generated; skipping update" %}
 {% else %}
-  {% assign all_caps = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
+  {% assign allowed_characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890" %}
 
   {% assign sku_base = product.handle | split: "-" | last | upcase %}
 
@@ -36,7 +58,7 @@
         {% assign variant_option_abbreviation = "" %}
         {% assign variant_option_characters = variant_option | split: "" %}
         {% for variant_option_character in variant_option_characters %}
-          {% if all_caps contains variant_option_character %}
+          {% if allowed_characters contains variant_option_character %}
             {% assign variant_option_abbreviation = variant_option_abbreviation | append: variant_option_character %}
           {% endif %}
         {% endfor %}
@@ -50,14 +72,20 @@
     {% endfor %}
 
     {% if variant_sku_generated != variant.sku %}
+      {% log message: "updating sku", original_sku: variant.sku, generated_sku: variant_sku_generated %}
+
       {% action "shopify" %}
-        [
-          "update",
-          ["variant", {{ variant.id | json }}],
-          {
-            "sku": {{ variant_sku_generated | json }}
+        mutation {
+          productVariantUpdate(input: {
+            id: {{ variant.admin_graphql_api_id | json }}
+            sku: {{ variant_sku_generated | json }}
+          }) {
+            userErrors {
+              field
+              message
+            }
           }
-        ]
+        }
       {% endaction %}
     {% endif %}
   {% endfor %}
