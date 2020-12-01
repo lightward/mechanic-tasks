@@ -33,7 +33,7 @@
 {% if product.variants.size == 1 %}
   {% log "The product only has one variant, and therefore has no product options from which a SKU can be generated; skipping update" %}
 {% else %}
-  {% assign allowed_characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890" %}
+  {% assign allowed_characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" %}
 
   {% assign sku_base = product.handle | split: "-" | last | upcase %}
 
