@@ -1,37 +1,73 @@
+{% assign collection = shop.collections[options.collection_id__required] %}
+
+{% if collection == blank and event.preview != true %}
+  {% error message: "Collection ID does not exist in this shop. Refer to task notes for help on locating Shopify object IDs.", collection_id: options.collection_id__required %}
+{% endif %}
+
+{% capture query %}
+  query {
+    publications(first: 250) {
+      edges {
+        node {
+          id
+          name
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
 {% if event.preview %}
-  {
-    "action": {
-      "type": "shopify",
-      "options": [
-        "update",
-        [
-          "product",
-          12345
-        ],
+  {% capture result_json %}
+    {
+      "data": {
+        "publications": {
+          "edges": [
+            {
+              "node": {
+                "id": "gid://shopify/Publication/1234567890",
+                "name": "Online Store"
+              }
+            }
+          ]
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+
+  {% capture collection_json %}
+    {
+      "products": [
         {
-          "published": false
+          "admin_graphql_api_id": "gid://shopify/Product/1234567890"
         }
       ]
     }
-  }
-{% else %}
-  {% assign collection = shop.collections[options.collection_id__required] %}
+  {% endcapture %}
 
-  {% for product in collection.products %}
-    {
-      "action": {
-        "type": "shopify",
-        "options": [
-          "update",
-          [
-            "product",
-            {{ product.id }}
-          ],
-          {
-            "published": false
-          }
-        ]
+  {% assign collection = collection_json | parse_json %}
+{% endif %}
+
+{% assign online_store_publication = result.data.publications.edges | map: "node" | where: "name", "Online Store" | first %}
+
+{% for product in collection.products %}
+  {% action "shopify" %}
+    mutation {
+      publishableUnpublish(
+        id: {{ product.admin_graphql_api_id | json }}
+        input: {
+          publicationId: {{ online_store_publication.id | json }}
+        }
+      ) {
+        userErrors {
+          field
+          message
+        }
       }
     }
-  {% endfor %}
-{% endif %}
+  {% endaction %}
+{% endfor %}
