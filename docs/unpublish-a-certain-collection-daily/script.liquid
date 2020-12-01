@@ -1,6 +1,6 @@
 {% assign collection = shop.collections[options.collection_id__required] %}
 
-{% if collection == blank and event.preview == false %}
+{% if collection == blank and event.preview != true %}
   {% error message: "Collection ID does not exist in this shop. Refer to task notes for help on locating Shopify object IDs.", collection_id: options.collection_id__required %}
 {% endif %}
 
