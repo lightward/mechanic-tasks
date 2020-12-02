@@ -17,7 +17,7 @@ Clear the clutter in your orders list, automatically! On a scheduled basis or on
   "period_to_wait_is_in_days__boolean": true,
   "tag_to_add_to_the_order": null,
   "void_payment_when_possible__boolean": null,
-  "restock_line_items__boolean": null,
+  "cancel_fulfillment_and_restock_to_default_location__boolean": null,
   "send_cancellation_email_to_customer__boolean": false,
   "test_mode__boolean": true
 }
