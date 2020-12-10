@@ -46,6 +46,8 @@
     {% assign result = query | shopify %}
 
     {% if event.preview %}
+      {% assign inventory_is_zeroed = false %}
+
       {% capture result_json %}
         {
           "data": {
