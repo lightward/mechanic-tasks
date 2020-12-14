@@ -1,0 +1,116 @@
+{% capture query %}
+  query {
+    deliveryProfile(id: {{ "gid://shopify/DeliveryProfile/" | append: options.delivery_profile_id__required_number | json }}) {
+      name
+      id
+    }
+
+    product(id: {{ product.admin_graphql_api_id | json }}) {
+      id
+      tags
+      variants(first: 250) {
+        pageInfo {
+          hasNextPage
+        }
+        edges {
+          node {
+            id
+            deliveryProfile {
+              id
+            }
+          }
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "deliveryProfile": {
+          "name": "General Profile",
+          "id": "gid://shopify/DeliveryProfile/1234567890"
+        },
+        "product": {
+          "id": "gid://shopify/Product/1234567890",
+          "tags": [{{ options.required_product_tag__required | json }}],
+          "variants": {
+            "pageInfo": {
+              "hasNextPage": false
+            },
+            "edges": [
+              {
+                "node": {
+                  "id": "gid://shopify/ProductVariant/1234567890",
+                  "deliveryProfile": {
+                    "id": "gid://shopify/DeliveryProfile/2345678901"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% assign deliveryProfile = result.data.deliveryProfile %}
+{% assign product = result.data.product %}
+
+{% if result.data.deliveryProfile == nil %}
+  {% error message: "Delivery profile not found! Please double-check the profile ID.", delivery_profile_id: options.delivery_profile_id__required_number %}
+{% else %}
+  {% log delivery_profile: deliveryProfile, product: product %}
+{% endif %}
+
+{% if product.variants.pageInfo.hasNextPage %}
+  {% log "Warning: This product has more than 250 variants. Only the first 250 will be handled." %}
+{% endif %}
+
+{% assign variant_ids_to_associate = array %}
+{% assign variant_ids_to_dissociate = array %}
+
+{% for variant_edge in product.variants.edges %}
+  {% assign variant = variant_edge.node %}
+
+  {% if product.tags contains options.required_product_tag__required %}
+    {% if variant.deliveryProfile.id != deliveryProfile.id %}
+      {% assign variant_ids_to_associate[variant_ids_to_associate.size] = variant.id %}
+    {% endif %}
+  {% else %}
+    {% if variant.deliveryProfile.id == deliveryProfile.id %}
+      {% assign variant_ids_to_dissociate[variant_ids_to_dissociate.size] = variant.id %}
+    {% endif %}
+  {% endif %}
+{% endfor %}
+
+{% if variant_ids_to_associate != empty or variant_ids_to_dissociate != empty %}
+  {% action "shopify" %}
+    mutation {
+      deliveryProfileUpdate(
+        id: {{ deliveryProfile.id | json }}
+        profile: {
+          {% if variant_ids_to_associate != empty %}
+            variantsToAssociate: {{ variant_ids_to_associate | json }}
+          {% endif %}
+
+          {% if variant_ids_to_dissociate != empty %}
+            variantsToDissociate: {{ variant_ids_to_dissociate | json }}
+          {% endif %}
+        }
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}

@@ -20,6 +20,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-add products to a custom collection when tagged](./auto-add-products-to-a-custom-collection-when-tagged)
 * [Auto-add the draft order ID to an order's attributes](./auto-add-the-draft-order-id-to-an-orders-attributes)
 * [Auto-archive orders after fulfillment](./auto-archive-orders-after-fulfillment)
+* [Auto-associate products with a delivery profile, by product tag](./auto-associate-products-with-a-delivery-profile-by-product-tag)
 * [Auto-cancel fulfillments when an order is tagged](./auto-cancel-fulfillments-when-an-order-is-tagged)
 * [Auto-cancel orders with too many of a certain SKU](./auto-cancel-orders-with-too-many-of-a-certain-sku)
 * [Auto-capture order payment after x days](./auto-capture-order-payment-after-30-days)
