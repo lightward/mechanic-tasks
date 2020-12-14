@@ -21,10 +21,6 @@
   {% for keyval in options.sales_channel_names_and_tags__keyval_required %}
     {% assign sales_channel_names[sales_channel_names.size] = keyval.first %}
   {% endfor %}
-
-  {% if available_channels.size != sales_channel_names.size %}
-    {% error message: "Didn't find all configured sales channels. Please check the list of available channels, and compare it with the list of configured channels.", available_channels: available_channels, configured_channels: sales_channel_names %}
-  {% endif %}
 {% endunless %}
 
 {% assign orders = array %}
@@ -133,7 +129,7 @@
   {% assign tag_to_add = options.sales_channel_names_and_tags__keyval_required[publication_name] %}
 
   {% if tag_to_add == blank %}
-    {% log order_id: order.id, order_name: order.name, message: "No tag found for this channel. Skipping.", publication_name: publication_name %}
+    {% log order_id: order.id, order_name: order.name, message: "No tag configured for this channel. Skipping.", publication_name: publication_name, available_channels: available_channels %}
   {% elsif result.data.order.tags contains tag_to_add %}
     {% log order_id: order.id, order_name: order.name, message: "The order already has the tag for this channel. Skipping.", publication_name: publication_name, tag_to_add: tag_to_add %}
   {% else %}
@@ -151,9 +147,4 @@
       }
     {% endaction %}
   {% endif %}
-
-  {% if tag_to_add == blank %}
-    {% log message: "No tag found for this channel. Skipping.", publication_name: publication_name %}
-  {% endif %}
-
 {% endfor %}
