@@ -34,6 +34,15 @@
           "id": 4567890123,
           "requires_shipping": true,
           "fulfillment_status": "fulfilled"
+        },
+        {
+          "id": 5678901234,
+          "requires_shipping": false,
+          "fulfillment_status": null,
+          "tip": {
+            "payment_method": "shopify_payments",
+            "payment_gateway": "shopify_payments"
+          }
         }
       ]
     }
@@ -44,6 +53,14 @@
 
 {% assign unfulfilled_line_items = array %}
 {% for line_item in order.line_items %}
+  {% if line_item.tip %}
+    {% comment %}
+      Tips can't be fulfilled!
+    {% endcomment %}
+
+    {% continue %}
+  {% endif %}
+
   {% if options.ignore_products_with_this_tag != blank %}
     {% assign line_item_product_tags = line_item.product.tags | split: ", " %}
     {% if line_item_product_tags contains options.ignore_products_with_this_tag %}
