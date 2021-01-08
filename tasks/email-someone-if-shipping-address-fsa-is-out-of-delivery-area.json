@@ -1,21 +1,19 @@
 {
-   "name":"Email Someone if Shipping Address FSA is out of delivery area",
-   "options":{
-      "allowed_fsa__required":"",
-      "email_recipients__required":"",
-      "email_subject__required":"Order {{ order.name }} may be out of delivery zone",
-      "email_body__required_multiline":"Hi team,\n\nPlease see details for order {{ order.name }}:\n\nhttps://{{ shop.myshopify_domain }}/admin/orders/{{ order.id }}\n\nIt looks like this might be out of our delivery zone!\n\nThanks,\n- Mechanic, for {{ shop.name }}"
-   },
-   "subscriptions":[
-      "shopify/orders/create"
-   ],
-   "subscriptions_template":"shopify/orders/create",
-   "script":"{% assign available_fsa = options.allowed_fsa__required | split: \",\" %}\n{% assign order_fsa = order.shipping_address.zip | slice: 0, 3 %}\n\n{% if available_fsa contains order_fsa %}\n\t{% assign order_disqualified = false %}\n  {% log %}\n    {{ \"The Fsa (\" | append: order_fsa | append: \") for order: \" | append: order.name | append: \" should be in our delivery area.\" | json }}\n  {% endlog %}\n{% else %}\n\t{% assign order_disqualified = true %}\n{% endif %}\n\n{% if event.preview or order_disqualified %}\n  {\n    \"action\": {\n      \"type\": \"email\",\n      \"options\": {\n        \"to\": {{ options.email_recipients__required | json }},\n        \"subject\": {{ options.email_subject__required | strip | json }},\n        \"body\": {{ options.email_body__required_multiline | newline_to_br | strip | json }},\n        \"reply_to\": {{ shop.customer_email | json }},\n        \"from_display_name\": {{ shop.name | json }}\n      }\n    }\n  }\n\n{% endif %}\n\n{% action \"echo\" %}\n  {\n    \"allowed_fsa\": {{ available_fsa | json }}\n  }\n{% endaction %}",
-   "docs":"This checks an order and sends an email if the shipping address FSA isn't included in the FSA list.\n\nThe FSA list must be the first three characters of the postal code. The postal codes must be seperated by commas and no spaces. The postal codes can be entered in any order.\n\nThe log displays orders whose FSA was was found in the available FSA list.\n\nIt also displays the available FSA in json format to eassily catch if the availability list was input incorrectly.",
-   "halt_action_run_sequence_on_error":false,
-   "liquid_profiling":false,
-   "online_store_javascript":null,
-   "order_status_javascript":null,
-   "perform_action_runs_in_sequence":false,
-   "shopify_api_version":"2021-01"
+  "name": "Email Someone if Shipping Address FSA is out of delivery area",
+  "options": {
+    "allowed_fsa__required": "",
+    "email_recipients__required": "",
+    "email_subject__required": "Order {{ order.name }} may be out of delivery zone",
+    "email_body__required_multiline": "Hi team,\n\nPlease see details for order {{ order.name }}:\n\nhttps://{{ shop.myshopify_domain }}/admin/orders/{{ order.id }}\n\nIt looks like this might be out of our delivery zone!\n\nThanks,\n- Mechanic, for {{ shop.name }}"
+  },
+  "subscriptions": [
+    "shopify/orders/create"
+  ],
+  "subscriptions_template": "shopify/orders/create",
+  "script": "{% assign available_fsa = options.allowed_fsa__required | split: \",\" %}\n{% assign order_fsa = order.shipping_address.zip | slice: 0, 3 %}\n\n{% if available_fsa contains order_fsa %}\n\t{% assign order_disqualified = false %}\n  {% log %}\n    {{ \"The Fsa (\" | append: order_fsa | append: \") for order: \" | append: order.name | append: \" should be in our delivery area.\" | json }}\n  {% endlog %}\n{% else %}\n\t{% assign order_disqualified = true %}\n{% endif %}\n\n{% if event.preview or order_disqualified %}\n  {\n    \"action\": {\n      \"type\": \"email\",\n      \"options\": {\n        \"to\": {{ options.email_recipients__required | json }},\n        \"subject\": {{ options.email_subject__required | strip | json }},\n        \"body\": {{ options.email_body__required_multiline | newline_to_br | strip | json }},\n        \"reply_to\": {{ shop.customer_email | json }},\n        \"from_display_name\": {{ shop.name | json }}\n      }\n    }\n  }\n\n{% endif %}\n\n{% action \"echo\" %}\n  {\n    \"allowed_fsa\": {{ available_fsa | json }}\n  }\n{% endaction %}",
+  "docs": "This checks an order and sends an email if the shipping address FSA isn't included in the FSA list.\n\nThe FSA list must be the first three characters of the postal code. The postal codes must be seperated by commas and no spaces. The postal codes can be entered in any order.\n\nThe log displays orders whose FSA was was found in the available FSA list.\n\nIt also displays the available FSA in json format to eassily catch if the availability list was input incorrectly.",
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false
 }

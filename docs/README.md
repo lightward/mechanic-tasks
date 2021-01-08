@@ -159,6 +159,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Demonstration: Performing action runs in sequence](./demonstration-performing-action-runs-in-sequence)
 * [Demonstration: Web fonts in PDFs](./demonstration-web-fonts-in-pdfs)
 * [Download and email a file to a customer, when purchased](./download-and-email-a-file-to-a-customer-when-purchased)
+* [Email Someone if Shipping Address FSA is out of delivery area](./email-someone-if-shipping-address-fsa-is-out-of-delivery-area)
 * [Email a CSV export of orders](./email-a-csv-export-of-orders)
 * [Email a CSV export of products](./email-a-csv-export-of-products)
 * [Email a report of customers who haven't ordered in X days](./email-a-report-of-customers-who-havent-ordered-in-x-days)
