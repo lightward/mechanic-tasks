@@ -1,6 +1,6 @@
 # Email Someone if Shipping Address FSA is out of delivery area
 
-This checks an order and sends an email if the shipping address FSA isn't included in the FSA list.
+This checks an order and sends an email to someone if the shipping address FSA isn't included in the FSA list.
 
 * View in the task library: [usemechanic.com/task/email-someone-if-shipping-address-fsa-is-out-of-delivery-area](https://usemechanic.com/task/email-someone-if-shipping-address-fsa-is-out-of-delivery-area)
 * Task JSON, for direct import: [task.json](../../tasks/email-someone-if-shipping-address-fsa-is-out-of-delivery-area.json)
@@ -29,13 +29,13 @@ shopify/orders/create
 
 ## Documentation
 
-This checks an order and sends an email if the shipping address FSA isn't included in the FSA list.
+This checks an order and sends an email to someone if the shipping address FSA isn't included in the FSA list.
 
-The FSA list must be the first three characters of the postal code. The postal codes must be seperated by commas and no spaces. The postal codes can be entered in any order.
+The FSA list must be comprised of FSAs in the format 'A1A', without the quotation marks. The FSAs must be seperated by commas and no spaces. The FSAs can be entered in any order.
 
-The log displays orders whose FSA was was found in the available FSA list.
+The task will log orders whose FSA was was found in the available FSA list.
 
-It also displays the available FSA in json format to eassily catch if the availability list was input incorrectly.
+It also displays the available FSA list in json format to more easily catch if there were errors in inputting the availability list.
 
 ## Installing this task
 
