@@ -1,5 +1,5 @@
 {
-   "name":"Email Team if Shipping Address FSA is out of delivery area",
+   "name":"Email Someone if Shipping Address FSA is out of delivery area",
    "options":{
       "allowed_fsa__required":"",
       "email_recipients__required":"",
