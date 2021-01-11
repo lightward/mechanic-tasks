@@ -1,0 +1,32 @@
+{% if event.preview %}
+  {% assign order = hash %}
+  {% assign order["shipping_address"] = hash %}
+  {% assign order["shipping_address"]["name"] = "#1234" %}
+  {% assign order["shipping_address"]["zip"] = "XXX123" %}
+{% endif %}
+
+{% assign available_fsa = options.allowed_fsa__required | split: "," %}
+{% assign order_fsa = order.shipping_address.zip | slice: 0, 3 %}
+
+{% if available_fsa contains order_fsa %}
+  {% assign order_disqualified = false %}
+  {% log %}
+    {{ "The FSA (" | append: order_fsa | append: ") for order: " | append: order.name | append: " should be in our delivery area." | json }}
+  {% endlog %}
+{% else %}
+  {% assign order_disqualified = true %}
+{% endif %}
+
+{% if order_disqualified %}
+  {% action "email" %}
+  {
+    "to": {{ options.email_recipients__required | json }},
+    "subject": {{ options.email_subject__required | strip | json }},
+    "body": {{ options.email_body__required_multiline | newline_to_br | strip | json }},
+    "reply_to": {{ shop.customer_email | json }},
+    "from_display_name": {{ shop.name | json }}
+  }
+  {% endaction %}
+{% endif %}
+
+{% action "echo" allowed_fsa: available_fsa %}
