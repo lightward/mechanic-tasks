@@ -241,6 +241,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Send an email alert when a customer places more than 2 orders in 24 hours](./send-an-email-alert-when-a-customer-places-more-than-2-orders-in-24-hours)
 * [Send an email alert when a fulfillment is cancelled](./send-an-email-alert-when-a-fulfillment-is-cancelled)
 * [Send an email alert when a variant hits 0 total inventory](./send-an-email-alert-when-a-variant-hits-0-total-inventory)
+* [Send an email alert when an incoming Canadian order has an unsupported FSA](./send-an-email-alert-when-an-incoming-canadian-order-has-an-unsupported-fsa)
 * [Send an email to all customers](./send-an-email-to-all-customers)
 * [Send an email when a product's price goes below its cost](./send-an-email-when-a-products-price-goes-below-its-cost)
 * [Send an email when a purchase is made from a certain collection](./send-an-email-when-a-purchase-is-made-from-a-certain-collection)
