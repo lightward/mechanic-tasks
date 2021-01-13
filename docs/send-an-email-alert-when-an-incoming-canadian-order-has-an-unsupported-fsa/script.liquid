@@ -5,13 +5,13 @@
   {% assign order["shipping_address"]["zip"] = "XXX123" %}
 {% endif %}
 
-{% assign available_fsa = options.allowed_fsa__required | split: "," %}
+{% assign supported_fsa_values = options.supported_fsa_values__required_array %}
 {% assign order_fsa = order.shipping_address.zip | slice: 0, 3 %}
 
-{% if available_fsa contains order_fsa %}
+{% if supported_fsa_values contains order_fsa %}
   {% assign order_disqualified = false %}
   {% log %}
-    {{ "The FSA (" | append: order_fsa | append: ") for order: " | append: order.name | append: " should be in our delivery area." | json }}
+    {{ "The FSA (" | append: order_fsa | append: ") for order: " | append: order.name | append: " is on the supported list, and should be in our delivery area." | json }}
   {% endlog %}
 {% else %}
   {% assign order_disqualified = true %}
@@ -29,4 +29,4 @@
   {% endaction %}
 {% endif %}
 
-{% action "echo" allowed_fsa: available_fsa %}
+{% log order_fsa: order_fsa, supported_fsa_values: supported_fsa_values %}

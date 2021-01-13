@@ -10,7 +10,9 @@ Useful for Canadian stores with limited shipping zones, this task inspects [the 
 
 ```json
 {
-  "allowed_fsa__required": "",
+  "supported_fsa_values__required_array": [
+    "K1A"
+  ],
   "email_recipients__required": "",
   "email_subject__required": "Order {{ order.name }} may be out of delivery zone",
   "email_body__required_multiline": "Hi team,\n\nPlease see details for order {{ order.name }}:\n\nhttps://{{ shop.myshopify_domain }}/admin/orders/{{ order.id }}\n\nIt looks like this might be out of our delivery zone!\n\nThanks,\n- Mechanic, for {{ shop.name }}"
