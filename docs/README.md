@@ -151,7 +151,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Delete cancelled orders after 48 hours](./delete-cancelled-orders-after-48-hours)
 * [Delete draft orders older than 30 days](./delete-draft-orders-older-than-30-days)
 * [Delete draft orders](./delete-draft-orders)
-* [Delete product metafields in bulk](./delete-product-metafields-in-bulk)
+* [Delete product or product variant metafields in bulk](./delete-product-or-product-variant-metafields-in-bulk)
 * [Delete the oldest x products from a specific collection](./delete-the-oldest-x-products-from-a-specific-collection)
 * [Delete variants having a metafield date that has passed](./delete-variants-having-a-metafield-date-that-has-passed)
 * [Demonstration: Fetch an external configuration file](./demonstration-fetch-an-external-configuration-file)
