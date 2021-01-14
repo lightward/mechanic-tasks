@@ -1,3 +1,7 @@
+{% if options.order_attribute_name_for_storing_the_draft_order_id == blank and options.order_attribute_name_for_storing_the_draft_order_name == blank %}
+  {% error "Please fill in at least one order attribute name." %}
+{% endif %}
+
 {% if event.preview %}
   {% assign order = hash %}
   {% assign order["admin_graphql_api_id"] = "gid://shopify/Order/1234567890" %}
@@ -46,8 +50,10 @@
 {% endif %}
 
 {% assign event_message = result.data.order.events.edges.first.node.message %}
-{% if event_message contains "created this order from draft order" %}
+{% if event_message contains ".myshopify.com/admin/draft_orders/" %}
   {% assign draft_order_id = event_message | split: "/draft_orders/" | last | split: '"' | first %}
+  {% assign draft_order_name = event_message | split: ">#" | last | split: "</a>" | first | prepend: "#" %}
+
   {% if draft_order_id == blank %}
     {% log message: "Couldn't locate the draft order ID", event_message: event_message %}
   {% else %}
@@ -61,12 +67,20 @@
                 {
                  key: {{ note_attribute.name | json }}
                  value: {{ note_attribute.value | json }}
-                },
+                }
               {% endfor %}
-              {
-                key: {{ options.order_attribute_name_for_storing_the_draft_order_id__required | json }}
-                value: {{ draft_order_id | json }}
-              }
+              {% if options.order_attribute_name_for_storing_the_draft_order_id != blank %}
+                {
+                  key: {{ options.order_attribute_name_for_storing_the_draft_order_id | json }}
+                  value: {{ draft_order_id | json }}
+                }
+              {% endif %}
+              {% if options.order_attribute_name_for_storing_the_draft_order_name != blank %}
+                {
+                  key: {{ options.order_attribute_name_for_storing_the_draft_order_name | json }}
+                  value: {{ draft_order_name | json }}
+                }
+              {% endif %}
             ]
           }
         ) {

@@ -1,6 +1,6 @@
-# Auto-add the draft order ID to an order's attributes
+# Auto-add the draft order to a new order's attributes
 
-When a new order is created from a draft order, this task will automatically add the draft order ID to the custom attributes of the new order.
+When a new order is created from a draft order, this task will automatically add the draft order ID and/or name to the custom attributes of the new order.
 
 * View in the task library: [usemechanic.com/task/auto-add-the-draft-order-id-to-an-orders-attributes](https://usemechanic.com/task/auto-add-the-draft-order-id-to-an-orders-attributes)
 * Task JSON, for direct import: [task.json](../../tasks/auto-add-the-draft-order-id-to-an-orders-attributes.json)
@@ -10,7 +10,8 @@ When a new order is created from a draft order, this task will automatically add
 
 ```json
 {
-  "order_attribute_name_for_storing_the_draft_order_id__required": "Draft order ID"
+  "order_attribute_name_for_storing_the_draft_order_id": "Draft Order ID",
+  "order_attribute_name_for_storing_the_draft_order_name": "Draft Order Name"
 }
 ```
 
@@ -26,7 +27,7 @@ shopify/orders/create
 
 ## Documentation
 
-When a new order is created from a draft order, this task will automatically add the draft order ID to the custom attributes of the new order.
+When a new order is created from a draft order, this task will automatically add the draft order ID and/or name to the custom attributes of the new order.
 
 ## Installing this task
 
