@@ -11,103 +11,56 @@
 {% endif %}
 
 {% if event.topic == "mechanic/user/trigger" %}
-{% comment %} Delete product metafields query {% endcomment %}
-  {% if options.delete_product_metafields__boolean %}
-    {% capture bulk_operation_query %}
-        query {
+  {% capture bulk_operation_query %}
+      query {
+        {% if options.delete_product_metafields__boolean %}
           products {
-            edges {
-              node {
-                __typename
-                id
-                {% if options.metafield_key != blank %}
-                  metafield(
-                    namespace: {{ options.metafield_namespace | json }}
-                    key: {{ options.metafield_key | json }}
-                  ) {
-                    __typename
-                    id
-                    description
-                    namespace
-                    key
-                    value
-                    valueType
-                  }
-                {% else %}
-                  metafields
-                    {% if options.metafield_namespace != blank %}
-                      (
-                      namespace: {{ options.metafield_namespace | json }}
-                      ) 
-                    {% endif %}
-                    {
-                    edges {
-                      node {
-                        __typename
-                        id
-                        description
-                        namespace
-                        key
-                        value
-                        valueType
-                      }
-                    }
-                  }
-                {% endif %}
-              }
-            }
-          }
-        }
-    {% endcapture %}
-  {% comment %} Delete product variant metafields query {% endcomment %} 
-  {% elsif options.delete_product_variant_metafields__boolean %}
-     {% capture bulk_operation_query %}
-        query {
+        {% elsif options.delete_product_variant_metafields__boolean %}
           productVariants {
-            edges {
-              node {
-                __typename
-                id
-                {% if options.metafield_key != blank %}
-                  metafield(
+        {% endif %}
+          edges {
+            node {
+              __typename
+              id
+              {% if options.metafield_key != blank %}
+                metafield(
+                  namespace: {{ options.metafield_namespace | json }}
+                  key: {{ options.metafield_key | json }}
+                ) {
+                  __typename
+                  id
+                  description
+                  namespace
+                  key
+                  value
+                  valueType
+                }
+              {% else %}
+                metafields
+                  {% if options.metafield_namespace != blank %}
+                    (
                     namespace: {{ options.metafield_namespace | json }}
-                    key: {{ options.metafield_key | json }}
-                  ) {
-                    __typename
-                    id
-                    description
-                    namespace
-                    key
-                    value
-                    valueType
-                  }
-                {% else %}
-                 metafields
-                    {% if options.metafield_namespace != blank %}
-                      (
-                      namespace: {{ options.metafield_namespace | json }}
-                      ) 
-                    {% endif %}
-                    {
-                    edges {
-                      node {
-                        __typename
-                        id
-                        description
-                        namespace
-                        key
-                        value
-                        valueType
-                      }
+                    ) 
+                  {% endif %}
+                  {
+                  edges {
+                    node {
+                      __typename
+                      id
+                      description
+                      namespace
+                      key
+                      value
+                      valueType
                     }
                   }
-                {% endif %}
-              }
+                }
+              {% endif %}
             }
           }
         }
-    {% endcapture %}       
-  {% endif %}
+      }
+  {% endcapture %}
 
   {% action "shopify" %}
     mutation {
@@ -148,7 +101,7 @@
 
     {% assign bulkOperation = hash %}
     {% assign bulkOperation["objects"] = objects_jsonl | parse_jsonl %}
-
+    
   {% endif %}
 
   
