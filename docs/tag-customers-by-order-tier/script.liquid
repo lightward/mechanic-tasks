@@ -5,7 +5,7 @@
   {{ options.only_keep_the_customer_tag_for_the_highest_order_minimum__boolean }}
   {{ options.tag_customers_by_number_of_orders__boolean }}
   {{ options.tag_customers_by_sum_of_order_totals__boolean }}
-  {{ options.only_tag_customers_with_an_active_account__boolean }}
+  {{ options.only_process_customers_matching_this_query }}
   {{ options.only_count_orders_matching_this_query }}
   {{ options.run_hourly__boolean }}
   {{ options.run_daily__boolean }}
@@ -18,15 +18,9 @@
 {% endif %}
 
 {% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
-  {% assign customers_query = nil %}
-
-  {% if options.only_tag_customers_with_an_active_account__boolean %}
-    {% assign customers_query = "state:enabled" %}
-  {% endif %}
-
   {% capture bulk_operation_query %}
     query {
-      customers(query: {{ customers_query | json }}) {
+      customers(query: {{ options.only_process_customers_matching_this_query | json }}) {
         edges {
           node {
             __typename

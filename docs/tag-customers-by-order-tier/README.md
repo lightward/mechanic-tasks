@@ -1,6 +1,6 @@
 # Tag customers by order tier
 
-Use this task to tag customers by tier, based on how many orders they've placed or by the sum of all their order totals (i.e. total spend). Optionally, configure an order query, specifying for things like a rolling time period, or fulfillment status. Useful for rewarding customers who establish or maintain a specific spend level.
+Use this task to tag customers by tier, based on how many orders they've placed or by the sum of all their order totals (i.e. total spend). Optionally, configure a customers query, limiting the set of customers that are processed. You may also configure an order query, specifying for things like a rolling time period, or fulfillment status. This task is useful for rewarding customers who establish or maintain a specific spend level.
 
 * View in the task library: [usemechanic.com/task/tag-customers-by-order-tier](https://usemechanic.com/task/tag-customers-by-order-tier)
 * Task JSON, for direct import: [task.json](../../tasks/tag-customers-by-order-tier.json)
@@ -17,7 +17,7 @@ Use this task to tag customers by tier, based on how many orders they've placed 
   "only_keep_the_customer_tag_for_the_highest_order_minimum__boolean": true,
   "tag_customers_by_number_of_orders__boolean": true,
   "tag_customers_by_sum_of_order_totals__boolean": null,
-  "only_tag_customers_with_an_active_account__boolean": null,
+  "only_process_customers_matching_this_query": "state:enabled tag:qualifies",
   "only_count_orders_matching_this_query": "financial_status:paid created_at:>={{ \"now\" | date: \"%s\" | minus: 31536000 | date: \"%Y-%m-%d\" }}",
   "run_hourly__boolean": null,
   "run_daily__boolean": null
@@ -44,11 +44,15 @@ mechanic/shopify/bulk_operation
 
 ## Documentation
 
-Use this task to tag customers by tier, based on how many orders they've placed or by the sum of all their order totals (i.e. total spend). Optionally, configure an order query, specifying for things like a rolling time period, or fulfillment status. Useful for rewarding customers who establish or maintain a specific spend level.
+Use this task to tag customers by tier, based on how many orders they've placed or by the sum of all their order totals (i.e. total spend). Optionally, configure a customers query, limiting the set of customers that are processed. You may also configure an order query, specifying for things like a rolling time period, or fulfillment status. This task is useful for rewarding customers who establish or maintain a specific spend level.
 
-Use this task to tag customers by tier, based on how many orders they've placed or by the sum of all their order totals (i.e. total spend).
+The options for querying customers and orders use the same query syntax as the "Customers" and "Orders" section of the Shopify admin area. For example, to only count customers with enabled online accounts who are tagged with "qualifies", use this customers query:
 
-The "Only count orders matching this query" option uses the same query syntax as the "Orders" section of the Shopify admin area. For example, to only count paid orders from the last 365 days, use this query:
+```
+state:enabled tag:qualifies
+```
+
+To count paid orders from the last 365 days, use this orders query:
 
 ```
 financial_status:paid created_at:>={{ "now" | date: "%s" | minus: 31536000 | date: "%Y-%m-%d" }}
