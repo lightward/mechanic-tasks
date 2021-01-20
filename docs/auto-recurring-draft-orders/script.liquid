@@ -39,7 +39,7 @@
               address1: "123 State St"
               city: "Everyville"
               company: "Widgets Inc"
-              country: "Estaria"
+              countryCodeV2: EE
               firstName: "Victor"
               lastName: "Juarez"
               province: "PK"
@@ -121,7 +121,7 @@
                   address2
                   city
                   company
-                  country
+                  countryCodeV2
                   firstName
                   lastName
                   phone
@@ -174,7 +174,7 @@
                   address2
                   city
                   company
-                  country
+                  countryCodeV2
                   firstName
                   lastName
                   phone
@@ -223,7 +223,7 @@
                     address2: {{ draftOrder.billingAddress.address2 | json }}
                     city: {{ draftOrder.billingAddress.city | json }}
                     company: {{ draftOrder.billingAddress.company | json }}
-                    country: {{ draftOrder.billingAddress.country | json }}
+                    countryCode: {{ draftOrder.billingAddress.countryCodeV2 }}
                     firstName: {{ draftOrder.billingAddress.firstName | json }}
                     lastName: {{ draftOrder.billingAddress.lastName | json }}
                     phone: {{ draftOrder.billingAddress.phone | json }}
@@ -311,7 +311,7 @@
                     address2: {{ draftOrder.shippingAddress.address2 | json }}
                     city: {{ draftOrder.shippingAddress.city | json }}
                     company: {{ draftOrder.shippingAddress.company | json }}
-                    country: {{ draftOrder.shippingAddress.country | json }}
+                    countryCode: {{ draftOrder.shippingAddress.countryCodeV2 }}
                     firstName: {{ draftOrder.shippingAddress.firstName | json }}
                     lastName: {{ draftOrder.shippingAddress.lastName | json }}
                     phone: {{ draftOrder.shippingAddress.phone | json }}
