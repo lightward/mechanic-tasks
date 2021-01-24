@@ -41,11 +41,7 @@ shopify/orders/cancelled
 
 Use this task to auto-tag customers when their historical purchase total falls within a certain range. For example, by configuring this task to evaluate purchase thresholds by number of orders, and by setting the minimum to "1" and the maximum to "12", this task will auto-tag customers who've made at least 1 purchase, and will *remove* the tag when the 13th purchase is made.
 
-Use this task to auto-tag customers when their historical purchase total falls within a certain range. 
-
-For example, by configuring this task to evaluate purchase thresholds by number of orders, and by setting the minimum to "1" and the maximum to "12", this task will auto-tag customers who've made at least 1 purchase, and will *remove* the tag when the 13th purchase is made.
-
-This task can total up purchases by number of orders, adding line item quantities, or by adding line item subtotals. Optionally, choose a specific product ID to filter by. [Learn how to find a product ID](https://help.usemechanic.com/en/articles/2946120-how-do-i-find-an-id-for-a-product-collection-order-or-something-else)
+This task can total up purchases by number of orders, adding line item quantities, or by adding line item subtotals. Optionally, choose a specific product ID to filter by. [Learn how to find a product ID](https://docs.usemechanic.com/article/360-how-do-i-find-an-id-for-a-product-collection-order-or-something-else)
 
 This task will run whenever a new order is created (or paid, if you choose to only count paid orders), and whenever an order is cancelled.
 

@@ -1,6 +1,12 @@
 {% assign purchase_minimum = options.purchase_minimum__number_required %}
 {% assign purchase_maximum = options.purchase_maximum__number_required %}
 
+{% if purchase_minimum < 1 or purchase_maximum < 1 %}
+  {% error "Purchase minimum and maximum should both be greater than zero." %}
+{% elsif purchase_minimum > purchase_maximum %}
+  {% error "Purchase maximum should be equal to or greater than purchase minimum." %}
+{% endif %}
+
 {% assign mode_selections = 0 %}
 {% if options.evaluate_purchase_thresholds_by_number_of_orders__boolean %}
   {% assign mode = "orders" %}
@@ -16,9 +22,9 @@
 {% endif %}
 
 {% if mode_selections == 0 %}
-  {"error": "Choose one method of evaluating the purchase thresholds. :)"}
+  {% error "Choose one method of evaluating the purchase thresholds. :)" %}
 {% elsif mode_selections > 1 %}
-  {"error": "Choose *only* one method of evaluating the purchase thresholds. :)"}
+  {% error "Choose *only* one method of evaluating the purchase thresholds. :)" %}
 {% endif %}
 
 {% assign purchase_total = 0 %}
@@ -28,7 +34,7 @@
   {% assign orders_scope = orders_scope.paid %}
 {% endif %}
 
-{% for some_order in order.customer.orders.any %}
+{% for some_order in orders_scope %}
   {% if some_order.cancelled_at != blank %}
     {% continue %}
   {% endif %}
@@ -45,23 +51,19 @@
     {% when "quantity" %}
       {% assign purchase_total = purchase_total | plus: line_item.quantity %}
     {% when "subtotal" %}
-      {% assign purchase_total = line_item.price | times: line_item.quantity | plus: line_item.quantity %}
+      {% assign purchase_total = line_item.price | times: line_item.quantity | plus: purchase_total %}
     {% endcase %}
   {% endfor %}
 {% endfor %}
 
 {% if event.preview %}
-  {% assign purchase_total = purchase_minimum | plus: 1 %}
+  {% assign purchase_total = purchase_minimum %}
   {% assign customer = '{"admin_graphql_api_id":"gid://shopify/Customer/1234567890","tags":""}' | parse_json %}
 {% else %}
   {% assign customer = order.customer %}
 {% endif %}
 
-{
-  "log": {
-    "purchase_total": {{ purchase_total | json }}
-  }
-}
+{% log message: "Purchase total for this customer", purchase_total: purchase_total  %}
 
 {% assign customer_tags_to_match = customer.tags | downcase | split: ", " %}
 {% assign customer_tag_to_match = options.customer_tag_to_apply__required | downcase %}
