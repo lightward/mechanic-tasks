@@ -122,7 +122,9 @@
 
 {% for order in orders %}
   {% assign publication_name = order.publication.name %}
+
   {% if publication_name == blank %}
+    {% log order_id: order.id, order_name: order.name, message: "No sales channel present for this order; it was probably created by an app (see https://usemechanic.com/task/auto-tag-orders-by-app)." %}
     {% continue %}
   {% endif %}
 

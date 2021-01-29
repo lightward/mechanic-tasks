@@ -10,7 +10,9 @@ Some apps are responsible for placing orders. Use this task to tag orders, both 
 
 ```json
 {
-  "app_titles_and_order_tags__keyval_required": null,
+  "app_titles_and_order_tags__keyval_required": {
+    "SomeApp": "some_app"
+  },
   "test_mode__boolean": null
 }
 ```
@@ -36,6 +38,8 @@ This task scans your incoming orders, tagging them based on the Shopify app resp
 Configure this task with app titles on the left, and order tags to add on the right.
 
 Use the "Test mode" option to see what the task intends to do, without actually having the task actually make any changes to your customers.
+
+Please note: this task works by *app*, and as such does not apply to orders that are created by a *sales channel*. It's sometimes difficult to distinguish whether a third-party is using an app or a sales channel; if you're having trouble with this task, try its companion, [Auto-tag orders by sales channel](https://usemechanic.com/task/auto-tag-orders-by-sales-channel).
 
 ## Installing this task
 

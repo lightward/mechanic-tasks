@@ -33,6 +33,8 @@ mechanic/shopify/bulk_operation
 
 Use this task to tag orders as they come in, based on which sales channel created them. Run this task manually to backfill tags for customers based on their historical orders.
 
+Please note: this task works by *sales channel*, and as such does not apply to orders that are created by an *app*. It's sometimes difficult to distinguish whether a third-party is using a sales channel or an app; if you're having trouble with this task, try its companion, [Auto-tag orders by app](https://usemechanic.com/task/auto-tag-orders-by-app).
+
 ## Installing this task
 
 Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-orders-by-sales-channel), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-orders-by-sales-channel.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
