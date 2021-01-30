@@ -199,7 +199,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Make products unavailable, after the date/time stored in product metafields](./make-products-unavailable-after-the-date-time-stored-in-product-metafields)
 * [Manage annual memberships based on order minimums](./manage-annual-memberships-based-on-order-minimums)
 * [Manage collection templates by product inventory](./manage-collection-templates-by-product-inventory)
-* [Manage fulfillment status using order tags](./manage-fulfillment-status-using-order-tags)
+* [Manage fulfillment shipment status using order tags](./manage-fulfillment-status-using-order-tags)
 * [Manage tagging for a time-limited membership product](./manage-tagging-for-a-time-limited-membership-product)
 * [Mark every new draft order as paid](./mark-every-new-draft-order-as-paid)
 * [Monitor customer note for certain information](./monitor-customer-note-for-certain-information)
