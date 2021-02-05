@@ -2,6 +2,7 @@
   Options order:
 
   {{ options.maximum_daily_orders__number_required }}
+  {{ options.only_count_orders_matching_this_query }}
   {{ options.only_clear_inventory_for_products_with_this_tag }}
   {{ options.prepend_this_html_to_product_description_when_order_limit_is_reached__multiline }}
   {{ options.restore_inventory_levels_the_next_day__boolean }}
@@ -25,13 +26,18 @@
   {% assign description_cache_key = "description_to_restore:" | append: previous_midnight_s %}
   {% assign products_to_update = cache[description_cache_key] | default: hash %}
 
+  {% capture orders_query %}
+    created_at:>={{ previous_midnight | json }} {{ options.only_count_orders_matching_this_query }}
+  {% endcapture %}
+  {% assign orders_query = orders_query | strip %}
+
   {% for n in (0..100) %}
     {% capture query %}
       query {
         orders(
           first: 250
           after: {{ cursor | json }}
-          query: "created_at:>=\"{{ previous_midnight }}\" -status:cancelled"
+          query: {{ orders_query | json }}
         ) {
           pageInfo {
             hasNextPage
@@ -79,7 +85,7 @@
     {% endif %}
   {% endfor %}
 
-  {% log orders_today_thus_far: orders_today, inventory_is_already_zeroed: inventory_is_zeroed %}
+  {% log orders_today_thus_far: orders_today, orders_query: orders_query, inventory_is_already_zeroed: inventory_is_zeroed %}
 
   {% if orders_today >= options.maximum_daily_orders__number_required and inventory_is_zeroed == false %}
     {% action "cache", "set", inventory_is_zeroed_cache_key, true %}
