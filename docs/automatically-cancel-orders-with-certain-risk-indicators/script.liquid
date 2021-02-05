@@ -55,7 +55,7 @@
     {% capture query %}
       query {
         order(id: {{ order.admin_graphql_api_id | json }}) {
-          suggestedRefund(suggestFullRefund: true) {
+          suggestedRefund(suggestFullRefund: true, refundShipping: true) {
             amountSet {
               shopMoney {
                 amount
