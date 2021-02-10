@@ -40,7 +40,7 @@ shopify/orders/updated
 
 Use this task to easily set the shipment status of your single-fulfillment orders. Just add a tag, and a new fulfillment event will be recorded, using the corresponding shipment status. Optionally, you may have the task attempt to fulfill the order first and may choose whether to send shipment status notifications to the customer.
 
-This task monitors order tags. For an order that has a single (non-cancelled) fulfillment, this task will update that fulfillment's shipment status according to the order's tags.
+This task monitors order tags. For an order that has a single fulfillment, this task will update that fulfillment's shipment status according to the order's tags. If the fulfill option is chosen, this task will only attempt to fulfill orders with no prior fulfillments (e.g., it will ignore orders that have been fulfilled, then cancelled, and then tagged).
 
 This task comes pre-configured with Shopify's shipment status identifiers on the right, and friendly order tags on the left. Feel free to update the tag names on the left-hand side. Do not modify the labels on the right! These must correspond directly to shipment statuses, as they're recorded by Shopify.
 

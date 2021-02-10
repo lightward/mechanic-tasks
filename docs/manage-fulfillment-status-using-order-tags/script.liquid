@@ -39,7 +39,7 @@
   {% endfor %}
 
   {% log "No shipment status tags found on this order; skipping" %}
-{% else%}
+{% else %}
   {% assign open_fulfillments = array %}
 
   {% for fulfillment in order.fulfillments %}
