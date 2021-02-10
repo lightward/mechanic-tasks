@@ -56,6 +56,8 @@
     {% assign bulkOperation["objects"][1]["metafield"] = nil %}
   {% endif %}
 
+  {% assign now_s = "now" | date: "%s" | times: 1 %}
+
   {% for object in bulkOperation.objects %}
     {% assign product_timestamp_s = object.metafield.value | times: 1 %}
 
@@ -162,6 +164,8 @@
   {% endif %}
 
   {% assign productNode = result.data.inventoryLevel.item.variant.product %}
+
+  {% log product: productNode, back_in_stock_inventory_level: options.back_in_stock_inventory_level__number_required %}
 
   {% if productNode.metafield == nil and productNode.totalInventory >= options.back_in_stock_inventory_level__number_required %}
     {% action "shopify" %}

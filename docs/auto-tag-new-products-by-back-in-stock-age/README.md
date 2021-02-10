@@ -16,7 +16,7 @@ This task monitors changes to inventory level, records the time at which a produ
     "new-5": "5",
     "new-9999": "9999"
   },
-  "run_daily__boolean": false,
+  "run_daily__boolean": true,
   "run_hourly__boolean": false
 }
 ```
