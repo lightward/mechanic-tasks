@@ -1,45 +1,78 @@
 {% if event.preview %}
-  {% action "shopify" %}
-    [
-      "post",
-      "/admin/api/2019-04/orders/1234567890/fulfillments/1234567890/events.json",
-      {
-        "event": {
-          "status": "confirmed"
+  {% capture order_json %}
+    {
+      "id": 1234567890,
+      "fulfillments": [
+        {
+          "id": 23456778901,
+          "status": "open"
         }
-      }
-    ]
-  {% endaction %}
+      ],
+      "tags": {{ options.shipment_tags_and_status__keyval_required | keys | first | json }}
+    }
+  {% endcapture %}
+
+  {% assign order = order_json | parse_json %}
+{% endif %}
+
+{% assign order_tags = order.tags | split: ", " %}
+
+{% if order.fulfillments == blank and options.attempt_to_fulfill_the_order_before_tagging__boolean %}
+  {% for order_tag in order_tags %}
+    {% if options.shipment_tags_and_status__keyval_required[order_tag] != blank %}
+      {% action "shopify" %}
+        [
+          "post",
+          "/admin/api/{{ task.shopify_api_version }}/orders/{{ order.id }}/fulfillments.json",
+          {
+            "fulfillment": {
+              "location_id": {{ shop.primary_location_id | json }},
+              "tracking_number": null,
+              "notify_customer": {{ options.send_shipment_notifications_to_customer__boolean }}
+            }
+          }
+        ]
+      {% endaction %}
+
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% log "No shipment status tags found on this order; skipping" %}
 {% else %}
   {% assign open_fulfillments = array %}
+
   {% for fulfillment in order.fulfillments %}
     {% if fulfillment.status != "cancelled" %}
-      {% assign index = open_fulfillments.size %}
-      {% assign open_fulfillments[index] = fulfillment %}
+      {% assign open_fulfillments[open_fulfillments.size] = fulfillment %}
     {% endif %}
   {% endfor %}
 
   {% if open_fulfillments.size == 0 %}
-    {"log": "Order has no open fulfillments - this task can only manage orders that have 1."}
+    {% log "Order has no open fulfillments - this task can only manage orders that have 1." %}
   {% elsif open_fulfillments.size > 1 %}
-    {"log": "Order has {{ open_fulfillments.size }} open fulfillments - this task can only manage orders with 1."}
+    {% log %}
+      "Order has {{ open_fulfillments.size }} open fulfillments - this task can only manage orders with 1."
+    {% endlog %}
   {% else %}
     {% assign fulfillment = open_fulfillments.first %}
-    {% assign order_tags = order.tags | split: ", " %}
+
     {% for order_tag in order_tags %}
-      {% if options.shipping_status_tags__keyval_required[order_tag] == blank %}
+      {% if options.shipment_tags_and_status__keyval_required[order_tag] == blank %}
         {% continue %}
       {% endif %}
 
-      {% assign desired_status = options.shipping_status_tags__keyval_required[order_tag] %}
-     
+      {% assign desired_status = options.shipment_tags_and_status__keyval_required[order_tag] %}
+
       {% if fulfillment.shipment_status == desired_status %}
-        {"log": "Fulfillment status is already {{ desired_status }}; nothing to do"}
+        {% log %}
+          "Fulfillment status is already {{ desired_status }}; nothing to do"
+        {% endlog %}
       {% else %}
         {% action "shopify" %}
           [
             "post",
-            "/admin/api/2019-04/orders/{{ order.id }}/fulfillments/{{ fulfillment.id }}/events.json",
+            "/admin/api/{{ task.shopify_api_version }}/orders/{{ order.id }}/fulfillments/{{ fulfillment.id }}/events.json",
             {
               "event": {
                 "status": {{ desired_status | json }}
