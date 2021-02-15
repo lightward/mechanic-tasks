@@ -1,57 +1,131 @@
-{% assign order = order.reload %}
+{% if event.topic == "shopify/orders/paid" %}
+  {% if event.preview %}
+    {% assign order = hash %}
+    {% assign order["admin_graphql_api_id"] = "gid://shopify/Order/1234567890" %}
+    {% assign order["fulfillment_status"] = nil %}
+  {% endif %}
 
-{% if event.preview %}
-  {% assign order = hash %}
-  {% assign order["admin_graphql_api_id"] = "gid://shopify/Order/1234567890" %}
-  {% assign order["cancelled_at"] = nil %}
-  {% assign order["financial_status"] = "paid" %}
-  {% assign order["fulfillment_status"] = nil %}
-  {% assign order["customer"] = hash %}
-  {% assign order["customer"]["admin_graphql_api_id"] = "gid://shopify/Customer/1234567890" %}
-{% endif %}
-
-{% if order.cancelled_at == blank and order.financial_status == "paid" %}
   {% if order.fulfillment_status == blank or order.fulfillment_status == "partial" %}
-    {% action "email" %}
-      {
-        "to": {{ order.email | json }},
-        "subject": {{ options.email_subject__required | strip | json }},
-        "body": {{ options.email_body__multiline_required | strip | newline_to_br | json }},
-        "reply_to": {{ shop.customer_email | json }},
-        "from_display_name": {{ shop.name | json }}
-      }
-    {% endaction %}
+    {% assign one_day_in_seconds = 60 | times: 60 | times: 24 %}
+    {% assign days_to_wait = options.number_of_days_to_wait__number_required | default: 10 %}
+    {% assign days_to_wait_in_seconds = days_to_wait | times: one_day_in_seconds %}
+    {% assign run_at = "now" | date: "%s" | plus: days_to_wait_in_seconds %}
 
-    {% if options.tag_to_add_to_order != blank %}
-      {% action "shopify" %}
-        mutation {
-          tagsAdd(
-            id: {{ order.admin_graphql_api_id | json }}
-            tags: {{ options.tag_to_add_to_order | json }}
-          ) {
-            userErrors {
-              field
-              message
-            }
-          }
-        }
-      {% endaction %}
+    {% if options.only_send_reminders_on_weekdays__boolean %}
+      {% assign run_at_day = run_at | date: "%w" %}
+
+      {% if run_at_day == "0" %}{% comment %}-- Sunday --{% endcomment %}
+        {% assign run_at = run_at | plus: one_day_in_seconds %}
+      {% elsif run_at_day == "6" %}{% comment %}-- Saturday --{% endcomment %}
+        {% assign run_at = run_at | plus: one_day_in_seconds | plus: one_day_in_seconds %}
+      {% endif %}
     {% endif %}
 
-    {% if options.tag_to_add_to_customer != blank %}
-      {% action "shopify" %}
-        mutation {
-          tagsAdd(
-            id: {{ order.customer.admin_graphql_api_id | json }}
-            tags: {{ options.tag_to_add_to_customer | json }}
-          ) {
-            userErrors {
-              field
-              message
+    {% action "event" %}
+      {
+        "topic": "user/order/customer_reminder",
+        "task_id": {{ task.id | json }},
+        "run_at": {{ run_at | json }},
+        "data": {
+          "order_id": {{ order.admin_graphql_api_id | json }}
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% elsif event.topic == "user/order/customer_reminder" %}
+  {% assign order_id = event.data.order_id %}
+
+  {% capture order_query %}
+    query {
+      order(id: {{ order_id | json }}) {
+        id
+        name
+        email
+        fullyPaid
+        displayFulfillmentStatus
+        cancelledAt
+        customer {
+          id
+          firstName
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign order_result = order_query | shopify %}
+
+  {% if event.preview %}
+    {% capture order_result_json %}
+      {
+        "data": {
+          "order": {
+            "id": "gid://shopify/Order/1234567890",
+            "name": "#1234",
+            "email": "charlie.customer@example.com",
+            "fullyPaid": true,
+            "displayFulfillmentStatus": "UNFULFILLED",
+            "cancelledAt": null,
+            "customer": {
+              "id": "gid://shopify/Customer/1234567890",
+              "firstName": "Charlie"
             }
           }
         }
+      }
+    {% endcapture %}
+
+    {% assign order_result = order_result_json | parse_json %}
+  {% endif %}
+
+  {% assign order = order_result.data.order %}
+
+  {% if order.cancelledAt == blank and order.fullyPaid %}
+    {% if order.displayFulfillmentStatus == "UNFULFILLED" or order.displayFulfillmentStatus == "PARTIALLY_FULFILLED" %}
+      {% assign customer_first_name = order.customer.firstName | default: "there" %}
+      {% assign email_subject = options.email_subject__required | replace: "ORDER_NAME", order.name %}
+      {% assign email_body = options.email_body__multiline_required | strip | newline_to_br | replace: "CUSTOMER_FIRST_NAME", customer_first_name %}
+
+      {% action "email" %}
+        {
+          "to": {{ order.email | json }},
+          "subject": {{ email_subject | json }},
+          "body": {{ email_body | json }},
+          "reply_to": {{ shop.customer_email | json }},
+          "from_display_name": {{ shop.name | json }}
+        }
       {% endaction %}
+
+      {% if options.tag_to_add_to_order != blank %}
+        {% action "shopify" %}
+          mutation {
+            tagsAdd(
+              id: {{ order.id | json }}
+              tags: {{ options.tag_to_add_to_order | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+      {% endif %}
+
+      {% if options.tag_to_add_to_customer != blank %}
+        {% action "shopify" %}
+          mutation {
+            tagsAdd(
+              id: {{ order.customer.id | json }}
+              tags: {{ options.tag_to_add_to_customer | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+      {% endif %}
     {% endif %}
   {% endif %}
 {% endif %}
