@@ -1,4 +1,4 @@
-# Auto-tag new products by age
+# Auto-tag products by age
 
 This task scans every product in your store, and adds or removes the tags you configure, according to how many days have passed since the product was created. (Or published, if you prefer!)
 
@@ -17,7 +17,13 @@ This task scans every product in your store, and adds or removes the tags you co
     "new-9999": "9999"
   },
   "run_daily__boolean": null,
-  "run_hourly__boolean": null
+  "run_hourly__boolean": null,
+  "match_product_tags_by_minimum_age__boolean": false,
+  "product_tags_and_age_threshold_in_days__keyval_number_required": {
+    "new-this-week": "7",
+    "new-this-month": "30"
+  },
+  "match_product_tags_by_maximum_age__boolean": true
 }
 ```
 
@@ -37,13 +43,13 @@ mechanic/user/trigger
 
 This task scans every product in your store, and adds or removes the tags you configure, according to how many days have passed since the product was created. (Or published, if you prefer!)
 
-This task scans every product in your store, and applies the tags you configure, according to the product's age.
-
 Enable "Use product publish times instead of creation times" to have this task look at when the product was published to your online storefront, instead of when the product was created. When this option is enabled, unpublished products will have any of this task's tags removed.
 
-Configure "Product tags and maximum age in days" with product tags on the left, and the maximum product age to consider on the right. For example, a product tag of "new-5" with a maximum age in days of "5" will be added to all products that were created/published within the last 5 days. Once a product ages beyond that threshold, running this task will remove that tag.
+Configure "Product tags and age threshold in days" with product tags on the left, and the product age (in days) to qualify on the right. Combine this setting with a choice between "Match product tags by minimum age" and "Match product tags by maximum age", to achieve tagging based on either minimum or maximum ages.
 
-Run this task manually to scan your store's products on demand, or configure the task to run daily/hourly.
+For example, a product tag of "new-5" with an age threshold of "5", combined with "Match product tags by maximum age" will be added to all products that were created/published within the last 5 days. Once a product ages beyond that threshold, running this task will remove that tag.
+
+Run this task manually to scan your store's products on demand, or configure the task to run daily or hourly.
 
 ## Installing this task
 

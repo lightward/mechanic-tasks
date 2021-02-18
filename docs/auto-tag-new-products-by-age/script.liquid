@@ -1,10 +1,32 @@
+{% comment %}
+  Preferred option order:
+
+  {{ options.product_tags_and_age_threshold_in_days__keyval_number_required }}
+  {{ options.match_product_tags_by_minimum_age__boolean }}
+  {{ options.match_product_tags_by_maximum_age__boolean }}
+  {{ options.use_product_publish_times_instead_of_creation_times__boolean }}
+{% endcomment %}
+
+{% if options.match_product_tags_by_minimum_age__boolean and options.match_product_tags_by_maximum_age__boolean %}
+  {% error "Please choose either 'Match product tags by minimum age' or 'Match product tags by maximum age', but not both." %}
+{% elsif options.match_product_tags_by_minimum_age__boolean == false and options.match_product_tags_by_maximum_age__boolean == false %}
+  {% error "Please choose either 'Match product tags by minimum age' or 'Match product tags by maximum age', but not both." %}
+{% endif %}
+
 {% if event.preview %}
   {% assign now_s = "now" | date: "%s" | times: 1 %}
-  {% assign preview_interval_s = options.product_tags_and_maximum_age_in_days__keyval_number_required.first.last | times: 24 | times: 60 | times: 60 %}
-  {% assign preview_time = now_s | minus: preview_interval_s | plus: 86400 | date: "%Y-%m-%d" %}
+  {% assign preview_interval_s = options.product_tags_and_age_threshold_in_days__keyval_number_required.first.last | times: 24 | times: 60 | times: 60 %}
+
+  {% if options.match_product_tags_by_minimum_age__boolean %}
+    {% assign preview_time = now_s | minus: preview_interval_s | minus: 86400 | date: "%Y-%m-%d" %}
+  {% elsif options.match_product_tags_by_maximum_age__boolean %}
+    {% assign preview_time = now_s | minus: preview_interval_s | plus: 86400 | date: "%Y-%m-%d" %}
+  {% endif %}
 
   {% assign products = array %}
-  {% assign products[0] = '{"admin_graphql_api_id":"gid://shopify/Product/1234567890"}' | parse_json %}
+  {% assign products[0] = hash %}
+  {% assign products[0]["admin_graphql_api_id"] = "gid://shopify/Product/1234567890" %}
+  {% assign products[0]["id"] = 1234567890 %}
   {% assign products[0]["created_at"] = preview_time %}
   {% assign products[0]["published_at"] = preview_time %}
 {% else %}
@@ -21,21 +43,34 @@
     {% assign product_timestamp_s = product.published_at | date: "%s" | times: 1 %}
   {% endif %}
 
+  {% assign product_age_d = now_s | minus: product_timestamp_s | divided_by: 86400 %}
+
   {% assign tags_to_add = array %}
   {% assign tags_to_remove = array %}
 
-  {% for keyval in options.product_tags_and_maximum_age_in_days__keyval_number_required %}
+  {% for keyval in options.product_tags_and_age_threshold_in_days__keyval_number_required %}
     {% assign tag = keyval[0] %}
-    {% assign maximum_age_d = keyval[1] %}
-    {% assign maximum_age_s = maximum_age_d | times: 24 | times: 60 | times: 60 %}
+    {% assign tag_age_threshold_d = keyval[1] %}
 
-    {% assign threshold_timestamp_s = now_s | minus: maximum_age_s %}
+    {% assign tag_age_threshold_met = false %}
 
     {% comment %}
       0 happens when we didn't have a valid datetime string to begin with. Happens
       when there's no published_at value.
     {% endcomment %}
-    {% if product_timestamp_s != 0 and product_timestamp_s > threshold_timestamp_s %}
+    {% if product_timestamp_s != 0 %}
+      {% if options.match_product_tags_by_minimum_age__boolean and product_age_d > tag_age_threshold_d %}
+        {% assign tag_age_threshold_met = true %}
+      {% elsif options.match_product_tags_by_maximum_age__boolean and product_age_d < tag_age_threshold_d%}
+        {% assign tag_age_threshold_met = true %}
+      {% endif %}
+    {% endif %}
+
+    {% comment %}
+      {% log product_id: product.id, product_age_d: product_age_d, tag: tag, tag_age_threshold_d: tag_age_threshold_d, tag_age_threshold_met: tag_age_threshold_met %}
+    {% endcomment %}
+
+    {% if tag_age_threshold_met %}
       {% unless product_tags contains tag %}
         {% assign tags_to_add[tags_to_add.size] = tag %}
       {% endunless %}
