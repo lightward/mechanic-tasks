@@ -1,0 +1,86 @@
+{% assign products = array %}
+
+{% if event.topic contains "shopify/products/" %}
+  {% if event.preview %}
+    {% assign product = hash %}
+    {% assign product["admin_graphql_api_id"] = "gid://shopify/Product/1234567890" %}
+    {% assign product["tags"] = "" %}
+  {% endif %}
+
+  {% assign product_node = hash %}
+  {% assign product_node["id"] = product.admin_graphql_api_id %}
+  {% assign product_node["tags"] = product.tags | split: ", " %}
+  {% assign products[0] = product_node %}
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% capture bulk_operation_query %}
+    query {
+      products {
+        edges {
+          node {
+            id
+            tags
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture objects_jsonl %}
+      {"id":"gid://shopify/Product/1234567890","tags": []}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = objects_jsonl | parse_jsonl %}
+  {% endif %}
+
+  {% assign products = bulkOperation.objects %}
+{% endif %}
+
+{% for product in products %}
+  {% assign add_tag = false %}
+  {% assign remove_tag = false %}
+
+  {% if product.tags contains options.product_tag_to_watch__required %}
+    {% if product.tags contains options.product_tag_to_use_when_missing__required %}
+      {% assign remove_tag = true %}
+    {% endif %}
+  {% else %}
+    {% unless product.tags contains options.product_tag_to_use_when_missing__required %}
+      {% assign add_tag = true %}
+    {% endunless %}
+  {% endif %}
+
+  {% if add_tag or remove_tag %}
+    {% action "shopify" %}
+      mutation {
+        tags{% if add_tag %}Add{% else %}Remove{% endif %}(
+          id: {{ product.id | json }}
+          tags: {{ options.product_tag_to_use_when_missing__required | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}

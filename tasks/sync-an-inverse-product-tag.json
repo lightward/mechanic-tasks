@@ -1,0 +1,20 @@
+{
+  "name": "Sync an inverse product tag",
+  "options": {
+    "product_tag_to_watch__required": "wholesale",
+    "product_tag_to_use_when_missing__required": "retail"
+  },
+  "subscriptions": [
+    "shopify/products/create",
+    "shopify/products/update",
+    "mechanic/user/trigger",
+    "mechanic/shopify/bulk_operation"
+  ],
+  "subscriptions_template": "shopify/products/create\nshopify/products/update\nmechanic/user/trigger\nmechanic/shopify/bulk_operation",
+  "script": "{% assign products = array %}\n\n{% if event.topic contains \"shopify/products/\" %}\n  {% if event.preview %}\n    {% assign product = hash %}\n    {% assign product[\"admin_graphql_api_id\"] = \"gid://shopify/Product/1234567890\" %}\n    {% assign product[\"tags\"] = \"\" %}\n  {% endif %}\n\n  {% assign product_node = hash %}\n  {% assign product_node[\"id\"] = product.admin_graphql_api_id %}\n  {% assign product_node[\"tags\"] = product.tags | split: \", \" %}\n  {% assign products[0] = product_node %}\n{% elsif event.topic == \"mechanic/user/trigger\" %}\n  {% capture bulk_operation_query %}\n    query {\n      products {\n        edges {\n          node {\n            id\n            tags\n          }\n        }\n      }\n    }\n  {% endcapture %}\n\n  {% action \"shopify\" %}\n    mutation {\n      bulkOperationRunQuery(\n        query: {{ bulk_operation_query | json }}\n      ) {\n        bulkOperation {\n          id\n          status\n        }\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% elsif event.topic == \"mechanic/shopify/bulk_operation\" %}\n  {% if event.preview %}\n    {% capture objects_jsonl %}\n      {\"id\":\"gid://shopify/Product/1234567890\",\"tags\": []}\n    {% endcapture %}\n\n    {% assign bulkOperation = hash %}\n    {% assign bulkOperation[\"objects\"] = objects_jsonl | parse_jsonl %}\n  {% endif %}\n\n  {% assign products = bulkOperation.objects %}\n{% endif %}\n\n{% for product in products %}\n  {% assign add_tag = false %}\n  {% assign remove_tag = false %}\n\n  {% if product.tags contains options.product_tag_to_watch__required %}\n    {% if product.tags contains options.product_tag_to_use_when_missing__required %}\n      {% assign remove_tag = true %}\n    {% endif %}\n  {% else %}\n    {% unless product.tags contains options.product_tag_to_use_when_missing__required %}\n      {% assign add_tag = true %}\n    {% endunless %}\n  {% endif %}\n\n  {% if add_tag or remove_tag %}\n    {% action \"shopify\" %}\n      mutation {\n        tags{% if add_tag %}Add{% else %}Remove{% endif %}(\n          id: {{ product.id | json }}\n          tags: {{ options.product_tag_to_use_when_missing__required | json }}\n        ) {\n          userErrors {\n            field\n            message\n          }\n        }\n      }\n    {% endaction %}\n  {% endif %}\n{% endfor %}",
+  "docs": "Shopify's product collection filters allow you to filter by the tags the product contains – but not the tags a product does not contain. Use this task to sync an \"inverse\" tag to all products who do not have a particular tag, allowing you to create collections in Shopify that use the inverse tag.\n\nTo explain by example, if you've already tagged your wholesale products with \"wholesale\", configure the \"Product tag to watch\" option with \"wholesale\", and the \"Product tag to use when missing\" option with \"retail\". This task will automatically tag all non-wholesale products with \"retail\", and automatically remove that tag from any products who later receive the tag \"wholesale\". Please note: if you remove the \"retail\" tag, this task will simply re-add it. To remove the \"retail\" tag, you would need to _add_ the \"wholesale\" tag to that product.\r\n\r\nRun this task manually to scan all of the products in your store. Otherwise, this task will monitor and sync tags for all new and updated products, as they come through.",
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false
+}
