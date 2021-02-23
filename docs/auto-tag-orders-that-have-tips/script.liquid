@@ -1,0 +1,39 @@
+{% if event.preview %}
+  {% capture order_json %}
+    {
+      "admin_graphql_api_id": "gid://shopify/Order/12345",
+      "tags": "",
+      "line_items": [
+        {
+          "id": 2345678901,
+          "requires_shipping": false,
+          "fulfillment_status": null,
+          "tip": {
+            "payment_method": "shopify_payments",
+            "payment_gateway": "shopify_payments"
+          }
+        }
+      ]
+    }
+  {% endcapture %}
+
+  {% assign order = order_json | parse_json %}
+{% endif %}
+
+{% assign tip_line_items = order.line_items | where: "tip" %}
+
+{% if tip_line_items != empty %}
+  {% action "shopify" %}
+    mutation {
+      tagsAdd(
+        id: {{ order.admin_graphql_api_id | json }}
+        tags: {{ options.tag_for_orders_that_have_a_tip__required | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}

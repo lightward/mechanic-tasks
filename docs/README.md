@@ -75,6 +75,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag new online orders by web browser](./auto-tag-new-online-orders-by-web-browser)
 * [Auto-tag new orders based on payment method](./auto-tag-new-orders-based-on-payment-method)
 * [Auto-tag new orders by staff member](./auto-tag-new-orders-by-staff-member)
+* [Auto-tag new orders that have tips](./auto-tag-orders-that-have-tips)
 * [Auto-tag new orders using Liquid](./auto-tag-new-orders-using-liquid)
 * [Auto-tag new orders using the customer's tags](./auto-tag-orders-using-the-customers-tags)
 * [Auto-tag new orders with a value from the customer note](./auto-tag-new-orders-with-a-value-from-the-customer-note)
