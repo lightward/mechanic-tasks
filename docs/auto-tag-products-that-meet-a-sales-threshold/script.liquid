@@ -9,10 +9,6 @@
   {{ options.order_query__required }}
 {% endcomment %}
 
-{% assign product_tallies = hash %}
-{% assign products_already_tagged = array %}
-{% assign products_deserving_tag = array %}
-
 {% assign mode_selections = 0 %}
 {% if options.tally_by_line_item_quantity__boolean %}
   {% assign mode = "line_item_quantity" %}
@@ -33,61 +29,33 @@
   {"error": "Choose exactly one tally mode - more than one is not supported."}
 {% endif %}
 
-{% assign cursor = nil %}
-{% for n in (0..10000) %}
-  {% capture query %}
+{% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% capture bulk_operation_query %}
     query {
       products(
-        first: 250
-        after: {{ cursor | json }}
         query: {{ options.product_tag_to_apply__required | json | prepend: "tag:" | json }}
       ) {
-        pageInfo {
-          hasNextPage
-        }
         edges {
-          cursor
           node {
+            __typename
             id
           }
         }
       }
-    }
-  {% endcapture %}
 
-  {% assign result = query | shopify %}
-
-  {% assign products_already_tagged = result.data.products.edges | map: "node" | map: "id" | concat: products_already_tagged %}
-
-  {% if result.data.products.pageInfo.hasNextPage %}
-    {% assign cursor = result.data.products.edges.last.cursor %}
-  {% else %}
-    {% break %}
-  {% endif %}
-{% endfor %}
-
-{% assign cursor = nil %}
-{% for n in (0..10000) %}
-  {% capture query %}
-    query {
       orders(
-        first: 10
-        after: {{ cursor | json }}
         query: {{ options.order_query__required | json }}
       ) {
-        pageInfo {
-          hasNextPage
-        }
         edges {
-          cursor
           node {
+            __typename
             id
             createdAt
-            lineItems(
-              first: 30
-            ) {
+            lineItems {
               edges {
                 node {
+                  __typename
+                  id
                   quantity
                   originalTotalSet {
                     shopMoney {
@@ -106,55 +74,84 @@
     }
   {% endcapture %}
 
-  {% assign result = query | shopify %}
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
 
-  {% for order_edge in result.data.orders.edges %}
-    {% assign order_node = order_edge.node %}
-    {% assign lineItem_nodes = order_node.lineItems.edges | map: "node" %}
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% assign products_already_tagged = bulkOperation.objects | where: "__typename", "Product" | map: "id" %}
+  {% assign line_items = bulkOperation.objects | where: "__typename", "LineItem" %}
 
-    {% case mode %}
-    {% when "line_item_quantity" %}
-      {% for lineItem_node in lineItem_nodes %}
-        {% if lineItem_node.product %}
-          {% assign product_tallies[lineItem_node.product.id] = product_tallies[lineItem_node.product.id] | default: 0 | plus: lineItem_node.quantity %}
-        {% endif %}
-      {% endfor %}
-    {% when "line_item_subtotal" %}
-      {% for lineItem_node in lineItem_nodes %}
-        {% if lineItem_node.product %}
-          {% assign product_tallies[lineItem_node.product.id] = product_tallies[lineItem_node.product.id] | default: 0 | plus: lineItem_node.originalTotalSet.shopMoney.amount %}
-        {% endif %}
-      {% endfor %}
-    {% when "order_count" %}
-      {% assign product_ids = lineItem_nodes | map: "product" | map: "id" | compact %}
-      {% for product_id in product_ids %}
-        {% assign product_tallies[product_id] = product_tallies[product_id] | default: 0 | plus: 1 %}
-      {% endfor %}
-    {% endcase %}
+  {% assign product_tallies = hash %}
+  {% assign products_deserving_tag = array %}
+
+  {% case mode %}
+  {% when "line_item_quantity" %}
+    {% for line_item in line_items %}
+      {% if line_item.product %}
+        {% assign product_tallies[line_item.product.id] = product_tallies[line_item.product.id] | default: 0 | plus: line_item.quantity %}
+      {% endif %}
+    {% endfor %}
+  {% when "line_item_subtotal" %}
+    {% for line_item in line_items %}
+      {% if line_item.product %}
+        {% assign product_tallies[line_item.product.id] = product_tallies[line_item.product.id] | default: 0 | plus: line_item.originalTotalSet.shopMoney.amount %}
+      {% endif %}
+    {% endfor %}
+  {% when "order_count" %}
+    {% assign product_ids = line_items | map: "product" | map: "id" | compact %}
+    {% for product_id in product_ids %}
+      {% assign product_tallies[product_id] = product_tallies[product_id] | default: 0 | plus: 1 %}
+    {% endfor %}
+  {% endcase %}
+
+  {% if event.preview %}
+    {% assign product_tallies["gid://shopify/Product/1234567890"] = options.minimum_tally_threshold_per_product__required_number %}
+  {% endif %}
+
+  {% for keyval in product_tallies %}
+    {% assign product_id = keyval[0] %}
+    {% assign tally = keyval[1] %}
+
+    {% if tally >= options.minimum_tally_threshold_per_product__required_number %}
+      {% assign products_deserving_tag[products_deserving_tag.size] = product_id %}
+
+      {% unless products_already_tagged contains product_id %}
+        {% action "shopify" %}
+          mutation {
+            tagsAdd(
+              id: {{ product_id | json }}
+              tags: {{ options.product_tag_to_apply__required | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+      {% endunless %}
+    {% endif %}
   {% endfor %}
 
-  {% if result.data.orders.pageInfo.hasNextPage %}
-    {% assign cursor = result.data.orders.edges.last.cursor %}
-  {% else %}
-    {% break %}
-  {% endif %}
-{% endfor %}
-
-{% if event.preview %}
-  {% assign product_tallies["gid://shopify/Product/1234567890"] = options.minimum_tally_threshold_per_product__required_number %}
-{% endif %}
-
-{% for keyval in product_tallies %}
-  {% assign product_id = keyval[0] %}
-  {% assign tally = keyval[1] %}
-
-  {% if tally >= options.minimum_tally_threshold_per_product__required_number %}
-    {% assign products_deserving_tag[products_deserving_tag.size] = product_id %}
-
-    {% unless products_already_tagged contains product_id %}
+  {% for product_id in products_already_tagged %}
+    {% unless products_deserving_tag contains product_id %}
       {% action "shopify" %}
         mutation {
-          tagsAdd(
+          tagsRemove(
             id: {{ product_id | json }}
             tags: {{ options.product_tag_to_apply__required | json }}
           ) {
@@ -166,25 +163,7 @@
         }
       {% endaction %}
     {% endunless %}
-  {% endif %}
-{% endfor %}
+  {% endfor %}
 
-{% for product_id in products_already_tagged %}
-  {% unless products_deserving_tag contains product_id %}
-    {% action "shopify" %}
-      mutation {
-        tagsRemove(
-          id: {{ product_id | json }}
-          tags: {{ options.product_tag_to_apply__required | json }}
-        ) {
-          userErrors {
-            field
-            message
-          }
-        }
-      }
-    {% endaction %}
-  {% endunless %}
-{% endfor %}
-
-{"log": {{ product_tallies | json }}}
+  {"log": {{ product_tallies | json }}}
+{% endif %}
