@@ -26,15 +26,12 @@ Out of the box, this task scans the last week's worth of paid orders, and auto-t
 ```liquid
 mechanic/user/trigger
 mechanic/scheduler/daily
+mechanic/shopify/bulk_operation
 ```
 
 [Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
 
 ## Documentation
-
-Out of the box, this task scans the last week's worth of paid orders, and auto-tags products that meet the sales threshold of your choice, removing the tag from products that no longer qualify. This scan can be run on demand (with the "Run task" button), and will otherwise run nightly.
-
-You can choose between a threshold defined by line item quantity (for the total number of units sold), by line item subtotals (for the total amount of money each product earned), or by number of orders (for the total number of times a customer placed an order including that product). You can also reconfigure the query used to fetch orders, to get specific about what orders you want to consider.
 
 Out of the box, this task scans the last week's worth of paid orders, and auto-tags products that meet the sales threshold of your choice, removing the tag from products that no longer qualify. This scan can be run on demand (with the "Run task" button), and will otherwise run nightly.
 
