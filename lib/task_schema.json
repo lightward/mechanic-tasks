@@ -4,6 +4,12 @@
     "name": {
       "type": "string"
     },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "options": {
       "type": "object",
       "propertyNames": {
