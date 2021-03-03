@@ -69,6 +69,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag draft orders by originating staff member](./auto-tag-draft-orders-by-originating-staff-member)
 * [Auto-tag fulfilled orders by carrier](./auto-tag-fulfilled-orders-by-carrier)
 * [Auto-tag fulfilled orders with their carriers](./auto-tag-fulfilled-orders-with-their-carriers)
+* [Auto-tag new customers by staff member](./auto-tag-new-customers-by-staff-member)
 * [Auto-tag new customers with the current date](./auto-tag-customers-with-the-current-date)
 * [Auto-tag new customers](./auto-tag-new-customers)
 * [Auto-tag new draft orders](./auto-tag-new-draft-orders)
