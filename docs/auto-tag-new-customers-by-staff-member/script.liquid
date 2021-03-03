@@ -1,0 +1,46 @@
+{% capture query %}
+  query {
+    customer(id: {{ customer.admin_graphql_api_id | json }}) {
+      id
+      events(first: 250) {
+        edges {
+          node {
+            attributeToUser
+            message
+          }
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% assign placed_event = result.data.first.last.events.edges | map: "node" | where: "attributeToUser" | first %}
+{% assign name = placed_event.message | split: " created this " | first %}
+{% assign tag_to_add = options.staff_names_and_tags__keyval_required[name] %}
+
+{% if event.preview %}
+  {% assign name = options.staff_names_and_tags__keyval_required.first.first %}
+  {% assign tag_to_add = options.staff_names_and_tags__keyval_required.first.last %}
+{% endif %}
+
+{% if name == blank %}
+  {% log message: "No staff member detected.", customer: result.data.first.last %}
+{% elsif tag_to_add == blank %}
+  {% log message: "No tag applicable for staff member.", staff_member: name %}
+{% else %}
+  {% action "shopify" %}
+    mutation {
+      tagsAdd(
+        id: {{ customer.admin_graphql_api_id | json }}
+        tags: {{ tag_to_add | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}
