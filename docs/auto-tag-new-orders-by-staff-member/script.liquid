@@ -1,5 +1,5 @@
 {% unless options.tag_orders__boolean or options.tag_draft_orders__boolean %}
-  {"error": "Choose at least one resource to auto-tag."}
+  {% error "Choose at least one resource to auto-tag." %}
 {% endunless %}
 
 {% if event.topic contains "shopify/orders/" %}
@@ -38,10 +38,9 @@
 {% endif %}
 
 {% if name == blank %}
-  {"log": "No staff member detected."}
-  {"log": {{ result.data.first.last | json }}}
+  {% log message: "No staff member detected.", resource: result.data.first.last %}
 {% elsif tag_to_add == blank %}
-  {"log": {{ "No tag applicable for " | append: name | json }}}
+  {% log message: "No tag applicable for staff member.", staff_member: name %}
 {% else %}
   {% action "shopify" %}
     mutation {
