@@ -286,3 +286,4 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Unpublish products that have been out of stock for x days](./unpublish-products-that-have-been-out-of-stock-for-x-days)
 * [Unpublish products when tagged](./unpublish-products-when-tagged)
 * [Untag orders when paid](./untag-orders-when-paid)
+* [Update product description when out of stock](./update-product-description-when-out-of-stock)
