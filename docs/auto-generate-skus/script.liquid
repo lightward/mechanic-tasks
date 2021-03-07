@@ -14,6 +14,13 @@
           "option1": "XL",
           "option2": "Heather Grey",
           "admin_graphql_api_id": "gid://shopify/ProductVariant/2345678901"
+      {% if options.skip_variants_that_already_have_skus__boolean %}
+        },
+        {
+          "option1": "XXL",
+          "option2": "Red",
+          "admin_graphql_api_id": "gid://shopify/ProductVariant/3456789012"
+      {% endif %}
         }
       ],
       "options": [
@@ -38,6 +45,11 @@
   {% assign sku_base = product.handle | split: "-" | last | upcase %}
 
   {% for variant in product.variants %}
+    {% if options.skip_variants_that_already_have_skus__boolean and variant.sku != blank %}
+      {% log message: "variant already has a sku; skipping", original_sku: variant.sku, generated_sku: variant_sku_generated %}
+      {% continue%}
+    {% endif %}
+
     {% assign variant_sku_generated = sku_base %}
 
     {% assign variant_options = array %}
