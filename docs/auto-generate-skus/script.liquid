@@ -46,7 +46,7 @@
 
   {% for variant in product.variants %}
     {% if options.skip_variants_that_already_have_skus__boolean and variant.sku != blank %}
-      {% log message: "variant already has a sku; skipping", original_sku: variant.sku, generated_sku: variant_sku_generated %}
+      {% log message: "variant already has a sku; skipping", original_sku: variant.sku %}
       {% continue%}
     {% endif %}
 
