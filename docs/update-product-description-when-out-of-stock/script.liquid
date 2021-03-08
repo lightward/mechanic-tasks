@@ -1,0 +1,190 @@
+{% comment %}
+  Options order:
+
+  {{ options.only_modify_products_with_this_tag }}
+  {{ options.add_this_html_to_product_description__multiline_required }}
+  {{ options.add_the_html_to_end_of_product_description_instead_of_beginning__boolean }}
+{% endcomment %}
+
+{% assign products_to_check = array %}
+
+{% if event.topic == "shopify/inventory_levels/update" %}
+  {% capture query %}
+    query {
+      inventoryLevel(
+        id: {{ inventory_level.admin_graphql_api_id | json }}
+      ) {
+        item {
+          variant {
+            product {
+              id
+              descriptionHtml
+              tags
+              totalInventory
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "inventoryLevel": {
+            "item": {
+              "variant": {
+                "product": {
+                  "id": "gid://shopify/Product/1234567890",
+                  "descriptionHtml": "<p>The best widget on the market!</p>",
+                  "tags": {{ options.only_modify_products_with_this_tag | json }},
+                  "totalInventory": 0
+                }
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign product = result.data.inventoryLevel.item.variant.product %}
+
+  {% if options.only_modify_products_with_this_tag != blank %}
+    {% if product.tags contains options.only_modify_products_with_this_tag %}
+      {% assign products_to_check[0] = product %}
+    {% else %}
+      {% log message: "This product does not have the tag being filtered by; skipping", tag_required: options.only_modify_products_with_this_tag, product_tags: product.tags %}
+    {% endif %}
+  {% else %}
+    {% assign products_to_check[0] = product %}
+  {% endif %}
+
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% assign cursor = nil %}
+  {% assign products_query = nil %}
+
+  {% if options.only_modify_products_with_this_tag != blank %}
+    {% assign products_query = options.only_modify_products_with_this_tag | json | prepend: "tag:" %}
+  {% endif %}
+
+  {% for n in (0..100) %}
+    {% capture query %}
+      query {
+        products(
+          first: 250
+          after: {{ cursor | json }}
+          query: {{ products_query | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+          }
+          edges {
+            cursor
+            node {
+              id
+              descriptionHtml
+              tracksInventory
+              totalInventory
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "products": {
+              "edges": [
+                {
+                  "node": {
+                    "id": "gid://shopify/Product/1234567890",
+                    "descriptionHtml": "<p>The best widget on the market!</p>",
+                    "tracksInventory": true,
+                    "totalInventory": 0
+                  }
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign products = result.data.products.edges | map: "node" | where: "tracksInventory" %}
+    {% assign products_to_check = products_to_check | concat: products %}
+
+    {% if result.data.products.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.products.edges.last.cursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+{% if products_to_check != blank %}
+  {% for product in products_to_check %}
+    {% assign cache_key = product.id | append: "__description_to_restore" %}
+    {% assign cached_description_html = cache[cache_key] %}
+
+    {% if product.totalInventory > 0 %}
+      {% if cached_description_html != blank %}
+        {% action "shopify" %}
+          mutation {
+            productUpdate(
+              input: {
+                id: {{ product.id | json }}
+                descriptionHtml: {{ cached_description_html | json }}
+              }
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+
+        {% action "cache", "del", cache_key %}
+      {% endif %}
+
+    {% else %}
+      {% unless product.descriptionHtml contains options.add_this_html_to_product_description__multiline_required %}
+        {% if options.add_the_html_to_end_of_product_description_instead_of_beginning__boolean %}
+          {% assign updated_description_html = product.descriptionHtml | append: options.add_this_html_to_product_description__multiline_required %}
+        {% else %}
+          {% assign updated_description_html = product.descriptionHtml | prepend: options.add_this_html_to_product_description__multiline_required %}
+        {% endif %}
+
+        {% action "shopify" %}
+          mutation {
+            productUpdate(
+              input: {
+                id: {{ product.id | json }}
+                descriptionHtml: {{ updated_description_html | json }}
+              }
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+
+        {% action "cache", "set", cache_key, product.descriptionHtml %}
+      {% endunless %}
+    {% endif %}
+  {% endfor %}
+{% endif %}

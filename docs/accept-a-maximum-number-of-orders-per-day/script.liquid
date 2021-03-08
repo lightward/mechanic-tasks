@@ -4,7 +4,6 @@
   {{ options.maximum_daily_orders__number_required }}
   {{ options.only_count_orders_matching_this_query }}
   {{ options.only_clear_inventory_for_products_with_this_tag }}
-  {{ options.prepend_this_html_to_product_description_when_order_limit_is_reached__multiline }}
   {{ options.restore_inventory_levels_the_next_day__boolean }}
   {{ options.restore_inventory_levels_on_demand__boolean }}
 {% endcomment %}
@@ -23,8 +22,6 @@
   {% assign previous_midnight_s = previous_midnight | date: "%s" %}
   {% assign cache_key = "inventory_to_restore:" | append: previous_midnight_s %}
   {% assign inventory_levels_to_zero = cache[cache_key] | default: hash %}
-  {% assign description_cache_key = "description_to_restore:" | append: previous_midnight_s %}
-  {% assign products_to_update = cache[description_cache_key] | default: hash %}
 
   {% capture orders_query %}
     created_at:>={{ previous_midnight | json }} {{ options.only_count_orders_matching_this_query }}
@@ -107,8 +104,6 @@
               node {
                 variant {
                   product {
-                    id
-                    descriptionHtml
                     tags
                   }
                 }
@@ -144,8 +139,6 @@
                     "node": {
                       "variant": {
                         "product": {
-                          "id": "gid://shopify/Product/1234567890",
-                          "descriptionHtml": "<p>The best widget on the market!</p>",
                           "tags": [
                             {% if options.only_clear_inventory_for_products_with_this_tag != blank %}
                               {{ options.only_clear_inventory_for_products_with_this_tag | json }}
@@ -188,12 +181,6 @@
 
           {% assign inventory_levels_to_zero[inventoryLevel_edge.node.id] = inventoryLevel_edge.node.available %}
         {% endfor %}
-
-        {% if options.prepend_this_html_to_product_description_when_order_limit_is_reached__multiline != blank %}
-          {% unless inventoryItem_edge.node.variant.product.descriptionHtml contains options.prepend_this_html_to_product_description_when_order_limit_is_reached__multiline %}
-            {% assign products_to_update[inventoryItem_edge.node.variant.product.id] = inventoryItem_edge.node.variant.product.descriptionHtml %}
-          {% endunless %}
-        {% endif %}
       {% endfor %}
 
       {% if result.data.inventoryItems.pageInfo.hasNextPage %}
@@ -232,33 +219,6 @@
         {% action "cache", "set", cache_key, inventory_levels_to_zero %}
       {% endif %}
     {% endif %}
-
-    {% if products_to_update.size > 0 %}
-      {% for keyval in products_to_update %}
-        {% assign product_id = keyval[0] %}
-        {% assign product_description_html = keyval[1] | prepend: options.prepend_this_html_to_product_description_when_order_limit_is_reached__multiline %}
-
-        {% action "shopify" %}
-          mutation {
-            productUpdate(
-              input: {
-                id: {{ product_id | json }}
-                descriptionHtml: {{ product_description_html | json }}
-              }
-            ) {
-              userErrors {
-                field
-                message
-              }
-            }
-          }
-        {% endaction %}
-      {% endfor %}
-
-      {% if options.restore_inventory_levels_the_next_day__boolean or options.restore_inventory_levels_on_demand__boolean %}
-        {% action "cache", "set", description_cache_key, products_to_update %}
-      {% endif %}
-    {% endif%}
   {% endif %}
 {% elsif event.topic contains "mechanic/" %}
   {% assign proceed = false %}
@@ -320,49 +280,6 @@
 
     {% if inventory_levels_to_restore != blank %}
       {% action "cache", "del", cache_key %}
-    {% endif %}
-
-    {% assign description_cache_key = "description_to_restore:" | append: midnight_s %}
-    {% assign products_to_update = cache[description_cache_key] | default: hash %}
-
-    {% if products_to_update == blank %}
-      {% assign midnight = "now" | date: "%Y-%m-%dT00:00:00%z" %}
-      {% assign midnight_s = midnight | date: "%s" %}
-      {% assign description_cache_key = "description_to_restore:" | append: midnight_s %}
-      {% assign products_to_update = cache[description_cache_key] | default: hash %}
-    {% endif %}
-
-    {% if event.preview %}
-      {% assign products_to_update = hash %}
-      {% assign id = "gid://shopify/Product/1234567890" %}
-      {% assign products_to_update[id] = "<p>The best widget on the market!</p>" %}
-    {% endif %}
-
-    {% log products_to_update_count: products_to_update.size, products_to_update: products_to_update, since: midnight %}
-
-    {% for keyval in products_to_update %}
-      {% assign product_id = keyval[0] %}
-      {% assign product_description_html = keyval[1] %}
-
-      {% action "shopify" %}
-        mutation {
-          productUpdate(
-            input: {
-              id: {{ product_id | json }}
-              descriptionHtml: {{ product_description_html | json }}
-            }
-          ) {
-            userErrors {
-              field
-              message
-            }
-          }
-        }
-      {% endaction %}
-    {% endfor %}
-
-    {% if products_to_update != blank %}
-      {% action "cache", "del", description_cache_key %}
     {% endif %}
   {% endif %}
 {% endif %}
