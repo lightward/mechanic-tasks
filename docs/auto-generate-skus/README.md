@@ -1,6 +1,6 @@
 # Auto-generate SKUs
 
-Save time by letting this task keep your variant SKUs up to date, generating them based on your product handle, and the initials of each variant option. Useful for large catalogs, or for anyone who has a consistent SKU format. Like all tasks, this one is easy to update for your business's needs - get in touch if you need a hand.
+Save time by letting this task keep your variant SKUs up to date, generating them based on your product handle, and the initials of each variant option. Optionally, choose to have the task skip updating variants that already have SKUs. Useful for large catalogs, or for anyone who has a consistent SKU format. Like all tasks, this one is easy to update for your business's needs - get in touch if you need a hand.
 
 * View in the task library: [usemechanic.com/task/auto-generate-skus](https://usemechanic.com/task/auto-generate-skus)
 * Task JSON, for direct import: [task.json](../../tasks/auto-generate-skus.json)
@@ -10,6 +10,7 @@ Save time by letting this task keep your variant SKUs up to date, generating the
 
 ```json
 {
+  "skip_variants_that_already_have_skus__boolean": false,
   "product_options_to_keep_unabbreviated__array": null
 }
 ```
@@ -27,7 +28,7 @@ shopify/products/update
 
 ## Documentation
 
-Save time by letting this task keep your variant SKUs up to date, generating them based on your product handle, and the initials of each variant option. Useful for large catalogs, or for anyone who has a consistent SKU format. Like all tasks, this one is easy to update for your business's needs - get in touch if you need a hand.
+Save time by letting this task keep your variant SKUs up to date, generating them based on your product handle, and the initials of each variant option. Optionally, choose to have the task skip updating variants that already have SKUs. Useful for large catalogs, or for anyone who has a consistent SKU format. Like all tasks, this one is easy to update for your business's needs - get in touch if you need a hand.
 
 This task automatically maintains SKUs for your product variants, by combining these elements and joining them with a dash:
 
