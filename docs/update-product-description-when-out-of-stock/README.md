@@ -1,6 +1,6 @@
 # Update product description when out of stock
 
-This task prepends an HTML message to the beginning of the product description, for each product that goes out of stock, and then restores the original product description when the product is back in stock. Optionally, you may choose to append the HTML message to the end of the product description instead of the beginning.
+This task prepends an HTML message to the beginning of the product description, for each product that goes out of stock, and then restores the original product description when the product is back in stock. Optionally, you may choose to append the HTML message to the end of the product description, instead of prepending it to the beginning.
 
 * View in the task library: [usemechanic.com/task/update-product-description-when-out-of-stock](https://usemechanic.com/task/update-product-description-when-out-of-stock)
 * Task JSON, for direct import: [task.json](../../tasks/update-product-description-when-out-of-stock.json)
@@ -29,7 +29,7 @@ mechanic/user/trigger
 
 ## Documentation
 
-This task prepends an HTML message to the beginning of the product description, for each product that goes out of stock, and then restores the original product description when the product is back in stock. Optionally, you may choose to append the HTML message to the end of the product description instead of the beginning.
+This task prepends an HTML message to the beginning of the product description, for each product that goes out of stock, and then restores the original product description when the product is back in stock. Optionally, you may choose to append the HTML message to the end of the product description, instead of prepending it to the beginning.
 
 The task runs when inventory levels change, or may be run manually on demand. Manual runs will ignore products that do not have inventory tracking enabled.
 
