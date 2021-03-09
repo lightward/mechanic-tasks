@@ -1,6 +1,6 @@
 # Auto-generate SKUs
 
-This will not override existing SKU codes and updates SKU codes against all products, not just variants.
+Save time by letting this task keep your variant SKUs up to date, generating them based on your product handle, and the initials of each variant option. Optionally, choose to have the task skip updating variants that already have SKUs. Useful for large catalogs, or for anyone who has a consistent SKU format.
 
 * View in the task library: [usemechanic.com/task/auto-generate-skus](https://usemechanic.com/task/auto-generate-skus)
 * Task JSON, for direct import: [task.json](../../tasks/auto-generate-skus.json)
@@ -28,14 +28,14 @@ shopify/products/update
 
 ## Documentation
 
-This will not override existing SKU codes and updates SKU codes against all products, not just variants.
+Save time by letting this task keep your variant SKUs up to date, generating them based on your product handle, and the initials of each variant option. Optionally, choose to have the task skip updating variants that already have SKUs. Useful for large catalogs, or for anyone who has a consistent SKU format.
 
-Save time by letting this task keep your variant SKUs up to date, generating them based on your product handle, and the initials of each variant option. Useful for large catalogs, or for anyone who has a consistent SKU format. Like all tasks, this one is easy to update for your business's needs - get in touch if you need a hand.
+Please note: This task updates SKUs for all products, whether or not they're configured with options and variants.
 
 This task automatically maintains SKUs for your product variants, by combining these elements and joining them with a dash:
 
 1. The last portion of the product handle (e.g. `503`, if your product is available at `myshop.com/products/stylish-shirt-503`)
-2. The capital letters of the variant's first option (e.g. `H` if the option is `Heather gray`, or `HG` if the option is `Heather Gray`)
+2. The capital letters of the variant's first option, if there is one (e.g. `H` if the option is `Heather gray`, or `HG` if the option is `Heather Gray`)
 3. The capital letters of the variant's second option, if there is one
 4. The capital letters of the variant's third option, if there is one
 
