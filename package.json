@@ -4,7 +4,7 @@
   "author": "Isaac Bowen <isaac@lightward.com>",
   "license": "MIT",
   "dependencies": {
-    "ajv": "^7.0.0-beta.2",
+    "ajv": "^7.2.1",
     "dir-compare": "^2.3.0",
     "glob": "^7.1.6"
   },
