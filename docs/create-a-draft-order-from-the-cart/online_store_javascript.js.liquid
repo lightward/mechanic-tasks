@@ -1,18 +1,22 @@
-document.querySelector('#mechanic_cart_submit').addEventListener('click', (event) => {
-  fetch({{ options.mechanic_webhook_url__required | json }}, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      cart: JSON.parse(event.target.dataset.cart),
-      customerId: JSON.parse(event.target.dataset.customerId),
-      customerIdSignature: JSON.parse(event.target.dataset.customerIdSignature),
-    }),
-  }).then(data => {
-    console.log('Sending cart data to Mechanic: Success!', data);
-  })
-  .catch((error) => {
-    console.error('Sending cart data to Mechanic: Error!', error);
+const mechanicCartSubmit = document.querySelector('#mechanic_cart_submit');
+
+if (mechanicCartSubmit) {
+  mechanicCartSubmit.addEventListener('click', (event) => {
+    fetch({{ options.mechanic_webhook_url__required | json }}, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        cart: JSON.parse(event.target.dataset.cart),
+        customerId: JSON.parse(event.target.dataset.customerId),
+        customerIdSignature: JSON.parse(event.target.dataset.customerIdSignature),
+      }),
+    }).then(data => {
+      console.log('Sending cart data to Mechanic: Success!', data);
+    })
+    .catch((error) => {
+      console.error('Sending cart data to Mechanic: Error!', error);
+    });
   });
-});
+}
