@@ -281,6 +281,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Temporarily enable tax-exempt status when a customer is tagged](./temporarily-enable-tax-exempt-status-when-a-customer-is-tagged)
 * [Track incoming donations in a store metafield](./track-incoming-donations-in-a-store-metafield)
 * [Trigger order emails with a tag](./trigger-order-emails-with-a-tag)
+* [Tutorial: trigger a task from a contact form using webhooks](./tutorial-trigger-a-task-from-a-contact-form-using-webhooks)
 * [Unpublish a certain collection, daily](./unpublish-a-certain-collection-daily)
 * [Unpublish products that fall below a rolling sales threshold](./unpublish-products-that-fall-below-a-rolling-sales-threshold)
 * [Unpublish products that have been out of stock for x days](./unpublish-products-that-have-been-out-of-stock-for-x-days)

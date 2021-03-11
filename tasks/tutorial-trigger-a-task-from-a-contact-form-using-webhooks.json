@@ -1,0 +1,21 @@
+{
+  "name": "Tutorial: trigger a task from a contact form using webhooks",
+  "options": {
+    "recipient_email_address__email_required": "",
+    "email_subject__required": "Contact form submission: {{ \"now\" | date: \"%Y-%m-%d %H:%M\" }}",
+    "email_body__required_multiline": "Hello,\n\nPlease find the attached CSV. Thanks!\n\n-Mechanic, for {{ shop.name }}",
+    "csv_attachment_filename__required": "contact-form-{{ \"now\" | date: \"%Y%m%d\" }}.csv",
+    "contact_form_id__required": "#ContactForm",
+    "mechanic_webhook_url__required": ""
+  },
+  "subscriptions": [
+    "user/webhook/form"
+  ],
+  "subscriptions_template": "user/webhook/form",
+  "script": "{% if event.preview %}\n  {% capture event_data_json %}\n    {\n      \"contact\": {\n        \"Name\": \"Matt Jake\",\n        \"email\": \"email@email.com\",\n        \"Phone Number\": \"555-555-5555\",\n        \"Message\": \"Walking through a dream I see you\"\n       }\n    }\n  {% endcapture %}\n\n  {% assign event = hash %}\n  {% assign event[\"data\"] = event_data_json | parse_json %}\n{% endif %}\n    \n    \n{% assign rows = array %}\n{% assign header = array %}\n{% assign header[0] = \"Name\" %}\n{% assign header[1] = \"email\" %}\n{% assign header[2] = \"Phone Number\" %}\n{% assign header[3] = \"Message\" %}\n{% assign rows[0] = header %}\n\n{% assign row = array %}\n{% assign row[0] = event.data.contact.Name %}\n{% assign row[1] = event.data.contact.email %}\n{% assign row[2] = event.data.contact[\"Phone Number\"] %}\n{% assign row[3] = event.data.contact.Message %}\n{% assign rows[rows.size] = row %}\n\n{% action \"email\" %}\n  {\n    \"to\": {{ options.recipient_email_address__email_required | json }},\n    \"subject\": {{ options.email_subject__required | json }},\n    \"body\": {{ options.email_body__required_multiline | strip | newline_to_br | json }},\n    \"reply_to\": {{ shop.customer_email | json }},\n    \"from_display_name\": {{ shop.name | json }},\n    \"attachments\": {\n       {{ options.csv_attachment_filename__required | replace: \".csv\", \"\" | append: \".csv\" | json }}: {{ rows | csv | json }}\n     }\n   }\n{% endaction %}",
+  "docs": "This is a companion task for the Trigger a task from a contact form tutorial: https://learn.mechanic.dev/resources/tutorials/trigger-a-task-from-a-contact-form.\n\nThis task is triggered via a webhook which is called when a contact form is submitted on the frontend of your Shopify store. We use the JavaScript for online storefront functionality to insert JavaScript, which listens for a `submit` event, and then posts the form data to your webhook.\n\nMake sure to visit the tutorial to learn more about this task: https://learn.mechanic.dev/resources/tutorials/trigger-a-task-from-a-contact-form.",
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": "const contactForm = document.querySelector({{ options.contact_form_id__required | json }});\n\nif(contactForm) {\n  contactForm.addEventListener(\"submit\",function(e){\n\n  fetch({{ options.mechanic_webhook_url__required | json }}, {\n    method: 'POST', \n    body: new FormData(contactForm),\n  })\n  .then(response => response.json())\n  .then(data => {\n    console.log('Sending data to Mechanic: Success!', data);\n  })\n  .catch((error) => {\n    console.error('Sending data to Mechanic: Error!', error);\n  });  \n    return true;\n  },false);\n}",
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false
+}

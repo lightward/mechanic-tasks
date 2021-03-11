@@ -1,0 +1,19 @@
+const contactForm = document.querySelector({{ options.contact_form_id__required | json }});
+
+if(contactForm) {
+  contactForm.addEventListener("submit",function(e){
+
+  fetch({{ options.mechanic_webhook_url__required | json }}, {
+    method: 'POST', 
+    body: new FormData(contactForm),
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log('Sending data to Mechanic: Success!', data);
+  })
+  .catch((error) => {
+    console.error('Sending data to Mechanic: Error!', error);
+  });  
+    return true;
+  },false);
+}
