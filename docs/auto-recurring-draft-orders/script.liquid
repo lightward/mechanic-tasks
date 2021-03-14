@@ -42,7 +42,7 @@
               countryCodeV2: EE
               firstName: "Victor"
               lastName: "Juarez"
-              province: "PK"
+              provinceCode: "PK"
               zip: "54321"
             }
             customerId: "gid://shopify/Customer/1234567890"
@@ -125,7 +125,7 @@
                   firstName
                   lastName
                   phone
-                  province
+                  provinceCode
                   zip
                 }
                 customer {
@@ -178,7 +178,7 @@
                   firstName
                   lastName
                   phone
-                  province
+                  provinceCode
                   zip
                 }
                 shippingLine {
@@ -227,7 +227,7 @@
                     firstName: {{ draftOrder.billingAddress.firstName | json }}
                     lastName: {{ draftOrder.billingAddress.lastName | json }}
                     phone: {{ draftOrder.billingAddress.phone | json }}
-                    province: {{ draftOrder.billingAddress.province | json }}
+                    provinceCode: {{ draftOrder.billingAddress.provinceCode | json }}
                     zip: {{ draftOrder.billingAddress.zip | json }}
                   }
                 {% endif %}
@@ -315,7 +315,7 @@
                     firstName: {{ draftOrder.shippingAddress.firstName | json }}
                     lastName: {{ draftOrder.shippingAddress.lastName | json }}
                     phone: {{ draftOrder.shippingAddress.phone | json }}
-                    province: {{ draftOrder.shippingAddress.province | json }}
+                    provinceCode: {{ draftOrder.shippingAddress.provinceCode | json }}
                     zip: {{ draftOrder.shippingAddress.zip | json }}
                   }
                 {% endif %}
