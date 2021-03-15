@@ -1,0 +1,51 @@
+// This code will be loaded on all pages of our store. So, we'll need
+// to begin by seeing if the current page has a contact form on it,
+// to make sure we're not causing errors by trying to modify a form
+// that doesn't exist.
+
+// The `contactForm` variable will either be our form (if it's present
+// on this page), or will be null (if it isn't).
+const contactForm = document.querySelector('#ContactForm');
+
+// Before Mechanic delivers this JavaScript to the storefront, it first
+// evaluates it for Liquid. This means that we get to use the `options`
+// object. By using {{ options.mechanic_webhook_url__required }}, we can
+// make the webhook URL configurable.
+const mechanicWebhookUrl = {{ options.mechanic_webhook_url__required | json }};
+
+// We only want to run all of this if there's a contact form on the page.
+if (contactForm) {
+
+  // Setting up a flag for later - keep reading!
+  let submittedToMechanic = false;
+
+  contactForm.addEventListener(
+    'submit',
+    (event) => {
+      // We're going to prevent the form submit from doing its normal
+      // normal. We'll re-submit the form in a second, after we've
+      // submitted data to Mechanic.
+      event.preventDefault();
+
+      // We'll use fetch to make our POST request:
+      // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
+      fetch(
+        mechanicWebhookUrl,
+        {
+          method: 'POST',
+          body: new FormData(contactForm),
+        }
+      ).then((response) => {
+        console.log('Sending data to Mechanic: Success!', response);
+      }).catch((error) => {
+        console.error('Sending data to Mechanic: Error!', error);
+      }).finally(() => {
+        // Now that we're done with sending our data to Mechanic,
+        // we're going to manually submit the contact form. This won't
+        // trigger the "submit" event again; it'll just run the form's
+        // usual submit behavior.
+        contactForm.submit();
+      });
+    },
+  );
+}
