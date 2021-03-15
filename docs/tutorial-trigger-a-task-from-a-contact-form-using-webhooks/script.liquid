@@ -8,10 +8,10 @@
 {% assign rows[rows.size] = header %}
 
 {% assign row = array %}
-{% assign row[0] = event.data.contact.name %}
-{% assign row[1] = event.data.contact.email %}
-{% assign row[2] = event.data.contact.phone %}
-{% assign row[3] = event.data.contact.body %}
+{% assign row[0] = event.data.contact.Name %}
+{% assign row[1] = event.data.contact.Email %}
+{% assign row[2] = event.data.contact["Phone Number"] %}
+{% assign row[3] = event.data.contact.Message %}
 {% assign rows[rows.size] = row %}
 
 {% assign csv_data = rows | csv %}
