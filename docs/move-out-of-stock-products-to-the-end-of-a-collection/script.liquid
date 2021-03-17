@@ -51,6 +51,7 @@
     {% action "event" %}
       {
         "topic": "user/reorder_collection/stage_2",
+        "task_id": {{ task.id | json }},
         "data": {
           "collection_id": {{ collection.admin_graphql_api_id | json }}
         }
