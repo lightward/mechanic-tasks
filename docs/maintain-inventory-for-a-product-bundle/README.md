@@ -45,7 +45,8 @@ Usage:
 Requirements:
 
 * This task does not support multiple inventory locations.
-* Configure this task with unique SKUs for the bundle product and its component products. These SKUs must not be re-used for any other product variants in your store. However, any component SKU may be used for multiple copies of this task.
+* Configure this task with unique SKUs for the bundle product.
+* Bundle Components can be duplicate SKU's, however, all duplicate SKU's must have the same inventory level. 
 * Use the right-hand side of the "Component product SKUs and quantities per bundle" option to control how many units of each component SKU is required for each single bundle unit. If your bundle requires one wrench and two sprockets, for example, make sure to add "1" and "2" on the right-hand side, each number associated with the right SKU.
 
 Notes:
