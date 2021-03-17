@@ -12,7 +12,7 @@
 
 {% if component_skus.size > 249 %}
   {% error %}
-    {{ "This task only supports up to 249 component product SKUs. You've added " | append: component_skus.size | append: "." | json }}
+  {{ "This task only supports up to 249 component product SKUs. You've added " | append: component_skus.size | append: "." | json }}
   {% enderror %}
 {% endif %}
 
@@ -28,12 +28,12 @@
   {% if event.preview %}
     {% capture order_json %}
       {
-        "line_items": [
-          {
-            "sku": {{ bundle_sku | json }},
-            "quantity": 1
-          }
-        ]
+      "line_items": [
+      {
+      "sku": {{ bundle_sku | json }},
+      "quantity": 1
+      }
+      ]
       }
     {% endcapture %}
 
@@ -51,16 +51,16 @@
   {% if event.preview %}
     {% capture refund_json %}
       {
-        "refund_line_items": [
-          {
-            "quantity": 1,
-            "restock_type": "cancel",
-            "line_item": {
-              "quantity": 1,
-              "sku": {{ bundle_sku | json }}
-            }
-          }
-        ]
+      "refund_line_items": [
+      {
+      "quantity": 1,
+      "restock_type": "cancel",
+      "line_item": {
+      "quantity": 1,
+      "sku": {{ bundle_sku | json }}
+      }
+      }
+      ]
       }
     {% endcapture %}
 
@@ -88,13 +88,13 @@
 
   {% capture query %}
     query {
-      inventoryLevel(id: {{ inventory_level.admin_graphql_api_id | json }}) {
-        item {
-          variant {
-            sku
-          }
-        }
-      }
+    inventoryLevel(id: {{ inventory_level.admin_graphql_api_id | json }}) {
+    item {
+    variant {
+    sku
+    }
+    }
+    }
     }
   {% endcapture %}
 
@@ -103,15 +103,15 @@
   {% if event.preview %}
     {% capture result_json %}
       {
-        "data": {
-          "inventoryLevel": {
-            "item": {
-              "variant": {
-                "sku": {{ component_skus.first | json }}
-              }
-            }
-          }
-        }
+      "data": {
+      "inventoryLevel": {
+      "item": {
+      "variant": {
+      "sku": {{ component_skus.first | json }}
+      }
+      }
+      }
+      }
       }
     {% endcapture %}
 
@@ -124,7 +124,7 @@
     {% assign do_full_sync = true %}
   {% else %}
     {% log %}
-      {{ updated_sku | json | prepend: "Inventory was updated for SKU " | append: ", which is not related to this bundle." | json }}
+    {{ updated_sku | json | prepend: "Inventory was updated for SKU " | append: ", which is not related to this bundle." | json }}
     {% endlog %}
   {% endif %}
 {% endif %}
@@ -137,25 +137,25 @@
 
   {% capture query %}
     query {
-      productVariants(
-        first: {{ component_skus.size | json }}
-        query: {{ query_components | join: " OR " | json }}
-      ) {
-        edges {
-          node {
-            inventoryItem {
-              inventoryLevels(first: 1) {
-                edges {
-                  node {
-                    id
-                  }
-                }
-              }
-            }
-            sku
-          }
-        }
-      }
+    productVariants(
+    first: {{ component_skus.size | json }}
+    query: {{ query_components | join: " OR " | json }}
+    ) {
+    edges {
+    node {
+    inventoryItem {
+    inventoryLevels(first: 1) {
+    edges {
+    node {
+    id
+    }
+    }
+    }
+    }
+    sku
+    }
+    }
+    }
     }
   {% endcapture %}
 
@@ -164,31 +164,31 @@
   {% if event.preview %}
     {% capture result_json %}
       {
-        "data": {
-          "productVariants": {
-            "edges": [
-              {% for sku in component_skus %}
-                {
-                  "node": {
-                    "inventoryItem": {
-                      "inventoryLevels": {
-                        "edges": [
-                          {
-                            "node": {
-                              "id": "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890"
-                            }
-                          }
-                        ]
-                      }
-                    },
-                    "sku": {{ sku | json }}
-                  }
-                }
-                {% unless forloop.last %},{% endunless %}
-              {% endfor %}
-            ]
-          }
+      "data": {
+      "productVariants": {
+      "edges": [
+      {% for sku in component_skus %}
+        {
+        "node": {
+        "inventoryItem": {
+        "inventoryLevels": {
+        "edges": [
+        {
+        "node": {
+        "id": "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890"
         }
+        }
+        ]
+        }
+        },
+        "sku": {{ sku | json }}
+        }
+        }
+        {% unless forloop.last %},{% endunless %}
+      {% endfor %}
+      ]
+      }
+      }
       }
     {% endcapture %}
 
@@ -200,37 +200,37 @@
 
   {% if variants.size != component_skus.size or found_skus.size != variants.size %}
     {% error %}
-      {{ "Expected to find " | append: component_skus.size | append: " matching component product variants with unique SKUs, based on the task configuration, but found " | append: variants.size | append: " matching variants with " | append: found_skus.size | append: " unique SKUs instead. Make sure each SKU for this task only has one associated product in your store." | json }}
+    {{ "Expected to find " | append: component_skus.size | append: " matching component product variants with unique SKUs, based on the task configuration, but found " | append: variants.size | append: " matching variants with " | append: found_skus.size | append: " unique SKUs instead. Make sure each SKU for this task only has one associated product in your store." | json }}
     {% enderror %}
   {% endif %}
 
   {% action "shopify" %}
-    mutation {
-      {% for variant in variants %}
-        {% assign variant_delta = component_adjustment_bundle_quantity | times: component_skus_and_quantities[variant.sku] %}
+  mutation {
+  {% for variant in variants %}
+    {% assign variant_delta = component_adjustment_bundle_quantity | times: component_skus_and_quantities[variant.sku] %}
 
-        inventoryAdjustQuantity{{ forloop.index }}: inventoryAdjustQuantity(
-          input: {
-            inventoryLevelId: {{ variant.inventoryItem.inventoryLevels.edges.first.node.id | json }}
-            availableDelta: {{ variant_delta | json }}
-          }
-        ) {
-          inventoryLevel {
-            id
-            available
-            item {
-              variant {
-                sku
-              }
-            }
-          }
-          userErrors {
-            field
-            message
-          }
-        }
-      {% endfor %}
+    inventoryAdjustQuantity{{ forloop.index }}: inventoryAdjustQuantity(
+    input: {
+    inventoryLevelId: {{ variant.inventoryItem.inventoryLevels.edges.first.node.id | json }}
+    availableDelta: {{ variant_delta | json }}
     }
+    ) {
+    inventoryLevel {
+    id
+    available
+    item {
+    variant {
+    sku
+    }
+    }
+    }
+    userErrors {
+    field
+    message
+    }
+    }
+  {% endfor %}
+  }
   {% endaction %}
 {% endif %}
 
@@ -242,26 +242,26 @@
 
   {% capture query %}
     query {
-      productVariants(
-        first: {{ all_skus.size | json }}
-        query: {{ query_components | join: " OR " | json }}
-      ) {
-        edges {
-          node {
-            inventoryQuantity
-            inventoryItem {
-              inventoryLevels(first: 1) {
-                edges {
-                  node {
-                    id
-                  }
-                }
-              }
-            }
-            sku
-          }
-        }
-      }
+    productVariants(
+    first: {{ all_skus.size | json }}
+    query: {{ query_components | join: " OR " | json }}
+    ) {
+    edges {
+    node {
+    inventoryQuantity
+    inventoryItem {
+    inventoryLevels(first: 1) {
+    edges {
+    node {
+    id
+    }
+    }
+    }
+    }
+    sku
+    }
+    }
+    }
     }
   {% endcapture %}
 
@@ -270,49 +270,49 @@
   {% if event.preview %}
     {% capture result_json %}
       {
-        "data": {
-          "productVariants": {
-            "edges": [
-              {
-                "node": {
-                  "inventoryItem": {
-                    "inventoryLevels": {
-                      "edges": [
-                        {
-                          "node": {
-                            "id": "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890"
-                          }
-                        }
-                      ]
-                    }
-                  },
-                  "inventoryQuantity": 2,
-                  "sku": {{ bundle_sku | json }}
-                }
-              },
-              {% for sku in component_skus %}
-                {
-                  "node": {
-                    "inventoryItem": {
-                      "inventoryLevels": {
-                        "edges": [
-                          {
-                            "node": {
-                              "id": "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890"
-                            }
-                          }
-                        ]
-                      }
-                    },
-                    "inventoryQuantity": 1,
-                    "sku": {{ sku | json }}
-                  }
-                }
-                {% unless forloop.last %},{% endunless %}
-              {% endfor %}
-            ]
-          }
+      "data": {
+      "productVariants": {
+      "edges": [
+      {
+      "node": {
+      "inventoryItem": {
+      "inventoryLevels": {
+      "edges": [
+      {
+      "node": {
+      "id": "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890"
+      }
+      }
+      ]
+      }
+      },
+      "inventoryQuantity": 2,
+      "sku": {{ bundle_sku | json }}
+      }
+      },
+      {% for sku in component_skus %}
+        {
+        "node": {
+        "inventoryItem": {
+        "inventoryLevels": {
+        "edges": [
+        {
+        "node": {
+        "id": "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890"
         }
+        }
+        ]
+        }
+        },
+        "inventoryQuantity": 1,
+        "sku": {{ sku | json }}
+        }
+        }
+        {% unless forloop.last %},{% endunless %}
+      {% endfor %}
+      ]
+      }
+      }
       }
     {% endcapture %}
 
@@ -324,7 +324,7 @@
 
   {% if variants.size != all_skus.size or found_skus.size != variants.size %}
     {% error %}
-      {{ "Expected to find " | append: all_skus.size | append: " matching component product variants with unique SKUs, based on the task configuration, but found " | append: variants.size | append: " matching variants with " | append: found_skus.size | append: " unique SKUs instead. Make sure each SKU for this task only has one associated product in your store." | json }}
+    {{ "Expected to find " | append: all_skus.size | append: " matching component product variants with unique SKUs, based on the task configuration, but found " | append: variants.size | append: " matching variants with " | append: found_skus.size | append: " unique SKUs instead. Make sure each SKU for this task only has one associated product in your store." | json }}
     {% enderror %}
   {% endif %}
 
@@ -357,28 +357,28 @@
     {% log "Lowest quantity component SKU had an inventory that was appropriate for the bundle's current inventory. No change needed." %}
   {% else %}
     {% action "shopify" %}
-      mutation {
-        inventoryAdjustQuantity(
-          input: {
-            inventoryLevelId: {{ bundle_variant.inventoryItem.inventoryLevels.edges.first.node.id | json }}
-            availableDelta: {{ bundle_delta | json }}
-          }
-        ) {
-          inventoryLevel {
-            id
-            available
-            item {
-              variant {
-                sku
-              }
-            }
-          }
-          userErrors {
-            field
-            message
-          }
-        }
-      }
+    mutation {
+    inventoryAdjustQuantity(
+    input: {
+    inventoryLevelId: {{ bundle_variant.inventoryItem.inventoryLevels.edges.first.node.id | json }}
+    availableDelta: {{ bundle_delta | json }}
+    }
+    ) {
+    inventoryLevel {
+    id
+    available
+    item {
+    variant {
+    sku
+    }
+    }
+    }
+    userErrors {
+    field
+    message
+    }
+    }
+    }
     {% endaction %}
   {% endif %}
 {% endif %}
