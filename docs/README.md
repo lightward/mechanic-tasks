@@ -250,6 +250,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Send an email when a specific product is shipped](./send-an-email-when-a-specific-product-is-shipped)
 * [Send an event to Klaviyo when a fulfillment is delayed](./send-an-event-to-klaviyo-when-a-fulfillment-is-delayed)
 * [Send customers a reorder link X days after ordering](./send-customers-a-reorder-link-x-days-after-ordering)
+* [Send email alerts by event topic](./send-email-alerts-by-event-topic)
 * [Send email when an order comes in](./send-email-when-an-order-comes-in)
 * [Send email when an order is tagged](./send-email-when-an-order-is-tagged)
 * [Send follow-up emails after sending a draft order invoice](./send-follow-up-emails-after-sending-a-draft-order-invoice)
