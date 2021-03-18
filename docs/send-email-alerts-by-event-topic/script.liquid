@@ -60,16 +60,13 @@
 
     {% assign email_body = email_body | replace: "OBJECT_LINK", object_link %}
 
+    {% action "email" %}
       {
-        "action": {
-          "type": "email",
-          "options": {
-            "to": {{ email_recipients | join: ", " | json }},
-            "subject": {{ email_subject | json }},
-            "body": {{ email_body | unindent | newline_to_br | json }},
-            "from_display_name": {{ shop.name | json }}
-          }
-        }
+        "to": {{ email_recipients | join: ", " | json }},
+        "subject": {{ email_subject | json }},
+        "body": {{ email_body | unindent | newline_to_br | json }},
+        "from_display_name": {{ shop.name | json }}
       }
+    {% endaction %}
   {% endif %}
 {% endfor %}

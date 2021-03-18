@@ -10,9 +10,7 @@ This task allows you to receive an email alert for any event topic supported by 
 
 ```json
 {
-  "emails_to_notify__array_required": [
-    "brad@tekha.us"
-  ],
+  "emails_to_notify__array_required": null,
   "general_email_subject__required": "ALERT",
   "append_event_topic_to_email_subject__boolean": true,
   "event_topics_and_email_bodies__keyval_multiline_required": {
@@ -27,10 +25,7 @@ This task allows you to receive an email alert for any event topic supported by 
 ## Subscriptions
 
 ```liquid
-{% assign event_topics = options.event_topics_and_email_bodies__keyval_multiline_required | keys %}
-{% for event_topic in event_topics %}
-{{ event_topic }}
-{% endfor %}
+{{ options.event_topics_and_email_bodies__keyval_multiline_required | keys | join: newline }}
 ```
 
 [Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
