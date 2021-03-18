@@ -25,31 +25,31 @@
     {% assign object_link = nil %}
 
     {% if event.topic contains "shopify/collections/" %}
-      {% capture object_link %}collections/{{ collection.id | default: 1234567890  }}{% endcapture %}
+      {% capture object_link %}collections/{{ collection.id | default: 1234567890 }}{% endcapture %}
 
     {% elsif event.topic contains "shopify/customers/" %}
       {% capture object_link %}customers/{{ customer.id | default: 1234567890 }}{% endcapture %}
 
     {% elsif event.topic contains "shopify/draft_orders/" %}
-      {% capture object_link %}draft_orders/{{ draft_order.id | default: 1234567890  }}{% endcapture %}
+      {% capture object_link %}draft_orders/{{ draft_order.id | default: 1234567890 }}{% endcapture %}
 
     {% elsif event.topic contains "shopify/fulfillment_events/" %}
-      {% capture object_link %}orders/{{ fulfillment_event.order.id | default: 1234567890  }}{% endcapture %}
+      {% capture object_link %}orders/{{ fulfillment_event.order.id | default: 1234567890 }}{% endcapture %}
 
     {% elsif event.topic contains "shopify/fulfillments/" %}
-      {% capture object_link %}orders/{{ fulfillment.order.id | default: 1234567890  }}{% endcapture %}
+      {% capture object_link %}orders/{{ fulfillment.order.id | default: 1234567890 }}{% endcapture %}
 
     {% elsif event.topic contains "shopify/orders/" %}
-      {% capture object_link %}orders/{{ order.id | default: 1234567890  }}{% endcapture %}
+      {% capture object_link %}orders/{{ order.id | default: order_edit.order.id | default: 1234567890 }}{% endcapture %}
 
     {% elsif event.topic contains "shopify/products/" %}
-      {% capture object_link %}products/{{ product.id | default: 1234567890  }}{% endcapture %}
+      {% capture object_link %}products/{{ product.id | default: 1234567890 }}{% endcapture %}
 
     {% elsif event.topic contains "shopify/refunds/" %}
-      {% capture object_link %}orders/{{ refund.order.id | default: 1234567890  }}{% endcapture %}
+      {% capture object_link %}orders/{{ refund.order.id | default: 1234567890 }}{% endcapture %}
 
     {% elsif event.topic contains "shopify/themes/" %}
-      {% capture object_link %}themes/{{ theme.id | default: 1234567890  }}{% endcapture %}
+      {% capture object_link %}themes/{{ theme.id | default: 1234567890 }}{% endcapture %}
     {% endif%}
 
     {% if object_link != blank %}
