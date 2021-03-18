@@ -39,6 +39,7 @@ The task comes preloaded with the customers and products create event topics, al
 Note:
 - The task will replace the __OBJECT_LINK__ string within the email body if present (and where it makes sense to do so) with an admin link to the Shopify object related to the event topic.
 - Some event topics, like *shopify/products/update* and *shopify/inventory_levels/update*, can generate **a lot** of emails, so they should be used with caution.
+- When using the *shopify/orders/edited* event topic, the original order can be referenced using `{{ order_edit.order }}`.
 
 ## Installing this task
 
