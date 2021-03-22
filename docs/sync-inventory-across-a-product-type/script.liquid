@@ -114,6 +114,10 @@
       {% assign inventory_old = 30 %}
     {% endif %}
 
+    {% if inventory_old == blank %}
+      {% error message: "The inventory for this product type has not yet been cached. Manually synchronize the inventory for this product type and run this task manually per steps 2 and 3 in the task instructions.", product_type: product_type %}
+    {% endif %}
+
     {% assign variants = array %}
     {% assign cursor = nil %}
 
