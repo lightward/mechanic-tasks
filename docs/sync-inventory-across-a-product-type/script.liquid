@@ -10,7 +10,7 @@
         query {
           productVariants(
             first: 250
-            query: {{ "product_type:" | append: product_type | json }}
+            query: {{ product_type | json | prepend: "product_type:" | json }}
             after: {{ cursor | json }}
           ) {
             pageInfo {
@@ -124,7 +124,7 @@
         query {
           productVariants(
             first: 250
-            query: {{ "product_type:" | append: product_type | json }}
+            query: {{ product_type | json | prepend: "product_type:" | json }}
             after: {{ cursor | json }}
           ) {
             pageInfo {
