@@ -81,7 +81,7 @@
     {
       "to": {{ order.email | json }},
       "subject": {{ options.email_subject__required | json }},
-      "body": {{ options.email_body__multiline_required | strip | json }},
+      "body": {{ options.email_body__multiline_required | strip | newline_to_br | json }},
       "reply_to": {{ shop.customer_email | json }},
       "from_display_name": {{ shop.name | json }}
     }
