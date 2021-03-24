@@ -1,5 +1,7 @@
 # Auto-tag orders with UTM parameters
 
+Tags: Auto-Tag, Marketing, Orders
+
 This task automatically tags incoming orders with the UTM campaign, content, medium, source, and/or term associated with the customer's visit. Run this task manually to tag your existing orders.
 
 * View in the task library: [usemechanic.com/task/auto-tag-orders-with-utm-parameters](https://usemechanic.com/task/auto-tag-orders-with-utm-parameters)

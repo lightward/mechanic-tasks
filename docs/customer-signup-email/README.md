@@ -1,5 +1,7 @@
 # Send a customer signup email
 
+Tags: Customers, Email, Signup
+
 Super basic, super useful. :) Get an email alert whenever a customer account is created.
 
 * View in the task library: [usemechanic.com/task/customer-signup-email](https://usemechanic.com/task/customer-signup-email)

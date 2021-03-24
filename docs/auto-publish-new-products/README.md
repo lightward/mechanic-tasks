@@ -1,5 +1,7 @@
 # Auto-publish new products
 
+Tags: Products, Publish
+
 Use this task to automatically make add new products to the sales channels of your choice, making each product available on each channel immediately after the product is created.
 
 * View in the task library: [usemechanic.com/task/auto-publish-new-products](https://usemechanic.com/task/auto-publish-new-products)

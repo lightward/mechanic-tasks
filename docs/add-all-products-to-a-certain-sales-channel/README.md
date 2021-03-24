@@ -1,5 +1,7 @@
 # Add all products to a certain sales channel
 
+Tags: Bulk, Products, Sales Channel
+
 Does exactly as it says: this task will publish all products to the sales channel(s) of your choice, on demand. Optionally, filter products by a search query, or choose to have this task run every ten minutes, hourly, or daily.
 
 * View in the task library: [usemechanic.com/task/add-all-products-to-a-certain-sales-channel](https://usemechanic.com/task/add-all-products-to-a-certain-sales-channel)

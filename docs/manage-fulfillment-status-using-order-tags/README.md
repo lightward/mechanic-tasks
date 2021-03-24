@@ -1,5 +1,7 @@
 # Manage fulfillment shipment status using order tags
 
+Tags: Fulfillment, Orders, Tag
+
 Use this task to easily set the shipment status of your single-fulfillment orders. Just add a tag, and a new fulfillment event will be recorded, using the corresponding shipment status. Optionally, you may have the task attempt to fulfill the order first and may choose whether to send shipment status notifications to the customer.
 
 * View in the task library: [usemechanic.com/task/manage-fulfillment-status-using-order-tags](https://usemechanic.com/task/manage-fulfillment-status-using-order-tags)

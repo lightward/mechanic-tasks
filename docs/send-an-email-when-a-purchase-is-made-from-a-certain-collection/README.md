@@ -1,5 +1,7 @@
 # Send an email when a purchase is made from a certain collection
 
+Tags: Collections, Email, Orders
+
 This task will monitor incoming orders for any products that are included in the collection you choose. [Learn where to find the collection ID.](https://help.usemechanic.com/articles/2946120-how-do-i-find-an-id-for-a-product-collection-order-or-something-else)
 
 * View in the task library: [usemechanic.com/task/send-an-email-when-a-purchase-is-made-from-a-certain-collection](https://usemechanic.com/task/send-an-email-when-a-purchase-is-made-from-a-certain-collection)

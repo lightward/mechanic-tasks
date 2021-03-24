@@ -1,5 +1,7 @@
 # Auto-tag orders that contain an out of stock item
 
+Tags: Auto-Tag, Orders, Out of Stock
+
 This task watches for newly-created orders, and checks each line item for that variant's total inventory quantity. If any are found with an inventory level of 0 or less, the task will add the tag of your choice to the order – and, optionally, will add a tag to the customer and to each product related to an out-of-stock line item.
 
 * View in the task library: [usemechanic.com/task/auto-tag-orders-that-contain-an-out-of-stock-item](https://usemechanic.com/task/auto-tag-orders-that-contain-an-out-of-stock-item)

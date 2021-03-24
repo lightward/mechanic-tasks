@@ -1,5 +1,7 @@
 # Auto-tag new orders using Liquid
 
+Tags: Auto-Tag, Orders
+
 This task offers an introduction to using Liquid to dynamically update your orders. This task comes with example Liquid code, showing you how to tag an order as "even" or "odd", based on whether the order number is even or odd; replace this Liquid with whatever suits your purposes. :)
 
 * View in the task library: [usemechanic.com/task/auto-tag-new-orders-using-liquid](https://usemechanic.com/task/auto-tag-new-orders-using-liquid)

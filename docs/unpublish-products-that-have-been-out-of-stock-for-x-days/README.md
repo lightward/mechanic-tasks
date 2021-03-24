@@ -1,5 +1,7 @@
 # Unpublish products that have been out of stock for x days
 
+Tags: Inventory, Products, Unpublish
+
 This task monitors for inventory changes, and records the time when a product's inventory falls to 0 or less. Then, on an hourly basis, the task will unpublish any products with a recorded out-of-stock time of at least x days ago.
 
 * View in the task library: [usemechanic.com/task/unpublish-products-that-have-been-out-of-stock-for-x-days](https://usemechanic.com/task/unpublish-products-that-have-been-out-of-stock-for-x-days)

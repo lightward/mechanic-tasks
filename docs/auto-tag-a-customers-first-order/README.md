@@ -1,5 +1,7 @@
 # Auto-tag a customer's first order
 
+Tags: Auto-Tag, Customers, Orders, Tag
+
 Watches for incoming orders that are the very first order on file for the related customer, and adds the tag of your choice.
 
 * View in the task library: [usemechanic.com/task/auto-tag-a-customers-first-order](https://usemechanic.com/task/auto-tag-a-customers-first-order)

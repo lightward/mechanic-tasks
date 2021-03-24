@@ -1,5 +1,7 @@
 # Email someone when a certain product is purchased
 
+Tags: Alert, Email, Orders, Products
+
 This task sends an email notification, immediately after an order is paid - if a product in the order has a title matching the product title you configure. Optionally, configure this task with a delay, in days, to wait before sending the email. (The task will not send any emails for orders that have since been cancelled.)
 
 * View in the task library: [usemechanic.com/task/email-someone-when-certain-product-purchased](https://usemechanic.com/task/email-someone-when-certain-product-purchased)

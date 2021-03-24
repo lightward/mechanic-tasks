@@ -1,5 +1,7 @@
 # Auto-tag products by age
 
+Tags: Age, Auto-Tag, Products
+
 This task scans every product in your store, and adds or removes the tags you configure, according to how many days have passed since the product was created. (Or published, if you prefer!)
 
 * View in the task library: [usemechanic.com/task/auto-tag-new-products-by-age](https://usemechanic.com/task/auto-tag-new-products-by-age)

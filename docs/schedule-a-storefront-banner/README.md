@@ -1,5 +1,7 @@
 # Schedule a storefront banner
 
+Tags: Banner, Schedule, Storefront
+
 Use this task to publish a banner, to be displayed across your online storefront. This task comes with some pre-configured HTML and CSS – customize to taste. :)
 
 * View in the task library: [usemechanic.com/task/schedule-a-storefront-banner](https://usemechanic.com/task/schedule-a-storefront-banner)

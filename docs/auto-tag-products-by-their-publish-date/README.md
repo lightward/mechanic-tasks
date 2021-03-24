@@ -1,5 +1,7 @@
 # Auto-tag products by their publish date
 
+Tags: Auto-Tag, Products, Publish
+
 This task formats the publish date of each product (according to the format you choose), adds a prefix (also of your choosing), and applies it to each product. Run this task manually to scan your entire product catalog at once, or wait for the task to run automatically when products are created or updated.
 
 * View in the task library: [usemechanic.com/task/auto-tag-products-by-their-publish-date](https://usemechanic.com/task/auto-tag-products-by-their-publish-date)

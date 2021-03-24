@@ -1,5 +1,7 @@
 # Auto-tag customers when their order is paid
 
+Tags: Auto-Tag, Customers, Orders, Payment
+
 Configure this task with a customer tag, and Mechanic will take care of applying it to your customers as soon as their order payment goes through. Easy as that. :)
 
 * View in the task library: [usemechanic.com/task/auto-tag-customers-when-order-paid](https://usemechanic.com/task/auto-tag-customers-when-order-paid)

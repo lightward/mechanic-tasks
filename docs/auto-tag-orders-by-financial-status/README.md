@@ -1,5 +1,7 @@
 # Auto-tag orders by financial status
 
+Tags: Auto-Tag, Financial Status, Orders
+
 This task watches new and updated orders, and updates their tags according to their financial status.
 
 * View in the task library: [usemechanic.com/task/auto-tag-orders-by-financial-status](https://usemechanic.com/task/auto-tag-orders-by-financial-status)

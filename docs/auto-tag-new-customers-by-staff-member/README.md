@@ -1,5 +1,7 @@
 # Auto-tag new customers by staff member
 
+Tags: (not tagged!)
+
 Use this task to easily keep track of who's responsible for manually creating new customers.
 
 * View in the task library: [usemechanic.com/task/auto-tag-new-customers-by-staff-member](https://usemechanic.com/task/auto-tag-new-customers-by-staff-member)

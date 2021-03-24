@@ -1,5 +1,7 @@
 # Copy order and/or product tags to customers
 
+Tags: Auto-Tag, Customers
+
 Run this task to scan all of your customers and their order histories in bulk, copying order and/or product tags to the relevant customer. Optionally, configure a specific set of tags to look for, when scanning. Optionally, choose to remove those tags if a qualifying source can't be found - useful for adding customer tags that expire after ordering!
 
 * View in the task library: [usemechanic.com/task/copy-order-tags-to-customers](https://usemechanic.com/task/copy-order-tags-to-customers)

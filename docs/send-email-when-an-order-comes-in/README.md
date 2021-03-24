@@ -1,5 +1,7 @@
 # Send email when an order comes in
 
+Tags: Alert, Email, Orders
+
 Use this task to notify staff (or suppliers, or anyone!) of incoming orders. Optionally, choose to only be notified when orders are paid, or only for orders that contain at least one product with a certain tag.
 
 * View in the task library: [usemechanic.com/task/send-email-when-an-order-comes-in](https://usemechanic.com/task/send-email-when-an-order-comes-in)

@@ -1,5 +1,7 @@
 # Auto-tag new draft orders
 
+Tags: Auto-Tag, Draft Orders
+
 Immediately upon the creation of a draft order, add one or more tags. Simple as that. :)
 
 * View in the task library: [usemechanic.com/task/auto-tag-new-draft-orders](https://usemechanic.com/task/auto-tag-new-draft-orders)

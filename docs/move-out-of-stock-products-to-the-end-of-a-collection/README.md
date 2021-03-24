@@ -1,5 +1,7 @@
 # Move out-of-stock products to the end of a collection
 
+Tags: Collections, Sort
+
 This task re-sorts your collections, beginning with the sort order of your choice (alphabetically, best selling first, etc), and then moving all out-of-stock products to the very end of the collection.
 
 * View in the task library: [usemechanic.com/task/move-out-of-stock-products-to-the-end-of-a-collection](https://usemechanic.com/task/move-out-of-stock-products-to-the-end-of-a-collection)

@@ -1,5 +1,7 @@
 # Manage annual memberships based on order minimums
 
+Tags: Membership, Orders
+
 Use this task to automatically tag customers as members when they purchase a minimum quantity of products. And, check on those customers on a regular basis to ensure that they maintain their order quantity minimums.
 
 * View in the task library: [usemechanic.com/task/manage-annual-memberships-based-on-order-minimums](https://usemechanic.com/task/manage-annual-memberships-based-on-order-minimums)

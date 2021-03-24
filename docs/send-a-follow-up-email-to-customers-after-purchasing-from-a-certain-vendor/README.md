@@ -1,5 +1,7 @@
 # Send a follow-up email to customers after purchasing from a certain vendor
 
+Tags: Customers, Email, Reviews, Vendor
+
 This task will send a follow-up email to your customer after their order is paid, waiting for a configurable number of days before doing so.
 
 * View in the task library: [usemechanic.com/task/send-a-follow-up-email-to-customers-after-purchasing-from-a-certain-vendor](https://usemechanic.com/task/send-a-follow-up-email-to-customers-after-purchasing-from-a-certain-vendor)

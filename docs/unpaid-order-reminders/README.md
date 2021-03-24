@@ -1,5 +1,7 @@
 # Send recurring reminders about unpaid orders
 
+Tags: Email, Orders, Unpaid
+
 This task sends recurring unpaid order reminders to customers, emailing them on a configurable schedule, until the order is no longer "pending" or until the order is cancelled.
 
 * View in the task library: [usemechanic.com/task/unpaid-order-reminders](https://usemechanic.com/task/unpaid-order-reminders)

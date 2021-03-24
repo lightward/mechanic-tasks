@@ -1,5 +1,7 @@
 # Delete draft orders older than 30 days
 
+Tags: Delete, Draft Orders, Schedule
+
 Keep your draft order list tidy - use this task to automatically delete orders that are older than a configurable number of days.
 
 * View in the task library: [usemechanic.com/task/delete-draft-orders-older-than-30-days](https://usemechanic.com/task/delete-draft-orders-older-than-30-days)

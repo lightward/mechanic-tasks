@@ -1,5 +1,7 @@
 # Schedule product tags by date
 
+Tags: Auto-Tag, Products, Schedule
+
 Use this task to schedule adding and/or removing tags for specific products, with support for scheduling by date, or by date and hour.
 
 * View in the task library: [usemechanic.com/task/schedule-product-tags-by-date](https://usemechanic.com/task/schedule-product-tags-by-date)

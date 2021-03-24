@@ -1,5 +1,7 @@
 # Unpublish products that fall below a rolling sales threshold
 
+Tags: Products, Unpublish
+
 This task scans the last x days of orders, and unpublishes any products that haven't met your specified sales threshold during that time period, from whichever sales channel you select. By default, this task adds up the line item subtotals for each product (quantity times price), but it can also count by total quantity sold. This task only looks at products that were published before the time period being examined.
 
 * View in the task library: [usemechanic.com/task/unpublish-products-that-fall-below-a-rolling-sales-threshold](https://usemechanic.com/task/unpublish-products-that-fall-below-a-rolling-sales-threshold)

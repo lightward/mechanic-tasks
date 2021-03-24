@@ -1,5 +1,7 @@
 # Export a CSV of order shipping addresses
 
+Tags: CSV, Export, Shipping
+
 Useful for quickly preparing labels, or planning a drop-off route.
 
 * View in the task library: [usemechanic.com/task/export-a-csv-of-order-shipping-addresses](https://usemechanic.com/task/export-a-csv-of-order-shipping-addresses)

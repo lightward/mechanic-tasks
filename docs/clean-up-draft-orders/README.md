@@ -1,5 +1,7 @@
 # Clean up draft orders
 
+Tags: Draft Orders, Orders
+
 Use this task to quickly delete draft orders from your account, optionally filtering by status, or by draft order age. Useful for keeping things tidy. :)
 
 * View in the task library: [usemechanic.com/task/clean-up-draft-orders](https://usemechanic.com/task/clean-up-draft-orders)

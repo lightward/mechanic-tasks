@@ -1,5 +1,7 @@
 # Auto-tag customers based on email domain
 
+Tags: Auto-Tag, Customers
+
 Useful in a million scenarios. The merchant who requested this task has discounts set up based on customer tag, and they're using this task to guarantee that qualifying customers see their discount immediately – even if they just signed up!
 
 * View in the task library: [usemechanic.com/task/auto-tag-customers-by-email-domain](https://usemechanic.com/task/auto-tag-customers-by-email-domain)

@@ -1,5 +1,7 @@
 # Auto-add an order note for returning customers
 
+Tags: Customers, Order Note
+
 Use this task to identify orders that are for customers who have previously ordered from your store. Optionally, ignore more frequent purchasers, by ignoring customers who've made an order recently. Useful for making sure to include a welcome-back gift in order shipments. :)
 
 * View in the task library: [usemechanic.com/task/auto-add-an-order-note-for-returning-customers](https://usemechanic.com/task/auto-add-an-order-note-for-returning-customers)

@@ -1,5 +1,7 @@
 # Reset inventory levels when they get too low
 
+Tags: Inventory, Low Stock
+
 Use this task to automatically maintain minimum inventory levels. Optionally, filter by variant or product ID, or by variant option, or by product type, choosing whether to blacklist or whitelist your filter selections.
 
 * View in the task library: [usemechanic.com/task/reset-inventory-levels-when-they-get-too-low](https://usemechanic.com/task/reset-inventory-levels-when-they-get-too-low)

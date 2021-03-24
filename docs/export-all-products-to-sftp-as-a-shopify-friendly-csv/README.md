@@ -1,5 +1,7 @@
 # Export all products to SFTP, as a Shopify-friendly CSV
 
+Tags: Backups, CSV, Export, FTP
+
 On a configurable schedule, this task generates a Shopify-friendly CSV of all your products, and uploads it to the SFTP destination of your choice. This is a convenient way to keep regular backups of your entire product catalog: simply import a CSV to restore your products to that point in time. ([Learn more about CSV imports and exports of Shopify products.](https://help.shopify.com/en/manual/products/import-export/using-csv))
 
 * View in the task library: [usemechanic.com/task/export-all-products-to-sftp-as-a-shopify-friendly-csv](https://usemechanic.com/task/export-all-products-to-sftp-as-a-shopify-friendly-csv)

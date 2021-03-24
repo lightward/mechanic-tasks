@@ -1,5 +1,7 @@
 # Untag orders when paid
 
+Tags: Orders, Payment, Untag
+
 This task automatically removes specific order tag(s) when orders are paid.
 
 * View in the task library: [usemechanic.com/task/untag-orders-when-paid](https://usemechanic.com/task/untag-orders-when-paid)

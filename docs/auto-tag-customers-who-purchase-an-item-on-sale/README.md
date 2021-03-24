@@ -1,5 +1,7 @@
 # Auto-tag customers who purchase an item on sale
 
+Tags: Auto-Tag, Customers, Products
+
 When a customer orders an item on sale (technically, when the order contains a product variant that includes a "compare at" price), this task automatically adds a tag to their account. Useful for keeping track of customers who take advantage of sale pricing!
 
 * View in the task library: [usemechanic.com/task/auto-tag-customers-who-purchase-an-item-on-sale](https://usemechanic.com/task/auto-tag-customers-who-purchase-an-item-on-sale)

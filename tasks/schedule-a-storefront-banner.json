@@ -13,5 +13,10 @@
   "halt_action_run_sequence_on_error": false,
   "online_store_javascript": "var now = Date.now();\nvar startAt = {{ options.starting_date_and_time__required | date: \"%s\" | times: 1000 | json }};\nvar endAt = {{ options.ending_date_and_time__required | date: \"%s\" | times: 1000 | json }};\n\nif (document.getElementById('admin-bar-iframe')) {\n  if (startAt === 0) {\n    alert('Scheduled banner with Mechanic: starting time was not understood');\n  }\n  if (endAt === 0) {\n    alert('Scheduled banner with Mechanic: ending time was not understood');\n  }\n}\n\nif (startAt !== 0 && endAt !== 0 && startAt <= now && now <= endAt) {\n  var bannerContainer = document.createElement('div');\n  bannerContainer.innerHTML = {{ options.banner_html__required_multiline_code | json }};\n\n  var parentCssSelector = {{ options.banner_parent_css_selector__required | json }};\n  var parent = document.querySelector(parentCssSelector);\n\n  parent.insertBefore(bannerContainer, parent.firstChild);\n}",
   "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false
+  "perform_action_runs_in_sequence": false,
+  "tags": [
+    "Banner",
+    "Schedule",
+    "Storefront"
+  ]
 }

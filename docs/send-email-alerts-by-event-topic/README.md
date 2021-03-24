@@ -1,5 +1,7 @@
 # Send email alerts by event topic
 
+Tags: (not tagged!)
+
 This task allows you to receive an email alert for any event topic supported by Mechanic. Configure the task with a list of email addresses to notify, an email subject, and one or more event topics, each paired with an email body that supports liquid output tags for the main object of each event (e.g. *shopify/products/create* can use attributes like `{{ product.id }}` or `{{ product.title }}`)
 
 * View in the task library: [usemechanic.com/task/send-email-alerts-by-event-topic](https://usemechanic.com/task/send-email-alerts-by-event-topic)

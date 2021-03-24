@@ -1,5 +1,7 @@
 # Sync inventory for shared SKUs
 
+Tags: Inventory, SKU, Sync
+
 This task monitors all variants having a SKU that you configure, and ensures that changes to inventory quantity are reflected across all variants sharing that SKU.
 
 * View in the task library: [usemechanic.com/task/sync-inventory-for-shared-skus](https://usemechanic.com/task/sync-inventory-for-shared-skus)

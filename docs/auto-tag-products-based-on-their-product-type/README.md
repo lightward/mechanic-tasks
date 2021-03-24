@@ -1,5 +1,7 @@
 # Auto-tag products based on their product type
 
+Tags: Auto-Tag, Products
+
 This task monitors new and updated products, applying the tag(s) of your choice to them based on their individual product type. Run this task manually to tag all of your products at once.
 
 * View in the task library: [usemechanic.com/task/auto-tag-products-based-on-their-product-type](https://usemechanic.com/task/auto-tag-products-based-on-their-product-type)

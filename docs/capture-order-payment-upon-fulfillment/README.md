@@ -1,5 +1,7 @@
 # Capture order payment upon fulfillment
 
+Tags: Fulfillment, Payment
+
 Short and simple. :) Upon the fulfillment of an authorized order, this task attempts to capture payment for that order.
 
 * View in the task library: [usemechanic.com/task/capture-order-payment-upon-fulfillment](https://usemechanic.com/task/capture-order-payment-upon-fulfillment)

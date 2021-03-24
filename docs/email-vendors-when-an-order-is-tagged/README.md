@@ -1,5 +1,7 @@
 # Email vendors when an order is tagged
 
+Tags: Email, Orders, Tag, Vendor, Watch
+
 Use this task to automatically keep vendors up to date as an order evolves. Configure this task with a list of known vendor names and their email addresses, and this task will email them whenever it notices the tag of your choice on the order.
 
 * View in the task library: [usemechanic.com/task/email-vendors-when-an-order-is-tagged](https://usemechanic.com/task/email-vendors-when-an-order-is-tagged)

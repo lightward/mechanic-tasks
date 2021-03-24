@@ -1,5 +1,7 @@
 # Sync variant inventory within a product by pack size
 
+Tags: Inventory, Products, Sync
+
 Use this task to sell a single product in different pack sizes, keeping inventory levels synchronized appropriately, storing the "master" inventory level in a product tag (e.g. "inventory:50").
 
 * View in the task library: [usemechanic.com/task/sync-variant-inventory-within-a-product-by-pack-size](https://usemechanic.com/task/sync-variant-inventory-within-a-product-by-pack-size)

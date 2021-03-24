@@ -1,5 +1,7 @@
 # Auto-tag new orders based on payment method
 
+Tags: Auto-Tag, Orders, Payment
+
 This task checks the payment method for new orders immediately upon order creation, and tags the order accordingly.
 
 * View in the task library: [usemechanic.com/task/auto-tag-new-orders-based-on-payment-method](https://usemechanic.com/task/auto-tag-new-orders-based-on-payment-method)

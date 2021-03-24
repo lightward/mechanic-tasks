@@ -1,5 +1,7 @@
 # Auto-tag products with their vendors
 
+Tags: Auto-Tag, Products, Vendor
+
 Use this task to copy each product's vendor to the product's tag. :)
 
 * View in the task library: [usemechanic.com/task/auto-tag-products-with-their-vendors](https://usemechanic.com/task/auto-tag-products-with-their-vendors)

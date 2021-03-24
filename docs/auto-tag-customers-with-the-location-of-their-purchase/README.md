@@ -1,5 +1,7 @@
 # Auto-tag customers with the location of their purchase
 
+Tags: Auto-Tag, Customers, Location, Orders
+
 When an order is created, this task adds the location of the purchase to the customer's tags. Useful for stores with multiple Shopify-powered locations.
 
 * View in the task library: [usemechanic.com/task/auto-tag-customers-with-the-location-of-their-purchase](https://usemechanic.com/task/auto-tag-customers-with-the-location-of-their-purchase)

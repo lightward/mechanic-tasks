@@ -1,5 +1,7 @@
 # Cancel fulfillments when an order is fully refunded
 
+Tags: Cancel, Fulfillment, Orders, Refunds
+
 This task monitors for new refunds. When a new refund changes an order's status to fully refunded, this task will cancel all fulfillments for that order. This task supports running manually, to cancel all fulfillments for refunded orders, across your store's order history.
 
 * View in the task library: [usemechanic.com/task/cancel-fulfillments-when-an-order-is-fully-refunded](https://usemechanic.com/task/cancel-fulfillments-when-an-order-is-fully-refunded)

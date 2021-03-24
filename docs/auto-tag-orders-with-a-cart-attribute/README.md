@@ -1,5 +1,7 @@
 # Auto-tag orders with a cart attribute
 
+Tags: Auto-Tag, Cart, Cart Attributes, Orders
+
 This task checks for incoming orders, watching for orders that have a specific cart attribute filled in. When present, the task then copies that attribute over to the order's tags.
 
 * View in the task library: [usemechanic.com/task/auto-tag-orders-with-a-cart-attribute](https://usemechanic.com/task/auto-tag-orders-with-a-cart-attribute)

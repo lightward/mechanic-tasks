@@ -1,5 +1,7 @@
 # Make products unavailable, after the date/time stored in product metafields
 
+Tags: Metafields, Products, Unpublish
+
 Use this task to automatically set product inventory to 0, and the product's inventory policy to deny out-of-stock purchases, after a date/time that you specify in a product metafield.
 
 * View in the task library: [usemechanic.com/task/make-products-unavailable-after-the-date-time-stored-in-product-metafields](https://usemechanic.com/task/make-products-unavailable-after-the-date-time-stored-in-product-metafields)

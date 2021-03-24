@@ -1,5 +1,7 @@
 # Auto-tag new orders with product SKUs
 
+Tags: Auto-Tag, Orders
+
 This task watches for new orders, and tags each order with all line item SKUs found in that order.
 
 * View in the task library: [usemechanic.com/task/auto-tag-new-orders-with-product-skus](https://usemechanic.com/task/auto-tag-new-orders-with-product-skus)

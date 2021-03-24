@@ -1,5 +1,7 @@
 # Auto-tag customers by purchased SKUs
 
+Tags: Auto-Tag, Customers, SKU
+
 Use this task to keep customers tagged with the SKUs of the products they've purchased, optionally ignoring product purchases that have been refunded. Add a tag prefix to make SKU tags easy to distinguish from your other customer tags. This task also stores all purchased SKUs in a customer metafield, dodging the 250 tag limit that exists for customers.
 
 * View in the task library: [usemechanic.com/task/auto-tag-customers-by-purchased-skus](https://usemechanic.com/task/auto-tag-customers-by-purchased-skus)

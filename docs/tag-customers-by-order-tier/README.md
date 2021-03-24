@@ -1,5 +1,7 @@
 # Tag customers by order tier
 
+Tags: Customers, Loyalty, Retention, Tag
+
 Use this task to tag customers by tier, based on how many orders they've placed or by the sum of all their order totals (i.e. total spend). Optionally, configure a customers query, limiting the set of customers that are processed. You may also configure an order query, specifying for things like a rolling time period, or fulfillment status. This task is useful for rewarding customers who establish or maintain a specific spend level.
 
 * View in the task library: [usemechanic.com/task/tag-customers-by-order-tier](https://usemechanic.com/task/tag-customers-by-order-tier)

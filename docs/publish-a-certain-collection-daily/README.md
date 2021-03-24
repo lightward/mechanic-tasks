@@ -1,5 +1,7 @@
 # Publish a certain collection, daily
 
+Tags: Collections, Publish, Schedule
+
 Use this task with the companion unpublishing task (see this task's documentation) to make a certain collection of products available on a schedule, and unavailable on another schedule.
 
 * View in the task library: [usemechanic.com/task/publish-a-certain-collection-daily](https://usemechanic.com/task/publish-a-certain-collection-daily)

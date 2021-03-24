@@ -1,5 +1,7 @@
 # Auto-tag customers by sales channel
 
+Tags: Auto-Tag, Customers, Sales Channel
+
 Use this task to tag customers, as their orders come in, based on which sales channel they used for their purchase. Run this task manually to backfill tags for customers based on their historical orders. Use test mode to see what this task _would_ do, if test mode wasn't enabled. :)
 
 * View in the task library: [usemechanic.com/task/auto-tag-customers-by-sales-channel](https://usemechanic.com/task/auto-tag-customers-by-sales-channel)

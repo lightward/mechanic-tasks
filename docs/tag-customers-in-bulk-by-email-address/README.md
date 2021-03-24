@@ -1,5 +1,7 @@
 # Tag customers in bulk by email address
 
+Tags: Customers, Email, Tag
+
 This task prompts you for a list of email addresses and tags, one pair per line, in the format "customer@example.com:tag". The task adds each tag to its related customer. Developers: this task is an example of working in batches with GraphQL – useful when working with bulk data.
 
 * View in the task library: [usemechanic.com/task/tag-customers-in-bulk-by-email-address](https://usemechanic.com/task/tag-customers-in-bulk-by-email-address)

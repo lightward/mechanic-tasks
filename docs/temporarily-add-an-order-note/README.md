@@ -1,5 +1,7 @@
 # Temporarily add an order note
 
+Tags: Order Note
+
 This task looks up orders by their order number, adds the note of your choice to the order record, and removes that same note 12 hours later. A bespoke task for a very specific merchant need, we publish this task as an example of getting creative with Mechanic. :)
 
 * View in the task library: [usemechanic.com/task/temporarily-add-an-order-note](https://usemechanic.com/task/temporarily-add-an-order-note)

@@ -1,5 +1,7 @@
 # Email your customers after a quiet period of no orders
 
+Tags: Email, Loyalty, Retention
+
 Follow up with your customers – keep those relationships alive, and improve your returning customer rate, by emailing your customers after a few months of no order activity. By default, this task sends an email after 6 months of no order activity, and another 6 months after that.
 
 * View in the task library: [usemechanic.com/task/email-your-customers-after-a-quiet-period-of-no-orders](https://usemechanic.com/task/email-your-customers-after-a-quiet-period-of-no-orders)

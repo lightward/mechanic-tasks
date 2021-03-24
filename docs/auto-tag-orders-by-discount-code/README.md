@@ -1,5 +1,7 @@
 # Auto-tag orders by discount code
 
+Tags: Auto-Tag, Discounts, Orders
+
 This task watches for newly-created orders, and copies any discount codes present to the order's tags.
 
 * View in the task library: [usemechanic.com/task/auto-tag-orders-by-discount-code](https://usemechanic.com/task/auto-tag-orders-by-discount-code)

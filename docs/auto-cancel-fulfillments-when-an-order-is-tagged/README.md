@@ -1,5 +1,7 @@
 # Auto-cancel fulfillments when an order is tagged
 
+Tags: Cancel, Fulfillment, Tag, Watch
+
 Useful when you discover that an order shouldn't have been fulfilled at all. :) After choosing an order tag in this task's configuration, add that tag to any order to have its fulfillments all cancelled, and the tag removed.
 
 * View in the task library: [usemechanic.com/task/auto-cancel-fulfillments-when-an-order-is-tagged](https://usemechanic.com/task/auto-cancel-fulfillments-when-an-order-is-tagged)

@@ -1,5 +1,7 @@
 # Automatically cancel orders with certain risk indicators
 
+Tags: Cancel, Orders, Risk
+
 This task auto-cancels incoming orders when it finds all of a certain set of risk indicator messages. Risk messages must match exactly, so double-check your configuration!
 
 * View in the task library: [usemechanic.com/task/automatically-cancel-orders-with-certain-risk-indicators](https://usemechanic.com/task/automatically-cancel-orders-with-certain-risk-indicators)

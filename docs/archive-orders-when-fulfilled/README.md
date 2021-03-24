@@ -1,5 +1,7 @@
 # Archive orders when fulfilled
 
+Tags: Archive, Fulfillment, Orders
+
 Super simple: this task monitors for order fulfillments, and automatically archives orders when they're fulfilled.
 
 * View in the task library: [usemechanic.com/task/archive-orders-when-fulfilled](https://usemechanic.com/task/archive-orders-when-fulfilled)

@@ -1,5 +1,7 @@
 # Auto-tag products that meet a sales threshold
 
+Tags: Auto-Tag, Products
+
 Out of the box, this task scans the last week's worth of paid orders, and auto-tags products that meet the sales threshold of your choice, removing the tag from products that no longer qualify. This scan can be run on demand (with the "Run task" button), and will otherwise run nightly.
 
 * View in the task library: [usemechanic.com/task/auto-tag-products-that-meet-a-sales-threshold](https://usemechanic.com/task/auto-tag-products-that-meet-a-sales-threshold)

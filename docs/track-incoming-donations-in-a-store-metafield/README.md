@@ -1,5 +1,7 @@
 # Track incoming donations in a store metafield
 
+Tags: Metafields, Products
+
 This task watches for orders for a certain donation product, and tallies up the total donation amount in a store metafield, allowing you to display this value in your online storefront.
 
 * View in the task library: [usemechanic.com/task/track-incoming-donations-in-a-store-metafield](https://usemechanic.com/task/track-incoming-donations-in-a-store-metafield)

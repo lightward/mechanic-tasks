@@ -1,5 +1,7 @@
 # Automatically cancel high-risk orders
 
+Tags: Cancel, Orders, Risk
+
 This task immediately cancels orders as soon as Shopify (or another risk-analysis app) determines it to be high risk. Optionally, this task can also auto-tag the order, email the customer, and attempt to void or refund payment.
 
 * View in the task library: [usemechanic.com/task/automatically-cancel-high-risk-orders](https://usemechanic.com/task/automatically-cancel-high-risk-orders)

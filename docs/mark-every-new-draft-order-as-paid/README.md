@@ -1,5 +1,7 @@
 # Mark every new draft order as paid
 
+Tags: Draft Orders, Payment
+
 This task monitors for newly-created draft orders, and converts each one into a completed, fully-paid order. Nothing more, nothing less. :)
 
 * View in the task library: [usemechanic.com/task/mark-every-new-draft-order-as-paid](https://usemechanic.com/task/mark-every-new-draft-order-as-paid)

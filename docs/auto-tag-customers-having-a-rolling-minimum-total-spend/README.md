@@ -1,5 +1,7 @@
 # Auto-tag customers having a rolling minimum total spend
 
+Tags: Auto-Tag, Customers, Spend
+
 Use this task to tag customers who reach a certain spending threshold, by scanning a rolling period of order history. Useful for rewarding customers who keep a consistent spend total.
 
 * View in the task library: [usemechanic.com/task/auto-tag-customers-having-a-rolling-minimum-total-spend](https://usemechanic.com/task/auto-tag-customers-having-a-rolling-minimum-total-spend)

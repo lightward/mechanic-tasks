@@ -1,5 +1,7 @@
 # Email all customers who made a purchase
 
+Tags: Customers, Email, Loyalty
+
 Need to reach customers who made a specific purchase? This task scans your order history, looking for orders that match the conditions you specify. For each qualifying order, the task sends an email to the customer, optionally linking to the product(s) ordered.
 
 * View in the task library: [usemechanic.com/task/email-customers-who-purchased-product](https://usemechanic.com/task/email-customers-who-purchased-product)

@@ -1,5 +1,7 @@
 # Tag customers when their last order is before/after x days ago
 
+Tags: Auto-Tag, Customers, Loyalty
+
 Running daily, hourly, or manually, this task scans all customers and tags them based on the date of their last order. Choose between tagging customers whose orders are before x days ago, or after x days ago.
 
 * View in the task library: [usemechanic.com/task/tag-customers-when-their-last-order-is-before-after-x-days-ago](https://usemechanic.com/task/tag-customers-when-their-last-order-is-before-after-x-days-ago)

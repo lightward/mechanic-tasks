@@ -1,5 +1,7 @@
 # Email someone when a certain variant is purchased
 
+Tags: Email, Orders, Products
+
 This task allows you to send an email to someone when a certain variant is purchased. Requires the variant ID.
 
 * View in the task library: [usemechanic.com/task/email-when-variant-purchased](https://usemechanic.com/task/email-when-variant-purchased)

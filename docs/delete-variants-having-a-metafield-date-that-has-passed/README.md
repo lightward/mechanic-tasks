@@ -1,5 +1,7 @@
 # Delete variants having a metafield date that has passed
 
+Tags: Delete, Metafields, Schedule
+
 Do you sell tickets to recurring events? Do you use a new product variant for each one? Use this task to regularly scan your catalog for product variants that have a date metafield, and to delete variants when their date has passed.
 
 * View in the task library: [usemechanic.com/task/delete-variants-having-a-metafield-date-that-has-passed](https://usemechanic.com/task/delete-variants-having-a-metafield-date-that-has-passed)

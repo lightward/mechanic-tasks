@@ -1,5 +1,7 @@
 # Auto-tag orders that contain bundles
 
+Tags: Bundle, Orders
+
 Use this task to automatically detect and tag orders that contain a complete bundle of products. Configure this task with as many bundles as you like, specifying a tag to add and a list of required SKUs.
 
 * View in the task library: [usemechanic.com/task/auto-tag-orders-that-contain-bundles](https://usemechanic.com/task/auto-tag-orders-that-contain-bundles)

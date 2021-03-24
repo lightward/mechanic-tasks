@@ -1,5 +1,7 @@
 # Send an email when a specific product is shipped
 
+Tags: Email, Products, Shipping
+
 Use this task to notify customers about product-specific information, that should only be delivered when a successful fulfillment is registered for their purchased product.
 
 * View in the task library: [usemechanic.com/task/send-an-email-when-a-specific-product-is-shipped](https://usemechanic.com/task/send-an-email-when-a-specific-product-is-shipped)

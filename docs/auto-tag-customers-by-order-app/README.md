@@ -1,5 +1,7 @@
 # Auto-tag customers by order app
 
+Tags: Auto-Tag, Customers, Orders
+
 This task scans your incoming orders, tagging customers based on the Shopify app responsible for creating each order. Run this task manually to tag your customers based on their historical orders.
 
 * View in the task library: [usemechanic.com/task/auto-tag-customers-by-order-app](https://usemechanic.com/task/auto-tag-customers-by-order-app)

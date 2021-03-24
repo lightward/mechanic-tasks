@@ -1,5 +1,7 @@
 # Send a new-order email to someone based on a cart attribute
 
+Tags: Cart Attributes, Email, Orders
+
 This task sends a new-order email alert to somebody specific, based on the contents of a cart attribute. Useful for allowing customers to select their salesperson, alerting the appropriate salesperson when the order is placed.
 
 * View in the task library: [usemechanic.com/task/send-a-new-order-email-to-someone-based-on-a-cart-attribute](https://usemechanic.com/task/send-a-new-order-email-to-someone-based-on-a-cart-attribute)
