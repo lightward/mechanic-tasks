@@ -1,5 +1,7 @@
 # Send a PDF invoice when an order is created
 
+Tags: PDF, Invoice, Orders, Email
+
 Automatically generate an invoice PDF, to be emailed to the address on file for the order, if the order has not yet been paid. Useful for working with billing departments, or with anyone else who needs an order summary auto-emailed. :)
 
 * View in the task library: [usemechanic.com/task/send-a-pdf-invoice-when-an-order-is-created](https://usemechanic.com/task/send-a-pdf-invoice-when-an-order-is-created)

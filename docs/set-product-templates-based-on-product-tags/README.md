@@ -1,5 +1,7 @@
 # Set product templates based on product tags
 
+Tags: Products, Tag
+
 Use this task to automatically select a specific product template for each of your products, based on how each product is tagged. Useful for a set-it-and-forget-it setup. :)
 
 * View in the task library: [usemechanic.com/task/set-product-templates-based-on-product-tags](https://usemechanic.com/task/set-product-templates-based-on-product-tags)

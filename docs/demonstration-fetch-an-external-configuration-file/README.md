@@ -1,5 +1,7 @@
 # Demonstration: Fetch an external configuration file
 
+Tags: Demonstration, External API
+
 This task script demonstrates using the "http" action to retrieve external data, using a GET request. It also demonstrates saving the retrieved data to the Mechanic cache, where it can be used for future task runs.
 
 * View in the task library: [usemechanic.com/task/demonstration-fetch-an-external-configuration-file](https://usemechanic.com/task/demonstration-fetch-an-external-configuration-file)

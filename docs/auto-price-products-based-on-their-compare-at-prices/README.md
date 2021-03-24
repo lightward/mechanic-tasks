@@ -1,5 +1,7 @@
 # Auto-price products based on their compare-at prices
 
+Tags: Discounts, Price, Products
+
 Use this task when the pricing for your products can be automatically calculated by multiplying with compare-at prices.
 
 * View in the task library: [usemechanic.com/task/auto-price-products-based-on-their-compare-at-prices](https://usemechanic.com/task/auto-price-products-based-on-their-compare-at-prices)

@@ -1,5 +1,7 @@
 # Generate a product discount when a voucher product is purchased
 
+Tags: Products, Discounts, Watch
+
 Use this task to sell vouchers for future purchases. Buy a product, receive an emailed discount code for a discount on another specific product.
 
 * View in the task library: [usemechanic.com/task/generate-a-product-discount-when-a-voucher-product-is-purchased](https://usemechanic.com/task/generate-a-product-discount-when-a-voucher-product-is-purchased)

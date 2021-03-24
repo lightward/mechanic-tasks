@@ -1,5 +1,7 @@
 # Auto-tag customers with product tags from their order
 
+Tags: Auto-Tag, Customers, Products
+
 When orders come in, use this task to copy product tags from the order to the customer on file. Useful for automatically segmenting your customers based on attributes of their purchases. To keep things tidy, optionally configure this task to only look for a certain set of tags. This task supports running manually, to scan and tag all customers based on their order history, or a subset of customers by using a query filter.
 
 * View in the task library: [usemechanic.com/task/tag-customers-with-product-tags-from-their-order](https://usemechanic.com/task/tag-customers-with-product-tags-from-their-order)

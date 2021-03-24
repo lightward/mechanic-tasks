@@ -1,5 +1,7 @@
 # Auto-tag products that have a "compare at" price
 
+Tags: Auto-Tag, Products, Compare at
+
 This task will keep your sale tags in sync, without any manual work. Configure the task with a tag to apply (and optionally a tag for products that aren't on sale), and Mechanic will take care of applying and removing tags as appropriate. If you're using Shopify discounts, this can allow you to use automatic sale collections – based on these tags – to control eligibility for your discounts.
 
 * View in the task library: [usemechanic.com/task/auto-tag-products-that-have-a-compare-at-price](https://usemechanic.com/task/auto-tag-products-that-have-a-compare-at-price)

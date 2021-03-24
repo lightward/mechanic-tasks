@@ -1,5 +1,7 @@
 # Send new customer signups to IFTTT
 
+Tags: Customers, IFTTT
+
 Send yourself a text message, or blink your lights, or do whatever you like! This task is an example, more than anything, of what you can do by connecting Mechanic and IFTTT. Follow our guide (in the task documentation) to learn how to set up text message alerts for customer signups, and then customize any and every part of this task to your liking.
 
 * View in the task library: [usemechanic.com/task/send-new-customer-signups-to-ifttt](https://usemechanic.com/task/send-new-customer-signups-to-ifttt)

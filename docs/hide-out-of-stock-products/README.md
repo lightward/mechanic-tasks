@@ -1,5 +1,7 @@
 # Hide out-of-stock products
 
+Tags: Unpublish, Out of Stock, Products
+
 This task monitors inventory updates, and pulls the product from the selected sales channels whenever a product's total inventory meets your "out of stock" threshold. Optionally, it'll send you an email when it does so. This task can also be run manually, to scan all products at once.
 
 * View in the task library: [usemechanic.com/task/hide-out-of-stock-products](https://usemechanic.com/task/hide-out-of-stock-products)

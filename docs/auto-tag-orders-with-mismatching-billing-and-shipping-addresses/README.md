@@ -1,5 +1,7 @@
 # Auto-tag orders with mismatching billing and shipping addresses
 
+Tags: Risk, Auto-Tag, Shipping, Address
+
 Useful for flagging orders for manual follow-up, for stores that see fraudulent activity in which billing and shipping address are not the same.
 
 * View in the task library: [usemechanic.com/task/auto-tag-orders-with-mismatching-billing-and-shipping-addresses](https://usemechanic.com/task/auto-tag-orders-with-mismatching-billing-and-shipping-addresses)

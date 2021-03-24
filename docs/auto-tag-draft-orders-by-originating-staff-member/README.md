@@ -1,5 +1,7 @@
 # Auto-tag draft orders by originating staff member
 
+Tags: Auto-Tag, Draft Orders, Staff
+
 Use this task to keep track of who created what draft order. This task watches for new draft orders, and tags each one with the name of the store staff member who created it. This task can also be run manually, to scan and tag all draft orders already in your store.
 
 * View in the task library: [usemechanic.com/task/auto-tag-draft-orders-by-originating-staff-member](https://usemechanic.com/task/auto-tag-draft-orders-by-originating-staff-member)

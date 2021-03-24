@@ -1,5 +1,7 @@
 # Auto-tag customers when their order is tagged
 
+Tags: Auto-Tag, Customers, Orders, Tag, Watch
+
 This task watches for order tags, and adds a corresponding tag to the customer whenever a known order tag is found.
 
 * View in the task library: [usemechanic.com/task/auto-tag-customers-when-their-order-is-tagged](https://usemechanic.com/task/auto-tag-customers-when-their-order-is-tagged)

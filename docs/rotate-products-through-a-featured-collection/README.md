@@ -1,5 +1,7 @@
 # Rotate products through a featured collection
 
+Tags: Collections, Featured, Products
+
 This task features products on a schedule, optionally publishing/unpublishing as they're featured/unfeatured. Use this task to make available exclusive products on the hourly/daily/etc, or simply to showcase a rotating selection of your best products.
 
 * View in the task library: [usemechanic.com/task/rotate-products-through-a-featured-collection](https://usemechanic.com/task/rotate-products-through-a-featured-collection)

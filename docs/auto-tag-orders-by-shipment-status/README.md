@@ -1,5 +1,7 @@
 # Auto-tag orders by shipment status
 
+Tags: Auto-Tag, Shipping
+
 Easily segment your orders by shipment status. Tagging your orders as "Delivered", or "Out for delivery", or "Attempted delivery", or any other status, allows you to stay on top of your order flow. And, adding these tags makes it easier to wire up additional automation, keeping the connection live between your customers and their orders.
 
 * View in the task library: [usemechanic.com/task/auto-tag-orders-by-shipment-status](https://usemechanic.com/task/auto-tag-orders-by-shipment-status)

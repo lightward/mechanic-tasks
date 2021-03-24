@@ -1,5 +1,7 @@
 # Email vendors when an order shipping address changes
 
+Tags: Email, Vendor, Shipping, Address
+
 Keep customers happy by making sure your vendors have up-to-date shipping information. This keeps your vendors happy, too!
 
 * View in the task library: [usemechanic.com/task/email-vendors-when-an-order-shipping-address-changes](https://usemechanic.com/task/email-vendors-when-an-order-shipping-address-changes)

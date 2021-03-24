@@ -1,5 +1,7 @@
 # Get email alerts for out of stock products
 
+Tags: Email, Alert, Out of Stock
+
 Use this task to keep you and your team updated when products go out of stock - and, optionally, when they go back in stock. Filter with a simple product search to only track products you care about. Choose a custom stock threshold to get a heads up before the stock level reaches zero.
 
 * View in the task library: [usemechanic.com/task/get-email-alerts-for-out-of-stock-products](https://usemechanic.com/task/get-email-alerts-for-out-of-stock-products)

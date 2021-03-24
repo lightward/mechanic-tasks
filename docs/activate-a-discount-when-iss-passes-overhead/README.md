@@ -1,5 +1,7 @@
 # Activate a discount when ISS passes overhead
 
+Tags: Discounts, Schedule
+
 You know what's worth celebrating? SPACE. Use this task to activate a discount code every time the International Space Station passes over your store (or some other location of your choice), powered by Mechanic webhooks, IFTTT, and NASA. 🚀
 
 * View in the task library: [usemechanic.com/task/activate-a-discount-when-iss-passes-overhead](https://usemechanic.com/task/activate-a-discount-when-iss-passes-overhead)

@@ -1,5 +1,7 @@
 # Email the customer when tracking numbers are added to their order
 
+Tags: Email, Tracking, Shipping, Orders, Customers
+
 Use this task with services that add tracking numbers to fulfillments after fulfillments are created, to ensure that customers are notified when their tracking number is available.
 
 * View in the task library: [usemechanic.com/task/email-the-customer-when-tracking-numbers-are-added-to-their-order](https://usemechanic.com/task/email-the-customer-when-tracking-numbers-are-added-to-their-order)

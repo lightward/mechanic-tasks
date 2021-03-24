@@ -1,5 +1,7 @@
 # Delete product or product variant metafields in bulk
 
+Tags: Metafields, Bulk, Products
+
 Use this task to delete all of your product or product variant metafields, optionally filtering by namespace or by namespace and key. This task will then delete all metafields found. This task comes with a test mode – use this first to make sure you're deleting the right things.
 
 * View in the task library: [usemechanic.com/task/delete-product-or-product-variant-metafields-in-bulk](https://usemechanic.com/task/delete-product-or-product-variant-metafields-in-bulk)

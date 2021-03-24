@@ -1,5 +1,7 @@
 # Flag orders that aren't fulfilled after several days
 
+Tags: Orders, Alert, Fulfillment
+
 It's critical to stay on top of any orders that aren't properly fulfilled – and your customers care, too! Use this task to auto-tag orders, to email yourself a reminder, and optionally to send customers a little reassurance message, if an order hasn't been fulfilled a configurable number of days after payment.
 
 * View in the task library: [usemechanic.com/task/flag-orders-that-arent-fulfilled-after-two-days](https://usemechanic.com/task/flag-orders-that-arent-fulfilled-after-two-days)

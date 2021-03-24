@@ -1,5 +1,7 @@
 # Auto-tag orders when another tag is added
 
+Tags: Auto-Tag, Orders, Tag, Watch
+
 Does exactly as it says. :)
 
 * View in the task library: [usemechanic.com/task/auto-tag-orders-when-another-tag-is-added](https://usemechanic.com/task/auto-tag-orders-when-another-tag-is-added)

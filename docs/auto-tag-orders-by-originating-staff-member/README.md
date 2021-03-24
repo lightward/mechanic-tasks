@@ -1,5 +1,7 @@
 # Auto-tag orders by originating staff member
 
+Tags: Auto-Tag, Orders, Staff
+
 Use this task to keep track of who created what order. This task watches for new orders, and tags each one with the name of the store staff member who created it (if that's how the order was created). This task can also be run manually, to scan and tag all orders already in your store.
 
 * View in the task library: [usemechanic.com/task/auto-tag-orders-by-originating-staff-member](https://usemechanic.com/task/auto-tag-orders-by-originating-staff-member)

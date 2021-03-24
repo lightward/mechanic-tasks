@@ -1,5 +1,7 @@
 # Maintain inventory for a product bundle
 
+Tags: Bundle, Inventory, Products
+
 Use this task to automatically sync inventory for a simple product bundle – no theme modifications required. When configured with unique SKUs for the bundle and its components, and with quantities needed from each component for each bundle unit, this task keeps the bundle inventory set to the greatest possible value, given the quantities of its components. It also appropriately subtracts from component inventory whenever the bundle is ordered, and appropriately raises component inventory when a bundle order is refunded.
 
 * View in the task library: [usemechanic.com/task/maintain-inventory-for-a-product-bundle](https://usemechanic.com/task/maintain-inventory-for-a-product-bundle)

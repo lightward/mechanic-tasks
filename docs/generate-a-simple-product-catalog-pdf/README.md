@@ -1,5 +1,7 @@
 # Generate a simple product catalog PDF
 
+Tags: PDF, Email, Catalog
+
 This task is a simple demonstration of pulling product titles and images into a PDF, resulting in a simple catalog of the products available in your store. Use it as a starting point for building something more complex.
 
 * View in the task library: [usemechanic.com/task/generate-a-simple-product-catalog-pdf](https://usemechanic.com/task/generate-a-simple-product-catalog-pdf)

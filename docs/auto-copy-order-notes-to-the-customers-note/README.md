@@ -1,5 +1,7 @@
 # Auto-copy order notes to the customer's note
 
+Tags: Order Note, Customer Notes, Sync
+
 This task appends order notes to the related customer's note, whenever the order note changes.
 
 * View in the task library: [usemechanic.com/task/auto-copy-order-notes-to-the-customers-note](https://usemechanic.com/task/auto-copy-order-notes-to-the-customers-note)

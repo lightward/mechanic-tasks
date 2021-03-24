@@ -1,5 +1,7 @@
 # Send an email alert when a customer changes state
 
+Tags: Email, Alert, Customers
+
 This task monitors for updates to a customer's state (account disabled, password set, invited, or invitation declined), and sends alert emails for any state changes you care about.
 
 * View in the task library: [usemechanic.com/task/send-an-email-alert-when-a-customer-changes-state](https://usemechanic.com/task/send-an-email-alert-when-a-customer-changes-state)

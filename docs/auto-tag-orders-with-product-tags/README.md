@@ -1,5 +1,7 @@
 # Auto-tag orders with product tags
 
+Tags: Auto-Tag, Products, Orders
+
 This task watches for new orders, and copies tags from each ordered product to the order itself.
 
 * View in the task library: [usemechanic.com/task/auto-tag-orders-with-product-tags](https://usemechanic.com/task/auto-tag-orders-with-product-tags)

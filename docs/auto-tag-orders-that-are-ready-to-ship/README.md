@@ -1,5 +1,7 @@
 # Auto-tag orders that are ready to ship
 
+Tags: Auto-Tag, Orders, Shipping
+
 Use this task to tag orders, as they are created, if every single line item is related to a variant that's in stock. Optionally, choose to tag qualifying unfulfilled orders whenever an inventory level is updated.
 
 * View in the task library: [usemechanic.com/task/auto-tag-orders-that-are-ready-to-ship](https://usemechanic.com/task/auto-tag-orders-that-are-ready-to-ship)

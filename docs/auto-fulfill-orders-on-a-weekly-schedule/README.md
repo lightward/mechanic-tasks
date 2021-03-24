@@ -1,5 +1,7 @@
 # Auto-fulfill orders on a weekly schedule
 
+Tags: Fulfillment, Orders, Schedule
+
 This task automatically fulfills orders on a weekly schedule, fulfilling orders with certain tags on certain days, at certain times, from certain locations.
 
 * View in the task library: [usemechanic.com/task/auto-fulfill-orders-on-a-weekly-schedule](https://usemechanic.com/task/auto-fulfill-orders-on-a-weekly-schedule)

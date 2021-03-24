@@ -1,5 +1,7 @@
 # Auto-tag products based on their publishing status
 
+Tags: Auto-Tag, Products, Publish
+
 This task manages tagging for products, according to whether or not they're published for the sales channel of your choice. Choose a tag to use when the product is published, and/or a tag for when the product is unpublished.
 
 * View in the task library: [usemechanic.com/task/auto-tag-products-based-on-their-publishing-status](https://usemechanic.com/task/auto-tag-products-based-on-their-publishing-status)

@@ -1,5 +1,7 @@
 # Auto-tag customers with who have accounts
 
+Tags: Auto-Tag, Customers
+
 This task monitors customer accounts, and applies the tag of your choice to customers that have an enabled account, with a registered email address and active password. It untags customers whose accounts are disabled. This task can be run manually to tag/untag all existing customers.
 
 * View in the task library: [usemechanic.com/task/auto-tag-customers-with-who-have-accounts](https://usemechanic.com/task/auto-tag-customers-with-who-have-accounts)

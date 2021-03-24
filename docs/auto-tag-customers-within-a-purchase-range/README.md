@@ -1,5 +1,7 @@
 # Auto-tag customers within a purchase range
 
+Tags: Auto-Tag, Loyalty, Customers
+
 Use this task to auto-tag customers when their historical purchase total falls within a certain range. For example, by configuring this task to evaluate purchase thresholds by number of orders, and by setting the minimum to "1" and the maximum to "12", this task will auto-tag customers who've made at least 1 purchase, and will *remove* the tag when the 13th purchase is made.
 
 * View in the task library: [usemechanic.com/task/auto-tag-customers-within-a-purchase-range](https://usemechanic.com/task/auto-tag-customers-within-a-purchase-range)

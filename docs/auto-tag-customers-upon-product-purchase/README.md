@@ -1,5 +1,7 @@
 # Auto-tag customers when they purchase a matching product
 
+Tags: Auto-Tag, Products, Customers, Orders
+
 Configure this task with search terms that describe certain products, and this task will apply the tags of your choice to every customer who purchases a matching product or product variant. Run this task manually to tag all customers who have a qualifying order already on file.
 
 * View in the task library: [usemechanic.com/task/auto-tag-customers-upon-product-purchase](https://usemechanic.com/task/auto-tag-customers-upon-product-purchase)

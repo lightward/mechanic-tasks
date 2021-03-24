@@ -17,5 +17,10 @@
   "halt_action_run_sequence_on_error": false,
   "online_store_javascript": "{% if options.redirect_url_when_resource_is_not_published != blank %}\n  {% assign resource_collection = options.resource_type__required | append: \"s\" %}\n  {% assign resource = shop[resource_collection][options.resource_id__number_required] %}\n\n  if (document.title.match(/404 Not Found/) && window.location.pathname.match({{ \"/\" | append: options.resource_type__required | append: \"s/\" | append: resource.handle | json }})) {\n    window.location.href = {{ options.redirect_url_when_resource_is_not_published | json }};\n  }\n{% endif %}",
   "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false
+  "perform_action_runs_in_sequence": false,
+  "tags": [
+    "Publish",
+    "Unpublish",
+    "Products"
+  ]
 }

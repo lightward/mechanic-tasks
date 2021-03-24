@@ -1,5 +1,7 @@
 # Ask for reviews a week after order fulfillment
 
+Tags: Reviews, Email, Orders, Fulfillment
+
 Follow up with your customers automatically, and establish the purchase -> earn-reviews -> attract-customers cycle. This task comes prefilled with a friendly, customizable email that gives the customer direct links to their purchases on your website, where they can leave a review using your existing review system.
 
 * View in the task library: [usemechanic.com/task/ask-for-reviews-a-week-after-order-fulfillment](https://usemechanic.com/task/ask-for-reviews-a-week-after-order-fulfillment)

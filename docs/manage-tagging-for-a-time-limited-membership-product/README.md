@@ -1,5 +1,7 @@
 # Manage tagging for a time-limited membership product
 
+Tags: Tag, Membership, Time-Limited, Products
+
 Use this task to automatically tag customers when they purchase specific a membership product, and then untag them after a certain amount of time has passed! (Optionally, this task can also automatically untag the customer if/when their membership order is cancelled.)
 
 * View in the task library: [usemechanic.com/task/manage-tagging-for-a-time-limited-membership-product](https://usemechanic.com/task/manage-tagging-for-a-time-limited-membership-product)

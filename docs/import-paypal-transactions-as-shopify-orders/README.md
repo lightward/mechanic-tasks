@@ -1,5 +1,7 @@
 # Import PayPal transactions as Shopify orders
 
+Tags: External API, Orders, Import
+
 Use this task when you want to record your external PayPal transactions as Shopify orders. Are you using PayPal subscriptions? Or receiving direct payments you'd like to record in Shopify? Use this task, or file a task request to have it modified for more purpose-specific uses. :) Again, this isn't for PayPal as a Shopify payment provider – it's for any time you might be using PayPal *outside* of your Shopify store.
 
 * View in the task library: [usemechanic.com/task/import-paypal-transactions-as-shopify-orders](https://usemechanic.com/task/import-paypal-transactions-as-shopify-orders)

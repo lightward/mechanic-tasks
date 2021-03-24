@@ -1,5 +1,7 @@
 # Auto-invite customers after an order
 
+Tags: Invite, Orders, Retention, Email
+
 Automatically prompt customers to activate their customer accounts, after placing an order in your store, by triggering a customizable Shopify-powered email. Useful if your online store unlocks special offers, functionality, or content after making a purchase. Optionally, only send invitations if the customer has ordered a product with a specific tag.
 
 * View in the task library: [usemechanic.com/task/auto-invite-customers-after-an-order](https://usemechanic.com/task/auto-invite-customers-after-an-order)

@@ -1,5 +1,7 @@
 # Auto-add products to a custom collection when tagged
 
+Tags: Collections, Watch, Products
+
 Just as it says. Useful for collections that can't be configured for automatic products, but still should have some products pulled in automatically.
 
 * View in the task library: [usemechanic.com/task/auto-add-products-to-a-custom-collection-when-tagged](https://usemechanic.com/task/auto-add-products-to-a-custom-collection-when-tagged)

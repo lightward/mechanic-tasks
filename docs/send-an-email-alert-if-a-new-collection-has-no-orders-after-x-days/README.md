@@ -1,5 +1,7 @@
 # Send an email alert if a new collection has no orders after x days
 
+Tags: Email, Collections, Products
+
 This task watches for newly-created collections, waits a configurable number of days, and then sends a staff email if no orders have been placed for products that are in the new collection.
 
 * View in the task library: [usemechanic.com/task/send-an-email-alert-if-a-new-collection-has-no-orders-after-x-days](https://usemechanic.com/task/send-an-email-alert-if-a-new-collection-has-no-orders-after-x-days)

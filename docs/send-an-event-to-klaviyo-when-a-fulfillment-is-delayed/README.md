@@ -1,5 +1,7 @@
 # Send an event to Klaviyo when a fulfillment is delayed
 
+Tags: Fulfillment, External API
+
 This task will watch for new order fulfillments, waiting a configurable number of days after each one. When the waiting period is over, if the fulfillment's status matches an item in the list, this task will send an event to Klaviyo, allowing you to use Klaviyo to contact the customer appropriately.
 
 * View in the task library: [usemechanic.com/task/send-an-event-to-klaviyo-when-a-fulfillment-is-delayed](https://usemechanic.com/task/send-an-event-to-klaviyo-when-a-fulfillment-is-delayed)

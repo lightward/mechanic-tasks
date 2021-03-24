@@ -1,5 +1,7 @@
 # Create a product inventory feed
 
+Tags: Inventory, Products, Feeds
+
 This task, paired with the linked instructions, creates a feed of product inventory (optionally filtering by product type).
 
 * View in the task library: [usemechanic.com/task/create-a-product-inventory-feed](https://usemechanic.com/task/create-a-product-inventory-feed)

@@ -1,5 +1,7 @@
 # Maintain a collection of new products
 
+Tags: Collections, Watch, Products
+
 Use this task to maintain a "New Products" collection, specifying either a number of products to include or the number of days to keep each product around. Easy! :)
 
 * View in the task library: [usemechanic.com/task/maintain-a-collection-of-new-products](https://usemechanic.com/task/maintain-a-collection-of-new-products)

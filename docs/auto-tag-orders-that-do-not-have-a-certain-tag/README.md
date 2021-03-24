@@ -1,5 +1,7 @@
 # Auto-tag orders that do not have a certain tag
 
+Tags: Auto-Tag, Orders, Tag
+
 This task monitors for new and updated orders, adding a tag if a certain other tag is found missing. If and when the order does receive that certain other tag, the task's tag will be removed.
 
 * View in the task library: [usemechanic.com/task/auto-tag-orders-that-do-not-have-a-certain-tag](https://usemechanic.com/task/auto-tag-orders-that-do-not-have-a-certain-tag)

@@ -1,5 +1,7 @@
 # Abandoned checkout emails
 
+Tags: Abandoned Checkout, Email, Retention
+
 Roll your own abandoned checkout emails with this task – or, modify it to perform any other actions that your business needs when a checkout is let go. :) Out of the box, this task sends customers a recovery link, with an emails subject and message that you can easily customize.
 
 * View in the task library: [usemechanic.com/task/abandoned-checkout-emails](https://usemechanic.com/task/abandoned-checkout-emails)

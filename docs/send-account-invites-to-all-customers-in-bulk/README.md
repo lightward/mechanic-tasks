@@ -1,5 +1,7 @@
 # Send account invites to all customers in bulk
 
+Tags: Account, Invite, Customers, Bulk
+
 Use this task to send out account invitations to all the customers you already have on file, with the push of a button. Optionally, filter by customer tag.
 
 * View in the task library: [usemechanic.com/task/send-account-invites-to-all-customers-in-bulk](https://usemechanic.com/task/send-account-invites-to-all-customers-in-bulk)

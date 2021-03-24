@@ -1,5 +1,7 @@
 # Remind customers after x days about unpaid orders
 
+Tags: Reminder, Unpaid, Schedule, Customers
+
 This task wait for a configurable number of days (or hours!) after an order placed, and – if the order is still unpaid – emails the customer, and optionally adds a tag to the order. This task only sends one email – it does not send repeating reminders.
 
 * View in the task library: [usemechanic.com/task/remind-customers-after-x-days-about-unpaid-orders](https://usemechanic.com/task/remind-customers-after-x-days-about-unpaid-orders)

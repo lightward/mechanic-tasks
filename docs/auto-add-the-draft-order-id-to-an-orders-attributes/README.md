@@ -1,5 +1,7 @@
 # Auto-add the draft order to a new order's attributes
 
+Tags: Draft Orders, Order Attributes
+
 When a new order is created from a draft order, this task will automatically add the draft order ID and/or name to the custom attributes of the new order.
 
 * View in the task library: [usemechanic.com/task/auto-add-the-draft-order-id-to-an-orders-attributes](https://usemechanic.com/task/auto-add-the-draft-order-id-to-an-orders-attributes)

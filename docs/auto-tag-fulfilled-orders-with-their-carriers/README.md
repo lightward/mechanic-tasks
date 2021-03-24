@@ -1,5 +1,7 @@
 # Auto-tag fulfilled orders with their carriers
 
+Tags: Auto-Tag, Fulfillment, Orders, Shipping
+
 When an order is fulfilled, this task will scan the tracking information for each fulfillment. The name of each tracking company on file – i.e. the fulfillment carrier – will then be added to the order as a tag.
 
 * View in the task library: [usemechanic.com/task/auto-tag-fulfilled-orders-with-their-carriers](https://usemechanic.com/task/auto-tag-fulfilled-orders-with-their-carriers)

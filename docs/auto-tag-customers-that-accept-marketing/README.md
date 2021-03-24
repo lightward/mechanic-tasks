@@ -1,5 +1,7 @@
 # Auto-tag customers that accept marketing
 
+Tags: Auto-Tag, Customers, Marketing
+
 Use this task to easily keep track of customers who accept marketing, adding a tag for those that do and removing it from customers who do not. Run this task manually to sync that tag for all customers.
 
 * View in the task library: [usemechanic.com/task/auto-tag-customers-that-accept-marketing](https://usemechanic.com/task/auto-tag-customers-that-accept-marketing)

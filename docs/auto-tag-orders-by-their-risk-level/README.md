@@ -1,5 +1,7 @@
 # Auto-tag orders by their risk level
 
+Tags: Auto-Tag, Orders, Risk
+
 This task applies the tag of your choice to incoming orders, based on the risk level determined for the order. Run this task manually to tag all orders in your store's records, according to their respective risk levels. Combine this task with an email task, to email customers when their order is flagged.
 
 * View in the task library: [usemechanic.com/task/auto-tag-orders-by-their-risk-level](https://usemechanic.com/task/auto-tag-orders-by-their-risk-level)

@@ -1,5 +1,7 @@
 # Auto-delete customers that are created without orders
 
+Tags: Delete, Customers, Orders
+
 Useful for stores that are subjected to bot abuse, this task watches for newly-created customers, and deletes any that don't come with an associated order. Optionally, choose to ignore any customers that are created with a certain tag – helpful if you create customers yourself, via the Shopify admin.
 
 * View in the task library: [usemechanic.com/task/auto-delete-customers-that-are-created-without-orders](https://usemechanic.com/task/auto-delete-customers-that-are-created-without-orders)

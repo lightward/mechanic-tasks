@@ -1,5 +1,7 @@
 # Auto-tag new customers
 
+Tags: Auto-Tag, Customers
+
 This task tags every new customer, with the same configurable tag. :)
 
 * View in the task library: [usemechanic.com/task/auto-tag-new-customers](https://usemechanic.com/task/auto-tag-new-customers)

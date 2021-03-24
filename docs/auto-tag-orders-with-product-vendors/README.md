@@ -1,5 +1,7 @@
 # Auto-tag orders with product vendors
 
+Tags: Auto-Tag, Products, Vendor, Orders
+
 Use this task to automatically tag incoming orders with the vendor of each product in the order.
 
 * View in the task library: [usemechanic.com/task/auto-tag-orders-with-product-vendors](https://usemechanic.com/task/auto-tag-orders-with-product-vendors)

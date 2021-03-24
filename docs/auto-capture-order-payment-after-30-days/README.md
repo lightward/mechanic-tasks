@@ -1,5 +1,7 @@
 # Auto-capture order payment after x days
 
+Tags: Schedule, Payment
+
 Short and simple. Captures order payment for un-cancelled orders that have a financial status of "authorized", after waiting 30 days (or another timespan of your choice).
 
 * View in the task library: [usemechanic.com/task/auto-capture-order-payment-after-30-days](https://usemechanic.com/task/auto-capture-order-payment-after-30-days)

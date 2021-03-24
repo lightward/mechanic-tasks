@@ -1,5 +1,7 @@
 # Maintain a tag for orders processed today
 
+Tags: Auto-Tag, Orders
+
 This task auto-tags today's new orders, as they're processed, and auto-untags them when the date changes. Optionally, choose to untag outside of a rolling 24-hour window, instead of untagging yesterday's orders at midnight.
 
 * View in the task library: [usemechanic.com/task/maintain-a-tag-for-orders-processed-today](https://usemechanic.com/task/maintain-a-tag-for-orders-processed-today)

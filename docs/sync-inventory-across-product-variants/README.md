@@ -1,5 +1,7 @@
 # Sync inventory across product variants
 
+Tags: Sync, Inventory, Variants, Products
+
 Useful for multiple price points, or for offering customizations of the same item, this task lets you offer multiple variant listings for what is ultimately the same stock. A purchase of a particular variant results in the inventory for all other variants, for the same product, being lowered by the amount ordered.
 
 * View in the task library: [usemechanic.com/task/sync-inventory-across-product-variants](https://usemechanic.com/task/sync-inventory-across-product-variants)

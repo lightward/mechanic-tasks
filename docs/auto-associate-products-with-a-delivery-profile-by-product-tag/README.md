@@ -1,5 +1,7 @@
 # Auto-associate products with a delivery profile, by product tag
 
+Tags: Tag, Delivery, Products
+
 Use this task to automatically add products, as they're tagged, to a specific delivery profile. Untag products to remove them from the configured profile.
 
 * View in the task library: [usemechanic.com/task/auto-associate-products-with-a-delivery-profile-by-product-tag](https://usemechanic.com/task/auto-associate-products-with-a-delivery-profile-by-product-tag)

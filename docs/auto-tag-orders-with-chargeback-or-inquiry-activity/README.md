@@ -1,5 +1,7 @@
 # Auto-tag orders with chargeback or inquiry activity
 
+Tags: Auto-Tag, Orders, Risk
+
 Stay on top of chargebacks and inquiries! Nightly or on-demand, this task will scan the last 60 days of your order records, and apply the tags of your choice to orders with chargeback or inquiry activity, based on what that activity looks like.
 
 * View in the task library: [usemechanic.com/task/auto-tag-orders-with-chargeback-or-inquiry-activity](https://usemechanic.com/task/auto-tag-orders-with-chargeback-or-inquiry-activity)

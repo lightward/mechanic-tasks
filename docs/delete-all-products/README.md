@@ -1,5 +1,7 @@
 # Delete all products
 
+Tags: Delete, Products
+
 Use this task to quickly (and permanently) clear out your product list. Optionally, filter by a specific query, so as to only delete specific products from your store. Supports a test mode, allowing you to see exactly what products you can expect Mechanic to delete.
 
 * View in the task library: [usemechanic.com/task/delete-all-products](https://usemechanic.com/task/delete-all-products)

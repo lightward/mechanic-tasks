@@ -1,5 +1,7 @@
 # Add new customers to GetResponse
 
+Tags: Customers, External API
+
 Does what it says on the tin. :) Provide your GetResponse API key (found under the account menu, under "Integrations & API" and "API") and a list token (found in the settings for your list – look for 5-6 letters and numbers), and Mechanic will automatically send each new customer account (full name and email address) over to GetResponse.
 
 * View in the task library: [usemechanic.com/task/add-new-customers-to-getresponse](https://usemechanic.com/task/add-new-customers-to-getresponse)

@@ -1,5 +1,7 @@
 # Sync inventory levels to variant metafields
 
+Tags: Sync, Inventory, Metafields, Variants, Products
+
 Use this task to easily make your inventory levels available in your online storefront theme. This task monitors for changes to inventory, and copies inventory availability figures to metafields on the related variant.
 
 * View in the task library: [usemechanic.com/task/sync-inventory-levels-to-variant-metafields](https://usemechanic.com/task/sync-inventory-levels-to-variant-metafields)

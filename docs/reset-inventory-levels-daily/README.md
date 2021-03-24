@@ -1,5 +1,7 @@
 # Reset inventory levels daily
 
+Tags: Inventory, Schedule
+
 Use this task to bring all of your inventory levels to the same place, every night.
 
 * View in the task library: [usemechanic.com/task/reset-inventory-levels-daily](https://usemechanic.com/task/reset-inventory-levels-daily)

@@ -15,5 +15,10 @@
   "halt_action_run_sequence_on_error": false,
   "online_store_javascript": "// https://gist.github.com/bronson/6707533\nvar cookie = function(name, value, ms) {\n    if(arguments.length < 2) {\n        // read cookie\n        var cookies = document.cookie.split(';')\n        for(var i=0; i < cookies.length; i++) {\n            var c = cookies[i].replace(/^\\s+/, '')\n            if(c.indexOf(name+'=') == 0) {\n                return decodeURIComponent(c.substring(name.length+1).split('+').join(' '))    \n            }\n        }\n        return null\n    }\n\n    // write cookie\n    var date = new Date()\n    date.setTime(date.getTime()+ms)\n    document.cookie = name+\"=\" + encodeURIComponent(value) + (ms ? \";expires=\"+date.toGMTString() : '') + \";path=/\"\n}\n\nvar parameterName = {{ options.query_parameter_name__required | json }};\n\nvar valueKeyval = window.location.search.split(/[?&]/).filter(function (keyval) {\n  return keyval.slice(0, parameterName.length) === parameterName;\n})[0];\n\nvar valueFromCookie = cookie(parameterName);\n\nif (valueFromCookie || valueKeyval) {\n  var value = valueFromCookie || valueKeyval.split('=')[1];\n\n  if (!valueFromCookie) {\n    cookie(parameterName, value, 1000*60*60*24*365);\n  }\n\n  var xhr = new XMLHttpRequest();\n  xhr.open('POST', '/cart/update.json', true);\n\n  //Send the proper header information along with the request\n  xhr.setRequestHeader('Content-Type', 'application/json');\n\n  var attributes = {};\n  attributes[{{ options.cart_attribute_name__required | json }}] = value;\n  xhr.send(JSON.stringify({ attributes: attributes }));\n}",
   "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false
+  "perform_action_runs_in_sequence": false,
+  "tags": [
+    "Orders",
+    "Auto-Tag",
+    "Referral"
+  ]
 }

@@ -1,5 +1,7 @@
 # Send an email to all customers
 
+Tags: Email, Customers
+
 Use this task to easily contact all of your customers at once, optionally filtering by customer tag. Important: This task can only be used in a transactional context - it cannot be used be used for marketing emails, or any type of message that would require an unsubscribe link.
 
 * View in the task library: [usemechanic.com/task/send-an-email-to-all-customers](https://usemechanic.com/task/send-an-email-to-all-customers)

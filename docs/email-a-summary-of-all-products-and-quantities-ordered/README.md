@@ -1,5 +1,7 @@
 # Email a summary of all products and quantities ordered
 
+Tags: Email, Products, Inventory
+
 Use this task to send yourself a quick tally of everything currently waiting in your order list. Super simple: just a list of products, and how many of each were ordered.
 
 * View in the task library: [usemechanic.com/task/email-a-summary-of-all-products-and-quantities-ordered](https://usemechanic.com/task/email-a-summary-of-all-products-and-quantities-ordered)

@@ -1,5 +1,7 @@
 # Auto-pay orders from customers with a certain tag
 
+Tags: Payment, Tag, Watch, Orders
+
 Use this task to immediately bump orders, from certain customers, to "paid". Useful if you have a standing payment arrangement for certain customers. Optionally, auto-remove this tag from customers after auto-paying their order. Useful for using customer tags as one-time triggers for auto-payment.
 
 * View in the task library: [usemechanic.com/task/auto-pay-orders-from-customers-with-a-certain-tag](https://usemechanic.com/task/auto-pay-orders-from-customers-with-a-certain-tag)

@@ -1,5 +1,7 @@
 # Sync an inverse customer tag
 
+Tags: Sync, Customers, Auto-Tag
+
 Shopify's customer group filters allow you to filter by the tags the customer contains – but not the tags a customer does not contain. Use this task to sync an "inverse" tag to all customers who do not have a particular tag, allowing you to filter customers in Shopify by that inverse tag.
 
 * View in the task library: [usemechanic.com/task/sync-an-inverse-customer-tag](https://usemechanic.com/task/sync-an-inverse-customer-tag)

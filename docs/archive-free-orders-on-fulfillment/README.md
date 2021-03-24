@@ -1,5 +1,7 @@
 # Archive free orders on fulfillment
 
+Tags: Archive, Orders
+
 Does what it says on the tin. :) Any order with a total price of 0.00 will be archived/closed, immediately upon order fulfillment.
 
 * View in the task library: [usemechanic.com/task/archive-free-orders-on-fulfillment](https://usemechanic.com/task/archive-free-orders-on-fulfillment)

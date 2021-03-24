@@ -1,5 +1,7 @@
 # Sync order timeline comments to the customer note
 
+Tags: Sync, Timeline, Comments, Customer Notes, Orders
+
 This task scans all orders (optionally filtering by the query of your choice), and copies any new timeline comments to the customer's note. Useful for getting a snapshot of order activity when looking at the customer's record. Runs manually, hourly, and/or daily.
 
 * View in the task library: [usemechanic.com/task/sync-order-timeline-comments-to-the-customer-note](https://usemechanic.com/task/sync-order-timeline-comments-to-the-customer-note)

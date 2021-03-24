@@ -1,5 +1,7 @@
 # Email vendors when their products are ordered
 
+Tags: Email, Vendor, Products, Orders
+
 Use this task to notify vendors when items of theirs have been purchased, by providing this task with a list of vendor names, and the related email addresses.
 
 * View in the task library: [usemechanic.com/task/email-vendors-when-their-products-are-ordered](https://usemechanic.com/task/email-vendors-when-their-products-are-ordered)

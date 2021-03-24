@@ -1,5 +1,7 @@
 # Sync an inverse product tag
 
+Tags: (not tagged!)
+
 Shopify's product collection filters allow you to filter by the tags the product contains – but not the tags a product does not contain. Use this task to sync an "inverse" tag to all products who do not have a particular tag, allowing you to create collections in Shopify that use the inverse tag.
 
 * View in the task library: [usemechanic.com/task/sync-an-inverse-product-tag](https://usemechanic.com/task/sync-an-inverse-product-tag)

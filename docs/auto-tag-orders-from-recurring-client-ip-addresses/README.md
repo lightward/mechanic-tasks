@@ -1,5 +1,7 @@
 # Auto-tag orders from recurring client IP addresses
 
+Tags: Auto-Tag, Orders, Risk
+
 Use this task to regularly scan for repeat orders from a single IP address, by tagging any orders from an IP address that's placed more than a configurable threshold of orders in the last x days of order history.
 
 * View in the task library: [usemechanic.com/task/auto-tag-orders-from-recurring-client-ip-addresses](https://usemechanic.com/task/auto-tag-orders-from-recurring-client-ip-addresses)

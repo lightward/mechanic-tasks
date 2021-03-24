@@ -1,5 +1,7 @@
 # Unpublish products when tagged
 
+Tags: Unpublish, Products, Tag
+
 This task watches for certain product tags, and removes the product from the selected sales channel(s) when those tags are found.
 
 * View in the task library: [usemechanic.com/task/unpublish-products-when-tagged](https://usemechanic.com/task/unpublish-products-when-tagged)

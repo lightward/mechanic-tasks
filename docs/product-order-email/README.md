@@ -1,5 +1,7 @@
 # Email customers after purchasing a certain product
 
+Tags: Email, Customers, Orders, Products
+
 Send an email to the customer with specific information regarding a product they just purchased. Useful for digital products, or anytime you'd like to communicate something extra about a product you offer. (Note: this does not replace the Shopify order confirmation email!)
 
 * View in the task library: [usemechanic.com/task/product-order-email](https://usemechanic.com/task/product-order-email)

@@ -1,5 +1,7 @@
 # Send an email when a product's price goes below its cost
 
+Tags: Email, Costs, Products, Price
+
 This task watches for product updates, and sends an email for each variant that's found to have a unit cost that's greater than the variant's for-sale price.
 
 * View in the task library: [usemechanic.com/task/send-an-email-when-a-products-price-goes-below-its-cost](https://usemechanic.com/task/send-an-email-when-a-products-price-goes-below-its-cost)

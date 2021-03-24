@@ -1,5 +1,7 @@
 # Archive orders when tagged
 
+Tags: Archive, Orders, Tag
+
 Add a tag, have the order automatically archived/closed. Simple. :)
 
 * View in the task library: [usemechanic.com/task/archive-orders-when-tagged](https://usemechanic.com/task/archive-orders-when-tagged)

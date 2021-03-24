@@ -22,5 +22,10 @@
   "halt_action_run_sequence_on_error": false,
   "online_store_javascript": null,
   "order_status_javascript": null,
-  "perform_action_runs_in_sequence": true
+  "perform_action_runs_in_sequence": true,
+  "tags": [
+    "Cancel",
+    "Unpaid",
+    "Orders"
+  ]
 }

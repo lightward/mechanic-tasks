@@ -1,5 +1,7 @@
 # Send a staff notification email for each delivery
 
+Tags: Email, Alert, Delivery, Shipping
+
 Use this task to send a staff email, the moment Shopify registers a successful delivery.
 
 * View in the task library: [usemechanic.com/task/send-a-staff-notification-email-for-each-delivery](https://usemechanic.com/task/send-a-staff-notification-email-for-each-delivery)

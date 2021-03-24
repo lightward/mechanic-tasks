@@ -1,5 +1,7 @@
 # Email a report of customers who haven't ordered in X days
 
+Tags: Report, Customers, Retention, Email
+
 Use this task to request or schedule an email digest of customers, having a certain tag, who haven't placed an order in a certain number of days.
 
 * View in the task library: [usemechanic.com/task/email-a-report-of-customers-who-havent-ordered-in-x-days](https://usemechanic.com/task/email-a-report-of-customers-who-havent-ordered-in-x-days)

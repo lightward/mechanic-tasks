@@ -1,5 +1,7 @@
 # Auto-tag orders based on customer account tags
 
+Tags: Auto-Tag, Customers, Orders
+
 Use this task to apply certain tags to newly-created orders, based on what tags are on the associated customer. Configure this task with one-to-one mappings of customer tags to look for, connected to order tags to add.
 
 * View in the task library: [usemechanic.com/task/auto-tag-orders-based-on-customer-account-tags](https://usemechanic.com/task/auto-tag-orders-based-on-customer-account-tags)

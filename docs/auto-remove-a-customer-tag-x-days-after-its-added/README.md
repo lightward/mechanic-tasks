@@ -1,5 +1,7 @@
 # Auto-remove a customer tag x days after it's added
 
+Tags: Untag, Schedule
+
 Use this this task to monitor for the addition of a new customer tag, and to schedule the customer to be untagged some number of days later. Useful for granting temporary access to discounts, or other resources.
 
 * View in the task library: [usemechanic.com/task/auto-remove-a-customer-tag-x-days-after-its-added](https://usemechanic.com/task/auto-remove-a-customer-tag-x-days-after-its-added)

@@ -1,5 +1,7 @@
 # Auto-tag orders using product tags
 
+Tags: Auto-Tag, Orders, Products
+
 Use this task to tag incoming orders with all the product tags in the order. Optionally, specify a specific list of tags to be copied, and/or a certain tag prefix to watch for. Can be run manually, to scan and tag historical orders.
 
 * View in the task library: [usemechanic.com/task/auto-tag-orders-using-product-tags](https://usemechanic.com/task/auto-tag-orders-using-product-tags)

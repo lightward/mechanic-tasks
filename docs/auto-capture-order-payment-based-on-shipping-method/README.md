@@ -1,5 +1,7 @@
 # Auto-capture order payment based on shipping method
 
+Tags: Payment, Shipping
+
 This task auto-captures payment if the customer has selected a certain shipping method. Useful for expedited order fulfillments.
 
 * View in the task library: [usemechanic.com/task/auto-capture-order-payment-based-on-shipping-method](https://usemechanic.com/task/auto-capture-order-payment-based-on-shipping-method)

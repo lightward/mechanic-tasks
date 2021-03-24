@@ -1,5 +1,7 @@
 # Email someone specific based on a new order's customer tags
 
+Tags: Email, Alert, Customers
+
 Use customer tags to assign staff email addresses to specific customers. When a new order arrives from a customer who has an assignment tag, this task will email the related staff member.
 
 * View in the task library: [usemechanic.com/task/email-someone-specific-based-on-a-new-orders-customer-tags](https://usemechanic.com/task/email-someone-specific-based-on-a-new-orders-customer-tags)

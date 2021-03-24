@@ -1,5 +1,7 @@
 # Auto-tag products by largest available size
 
+Tags: Auto-Tag, Products, Variants
+
 This task watches for incoming updates to inventory levels, and auto-tags the product according to the largest in-stock size. This task is specifically made to work with numeric variant options (e.g. "10", "11", "12", etc). This task can also be run manually, and can be configured to run daily.
 
 * View in the task library: [usemechanic.com/task/auto-tag-products-by-largest-available-size](https://usemechanic.com/task/auto-tag-products-by-largest-available-size)

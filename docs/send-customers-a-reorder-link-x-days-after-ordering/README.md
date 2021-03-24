@@ -1,5 +1,7 @@
 # Send customers a reorder link X days after ordering
 
+Tags: Retention, Customers, Email, Marketing
+
 Use this task to make repeat business easy. Set the number of days to wait, then let this task automatically email your customers a one-click reorder link X days after their purchase, sending them straight to checkout with their entire cart pre-filled.
 
 * View in the task library: [usemechanic.com/task/send-customers-a-reorder-link-x-days-after-ordering](https://usemechanic.com/task/send-customers-a-reorder-link-x-days-after-ordering)
