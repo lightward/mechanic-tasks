@@ -1,6 +1,6 @@
 # Accept a maximum number of orders per hour
 
-Tags: Max orders, Orders
+Tags: Max Orders, Orders
 
 This task works by monitoring the number of orders created per hour, and clearing the inventory for all in-stock items when the hourly order limit is reached. Optionally, this task can restore inventory to its original levels at minute zero of the next hour, or on demand.
 

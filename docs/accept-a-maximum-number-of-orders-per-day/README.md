@@ -1,6 +1,6 @@
 # Accept a maximum number of orders per day
 
-Tags: Max orders, Orders
+Tags: Max Orders, Orders
 
 This task works by setting your inventory to zero when the order limit is reached. (Specifically, this means setting inventory levels to 0 for all items that have a greater-than-zero inventory level.) When the limit is reached, your inventory will be dropped to zero. If your store is configured to stop selling out-of-stock products, your customers will be prevented from making additional purchases.
 
