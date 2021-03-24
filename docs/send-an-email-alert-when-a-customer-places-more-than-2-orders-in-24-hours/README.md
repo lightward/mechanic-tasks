@@ -1,6 +1,6 @@
 # Send an email alert when a customer places more than 2 orders in 24 hours
 
-Tags: Email, Alert, Risk
+Tags: Alert, Email, Risk
 
 Use this task to receive an email alert whenever a single customer exceeds a configurable order count, over the last configurable number of hours.
 

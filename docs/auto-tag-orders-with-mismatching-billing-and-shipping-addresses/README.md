@@ -1,6 +1,6 @@
 # Auto-tag orders with mismatching billing and shipping addresses
 
-Tags: Risk, Auto-Tag, Shipping, Address
+Tags: Address, Auto-Tag, Risk, Shipping
 
 Useful for flagging orders for manual follow-up, for stores that see fraudulent activity in which billing and shipping address are not the same.
 

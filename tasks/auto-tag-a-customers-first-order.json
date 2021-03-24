@@ -15,8 +15,8 @@
   "perform_action_runs_in_sequence": false,
   "tags": [
     "Auto-Tag",
-    "Tag",
     "Customers",
-    "Orders"
+    "Orders",
+    "Tag"
   ]
 }

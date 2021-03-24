@@ -19,7 +19,7 @@
   "perform_action_runs_in_sequence": false,
   "tags": [
     "Cancel",
-    "Risk",
-    "Orders"
+    "Orders",
+    "Risk"
   ]
 }

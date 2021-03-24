@@ -25,8 +25,8 @@
   "perform_action_runs_in_sequence": false,
   "tags": [
     "Auto-Tag",
-    "Watch",
     "Metafields",
-    "Products"
+    "Products",
+    "Watch"
   ]
 }

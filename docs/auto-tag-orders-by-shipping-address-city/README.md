@@ -1,6 +1,6 @@
 # Auto-tag orders by shipping address city
 
-Tags: Auto-Tag, Shipping, Orders
+Tags: Auto-Tag, Orders, Shipping
 
 This task automatically tags orders based on the city in the shipping address. Within this key you define the city and the tag on the order.
 

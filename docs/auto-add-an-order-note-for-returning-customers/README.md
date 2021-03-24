@@ -1,6 +1,6 @@
 # Auto-add an order note for returning customers
 
-Tags: Order Note, Customers
+Tags: Customers, Order Note
 
 Use this task to identify orders that are for customers who have previously ordered from your store. Optionally, ignore more frequent purchasers, by ignoring customers who've made an order recently. Useful for making sure to include a welcome-back gift in order shipments. :)
 

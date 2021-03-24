@@ -1,6 +1,6 @@
 # Reset negative inventory levels to zero in bulk
 
-Tags: Inventory, Bulk
+Tags: Bulk, Inventory
 
 Super simple. Scans all inventory levels in your store, on demand, and brings the negative ones back up to zero. Optionally, configure this task to run nightly.
 

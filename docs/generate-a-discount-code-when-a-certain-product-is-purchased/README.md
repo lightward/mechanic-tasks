@@ -1,6 +1,6 @@
 # Generate a discount code when a certain product is purchased
 
-Tags: Discounts, Products, Retention, Marketing
+Tags: Discounts, Marketing, Products, Retention
 
 This task watches for newly-paid orders, and if the configured product is purchased, sends the customer a discount code that's just for them. Optionally, configure the discounts to only apply to a certain collection of products, and to only last for a certain number of days.
 

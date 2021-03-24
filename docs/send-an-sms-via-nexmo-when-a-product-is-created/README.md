@@ -1,6 +1,6 @@
 # Send an SMS via Nexmo when a product is created
 
-Tags: SMS, Products
+Tags: Products, SMS
 
 This task is a demonstration of sending text messages via Nexmo. In this task, we monitor for newly-created products, and we send a text message about the product to a phone number stored in that product's metafield.
 

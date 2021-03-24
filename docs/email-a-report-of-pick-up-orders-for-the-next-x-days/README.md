@@ -1,6 +1,6 @@
 # Email a report of pick-up orders for the next x days
 
-Tags: Email, Pick-up, Orders
+Tags: Email, Orders, Pick-up
 
 Using Zapiet to track store pickups? This task filters for orders that are tagged by Zapiet for pickup, and emails you a report of how many orders are scheduled for each of the next few days. Useful for scanning the week ahead, and blacking out dates that are at capacity.
 

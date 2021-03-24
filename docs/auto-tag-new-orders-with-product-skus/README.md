@@ -1,6 +1,6 @@
 # Auto-tag new orders with product SKUs
 
-Tags: Orders, Auto-Tag
+Tags: Auto-Tag, Orders
 
 This task watches for new orders, and tags each order with all line item SKUs found in that order.
 

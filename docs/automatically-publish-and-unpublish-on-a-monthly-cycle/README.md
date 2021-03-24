@@ -1,6 +1,6 @@
 # Automatically publish and unpublish on a monthly cycle
 
-Tags: Publish, Unpublish, Products
+Tags: Products, Publish, Unpublish
 
 Use this task to make a single product or page available for a limited window of time, on a monthly basis. Redirect your visitors to a specific page when that resource is unavailable.
 

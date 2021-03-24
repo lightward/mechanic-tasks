@@ -21,7 +21,7 @@
   "perform_action_runs_in_sequence": false,
   "tags": [
     "External API",
-    "Orders",
-    "Import"
+    "Import",
+    "Orders"
   ]
 }

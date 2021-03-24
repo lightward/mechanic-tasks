@@ -1,6 +1,6 @@
 # Auto-tag out-of-stock products
 
-Tags: Inventory, Auto-Tag, Products, Out of Stock
+Tags: Auto-Tag, Inventory, Out of Stock, Products
 
 Does what it says on the tin. :) Optionally, emails you an alert when a product goes out of stock.
 

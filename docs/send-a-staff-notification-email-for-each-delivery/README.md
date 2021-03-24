@@ -1,6 +1,6 @@
 # Send a staff notification email for each delivery
 
-Tags: Email, Alert, Delivery, Shipping
+Tags: Alert, Delivery, Email, Shipping
 
 Use this task to send a staff email, the moment Shopify registers a successful delivery.
 

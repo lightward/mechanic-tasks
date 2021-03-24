@@ -1,6 +1,6 @@
 # Auto-copy order notes to the customer's note
 
-Tags: Order Note, Customer Notes, Sync
+Tags: Customer Notes, Order Note, Sync
 
 This task appends order notes to the related customer's note, whenever the order note changes.
 

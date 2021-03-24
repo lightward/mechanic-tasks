@@ -1,6 +1,6 @@
 # Auto-tag orders based on cart attributes
 
-Tags: Cart Attributes, Orders, Auto-Tag
+Tags: Auto-Tag, Cart Attributes, Orders
 
 Use this task to automatically categorize orders based on the cart attributes configured before checkout. Useful if you allow customers to supply extra information about their order, or if your cart has some hidden coding that adds cart attributes programatically.
 

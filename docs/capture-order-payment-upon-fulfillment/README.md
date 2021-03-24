@@ -1,6 +1,6 @@
 # Capture order payment upon fulfillment
 
-Tags: Payment, Fulfillment
+Tags: Fulfillment, Payment
 
 Short and simple. :) Upon the fulfillment of an authorized order, this task attempts to capture payment for that order.
 

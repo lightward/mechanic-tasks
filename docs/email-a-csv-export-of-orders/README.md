@@ -1,6 +1,6 @@
 # Email a CSV export of orders
 
-Tags: Email, CSV, Export, Orders
+Tags: CSV, Email, Export, Orders
 
 Use this task to generate and email a CSV of orders, including one row per line item. Filter with a search query or by tags, and auto-tag orders as they're exported. Run the export on demand, and/or nightly. This task is also useful as a template for further development.
 

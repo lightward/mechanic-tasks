@@ -1,6 +1,6 @@
 # Clean up draft orders
 
-Tags: Orders, Draft Orders
+Tags: Draft Orders, Orders
 
 Use this task to quickly delete draft orders from your account, optionally filtering by status, or by draft order age. Useful for keeping things tidy. :)
 

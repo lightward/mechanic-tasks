@@ -1,6 +1,6 @@
 # Auto-connect new products to all locations
 
-Tags: Multi-Location, Products, Inventory
+Tags: Inventory, Multi-Location, Products
 
 Using Shopify's multi-locations feature, and importing products in bulk? Use this task to automatically connect each new product to every location for your store.
 

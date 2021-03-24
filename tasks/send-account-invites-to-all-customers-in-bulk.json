@@ -17,8 +17,8 @@
   "perform_action_runs_in_sequence": false,
   "tags": [
     "Account",
-    "Invite",
+    "Bulk",
     "Customers",
-    "Bulk"
+    "Invite"
   ]
 }

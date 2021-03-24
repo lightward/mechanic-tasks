@@ -1,6 +1,6 @@
 # Auto-remove a product tag x days after it's added
 
-Tags: Auto-Tag, Untag, Schedule
+Tags: Auto-Tag, Schedule, Untag
 
 Use this this task to monitor for the addition of a new product tag, and to schedule the product to be untagged some number of days later. Useful for temporarily adding a product to a collection, or qualifying the product for some other temporary functionality.
 

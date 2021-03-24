@@ -1,6 +1,6 @@
 # Calculate total quantities purchased by SKU
 
-Tags: SKU, Orders, Products
+Tags: Orders, Products, SKU
 
 This task scans all orders, regardless of status, and counts up the lifetime quantity purchased for each SKU, listing each SKU with its quantity and all related order names. This task demonstrates Shopify's bulk operations API.
 

@@ -1,6 +1,6 @@
 # Auto-recurring draft orders
 
-Tags: Recurring, Draft Orders
+Tags: Draft Orders, Recurring
 
 This task searches for draft orders having the configured tag, and duplicates each one (minus the tag used for searching). Optionally, this task can automatically send an invoice to the customer on file, after the new draft order is created. Or, this task can auto-complete the order, marking the order as paid if you so chose. (Auto-completed orders will result in an email receipt being sent to the customer on file for the original draft order.)
 

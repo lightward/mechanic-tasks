@@ -23,10 +23,10 @@
   "order_status_javascript": null,
   "perform_action_runs_in_sequence": false,
   "tags": [
-    "Sync",
-    "Timeline",
     "Comments",
     "Customer Notes",
-    "Orders"
+    "Orders",
+    "Sync",
+    "Timeline"
   ]
 }

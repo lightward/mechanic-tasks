@@ -1,6 +1,6 @@
 # Temporarily enable tax-exempt status when a customer is tagged
 
-Tags: Tax, Customers, Tag
+Tags: Customers, Tag, Tax
 
 This task monitors customer tags, applying tax-exempt status when a certain tag is detected, and removing it (and the tag) after a certain amount of time. Useful when you need to regularly re-approve customers for tax exemption.
 

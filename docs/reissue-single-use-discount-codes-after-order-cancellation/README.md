@@ -1,6 +1,6 @@
 # Reissue single-use discount codes after order cancellation
 
-Tags: Discounts, Orders, Cancel
+Tags: Cancel, Discounts, Orders
 
 This task watches for cancellations of orders that have either a single-use discount code, or a discount code that can only be used once per customer. When such an order is found, this task creates a new copy of the discount exclusively for the related customer, using a new discount code, and emails it to the customer.
 

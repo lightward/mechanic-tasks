@@ -1,6 +1,6 @@
 # Auto-tag orders created from drafts
 
-Tags: Auto-Tag, Orders, Draft Orders
+Tags: Auto-Tag, Draft Orders, Orders
 
 This task monitors for newly-created orders, and auto-tags any that were originally based on a Shopify draft order, using the tag of your choice.
 

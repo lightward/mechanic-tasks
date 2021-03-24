@@ -1,6 +1,6 @@
 # Catalog update email
 
-Tags: Email, Alert, Products
+Tags: Alert, Email, Products
 
 Get an email alert whenever a product is created, updated, or deleted. This makes it easy to keep tabs on updates to your catalog – useful if you need a precise audit trail.
 

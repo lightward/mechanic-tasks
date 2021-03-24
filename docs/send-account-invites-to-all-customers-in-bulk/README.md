@@ -1,6 +1,6 @@
 # Send account invites to all customers in bulk
 
-Tags: Account, Invite, Customers, Bulk
+Tags: Account, Bulk, Customers, Invite
 
 Use this task to send out account invitations to all the customers you already have on file, with the push of a button. Optionally, filter by customer tag.
 

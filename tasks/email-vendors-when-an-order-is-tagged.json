@@ -23,9 +23,9 @@
   "perform_action_runs_in_sequence": false,
   "tags": [
     "Email",
-    "Vendor",
     "Orders",
     "Tag",
+    "Vendor",
     "Watch"
   ]
 }

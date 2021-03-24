@@ -1,6 +1,6 @@
 # Auto-tag products in a manual collection
 
-Tags: Auto-Tag, Products, Collections
+Tags: Auto-Tag, Collections, Products
 
 If you prefer to categorize your products using manual collections, but you still need your tags to match up, use this task to monitor your manual collection and automatically tag the products it contains.
 

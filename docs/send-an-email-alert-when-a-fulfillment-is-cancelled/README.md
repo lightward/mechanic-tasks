@@ -1,6 +1,6 @@
 # Send an email alert when a fulfillment is cancelled
 
-Tags: Email, Fulfillment, Alert
+Tags: Alert, Email, Fulfillment
 
 Useful for keeping an eye on unexpected cancellations by third party shipping services.
 

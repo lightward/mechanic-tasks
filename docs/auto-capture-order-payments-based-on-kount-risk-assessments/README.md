@@ -1,6 +1,6 @@
 # Auto-capture order payments based on Kount risk assessments
 
-Tags: Kount, Risk, Payment
+Tags: Kount, Payment, Risk
 
 An integration with Kount, this task allows you to immediately capture payments for orders that Kount has deemed to be of a certain risk level.
 

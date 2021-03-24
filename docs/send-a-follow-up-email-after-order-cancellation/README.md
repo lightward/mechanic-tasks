@@ -1,6 +1,6 @@
 # Send a follow-up email after order cancellation
 
-Tags: Email, Cancel, Orders
+Tags: Cancel, Email, Orders
 
 Use this task to easily check in on customers, after an order of theirs is cancelled. Optionally, queue up the email for a certain number of hours from the time of cancellation.
 

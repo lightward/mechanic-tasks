@@ -25,7 +25,7 @@
   "perform_action_runs_in_sequence": true,
   "tags": [
     "Cancel",
-    "Unpaid",
-    "Orders"
+    "Orders",
+    "Unpaid"
   ]
 }

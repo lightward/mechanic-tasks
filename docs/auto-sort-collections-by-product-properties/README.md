@@ -1,6 +1,6 @@
 # Auto-sort collections by product properties
 
-Tags: Sort, Collections, Products
+Tags: Collections, Products, Sort
 
 This task re-sorts your collections by any product property that you choose. A property lookup can be something simple, like "published_at", or more complicated: use multiple property lookups, like "metafields", "store", and "priority", to sort collections by product metafield values.
 

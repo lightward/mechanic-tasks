@@ -1,6 +1,6 @@
 # Auto-tag orders by app
 
-Tags: Orders, Auto-Tag
+Tags: Auto-Tag, Orders
 
 Some apps are responsible for placing orders. Use this task to tag orders, both incoming and historical, based on which app was responsible for placing them.
 

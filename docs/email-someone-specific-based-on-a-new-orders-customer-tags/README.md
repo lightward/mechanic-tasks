@@ -1,6 +1,6 @@
 # Email someone specific based on a new order's customer tags
 
-Tags: Email, Alert, Customers
+Tags: Alert, Customers, Email
 
 Use customer tags to assign staff email addresses to specific customers. When a new order arrives from a customer who has an assignment tag, this task will email the related staff member.
 

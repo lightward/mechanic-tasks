@@ -1,6 +1,6 @@
 # Auto-tag orders with a cart attribute
 
-Tags: Cart Attributes, Cart, Orders, Auto-Tag
+Tags: Auto-Tag, Cart, Cart Attributes, Orders
 
 This task checks for incoming orders, watching for orders that have a specific cart attribute filled in. When present, the task then copies that attribute over to the order's tags.
 

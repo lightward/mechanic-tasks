@@ -1,6 +1,6 @@
 # Auto-untag customers when a certain product is refunded
 
-Tags: Untag, Customers, Refunds
+Tags: Customers, Refunds, Untag
 
 Use this task to automatically remove a certain customer tag whenever a particular product is refunded, for that customer.
 

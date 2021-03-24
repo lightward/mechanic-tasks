@@ -1,6 +1,6 @@
 # Auto-pay orders having a certain tag
 
-Tags: Tag, Watch, Orders, Payment
+Tags: Orders, Payment, Tag, Watch
 
 Use this task to quickly designate certain orders to be automatically marked as paid. Runs for orders as they're created and updated, and can also be run manually, to scan all orders in your store at once.
 

@@ -1,6 +1,6 @@
 # Untag orders when paid
 
-Tags: Untag, Orders, Payment
+Tags: Orders, Payment, Untag
 
 This task automatically removes specific order tag(s) when orders are paid.
 

@@ -1,6 +1,6 @@
 # Email all customers who made a purchase
 
-Tags: Email, Customers, Loyalty
+Tags: Customers, Email, Loyalty
 
 Need to reach customers who made a specific purchase? This task scans your order history, looking for orders that match the conditions you specify. For each qualifying order, the task sends an email to the customer, optionally linking to the product(s) ordered.
 

@@ -1,6 +1,6 @@
 # Tag products by their price ranges
 
-Tags: Auto-Tag, Products, Price
+Tags: Auto-Tag, Price, Products
 
 Some themes (like Mogo!) support browsing products by price range. Under the hood, this functionality is powered by tags that look like "rprice-1-100". This task watches for new and updated products, making sure that the product range tags stay in sync with prices available for each product. And, if you run the task manually, it'll update the tags for all products in your shop.
 

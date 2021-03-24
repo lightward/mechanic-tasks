@@ -1,6 +1,6 @@
 # Archive orders when fulfilled
 
-Tags: Archive, Orders, Fulfillment
+Tags: Archive, Fulfillment, Orders
 
 Super simple: this task monitors for order fulfillments, and automatically archives orders when they're fulfilled.
 

@@ -1,6 +1,6 @@
 # Auto-tag orders by financial status
 
-Tags: Auto-Tag, Orders, Financial Status
+Tags: Auto-Tag, Financial Status, Orders
 
 This task watches new and updated orders, and updates their tags according to their financial status.
 

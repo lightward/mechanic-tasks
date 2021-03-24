@@ -1,6 +1,6 @@
 # Create a product inventory feed
 
-Tags: Inventory, Products, Feeds
+Tags: Feeds, Inventory, Products
 
 This task, paired with the linked instructions, creates a feed of product inventory (optionally filtering by product type).
 

@@ -1,6 +1,6 @@
 # Auto-tag orders with product tags
 
-Tags: Auto-Tag, Products, Orders
+Tags: Auto-Tag, Orders, Products
 
 This task watches for new orders, and copies tags from each ordered product to the order itself.
 

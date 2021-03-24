@@ -1,6 +1,6 @@
 # Auto-tag orders by discount code
 
-Tags: Auto-Tag, Orders, Discounts
+Tags: Auto-Tag, Discounts, Orders
 
 This task watches for newly-created orders, and copies any discount codes present to the order's tags.
 

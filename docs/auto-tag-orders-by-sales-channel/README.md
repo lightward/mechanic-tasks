@@ -1,6 +1,6 @@
 # Auto-tag orders by sales channel
 
-Tags: Sales Channel, Orders, Auto-Tag
+Tags: Auto-Tag, Orders, Sales Channel
 
 Use this task to tag orders as they come in, based on which sales channel created them. Run this task manually to backfill tags for customers based on their historical orders.
 

@@ -13,7 +13,7 @@
   "perform_action_runs_in_sequence": false,
   "tags": [
     "Auto-Tag",
-    "Orders",
-    "Discounts"
+    "Discounts",
+    "Orders"
   ]
 }

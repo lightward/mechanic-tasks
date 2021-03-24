@@ -1,6 +1,6 @@
 # Auto-archive orders after fulfillment
 
-Tags: Archive, Orders, Fulfillment
+Tags: Archive, Fulfillment, Orders
 
 Just as it says. :) Archives orders immediately upon fulfillment, or after a configurable number of days.
 

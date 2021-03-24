@@ -1,6 +1,6 @@
 # Demonstration: Order editing
 
-Tags: Orders, Order Editing
+Tags: Order Editing, Orders
 
 This task demonstrates Shopify's ability to edit orders through the admin API. It's intended to be a starting place for developing more specific functionality. Out of the box, this task automatically adds a product to orders that (optionally) meet an order minimum.
 

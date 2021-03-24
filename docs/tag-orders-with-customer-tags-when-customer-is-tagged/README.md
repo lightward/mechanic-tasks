@@ -1,6 +1,6 @@
 # Auto-tag orders with customer tags when new customer tags are added
 
-Tags: Auto-Tag, Orders, Customers
+Tags: Auto-Tag, Customers, Orders
 
 Activating this task will automatically keep the order tags up to date with the customer's tags.
 

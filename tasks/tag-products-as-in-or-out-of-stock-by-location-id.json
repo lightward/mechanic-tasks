@@ -22,8 +22,8 @@
   "tags": [
     "Auto-Tag",
     "In Stock",
-    "Out of Stock",
     "Location",
-    "Multi-Location"
+    "Multi-Location",
+    "Out of Stock"
   ]
 }

@@ -1,6 +1,6 @@
 # Add fulfillment tracking when an order is tagged
 
-Tags: Tracking, Fulfillment, Tag, Watch
+Tags: Fulfillment, Tag, Tracking, Watch
 
 Configure this tag with a mapping of country codes to tracking companies and URL templates, and/or default companies and URL templates. When an order is tagged, this task will apply the appropriate values to each fulfillment that has a tracking number.
 

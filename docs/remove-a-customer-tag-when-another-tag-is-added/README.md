@@ -1,6 +1,6 @@
 # Remove a customer tag when another tag is added
 
-Tags: Customers, Watch, Untag
+Tags: Customers, Untag, Watch
 
 Does exactly as it says. :)
 

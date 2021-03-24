@@ -1,6 +1,6 @@
 # Keep inventory levels in sync within products
 
-Tags: Inventory, Sync, Products
+Tags: Inventory, Products, Sync
 
 Useful for selling, say, a limited print with different framing options, this task makes sure that a product's inventory levels, for each variant and location, are all kept in sync.
 

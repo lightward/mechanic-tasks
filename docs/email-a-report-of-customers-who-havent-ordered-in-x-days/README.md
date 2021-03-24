@@ -1,6 +1,6 @@
 # Email a report of customers who haven't ordered in X days
 
-Tags: Report, Customers, Retention, Email
+Tags: Customers, Email, Report, Retention
 
 Use this task to request or schedule an email digest of customers, having a certain tag, who haven't placed an order in a certain number of days.
 

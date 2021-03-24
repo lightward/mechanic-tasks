@@ -1,6 +1,6 @@
 # Unpublish a certain collection, daily
 
-Tags: Unpublish, Collections, Schedule
+Tags: Collections, Schedule, Unpublish
 
 Use this task with the companion publishing task (see this task's documentation) to make a certain collection of products available on a schedule, and unavailable on another schedule.
 

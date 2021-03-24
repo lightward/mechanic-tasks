@@ -23,8 +23,8 @@
   "order_status_javascript": null,
   "perform_action_runs_in_sequence": false,
   "tags": [
-    "Unpaid",
     "Email",
-    "Orders"
+    "Orders",
+    "Unpaid"
   ]
 }

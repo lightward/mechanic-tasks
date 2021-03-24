@@ -1,6 +1,6 @@
 # Auto-copy notes from customers to their orders
 
-Tags: Customer Notes, Order Note, Customers
+Tags: Customer Notes, Customers, Order Note
 
 Save time jumping between screens, by making sure that the order record has everything you need. Useful for shops that keep important fulfillment information in the customer notes. This task can be run manually to back-fill notes for open orders.
 

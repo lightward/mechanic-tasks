@@ -1,6 +1,6 @@
 # Auto-tag orders with product vendors
 
-Tags: Auto-Tag, Products, Vendor, Orders
+Tags: Auto-Tag, Orders, Products, Vendor
 
 Use this task to automatically tag incoming orders with the vendor of each product in the order.
 

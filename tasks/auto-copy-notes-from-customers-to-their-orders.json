@@ -14,7 +14,7 @@
   "perform_action_runs_in_sequence": false,
   "tags": [
     "Customer Notes",
-    "Order Note",
-    "Customers"
+    "Customers",
+    "Order Note"
   ]
 }

@@ -1,6 +1,6 @@
 # Send a welcome email to new customers, in their language
 
-Tags: Email, Customers, Localization, Retention
+Tags: Customers, Email, Localization, Retention
 
 This task demonstrates how to send emails that respect the customer's language preference, by matching their locale to a pre-written email translation.
 

@@ -16,10 +16,10 @@
   "order_status_javascript": null,
   "perform_action_runs_in_sequence": false,
   "tags": [
+    "Customers",
     "Email",
-    "Tracking",
-    "Shipping",
     "Orders",
-    "Customers"
+    "Shipping",
+    "Tracking"
   ]
 }

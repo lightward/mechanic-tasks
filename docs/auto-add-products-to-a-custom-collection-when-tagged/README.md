@@ -1,6 +1,6 @@
 # Auto-add products to a custom collection when tagged
 
-Tags: Collections, Watch, Products
+Tags: Collections, Products, Watch
 
 Just as it says. Useful for collections that can't be configured for automatic products, but still should have some products pulled in automatically.
 

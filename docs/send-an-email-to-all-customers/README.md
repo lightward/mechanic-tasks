@@ -1,6 +1,6 @@
 # Send an email to all customers
 
-Tags: Email, Customers
+Tags: Customers, Email
 
 Use this task to easily contact all of your customers at once, optionally filtering by customer tag. Important: This task can only be used in a transactional context - it cannot be used be used for marketing emails, or any type of message that would require an unsubscribe link.
 

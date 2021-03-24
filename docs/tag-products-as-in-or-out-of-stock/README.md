@@ -1,6 +1,6 @@
 # Tag products as in- or out-of-stock
 
-Tags: Auto-Tag, Products, Inventory, Out of Stock, In Stock
+Tags: Auto-Tag, In Stock, Inventory, Out of Stock, Products
 
 This task scans your products, in bulk, and tags them according to whether or not they're in stock. Optionally, configure this task to monitor products for live auto-tagging.
 

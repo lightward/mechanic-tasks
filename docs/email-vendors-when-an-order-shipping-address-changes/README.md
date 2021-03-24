@@ -1,6 +1,6 @@
 # Email vendors when an order shipping address changes
 
-Tags: Email, Vendor, Shipping, Address
+Tags: Address, Email, Shipping, Vendor
 
 Keep customers happy by making sure your vendors have up-to-date shipping information. This keeps your vendors happy, too!
 

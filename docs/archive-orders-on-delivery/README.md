@@ -1,6 +1,6 @@
 # Archive orders on delivery
 
-Tags: Archive, Orders, Delivery
+Tags: Archive, Delivery, Orders
 
 Don't keep your customers waiting! Stay on top of orders that have yet to be delivered, by auto-archiving every order once every item has reached the customer.
 

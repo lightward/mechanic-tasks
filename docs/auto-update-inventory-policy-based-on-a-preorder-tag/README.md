@@ -1,6 +1,6 @@
 # Auto-update inventory policy based on a "preorder" tag
 
-Tags: Auto-Update, Watch, Tag, Products
+Tags: Auto-Update, Products, Tag, Watch
 
 This task manages your published product catalog, checking for the presence of a "preorder" tag, or a tag that starts with "preorder_" (like "preorder_summer"). If this tag is found, the task updates the product to allow customers to purchase the product after it's out of stock. If no preorder tag is found, the task makes sure customers *cannot* purchase the product if it's out of stock.
 

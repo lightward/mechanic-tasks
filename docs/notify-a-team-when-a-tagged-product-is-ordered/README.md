@@ -1,6 +1,6 @@
 # Notify a team when a tagged product is ordered
 
-Tags: Orders, Products, Email, Watch
+Tags: Email, Orders, Products, Watch
 
 Quickly route order notifications to whichever teams need be alerted for a given order. Use product tags to mark products according to which team needs the alert, and add multiple copies of this task to alert different teams for different tags.
 

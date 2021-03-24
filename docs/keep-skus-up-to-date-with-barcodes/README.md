@@ -1,6 +1,6 @@
 # Keep SKUs up to date with barcodes
 
-Tags: SKU, Barcodes
+Tags: Barcodes, SKU
 
 Included as a good example of keeping one attribute synced up with another, this task copies new barcode values over to the variant SKU, whenever a barcode is found and the SKU is out of date.
 

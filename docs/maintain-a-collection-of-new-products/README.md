@@ -1,6 +1,6 @@
 # Maintain a collection of new products
 
-Tags: Collections, Watch, Products
+Tags: Collections, Products, Watch
 
 Use this task to maintain a "New Products" collection, specifying either a number of products to include or the number of days to keep each product around. Easy! :)
 

@@ -14,7 +14,7 @@
   "order_status_javascript": null,
   "perform_action_runs_in_sequence": false,
   "tags": [
-    "Draft Orders",
-    "Cart"
+    "Cart",
+    "Draft Orders"
   ]
 }

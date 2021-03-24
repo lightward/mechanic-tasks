@@ -18,7 +18,7 @@
   "perform_action_runs_in_sequence": false,
   "tags": [
     "Metafields",
-    "Tag",
-    "Products"
+    "Products",
+    "Tag"
   ]
 }

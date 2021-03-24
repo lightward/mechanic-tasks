@@ -1,6 +1,6 @@
 # Send follow-up emails after sending a draft order invoice
 
-Tags: Draft Orders, Customers, Email, Invoice
+Tags: Customers, Draft Orders, Email, Invoice
 
 Use this task to send a follow-up email, 24 hours after you send out an email invoice for a draft order. Optionally, set this task to continue sending follow-up messages, every day after that.
 

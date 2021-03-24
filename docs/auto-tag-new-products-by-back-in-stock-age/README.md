@@ -1,6 +1,6 @@
 # Auto-tag new products by "back in stock" age
 
-Tags: Auto-Tag, Watch, Metafields, Products
+Tags: Auto-Tag, Metafields, Products, Watch
 
 This task monitors changes to inventory level, records the time at which a product's total inventory passes your configured threshold, and then maintains a set of tags indicating how recently the product returned to "back in stock" status.
 

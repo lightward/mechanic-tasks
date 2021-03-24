@@ -1,6 +1,6 @@
 # Sync inventory for shared SKUs
 
-Tags: Sync, Inventory, SKU
+Tags: Inventory, SKU, Sync
 
 This task monitors all variants having a SKU that you configure, and ensures that changes to inventory quantity are reflected across all variants sharing that SKU.
 

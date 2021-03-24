@@ -1,6 +1,6 @@
 # Email customers when created
 
-Tags: Email, Customers
+Tags: Customers, Email
 
 Use this task to send a quick welcome email to customers, when they sign up or are otherwise created in your shop. Optionally, filter by customer tag to only send welcome emails to certain customers.
 

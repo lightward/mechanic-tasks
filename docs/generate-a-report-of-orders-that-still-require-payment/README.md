@@ -1,6 +1,6 @@
 # Generate a report of orders that still require payment
 
-Tags: Report, CSV, Unpaid
+Tags: CSV, Report, Unpaid
 
 This task generates a CSV spreadsheet, listing orders that are unpaid, partially paid, or pending payment. The resulting report is emailed to the recipient of your choice. Optionally, choose to have this report  generated hourly, or daily.
 

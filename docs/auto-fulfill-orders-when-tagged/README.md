@@ -1,6 +1,6 @@
 # Auto-fulfill orders when tagged
 
-Tags: Orders, Fulfillment, Tag
+Tags: Fulfillment, Orders, Tag
 
 This task monitors order tags, and when a certain tag is added to an order, it auto-fulfills all unfulfilled items in the order. Optionally, you can choose to notify customers when their order is fulfilled by this task.
 

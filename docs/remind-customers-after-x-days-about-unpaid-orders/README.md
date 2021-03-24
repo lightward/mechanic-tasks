@@ -1,6 +1,6 @@
 # Remind customers after x days about unpaid orders
 
-Tags: Reminder, Unpaid, Schedule, Customers
+Tags: Customers, Reminder, Schedule, Unpaid
 
 This task wait for a configurable number of days (or hours!) after an order placed, and – if the order is still unpaid – emails the customer, and optionally adds a tag to the order. This task only sends one email – it does not send repeating reminders.
 

@@ -1,6 +1,6 @@
 # Send an email alert when a variant hits 0 total inventory
 
-Tags: Email, Alert, Out of Stock, Inventory, Products
+Tags: Alert, Email, Inventory, Out of Stock, Products
 
 Use this task to receive an immediate email alert, whenever a variant's total inventory hits 0, when added up across all locations.
 

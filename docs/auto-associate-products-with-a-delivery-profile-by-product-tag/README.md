@@ -1,6 +1,6 @@
 # Auto-associate products with a delivery profile, by product tag
 
-Tags: Tag, Delivery, Products
+Tags: Delivery, Products, Tag
 
 Use this task to automatically add products, as they're tagged, to a specific delivery profile. Untag products to remove them from the configured profile.
 

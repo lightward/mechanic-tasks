@@ -1,6 +1,6 @@
 # Schedule product tags by date
 
-Tags: Schedule, Products, Auto-Tag
+Tags: Auto-Tag, Products, Schedule
 
 Use this task to schedule adding and/or removing tags for specific products, with support for scheduling by date, or by date and hour.
 

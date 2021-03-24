@@ -18,9 +18,9 @@
   "perform_action_runs_in_sequence": false,
   "tags": [
     "Email",
-    "Report",
     "Inventory",
-    "Schedule",
-    "Low Stock"
+    "Low Stock",
+    "Report",
+    "Schedule"
   ]
 }

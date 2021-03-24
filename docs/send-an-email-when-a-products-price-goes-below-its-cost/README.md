@@ -1,6 +1,6 @@
 # Send an email when a product's price goes below its cost
 
-Tags: Email, Costs, Products, Price
+Tags: Costs, Email, Price, Products
 
 This task watches for product updates, and sends an email for each variant that's found to have a unit cost that's greater than the variant's for-sale price.
 

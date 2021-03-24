@@ -1,6 +1,6 @@
 # Remind customers that their order is on the way
 
-Tags: Reminder, Email, Shipping
+Tags: Email, Reminder, Shipping
 
 Do you ship custom items, or do you have a lengthy turnaround time on your orders? Use this task to automatically re-assure customers that their order is in the queue, to be shipped as soon as possible. By default, this task sends an email 10 days (or a number you configure) after the order is paid, as long as the order remains fully paid, unfulfilled, and un-cancelled. Optionally, configure tags to add to the order and/or customer, to be added when the email is sent, and choose whether to only send reminders on weekdays.
 

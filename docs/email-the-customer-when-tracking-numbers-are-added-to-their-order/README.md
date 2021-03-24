@@ -1,6 +1,6 @@
 # Email the customer when tracking numbers are added to their order
 
-Tags: Email, Tracking, Shipping, Orders, Customers
+Tags: Customers, Email, Orders, Shipping, Tracking
 
 Use this task with services that add tracking numbers to fulfillments after fulfillments are created, to ensure that customers are notified when their tracking number is available.
 

@@ -1,6 +1,6 @@
 # Auto-invite customers when tagged
 
-Tags: Invite, Tag, Email, Watch
+Tags: Email, Invite, Tag, Watch
 
 This task watches for updates to customers, and sends invites for any customer who has the tag you choose, who hasn't previously been invited. This task also supports sending invitations in bulk, to all tagged customers who haven't previously been invited.
 

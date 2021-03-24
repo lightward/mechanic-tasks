@@ -1,6 +1,6 @@
 # Trigger order emails with a tag
 
-Tags: Watch, Email, Orders, Tag
+Tags: Email, Orders, Tag, Watch
 
 This task monitors order tags, and sends out an email that you configure whenever a certain tag is added. Supports email templates, and sending to custom recipients.
 

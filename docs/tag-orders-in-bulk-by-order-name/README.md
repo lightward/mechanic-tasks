@@ -1,6 +1,6 @@
 # Tag orders in bulk by order name
 
-Tags: Orders, Bulk, Auto-Tag
+Tags: Auto-Tag, Bulk, Orders
 
 Use this task to rapidly update your order list, by entering a set of order names (e.g. "#12345", often called order numbers) and the tags to apply to those orders.
 

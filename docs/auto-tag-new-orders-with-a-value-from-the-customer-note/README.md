@@ -1,6 +1,6 @@
 # Auto-tag new orders with a value from the customer note
 
-Tags: Auto-Tag, Orders, Customers, Customer Notes
+Tags: Auto-Tag, Customer Notes, Customers, Orders
 
 This task watches incoming orders, and tags each order with a certain value from the customer's note, as identified by a configurable prefix. For example, if your customers have notes resembling "Username: xyz", configure this task with the prefix "Username: " to have it tag incoming orders as "xyz". Useful with apps like inkFrog, which add eBay usernames to customer notes, using a prefix.
 

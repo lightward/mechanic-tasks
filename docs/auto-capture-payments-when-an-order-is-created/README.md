@@ -1,6 +1,6 @@
 # Auto-capture payments when an order is created
 
-Tags: Payment, Orders
+Tags: Orders, Payment
 
 This task runs immediately after an order is created, and captures an authorized transaction if one is present. Choose which risk levels to capture for, and optionally choose to filter by order tag. You may also choose to only capture funds for line items that do not require shipping.
 

@@ -1,6 +1,6 @@
 # Standardize UK postcodes
 
-Tags: UK, Shipping
+Tags: Shipping, UK
 
 This task watches for incoming orders for the United Kingdom, and reformats any address postcodes that are not in the standard formats "XX XXX", "XXX XXX", and "XXXX XXX".
 

@@ -20,8 +20,8 @@
   "order_status_javascript": null,
   "perform_action_runs_in_sequence": false,
   "tags": [
-    "Report",
     "CSV",
+    "Report",
     "Unpaid"
   ]
 }

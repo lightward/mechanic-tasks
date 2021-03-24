@@ -1,6 +1,6 @@
 # Delete the oldest x products from a specific collection
 
-Tags: Delete, Collections, Products
+Tags: Collections, Delete, Products
 
 Either triggered manually, or configured to run daily, this task will look for the oldest products in the collection of your choice, and delete as many of them as you wish.
 

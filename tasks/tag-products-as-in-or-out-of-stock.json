@@ -18,9 +18,9 @@
   "perform_action_runs_in_sequence": false,
   "tags": [
     "Auto-Tag",
-    "Products",
+    "In Stock",
     "Inventory",
     "Out of Stock",
-    "In Stock"
+    "Products"
   ]
 }

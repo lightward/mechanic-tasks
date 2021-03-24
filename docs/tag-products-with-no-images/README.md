@@ -1,6 +1,6 @@
 # Tag products with no images
 
-Tags: Tag, Products, Images
+Tags: Images, Products, Tag
 
 Running manually or on a schedule, this task scans all products in your store, and adds a tag to any products that have no images. Optionally, choose to have this task remove that tag from any products that are found to have an image.
 

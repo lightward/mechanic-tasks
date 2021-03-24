@@ -1,6 +1,6 @@
 # Export a CSV of order shipping addresses
 
-Tags: Export, CSV, Shipping
+Tags: CSV, Export, Shipping
 
 Useful for quickly preparing labels, or planning a drop-off route.
 

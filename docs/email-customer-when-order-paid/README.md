@@ -1,6 +1,6 @@
 # Email customer when their order is paid
 
-Tags: Email, Customers, Orders, Payment
+Tags: Customers, Email, Orders, Payment
 
 Quickly send a thank-you email (or any other sort of follow-up email) to your customers, as soon as their order is paid. (Optionally, require one or more order tags to be present, in order for the email to be sent.) And it's super easy to add a delay – set the task to subscribe "shopify/orders/paid+2.days" or "shopify/orders/paid+1.week" instead to create a thoughtful just-checking-back-in-with-you message. :)
 

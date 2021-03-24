@@ -1,6 +1,6 @@
 # Receive email alerts when inventory levels change
 
-Tags: Email, Alert, Inventory
+Tags: Alert, Email, Inventory
 
 Use this task to receive immediate email notifications whenever inventory/stock levels are adjusted, whether manually or as a result of a transfer or customer order.
 

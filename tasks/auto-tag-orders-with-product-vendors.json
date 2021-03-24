@@ -13,8 +13,8 @@
   "perform_action_runs_in_sequence": false,
   "tags": [
     "Auto-Tag",
+    "Orders",
     "Products",
-    "Vendor",
-    "Orders"
+    "Vendor"
   ]
 }

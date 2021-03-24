@@ -1,6 +1,6 @@
 # Copy product metafields to each product's tags
 
-Tags: Metafields, Tag, Products
+Tags: Metafields, Products, Tag
 
 This task exists to fill the gap between Shopify's admin product search, and product metafields. Use this task to copy metafield values to product tags, allowing you to filter products by tags based on those metafields.
 

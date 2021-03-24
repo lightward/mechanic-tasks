@@ -1,6 +1,6 @@
 # Monitor customer note for certain information
 
-Tags: Customer Notes, Watch, Customers
+Tags: Customer Notes, Customers, Watch
 
 Use this task to keep an eye on the contents of a customer's note. When the text you want to watch for is added (e.g. "Authorization number:", or "VAT Registration Number:", or anything else!), Mechanic will add the tag of your choice to the customer, and optionally send you a notification email.
 

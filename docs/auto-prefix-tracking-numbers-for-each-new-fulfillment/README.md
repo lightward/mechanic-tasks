@@ -1,6 +1,6 @@
 # Auto-prefix tracking numbers for each new fulfillment
 
-Tags: Fulfillment, Tracking, Shipping
+Tags: Fulfillment, Shipping, Tracking
 
 This task runs immediately after each new fulfillment is created, and adds a prefix to its tracking number, if a tracking number is present.
 

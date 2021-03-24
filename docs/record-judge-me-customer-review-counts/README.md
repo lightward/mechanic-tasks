@@ -1,6 +1,6 @@
 # Record Judge.me customer review counts
 
-Tags: Judge.me, Reviews, Customers
+Tags: Customers, Judge.me, Reviews
 
 Using Judge.me for reviews? Use this task to keep a counter for each customer's reviews, stored as a metafield on the customer record. And, auto-tag customers as they reach different levels of review counts - useful for granting discounts or special access to repeat reviewers.
 

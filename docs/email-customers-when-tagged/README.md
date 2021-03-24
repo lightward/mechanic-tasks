@@ -1,6 +1,6 @@
 # Email customers when tagged
 
-Tags: Email, Tag, Watch, Customers
+Tags: Customers, Email, Tag, Watch
 
 Automatically send out an email to your customers when a tag is added to their account. Useful for sending approval emails, welcome emails if the customer was created with a certain tag, or any other emails related to an update to the customer's status. The most common use of this task is to send out emails to customers when their accounts are approved, but you can use this task to email customers any kind of alert you like, triggered by a simple tag. For example, some themes include an email subscription form that creates a customer record, pre-tagged with "email subscribe", or something to that effect.
 

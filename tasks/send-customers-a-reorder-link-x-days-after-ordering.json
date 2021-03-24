@@ -17,9 +17,9 @@
   "order_status_javascript": null,
   "perform_action_runs_in_sequence": false,
   "tags": [
-    "Retention",
     "Customers",
     "Email",
-    "Marketing"
+    "Marketing",
+    "Retention"
   ]
 }

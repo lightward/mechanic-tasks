@@ -20,7 +20,7 @@
   "perform_action_runs_in_sequence": false,
   "tags": [
     "Email",
-    "Pick-up",
-    "Orders"
+    "Orders",
+    "Pick-up"
   ]
 }
