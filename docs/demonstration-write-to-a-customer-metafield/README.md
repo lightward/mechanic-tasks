@@ -44,7 +44,7 @@ To use this task, provide the numeric ID of a customer in your store. ([Need hel
 
 Run the task to see the metafield create/update in action.
 
-To verify that the metafield operation succeeded, use an app like Metafields Guru, or look up `/metafields.json` for the customer in your Shopify admin area. For example, for a customer with the ID 12345, on a store called example.myshopify.com, the following URL would show all the metafields for that customer:
+To verify that the metafield operation succeeded, use an app like [Metafields Guru](https://apps.shopify.com/metafields-editor-2), or look up `/metafields.json` for the customer in your Shopify admin area. For example, for a customer with the ID 12345, on a store called example.myshopify.com, the following URL would show all the metafields for that customer:
 
 https://example.myshopify.com/admin/customers/12345/metafields.json
 
