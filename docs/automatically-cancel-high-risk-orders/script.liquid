@@ -3,7 +3,9 @@
 {% assign cancellation_reason = options.cancellation_reason | default: "other" %}
 {% assign valid_cancellation_reasons = "customer,inventory,fraud,declined,other" | split: "," %}
 {% unless valid_cancellation_reasons contains cancellation_reason %}
-  {"error": {{ "Cancellation reason " | append: cancellation_reason | append: " - must be one of 'customer', 'inventory', 'fraud', 'declined', or 'other'." | json }}}
+  {% error %}
+    {{ "Cancellation reason " | append: cancellation_reason | append: " - must be one of 'customer', 'inventory', 'fraud', 'declined', or 'other'." | json }}
+  {% enderror %}
 {% endunless %}
 
 {% assign order_qualifies = false %}
@@ -11,40 +13,87 @@
 {% if order.cancelled_at == blank and cancel_risk %}
   {% assign order_qualifies = true %}
 {% endif %}
-   
+
 {% if options.ignore_unpaid_orders__boolean and order.financial_status == "pending" %}
    {% assign order_qualifies = false %}
 {% endif %}
 
 {% if event.preview or order_qualifies %}
-  {% action "shopify" %}
-    [
-      "update",
-      ["order", {{ order.id | json }}, "risk", {{ cancel_risk.id | json }}],
-      {
-        "cause_cancel": true
-      }
-    ]
-  {% endaction %}
-
   {% if options.attempt_to_void_or_refund_payment_for_cancelled_orders__boolean %}
-    {% capture suggested_refund_query %}
+    {% capture order_refund_query %}
       query {
         order(id: {{ order.admin_graphql_api_id | json }}) {
           suggestedRefund(suggestFullRefund: true, refundShipping: true) {
             amountSet {
               shopMoney {
                 amount
-                currencyCode
               }
             }
+          }
+          transactions {
+            id
+            gateway
           }
         }
       }
     {% endcapture %}
 
-    {% assign suggested_refund_result = suggested_refund_query | shopify %}
-    {% assign suggested_refund = suggested_refund_result.data.order.suggestedRefund.amountSet.shopMoney %}
+    {% assign order_refund_result = order_refund_query | shopify %}
+
+    {% if event.preview %}
+      {% capture order_refund_result_json %}
+        {
+          "data": {
+            "order": {
+              "suggestedRefund": {
+                "amountSet": {
+                  "shopMoney": {
+                    "amount": "123.0"
+                  }
+                }
+              },
+              "transactions": [
+                {
+                  "id": "gid://shopify/OrderTransaction/1234567890",
+                  "gateway": "bogus"
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign order_refund_result = order_refund_result_json | parse_json %}
+    {% endif %}
+
+    {% assign suggested_refund = order_refund_result.data.order.suggestedRefund.amountSet.shopMoney.amount %}
+    {% assign transaction = order_refund_result.data.order.transactions.first %}
+
+    {% if transaction != nil %}
+      {% action "shopify" %}
+        mutation {
+          refundCreate(input: {
+            orderId: {{ order.admin_graphql_api_id | json }}
+              transactions: [
+                {
+                  amount: {{ suggested_refund | json }}
+                  gateway: {{ transaction.gateway | json }}
+                  kind: VOID
+                  orderId: {{ order.admin_graphql_api_id | json }}
+                  parentId: {{ transaction.id | json }}
+                }
+              ]
+            notify: false
+            note: {{ task.name | json }}
+          }) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endif %}
   {% endif %}
 
   {% action "shopify" %}
@@ -52,10 +101,6 @@
       "post",
       "/admin/orders/{{ order.id | json }}/cancel.json",
       {
-        {% if options.attempt_to_void_or_refund_payment_for_cancelled_orders__boolean %}
-          "amount": {{ suggested_refund.amount | json }},
-          "currency": {{ suggested_refund.currencyCode | json }},
-        {% endif %}
         "reason": {{ cancellation_reason | json }},
         "email": {{ options.email_customer_when_cancelling__boolean | json }}
       }
