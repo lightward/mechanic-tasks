@@ -46,8 +46,9 @@ And, this task can restore inventory to its original levels at midnight the next
 
 ### Important notes
 
-* ​This task only works for products that have inventory tracking enabled, which are configured to be unavailable when out of stock. This means that the "Track quantity" product option needs to be enabled, and the "Continue selling when out of stock" option needs to be disabled, for all products.
+* This task only works for products that have inventory tracking enabled, which are configured to be unavailable when out of stock. This means that the "Track quantity" product option needs to be enabled, and the "Continue selling when out of stock" option needs to be disabled, for all products.
 * The "Only clear inventory for products with this tag" does _not_ change which orders are considered for the daily maximum. Use the "Only count orders matching this query" option to filter orders for counting, using the same order search syntax as the Shopify admin.
+* The "Only clear inventory for products with this tag" setting is case-sensitive - it must match product tags exactly.
 * **This task may be not behave as intended if you receive multiple orders per minute. We don't recommend using it for high-volume stores.**
 
 ## Installing this task
