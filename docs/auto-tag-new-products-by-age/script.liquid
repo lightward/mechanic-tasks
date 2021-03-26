@@ -91,7 +91,7 @@
       {% if product_timestamp_s != 0 %}
         {% if options.match_product_tags_by_minimum_age__boolean and product_age_d > tag_age_threshold_d %}
           {% assign tag_age_threshold_met = true %}
-        {% elsif options.match_product_tags_by_maximum_age__boolean and product_age_d < tag_age_threshold_d%}
+        {% elsif options.match_product_tags_by_maximum_age__boolean and product_age_d < tag_age_threshold_d %}
           {% assign tag_age_threshold_met = true %}
         {% endif %}
       {% endif %}
