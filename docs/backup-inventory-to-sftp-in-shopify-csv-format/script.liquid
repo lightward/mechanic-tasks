@@ -1,0 +1,283 @@
+{% comment %}
+  Preferred option order:
+
+  {{ options.only_export_products_matching_this_query }}
+  {{ options.run_every_x_hours__number }}
+  {{ options.sftp_host__required }}
+  {{ options.sftp_port__required_number }}
+  {{ options.sftp_user__required }}
+  {{ options.sftp_password__required }}
+  {{ options.sftp_upload_directory }}
+{% endcomment %}
+
+{% comment %}
+-- validate options
+{% endcomment %}
+{% if options.run_every_x_hours__number != blank %}
+  {% assign valid_hours = array %}
+  {% assign valid_hours[valid_hours.size] = 1 %}
+  {% assign valid_hours[valid_hours.size] = 2 %}
+  {% assign valid_hours[valid_hours.size] = 3 %}
+  {% assign valid_hours[valid_hours.size] = 4 %}
+  {% assign valid_hours[valid_hours.size] = 6 %}
+  {% assign valid_hours[valid_hours.size] = 12 %}
+  {% assign valid_hours[valid_hours.size] = 24 %}
+
+  {% unless valid_hours contains options.run_every_x_hours__number %}
+    {% error "If set, 'Run interval in hours' must be 1, 2, 3, 4, 6, 12, or 24." %}
+  {% endunless %}
+{% endif %}
+
+{% assign ok_to_run = false %}
+
+{% if event.topic == "mechanic/user/trigger" or event.topic == "mechanic/scheduler/daily" %}
+  {% assign ok_to_run = true %}
+
+{% elsif event.topic == "mechanic/scheduler/hourly" and options.run_every_x_hours__number != blank %}
+  {% assign hour_mod = "now" | date: "%H" | modulo: options.run_every_x_hours__number %}
+
+  {% if event.preview or hour_mod == 0 %}
+    {% assign ok_to_run = true %}
+
+  {% else %}
+    {% log message: "The current hour does not fall on the configured interval; skipping", hour_interval: options.run_every_x_hours__number, current_hour: hour_mod %}
+  {% endif %}
+{% endif %}
+
+{% if ok_to_run %}
+  {% capture bulk_operation_query %}
+    query {
+      productVariants(reverse: true, query: {{ options.only_export_products_matching_this_query | json }}) {
+        edges {
+          node {
+            id
+            __typename
+            product {
+              handle
+              title
+              options {
+                name
+                position
+              }
+            }
+            selectedOptions {
+              name
+              value
+            }
+            sku
+            inventoryItem {
+              tracked
+              inventoryLevels {
+                edges {
+                  node {
+                    id
+                    __typename
+                    location {
+                      name
+                    }
+                    available
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture jsonl_string %}
+      {"id":"gid:\/\/shopify\/ProductVariant\/1234567890","__typename":"ProductVariant","product":{"handle":"log","title":"Log","options":[{"name":"Size","position":1}]},"selectedOptions":[{"name":"Size","value":"Petite"}],"sku":"LOG-3","inventoryItem":{"tracked":true}}
+      {"id":"gid:\/\/shopify\/InventoryLevel\/1357924680?inventory_item_id=1470258369","__typename":"InventoryLevel","location":{"name":"123 Main Street"},"available":9,"__parentId":"gid:\/\/shopify\/ProductVariant\/1234567890"}
+      {"id":"gid:\/\/shopify\/InventoryLevel\/2468013579?inventory_item_id=1470258369","__typename":"InventoryLevel","location":{"name":"987 Alley Way"},"available":8,"__parentId":"gid:\/\/shopify\/ProductVariant\/1234567890"}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = jsonl_string | parse_jsonl %}
+  {% endif %}
+
+  {% comment %}
+  -- csv required fields, in this order
+  {% endcomment %}
+
+  {% assign columns = "Handle,Title,Option1 Name,Option1 Value,Option2 Name,Option2 Value,Option3 Name,Option3 Value,SKU" | split: "," %}
+
+  {% comment %}
+  -- add inventory locations
+  {% endcomment %}
+
+  {% for location in shop.locations %}
+    {% if location.active %}
+      {% assign columns[columns.size] = location.name %}
+    {% endif %}
+  {% endfor %}
+
+  {% assign location_count = shop.locations.size %}
+
+  {% if event.preview %}
+    {% assign columns[columns.size] = "123 Main Street" %}
+    {% assign columns[columns.size] = "987 Alley Way" %}
+  {% endif %}
+
+  {% comment %}
+  -- setup 2d array required by csv filter, and add the columns as a header row
+  {% endcomment %}
+
+  {% assign rows = array %}
+  {% assign rows[0] = columns %}
+
+  {% comment %}
+  -- loop through the lines (JSONL) returned by the bulk operation
+  {% endcomment %}
+
+  {% assign variants_by_id = hash %}
+
+  {% for object in bulkOperation.objects %}
+    {% case object.__typename %}
+      {% when "ProductVariant" %}
+        {% comment %}-- clone the object to allow modification --{% endcomment %}
+        {% assign variant = object | json | parse_json %}
+        {% assign variant["inventory_levels"] = array %}
+        {% assign variants_by_id[variant.id] = variant %}
+
+      {% when "InventoryLevel" %}
+        {% assign inventory_level = object %}
+        {% assign variant_id = inventory_level.__parentId %}
+        {% assign variant = variants_by_id[variant_id] %}
+        {% assign variant["inventory_levels"][variant.inventory_levels.size] = inventory_level %}
+
+      {% else %}
+        {% log message: "Unexpected object type in JSONL", object_type: object.__typename, object: object %}
+    {% endcase %}
+  {% endfor %}
+
+  {% comment %}
+  -- loop through variants_by_id to build csv rows, one row per variant
+  {% endcomment %}
+
+  {% for pair in variants_by_id %}
+    {% assign variant = pair[1] %}
+    {% assign variant_row = hash %}
+
+    {% comment %}
+    -- exclude untracked variants (no graphql filter for this)
+    {% endcomment %}
+
+    {% unless variant.inventoryItem.tracked %}
+      {% continue %}
+    {% endunless %}
+
+    {% for column in columns %}
+      {% unless forloop.rindex0 < location_count %}
+        {% assign variant_row[column] = nil %}
+      {% else %}
+        {% assign variant_row[column] = "not stocked" %}
+      {% endunless %}
+    {% endfor %}
+
+    {% assign variant_row["Handle"] = variant.product.handle %}
+    {% assign variant_row["SKU"] = variant.sku %}
+    {% assign variant_row["Title"] = variant.product.title %}
+
+    {% comment %}
+    -- map variant selected options to the correct product option columns
+    {% endcomment %}
+
+    {% assign product_options = hash %}
+
+    {% for option in variant.product.options %}
+      {% assign product_options[option.name] = option.position %}
+    {% endfor %}
+
+    {% for option in variant.selectedOptions %}
+      {% assign position = product_options[option.name] %}
+      {% assign option_name_key = "Option" | append: position | append: " Name" %}
+      {% assign option_value_key = "Option" | append: position | append: " Value" %}
+      {% assign variant_row[option_name_key] = option.name %}
+      {% assign variant_row[option_value_key] = option.value %}
+    {% endfor %}
+
+    {% comment %}
+    -- add inventory levels by location
+    {% endcomment %}
+
+    {% for inventory_level in variant.inventory_levels %}
+      {% assign location_name = inventory_level.location.name %}
+      {% assign variant_row[location_name] = inventory_level.available %}
+    {% endfor %}
+
+    {% comment %}
+    -- flatten the variant row hash into an array of values
+    {% endcomment %}
+
+    {% assign row = array %}
+    {% for pair in variant_row %}
+      {% assign row[forloop.index0] = pair[1] %}
+    {% endfor %}
+
+    {% comment %}
+    -- add the row to 2d rows array
+    {% endcomment %}
+
+    {% assign rows[rows.size] = row %}
+  {% endfor %}{% comment %}-- end variants loop --{% endcomment %}
+
+  {% comment %}
+  -- convert 2d array into csv format
+  {% endcomment %}
+
+  {% assign csv = rows | csv %}
+
+  {% if event.preview %}
+    {% action "echo" csv %}
+  {% endif %}
+
+  {% capture upload_path %}inventory__{{ "now" | date: "%Y-%m-%d_T%H-%M-%S_%Z", tz: "UTC" }}.csv{% endcapture %}
+
+  {% comment %}
+  -- directory paths may or may not have a leading slash (if they do, they're absolute;
+  -- if they don't, they're relative), but we always need a trailing slash
+  {% endcomment %}
+
+  {% if options.sftp_upload_directory != blank %}
+    {% assign directory = options.sftp_upload_directory %}
+
+    {% if directory.last != "/" %}
+      {% assign directory = directory | append: "/" %}
+    {% endif %}
+
+    {% assign upload_path = directory | append: upload_path %}
+  {% endif %}
+
+  {% action "ftp" %}
+    {
+      "protocol": "sftp",
+      "host": {{ options.sftp_host__required | json }},
+      "port": {{ options.sftp_port__required_number | json }},
+      "user": {{ options.sftp_user__required | json }},
+      "password": {{ options.sftp_password__required | json }},
+      "uploads": {
+        {{ upload_path | json }}: {{ csv | json }}
+      }
+    }
+  {% endaction %}
+{% endif %}
