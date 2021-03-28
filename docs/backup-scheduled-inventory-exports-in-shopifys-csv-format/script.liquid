@@ -3,16 +3,32 @@
 
   {{ options.only_export_products_matching_this_query }}
   {{ options.run_every_x_hours__number }}
-  {{ options.sftp_host__required }}
-  {{ options.sftp_port__required_number }}
-  {{ options.sftp_user__required }}
-  {{ options.sftp_password__required }}
+  {{ options.sftp_host }}
+  {{ options.sftp_port__number }}
+  {{ options.sftp_user }}
+  {{ options.sftp_password }}
   {{ options.sftp_upload_directory }}
+  {{ options.send_email_export_to_this_address }}
 {% endcomment %}
 
 {% comment %}
 -- validate options
 {% endcomment %}
+{% assign export_using_sftp = false %}
+{% assign export_using_email = false %}
+
+{% if options.sftp_host != blank or options.sftp_port__number != blank or options.sftp_user != blank or options.sftp_password != blank %}
+  {% if options.sftp_host == blank or options.sftp_port__number == blank or options.sftp_user == blank or options.sftp_password == blank %}
+    {% error "When exporting via SFTP, the host, port, user, and password fields are required." %}
+  {% else %}
+    {% assign export_using_sftp = true %}
+  {% endif %}
+{% endif %}
+
+{% if export_using_sftp == false and options.send_email_export_to_this_address == blank %}
+  {% error "This task must be configured to export via SFTP (by filling in all of the SFTP host, port, user, and password fields), or via email, or both." %}
+{% endif %}
+
 {% if options.run_every_x_hours__number != blank %}
   {% assign valid_hours = array %}
   {% assign valid_hours[valid_hours.size] = 1 %}
@@ -251,33 +267,50 @@
     {% action "echo" csv %}
   {% endif %}
 
-  {% capture upload_path %}inventory__{{ "now" | date: "%Y-%m-%d_T%H-%M-%S_%Z", tz: "UTC" }}.csv{% endcapture %}
+  {% capture file_name %}inventory__{{ "now" | date: "%Y-%m-%d_T%H-%M-%S_%Z", tz: "UTC" }}.csv{% endcapture %}
 
-  {% comment %}
-  -- directory paths may or may not have a leading slash (if they do, they're absolute;
-  -- if they don't, they're relative), but we always need a trailing slash
-  {% endcomment %}
+  {% if export_using_sftp %}
+    {% comment %}
+    -- directory paths may or may not have a leading slash (if they do, they're absolute;
+    -- if they don't, they're relative), but we always need a trailing slash
+    {% endcomment %}
 
-  {% if options.sftp_upload_directory != blank %}
-    {% assign directory = options.sftp_upload_directory %}
+    {% if options.sftp_upload_directory != blank %}
+      {% assign directory = options.sftp_upload_directory %}
 
-    {% if directory.last != "/" %}
-      {% assign directory = directory | append: "/" %}
+      {% if directory.last != "/" %}
+        {% assign directory = directory | append: "/" %}
+      {% endif %}
+
+      {% assign upload_path = directory | append: file_name %}
     {% endif %}
 
-    {% assign upload_path = directory | append: upload_path %}
+    {% action "ftp" %}
+      {
+        "protocol": "sftp",
+        "host": {{ options.sftp_host | json }},
+        "port": {{ options.sftp_port__number | json }},
+        "user": {{ options.sftp_user | json }},
+        "password": {{ options.sftp_password | json }},
+        "uploads": {
+          {{ upload_path | default: file_name | json }}: {{ csv | json }}
+        }
+      }
+    {% endaction %}
   {% endif %}
 
-  {% action "ftp" %}
-    {
-      "protocol": "sftp",
-      "host": {{ options.sftp_host__required | json }},
-      "port": {{ options.sftp_port__required_number | json }},
-      "user": {{ options.sftp_user__required | json }},
-      "password": {{ options.sftp_password__required | json }},
-      "uploads": {
-        {{ upload_path | json }}: {{ csv | json }}
+  {% if options.send_email_export_to_this_address != blank %}
+    {% action "email" %}
+      {
+        "to": {{ options.send_email_export_to_this_address | json }},
+        "subject": {{ "Inventory export for " | append: shop.name | json }},
+        "body": "Please see attached. :)",
+        "reply_to": {{ shop.customer_email | json }},
+        "from_display_name": {{ shop.name | json }},
+        "attachments": {
+          {{ file_name | json }}: {{ csv | json }}
+        }
       }
-    }
-  {% endaction %}
+    {% endaction %}
+  {% endif %}
 {% endif %}
