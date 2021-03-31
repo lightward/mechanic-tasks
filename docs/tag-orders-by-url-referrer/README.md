@@ -1,5 +1,7 @@
 # Tag online orders by their ?ref= referral codes
 
+Tags: Auto-Tag, Orders, Referral
+
 Have your traffic sources refer customers using ?ref=referral-code-here URLs (using the query parameter of your choice), then use this task to automatically tag each customer's order according to the referral value they arrived with. Optionally, tag the customer as well.
 
 * View in the task library: [usemechanic.com/task/tag-orders-by-url-referrer](https://usemechanic.com/task/tag-orders-by-url-referrer)

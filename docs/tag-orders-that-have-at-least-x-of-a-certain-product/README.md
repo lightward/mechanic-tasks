@@ -1,5 +1,7 @@
 # Tag orders that have at least x of a certain product
 
+Tags: Auto-Tag, Orders
+
 Use this task to monitor for orders that meet a certain quantity threshold, per line item or totaled up, optionally only looking at certain SKUs. Optionally, send yourself an email notification when such an order comes in.
 
 * View in the task library: [usemechanic.com/task/tag-orders-that-have-at-least-x-of-a-certain-product](https://usemechanic.com/task/tag-orders-that-have-at-least-x-of-a-certain-product)

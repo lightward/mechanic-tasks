@@ -1,5 +1,7 @@
 # Auto-add default custom attributes to new orders
 
+Tags: Order Attributes, Orders
+
 Shopify allows orders to have custom attributes associated with them – and these attributes can be edited from within Shopify. Use this task to configure default attributes to be added to all new orders, providing an attribute name and (optionally) a value. Feel free to leave the value blank if you know you'll want to add your own values later, within Shopify.
 
 * View in the task library: [usemechanic.com/task/auto-add-default-custom-attributes-to-new-orders](https://usemechanic.com/task/auto-add-default-custom-attributes-to-new-orders)

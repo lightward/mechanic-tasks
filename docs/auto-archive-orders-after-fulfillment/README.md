@@ -1,5 +1,7 @@
 # Auto-archive orders after fulfillment
 
+Tags: Archive, Fulfillment, Orders
+
 Just as it says. :) Archives orders immediately upon fulfillment, or after a configurable number of days.
 
 * View in the task library: [usemechanic.com/task/auto-archive-orders-after-fulfillment](https://usemechanic.com/task/auto-archive-orders-after-fulfillment)

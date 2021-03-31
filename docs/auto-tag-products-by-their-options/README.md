@@ -1,5 +1,7 @@
 # Auto-tag products by their options
 
+Tags: Auto-Tag, Products
+
 Use this task to add tags to your products, based on their options, for easy filtering. A shirt might be tagged with "Color-Blue" and "Size-XL", for example. Optionally, choose to ignore options that only appear on out-of-stock variants, or choose to apply all tags in lowercase.
 
 * View in the task library: [usemechanic.com/task/auto-tag-products-by-their-options](https://usemechanic.com/task/auto-tag-products-by-their-options)

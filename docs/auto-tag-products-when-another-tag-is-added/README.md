@@ -1,5 +1,7 @@
 # Auto-tag products when another tag is added
 
+Tags: Auto-Tag, Products, Tag, Watch
+
 Does exactly as it says. :)
 
 * View in the task library: [usemechanic.com/task/auto-tag-products-when-another-tag-is-added](https://usemechanic.com/task/auto-tag-products-when-another-tag-is-added)

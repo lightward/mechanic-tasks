@@ -1,5 +1,7 @@
 # Auto-tag products by age
 
+Tags: Age, Auto-Tag, Products
+
 This task scans every product in your store, and adds or removes the tags you configure, according to how many days have passed since the product was created. (Or published, if you prefer!)
 
 * View in the task library: [usemechanic.com/task/auto-tag-new-products-by-age](https://usemechanic.com/task/auto-tag-new-products-by-age)
@@ -10,20 +12,15 @@ This task scans every product in your store, and adds or removes the tags you co
 
 ```json
 {
-  "use_product_publish_times_instead_of_creation_times__boolean": true,
-  "product_tags_and_maximum_age_in_days__keyval_number_required": {
-    "new-1": "1",
-    "new-5": "5",
-    "new-9999": "9999"
-  },
-  "run_daily__boolean": null,
-  "run_hourly__boolean": null,
-  "match_product_tags_by_minimum_age__boolean": false,
   "product_tags_and_age_threshold_in_days__keyval_number_required": {
     "new-this-week": "7",
     "new-this-month": "30"
   },
-  "match_product_tags_by_maximum_age__boolean": true
+  "match_product_tags_by_minimum_age__boolean": false,
+  "match_product_tags_by_maximum_age__boolean": true,
+  "use_product_publish_times_instead_of_creation_times__boolean": true,
+  "run_daily__boolean": null,
+  "run_hourly__boolean": null
 }
 ```
 
@@ -35,6 +32,7 @@ This task scans every product in your store, and adds or removes the tags you co
 mechanic/user/trigger
 {% if options.run_daily__boolean %}mechanic/scheduler/daily{% endif %}
 {% if options.run_hourly__boolean %}mechanic/scheduler/hourly{% endif %}
+mechanic/shopify/bulk_operation
 ```
 
 [Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)

@@ -1,5 +1,7 @@
 # Auto-tag orders by shipping address country
 
+Tags: Auto-Tag, Orders, Shipping
+
 This task automatically adds the tag of your choice to incoming orders, based on the country in the order's shipping address.
 
 * View in the task library: [usemechanic.com/task/auto-tag-orders-by-shipping-address-country](https://usemechanic.com/task/auto-tag-orders-by-shipping-address-country)

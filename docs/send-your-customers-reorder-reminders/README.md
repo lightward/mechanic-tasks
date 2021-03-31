@@ -1,5 +1,7 @@
 # Send your customers reorder reminders
 
+Tags: Customers, Email, Loyalty, Reminder
+
 Useful for customers who need recurring reminders to reorder. Optionally filtering by a customer tag, this task monitors the most recent order for each customer, and sends them reminders every x days since that order.
 
 * View in the task library: [usemechanic.com/task/send-your-customers-reorder-reminders](https://usemechanic.com/task/send-your-customers-reorder-reminders)

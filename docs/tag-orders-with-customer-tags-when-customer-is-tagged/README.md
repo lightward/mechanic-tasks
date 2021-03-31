@@ -1,5 +1,7 @@
 # Auto-tag orders with customer tags when new customer tags are added
 
+Tags: Auto-Tag, Customers, Orders
+
 Activating this task will automatically keep the order tags up to date with the customer's tags.
 
 * View in the task library: [usemechanic.com/task/tag-orders-with-customer-tags-when-customer-is-tagged](https://usemechanic.com/task/tag-orders-with-customer-tags-when-customer-is-tagged)

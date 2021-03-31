@@ -1,5 +1,7 @@
 # Auto-cancel orders with too many of a certain SKU
 
+Tags: Cancel, Orders, SKU
+
 Useful for enforcing order limits on the backend, use this task to ensure that too many of a certain product cannot be purchased. This task can be configured with multiple SKUs, too!
 
 * View in the task library: [usemechanic.com/task/auto-cancel-orders-with-too-many-of-a-certain-sku](https://usemechanic.com/task/auto-cancel-orders-with-too-many-of-a-certain-sku)

@@ -1,5 +1,7 @@
 # Auto-tag new orders
 
+Tags: Auto-Tag, Orders
+
 Immediately upon order creation, add one or more tags to the order. Simple as that. :)
 
 * View in the task library: [usemechanic.com/task/auto-tag-new-orders](https://usemechanic.com/task/auto-tag-new-orders)

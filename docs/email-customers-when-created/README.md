@@ -1,5 +1,7 @@
 # Email customers when created
 
+Tags: Customers, Email
+
 Use this task to send a quick welcome email to customers, when they sign up or are otherwise created in your shop. Optionally, filter by customer tag to only send welcome emails to certain customers.
 
 * View in the task library: [usemechanic.com/task/email-customers-when-created](https://usemechanic.com/task/email-customers-when-created)

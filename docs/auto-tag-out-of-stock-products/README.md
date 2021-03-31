@@ -1,5 +1,7 @@
 # Auto-tag out-of-stock products
 
+Tags: Auto-Tag, Inventory, Out of Stock, Products
+
 Does what it says on the tin. :) Optionally, emails you an alert when a product goes out of stock.
 
 * View in the task library: [usemechanic.com/task/auto-tag-out-of-stock-products](https://usemechanic.com/task/auto-tag-out-of-stock-products)

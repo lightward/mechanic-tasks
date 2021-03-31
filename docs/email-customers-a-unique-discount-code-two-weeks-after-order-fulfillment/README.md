@@ -1,5 +1,7 @@
 # Email customers a unique discount code, two weeks after order fulfillment
 
+Tags: Customers, Discounts, Schedule
+
 This task generates a brand new discount code (copying configuration from another code, of your choice), and emails it to the customer, after waiting a configurable number of days after order fulfillment.
 
 * View in the task library: [usemechanic.com/task/email-customers-a-unique-discount-code-two-weeks-after-order-fulfillment](https://usemechanic.com/task/email-customers-a-unique-discount-code-two-weeks-after-order-fulfillment)

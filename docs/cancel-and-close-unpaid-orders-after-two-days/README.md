@@ -1,5 +1,7 @@
 # Cancel and close unpaid orders after x hours/days
 
+Tags: Cancel, Orders, Unpaid
+
 Clear the clutter in your orders list, automatically! On a scheduled basis or on-demand, this task scans for orders that are more than x days or hours old, and cancels and closes/archives the order if its financial status is still marked "pending".
 
 * View in the task library: [usemechanic.com/task/cancel-and-close-unpaid-orders-after-two-days](https://usemechanic.com/task/cancel-and-close-unpaid-orders-after-two-days)

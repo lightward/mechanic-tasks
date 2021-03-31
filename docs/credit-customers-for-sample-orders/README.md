@@ -1,5 +1,7 @@
 # Credit customers for sample orders
 
+Tags: Customers, Orders
+
 Offer free samples to your customers at a nominal fee, and offer them that value back as a discount on a future order. This task generates a discount code, good for the amount of the sample order, and emails it to the customer.
 
 * View in the task library: [usemechanic.com/task/credit-customers-for-sample-orders](https://usemechanic.com/task/credit-customers-for-sample-orders)

@@ -1,5 +1,7 @@
 # Auto-tag new customers with the current date
 
+Tags: Auto-Tag, Customers
+
 Use this task to tag incoming customers with the current date/time, using the format of your choice, and optionally a prefix and suffix. If you like, enable "Wait until the customer is enabled" to apply the tag when the customer's online account is activated, rather than when the customer is first created.
 
 * View in the task library: [usemechanic.com/task/auto-tag-customers-with-the-current-date](https://usemechanic.com/task/auto-tag-customers-with-the-current-date)

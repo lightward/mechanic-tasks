@@ -1,5 +1,7 @@
 # Create a draft order from the cart
 
+Tags: Cart, Draft Orders
+
 Use this task as a starting point, for allowing visitors to submit their carts to be transformed into draft orders, associated with their customer account. Installing and customizing this task requires some level of comfort with Liquid, HTML, and JavaScript.
 
 * View in the task library: [usemechanic.com/task/create-a-draft-order-from-the-cart](https://usemechanic.com/task/create-a-draft-order-from-the-cart)

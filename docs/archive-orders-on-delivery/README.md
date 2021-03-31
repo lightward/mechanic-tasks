@@ -1,5 +1,7 @@
 # Archive orders on delivery
 
+Tags: Archive, Delivery, Orders
+
 Don't keep your customers waiting! Stay on top of orders that have yet to be delivered, by auto-archiving every order once every item has reached the customer.
 
 * View in the task library: [usemechanic.com/task/archive-orders-on-delivery](https://usemechanic.com/task/archive-orders-on-delivery)

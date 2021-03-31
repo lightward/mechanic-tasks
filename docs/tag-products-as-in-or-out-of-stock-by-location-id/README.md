@@ -1,5 +1,7 @@
 # Tag products as in- or out-of-stock, by location ID
 
+Tags: Auto-Tag, In stock, Location, Multi-Location, Out of Stock
+
 Use this task to easily keep an eye on which products are in stock, or out of stock, as established by individual locations. Configure tag prefixes and suffixes to arrive at product tags resembling "location-123456890-instock" or "oos-123456890". Configure this task to run hourly or daily, to keep these tags in sync.
 
 * View in the task library: [usemechanic.com/task/tag-products-as-in-or-out-of-stock-by-location-id](https://usemechanic.com/task/tag-products-as-in-or-out-of-stock-by-location-id)

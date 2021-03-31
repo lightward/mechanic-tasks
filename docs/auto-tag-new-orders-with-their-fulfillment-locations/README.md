@@ -1,5 +1,7 @@
 # Auto-tag new orders with their fulfillment locations
 
+Tags: Auto-Tag, Fulfillment, Location, Orders
+
 Monitoring for brand-new orders, this task tags each order with the fulfillment locations that Shopify automatically assigns at the moment of order creation. (Note: It's not currently possible to adjust tags when assigned fulfillment locations change.)
 
 * View in the task library: [usemechanic.com/task/auto-tag-new-orders-with-their-fulfillment-locations](https://usemechanic.com/task/auto-tag-new-orders-with-their-fulfillment-locations)

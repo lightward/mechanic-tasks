@@ -1,5 +1,7 @@
 # Auto-tag products that are missing costs
 
+Tags: Auto-Tag, Costs, Products
+
 Use this task to help you close in on the last few products that are missing cost values. Trigger this task manually to process your entire catalog, or let this task update tags as needed for products you create or update.
 
 * View in the task library: [usemechanic.com/task/auto-tag-products-that-are-missing-costs](https://usemechanic.com/task/auto-tag-products-that-are-missing-costs)

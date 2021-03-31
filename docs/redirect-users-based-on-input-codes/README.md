@@ -1,5 +1,7 @@
 # Redirect users based on input codes
 
+Tags: Redirects
+
 Use this task to prompt your users for a code, redirecting them to an appropriate destination based on what they enter. Some assembly required, with sample Javascript and HTML provided. :)
 
 * View in the task library: [usemechanic.com/task/redirect-users-based-on-input-codes](https://usemechanic.com/task/redirect-users-based-on-input-codes)

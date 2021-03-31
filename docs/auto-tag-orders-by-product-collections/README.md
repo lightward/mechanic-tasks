@@ -1,5 +1,7 @@
 # Auto-tag orders by product collections
 
+Tags: Auto-Tag, Collections, Orders, Products
+
 Use this task to automatically tag orders based on what collection(s) the customer has ordered from. Useful for broadly classifying orders according to their contents.
 
 * View in the task library: [usemechanic.com/task/auto-tag-orders-by-product-collections](https://usemechanic.com/task/auto-tag-orders-by-product-collections)

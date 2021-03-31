@@ -1,5 +1,7 @@
 # Schedule customer auto-tagging after a purchase
 
+Tags: Auto-Tag, Customers, Orders, Schedule
+
 Selling scheduled events? Using this task, you can automatically tag customers after the event has been completed. Simply tag a product with "autotag Authorized May 15", for example, and Mechanic will tag purchasers of that product with "Authorized", on May 15th.
 
 * View in the task library: [usemechanic.com/task/schedule-customer-auto-tagging-after-a-purchase](https://usemechanic.com/task/schedule-customer-auto-tagging-after-a-purchase)

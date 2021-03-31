@@ -1,5 +1,7 @@
 # Send email when an order is tagged
 
+Tags: Email, Orders, Tag, Watch
+
 Use this task to monitor order tags, and notify staff, vendors, or any other interested parties when an order receives a certain tag. Useful for keeping teams across your business up to date as an order progresses.
 
 * View in the task library: [usemechanic.com/task/send-email-when-an-order-is-tagged](https://usemechanic.com/task/send-email-when-an-order-is-tagged)

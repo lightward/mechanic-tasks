@@ -1,5 +1,7 @@
 # Set a default tracking number for new fulfillments
 
+Tags: Fulfillment, Shipping, Tracking
+
 This task is here to illustrate managing tracking numbers. If a default tracking number is right for your orders, you can use this task to make sure that one is added the instant a fulfillment is created.
 
 * View in the task library: [usemechanic.com/task/set-a-default-tracking-number-for-new-fulfillments](https://usemechanic.com/task/set-a-default-tracking-number-for-new-fulfillments)

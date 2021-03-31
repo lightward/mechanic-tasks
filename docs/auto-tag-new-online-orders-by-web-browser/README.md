@@ -1,5 +1,7 @@
 # Auto-tag new online orders by web browser
 
+Tags: Auto-Tag, Order Attributes, Web Browser
+
 This task monitors incoming orders, and tags them with information about the customer's web browser.
 
 * View in the task library: [usemechanic.com/task/auto-tag-new-online-orders-by-web-browser](https://usemechanic.com/task/auto-tag-new-online-orders-by-web-browser)

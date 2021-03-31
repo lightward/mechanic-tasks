@@ -1,5 +1,7 @@
 # Delete draft orders
 
+Tags: Delete, Draft Orders
+
 Use this task to clear out your draft orders, on demand. Filter by draft order status (open, invoice sent, closed), or by draft order tags.
 
 * View in the task library: [usemechanic.com/task/delete-draft-orders](https://usemechanic.com/task/delete-draft-orders)

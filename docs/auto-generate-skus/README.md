@@ -1,5 +1,7 @@
 # Auto-generate SKUs
 
+Tags: SKU
+
 Save time by letting this task keep your variant SKUs up to date, generating them based on your product handle, and the initials of each variant option. Optionally, choose to have the task skip updating variants that already have SKUs. Useful for large catalogs, or for anyone who has a consistent SKU format.
 
 * View in the task library: [usemechanic.com/task/auto-generate-skus](https://usemechanic.com/task/auto-generate-skus)

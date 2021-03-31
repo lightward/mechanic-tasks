@@ -1,5 +1,7 @@
 # Auto-tag new orders that have tips
 
+Tags: (not tagged!)
+
 This task watches for newly-paid orders, and tags any that include a customer tip, using the tag of your choice. :)
 
 * View in the task library: [usemechanic.com/task/auto-tag-orders-that-have-tips](https://usemechanic.com/task/auto-tag-orders-that-have-tips)

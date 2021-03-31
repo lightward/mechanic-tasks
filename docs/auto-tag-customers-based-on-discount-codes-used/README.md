@@ -1,5 +1,7 @@
 # Auto-tag customers based on discount codes used
 
+Tags: Auto-Tag, Customers, Discounts
+
 Use this task to easily identify customers who used certain discount codes. This task runs automatically on incoming orders, and can be run manually to tag customers based on historical orders. Optionally, choose to remove tags, instead of adding them.
 
 * View in the task library: [usemechanic.com/task/auto-tag-customers-based-on-discount-codes-used](https://usemechanic.com/task/auto-tag-customers-based-on-discount-codes-used)

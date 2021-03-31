@@ -1,5 +1,7 @@
 # Demonstration: Web fonts in PDFs
 
+Tags: Demonstration, PDF
+
 This task illustrates how to use a typeface from Google Fonts, embedding it in a generated PDF which is then emailed to the recipient of your choice.
 
 * View in the task library: [usemechanic.com/task/demonstration-web-fonts-in-pdfs](https://usemechanic.com/task/demonstration-web-fonts-in-pdfs)

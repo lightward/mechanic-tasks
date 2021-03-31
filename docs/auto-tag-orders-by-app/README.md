@@ -1,5 +1,7 @@
 # Auto-tag orders by app
 
+Tags: Auto-Tag, Orders
+
 Some apps are responsible for placing orders. Use this task to tag orders, both incoming and historical, based on which app was responsible for placing them.
 
 * View in the task library: [usemechanic.com/task/auto-tag-orders-by-app](https://usemechanic.com/task/auto-tag-orders-by-app)

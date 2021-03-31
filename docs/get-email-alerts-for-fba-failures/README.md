@@ -1,5 +1,7 @@
 # Get email alerts for FBA failures
 
+Tags: Alert, Email, Fulfillment
+
 Using Fulfillment By Amazon for your business? Stay on top of your customer experience by getting notified whenever FBA is unable to fulfill your order.
 
 * View in the task library: [usemechanic.com/task/get-email-alerts-for-fba-failures](https://usemechanic.com/task/get-email-alerts-for-fba-failures)

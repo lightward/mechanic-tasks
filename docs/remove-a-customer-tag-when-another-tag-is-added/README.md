@@ -1,5 +1,7 @@
 # Remove a customer tag when another tag is added
 
+Tags: Customers, Untag, Watch
+
 Does exactly as it says. :)
 
 * View in the task library: [usemechanic.com/task/remove-a-customer-tag-when-another-tag-is-added](https://usemechanic.com/task/remove-a-customer-tag-when-another-tag-is-added)

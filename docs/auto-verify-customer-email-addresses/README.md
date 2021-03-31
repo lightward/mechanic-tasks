@@ -1,5 +1,7 @@
 # Auto-verify customer email addresses
 
+Tags: Account, Customers, Email
+
 Use this task to perform an extra verification step for your newly-created customers, in which a verification code is emailed to them, along with a link to a form on your online storefront where they can enter the code for verification. Once verified, the customer will be tagged, and sent a confirmation email.
 
 * View in the task library: [usemechanic.com/task/auto-verify-customer-email-addresses](https://usemechanic.com/task/auto-verify-customer-email-addresses)

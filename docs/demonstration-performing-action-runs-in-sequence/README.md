@@ -1,5 +1,7 @@
 # Demonstration: Performing action runs in sequence
 
+Tags: Demonstration
+
 This task demonstrates Mechanic's opt-in ability to perform a task's generated actions in a sequence, rather than in parallel. To try this task, enable the "Perform action runs in sequence" option, in the task's advanced settings.
 
 * View in the task library: [usemechanic.com/task/demonstration-performing-action-runs-in-sequence](https://usemechanic.com/task/demonstration-performing-action-runs-in-sequence)

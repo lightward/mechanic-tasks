@@ -1,5 +1,7 @@
 # Send an email alert when an incoming Canadian order has an unsupported FSA
 
+Tags: Alert, Delivery, Email, Shipping
+
 Useful for Canadian stores with limited shipping zones, this task inspects [the FSA (the first three characters of the postal code)](https://en.wikipedia.org/wiki/Postal_codes_in_Canada#Forward_sortation_areas) for each order's shipping address. If an FSA is found that's not on a preconfigured list, this task sends an email to the recipients of your choice.
 
 * View in the task library: [usemechanic.com/task/send-an-email-alert-when-an-incoming-canadian-order-has-an-unsupported-fsa](https://usemechanic.com/task/send-an-email-alert-when-an-incoming-canadian-order-has-an-unsupported-fsa)

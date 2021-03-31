@@ -1,5 +1,7 @@
 # Partially auto-capture payments as orders are fulfilled
 
+Tags: Fulfillment, Orders, Payment
+
 Running when an order is updated, this task captures payment in proportion to the order value that has been fulfilled. For example, for an order with a subtotal of $10 and a total of $15 with shipping/taxes/discounts, this task will capture $7.50 when $5 of the order's value has been fulfilled.
 
 * View in the task library: [usemechanic.com/task/partially-auto-capture-payments-as-orders-are-fulfilled](https://usemechanic.com/task/partially-auto-capture-payments-as-orders-are-fulfilled)

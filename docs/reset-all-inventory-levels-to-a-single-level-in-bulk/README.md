@@ -1,5 +1,7 @@
 # Reset all inventory levels to a single level, in bulk
 
+Tags: Inventory
+
 A utility task, this one is useful for those one-off moments when your inventory needs a clean slate. Run this task manually to reset all of your inventory, across your entire store and for all locations, to the single level of your choice. No exceptions, no filters.
 
 * View in the task library: [usemechanic.com/task/reset-all-inventory-levels-to-a-single-level-in-bulk](https://usemechanic.com/task/reset-all-inventory-levels-to-a-single-level-in-bulk)

@@ -1,5 +1,7 @@
 # Receive email alerts when inventory levels change
 
+Tags: Alert, Email, Inventory
+
 Use this task to receive immediate email notifications whenever inventory/stock levels are adjusted, whether manually or as a result of a transfer or customer order.
 
 * View in the task library: [usemechanic.com/task/receive-email-alerts-when-inventory-levels-change](https://usemechanic.com/task/receive-email-alerts-when-inventory-levels-change)

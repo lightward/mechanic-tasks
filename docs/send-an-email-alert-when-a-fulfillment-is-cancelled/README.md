@@ -1,5 +1,7 @@
 # Send an email alert when a fulfillment is cancelled
 
+Tags: Alert, Email, Fulfillment
+
 Useful for keeping an eye on unexpected cancellations by third party shipping services.
 
 * View in the task library: [usemechanic.com/task/send-an-email-alert-when-a-fulfillment-is-cancelled](https://usemechanic.com/task/send-an-email-alert-when-a-fulfillment-is-cancelled)

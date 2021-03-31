@@ -1,5 +1,7 @@
 # Send a welcome email to new customers, in their language
 
+Tags: Customers, Email, Localization, Retention
+
 This task demonstrates how to send emails that respect the customer's language preference, by matching their locale to a pre-written email translation.
 
 * View in the task library: [usemechanic.com/task/send-a-welcome-email-to-new-customers-in-their-language](https://usemechanic.com/task/send-a-welcome-email-to-new-customers-in-their-language)

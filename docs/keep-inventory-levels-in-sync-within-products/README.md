@@ -1,5 +1,7 @@
 # Keep inventory levels in sync within products
 
+Tags: Inventory, Products, Sync
+
 Useful for selling, say, a limited print with different framing options, this task makes sure that a product's inventory levels, for each variant and location, are all kept in sync.
 
 * View in the task library: [usemechanic.com/task/keep-inventory-levels-in-sync-within-products](https://usemechanic.com/task/keep-inventory-levels-in-sync-within-products)

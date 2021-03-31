@@ -1,5 +1,7 @@
 # Auto-tag new orders by staff member
 
+Tags: Auto-Tag, Orders, Staff
+
 Use this task to easily keep track of who's responsible for which orders. Works for draft orders, too!
 
 * View in the task library: [usemechanic.com/task/auto-tag-new-orders-by-staff-member](https://usemechanic.com/task/auto-tag-new-orders-by-staff-member)

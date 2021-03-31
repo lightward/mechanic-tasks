@@ -1,5 +1,7 @@
 # Auto-tag orders that contain a matching product
 
+Tags: Auto-Tag, Orders, Products
+
 This task watches for incoming orders, and tags them if they contain a product that matches by title or by product tags. Additionally, edited orders will have tags added or removed in line with product additions or removals. Run this task manually to scan your store's order history, tagging older orders that qualify, and untagging those that have been edited and no longer do.
 
 * View in the task library: [usemechanic.com/task/auto-tag-orders-that-contain-a-matching-product](https://usemechanic.com/task/auto-tag-orders-that-contain-a-matching-product)

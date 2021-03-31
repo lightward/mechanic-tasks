@@ -1,5 +1,7 @@
 # Delete cancelled orders after 48 hours
 
+Tags: Delete, Orders
+
 When an order is cancelled, this task waits 48 hours, and then permanently deletes the order. Simple as that! (Please note: if you only want to archive the cancelled order, not delete it, try a different task!)
 
 * View in the task library: [usemechanic.com/task/delete-cancelled-orders-after-48-hours](https://usemechanic.com/task/delete-cancelled-orders-after-48-hours)

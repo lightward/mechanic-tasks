@@ -1,5 +1,7 @@
 # Manage collection templates by product inventory
 
+Tags: Collections, Inventory
+
 Use this task to automatically switch collections over to an appropriate theme template, when every product in the collection has gone completely out of stock, and to switch them back when inventory arrives.
 
 * View in the task library: [usemechanic.com/task/manage-collection-templates-by-product-inventory](https://usemechanic.com/task/manage-collection-templates-by-product-inventory)

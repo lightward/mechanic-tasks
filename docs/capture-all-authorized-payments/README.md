@@ -1,5 +1,7 @@
 # Capture all authorized payments
 
+Tags: Payment
+
 This task will scan for all orders that have a financial status of "authorized", and will capture payment for them. This task can be scheduled to run daily, and can be run on demand.
 
 * View in the task library: [usemechanic.com/task/capture-all-authorized-payments](https://usemechanic.com/task/capture-all-authorized-payments)

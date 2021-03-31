@@ -1,5 +1,7 @@
 # Maintain a collection of recently purchased products
 
+Tags: Collections, Products
+
 This task watches for newly-paid orders (or newly-fulfilled orders, if you choose), and adds or moves the purchased products to the top of the collection of your choice. Optionally, ignore products that are sold out. Useful for "trending products" functionality. :)
 
 * View in the task library: [usemechanic.com/task/maintain-a-collection-of-recently-purchased-products](https://usemechanic.com/task/maintain-a-collection-of-recently-purchased-products)

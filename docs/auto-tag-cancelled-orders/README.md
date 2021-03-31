@@ -1,5 +1,7 @@
 # Auto-tag cancelled orders
 
+Tags: Auto-Tag, Cancel, Orders
+
 This task watches for order cancellations, and adds or removes tags according to your preference. Run this task manually to update tags for existing cancelled orders.
 
 * View in the task library: [usemechanic.com/task/auto-tag-cancelled-orders](https://usemechanic.com/task/auto-tag-cancelled-orders)

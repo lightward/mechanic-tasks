@@ -1,0 +1,72 @@
+{% comment %}
+  Preferred option order:
+
+  {{ options.emails_to_notify__array_required }}
+  {{ options.general_email_subject__required }}
+  {{ options.append_event_topic_to_email_subject__boolean }}
+  {{ options.event_topics_and_email_bodies__keyval_multiline_required }}
+{% endcomment %}
+
+{% assign email_recipients = options.emails_to_notify__array_required %}
+
+{% for keyval in options.event_topics_and_email_bodies__keyval_multiline_required %}
+  {% assign configured_event_topic = keyval.first %}
+
+  {% if event.topic == configured_event_topic %}
+    {% assign email_subject = options.general_email_subject__required %}
+    {% assign email_body = keyval.last %}
+
+    {% if options.append_event_topic_to_email_subject__boolean %}
+      {% assign email_subject = email_subject | append: " [" | append: configured_event_topic | append: "]" %}
+    {% endif %}
+
+    {% capture admin_link %}https://{{ shop.myshopify_domain }}/admin/{% endcapture %}
+
+    {% assign object_link = nil %}
+
+    {% if event.topic contains "shopify/collections/" %}
+      {% capture object_link %}collections/{{ collection.id | default: 1234567890 }}{% endcapture %}
+
+    {% elsif event.topic contains "shopify/customers/" %}
+      {% capture object_link %}customers/{{ customer.id | default: 1234567890 }}{% endcapture %}
+
+    {% elsif event.topic contains "shopify/draft_orders/" %}
+      {% capture object_link %}draft_orders/{{ draft_order.id | default: 1234567890 }}{% endcapture %}
+
+    {% elsif event.topic contains "shopify/fulfillment_events/" %}
+      {% capture object_link %}orders/{{ fulfillment_event.order.id | default: 1234567890 }}{% endcapture %}
+
+    {% elsif event.topic contains "shopify/fulfillments/" %}
+      {% capture object_link %}orders/{{ fulfillment.order.id | default: 1234567890 }}{% endcapture %}
+
+    {% elsif event.topic contains "shopify/orders/" %}
+      {% capture object_link %}orders/{{ order.id | default: order_edit.order.id | default: 1234567890 }}{% endcapture %}
+
+    {% elsif event.topic contains "shopify/products/" %}
+      {% capture object_link %}products/{{ product.id | default: 1234567890 }}{% endcapture %}
+
+    {% elsif event.topic contains "shopify/refunds/" %}
+      {% capture object_link %}orders/{{ refund.order.id | default: 1234567890 }}{% endcapture %}
+
+    {% elsif event.topic contains "shopify/themes/" %}
+      {% capture object_link %}themes/{{ theme.id | default: 1234567890 }}{% endcapture %}
+    {% endif%}
+
+    {% if object_link != blank %}
+      {% assign object_link = admin_link | append: object_link %}
+    {% else %}
+      {% assign object_link = "[<small>Object link could not be generated</small>]" %}
+    {% endif %}
+
+    {% assign email_body = email_body | replace: "OBJECT_LINK", object_link %}
+
+    {% action "email" %}
+      {
+        "to": {{ email_recipients | join: ", " | json }},
+        "subject": {{ email_subject | json }},
+        "body": {{ email_body | unindent | newline_to_br | json }},
+        "from_display_name": {{ shop.name | json }}
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}

@@ -1,5 +1,7 @@
 # Sync inventory across a product type
 
+Tags: Inventory, Products, Sync
+
 Useful for custom orders, this task lets you offer multiple product and variant listings for what is ultimately the same stock. A purchase for a single product leads to the inventory for all other listings, of the same product type, being lowered by the amount ordered.
 
 * View in the task library: [usemechanic.com/task/sync-inventory-across-a-product-type](https://usemechanic.com/task/sync-inventory-across-a-product-type)

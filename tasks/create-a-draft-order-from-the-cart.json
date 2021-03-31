@@ -12,5 +12,9 @@
   "halt_action_run_sequence_on_error": false,
   "online_store_javascript": "const mechanicCartSubmit = document.querySelector('#mechanic_cart_submit');\n\nif (mechanicCartSubmit) {\n  mechanicCartSubmit.addEventListener('click', (event) => {\n    fetch({{ options.mechanic_webhook_url__required | json }}, {\n      method: 'POST',\n      headers: {\n        'Content-Type': 'application/json'\n      },\n      body: JSON.stringify({\n        cart: JSON.parse(event.target.dataset.cart),\n        customerId: JSON.parse(event.target.dataset.customerId),\n        customerIdSignature: JSON.parse(event.target.dataset.customerIdSignature),\n      }),\n    }).then(data => {\n      console.log('Sending cart data to Mechanic: Success!', data);\n    })\n    .catch((error) => {\n      console.error('Sending cart data to Mechanic: Error!', error);\n    });\n  });\n}",
   "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false
+  "perform_action_runs_in_sequence": false,
+  "tags": [
+    "Cart",
+    "Draft Orders"
+  ]
 }

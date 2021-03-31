@@ -1,5 +1,7 @@
 # Auto-tag orders based on shipping method
 
+Tags: Auto-Tag, Orders, Shipping
+
 Quickly identify and sort orders based on their shipping method, using automatic order tags. This task supports auto-tagging incoming orders, and can be run manually to tag historical orders.
 
 * View in the task library: [usemechanic.com/task/auto-tag-orders-based-on-shipping-method](https://usemechanic.com/task/auto-tag-orders-based-on-shipping-method)

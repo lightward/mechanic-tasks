@@ -1,5 +1,7 @@
 # Send an email alert when a variant hits 0 total inventory
 
+Tags: Alert, Email, Inventory, Out of Stock, Products
+
 Use this task to receive an immediate email alert, whenever a variant's total inventory hits 0, when added up across all locations.
 
 * View in the task library: [usemechanic.com/task/send-an-email-alert-when-a-variant-hits-0-total-inventory](https://usemechanic.com/task/send-an-email-alert-when-a-variant-hits-0-total-inventory)

@@ -1,5 +1,7 @@
 # Receive a nightly out-of-stock report
 
+Tags: Email, Inventory, Low Stock, Report, Schedule
+
 Based on an out-of-stock threshold you define, this task sends you an email summary (with CSV attachment) of all variants that are out of stock in any location. Run this task manually to receive the report on demand.
 
 * View in the task library: [usemechanic.com/task/receive-a-nightly-out-of-stock-report](https://usemechanic.com/task/receive-a-nightly-out-of-stock-report)

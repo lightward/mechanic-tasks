@@ -1,0 +1,28 @@
+{% assign rows = array %}
+
+{% assign header = array %}
+{% assign header[0] = "Name" %}
+{% assign header[1] = "Email" %}
+{% assign header[2] = "Phone Number" %}
+{% assign header[3] = "Message" %}
+{% assign rows[rows.size] = header %}
+
+{% assign row = array %}
+{% assign row[0] = event.data.contact.Name %}
+{% assign row[1] = event.data.contact.Email %}
+{% assign row[2] = event.data.contact["Phone Number"] %}
+{% assign row[3] = event.data.contact.Message %}
+{% assign rows[rows.size] = row %}
+
+{% assign csv_data = rows | csv %}
+
+{% action "email" %}
+  {
+    "to": {{ options.recipient_email_address__email_required | json }},
+    "subject": {{ options.email_subject__required | json }},
+    "body": {{ options.email_body__required_multiline | strip | newline_to_br | json }},
+    "attachments": {
+       {{ options.csv_attachment_filename__required | replace: ".csv", "" | append: ".csv" | json }}: {{ rows | csv | json }}
+     }
+   }
+{% endaction %}

@@ -1,0 +1,25 @@
+{
+  "name": "Demonstration: Write to a customer metafield",
+  "options": {
+    "customer_id__number_required": "",
+    "metafield_namespace__required": "foo",
+    "metafield_key__required": "bar",
+    "metafield_value__required": "baz",
+    "use_rest_api__boolean": false,
+    "use_graphql_api__boolean": false
+  },
+  "subscriptions": [
+    "mechanic/user/trigger"
+  ],
+  "subscriptions_template": "mechanic/user/trigger",
+  "script": "{% assign customer_id = options.customer_id__number_required %}\n{% assign metafield_namespace = options.metafield_namespace__required %}\n{% assign metafield_key = options.metafield_key__required %}\n{% assign metafield_value = options.metafield_value__required %}\n\n{% assign customer = shop.customers[customer_id] %}\n{% assign existing_metafield = customer.metafields | where: \"namespace\", metafield_namespace | where: \"key\", metafield_key | first %}\n\n{% if options.use_rest_api__boolean %}\n  {% action \"shopify\" %}\n    [\n      \"update\",\n      [\n        \"customer\",\n        {{ customer_id | json }}\n      ],\n      {\n        \"metafields\": [\n          {\n            \"id\": {{ existing_metafield.id | json }},\n            \"namespace\": {{ metafield_namespace | json }},\n            \"key\": {{ metafield_key | json }},\n            \"value\": {{ metafield_value | json }},\n            \"value_type\": \"string\"\n          }\n        ]\n      }\n    ]\n  {% endaction %}\n{% elsif options.use_graphql_api__boolean %}\n  {% action \"shopify\" %}\n    mutation {\n      customerUpdate(\n        input: {\n          id: {{ customer.admin_graphql_api_id | json }}\n          metafields: [\n            {\n              id: {{ existing_metafield.admin_graphql_api_id | json }}\n              namespace: {{ metafield_namespace | json }}\n              key: {{ metafield_key | json }}\n              value: {{ metafield_value | json }}\n              valueType: STRING\n            }\n          ]\n        }\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% else %}\n  {% error \"Choose at least one API option to continue. :)\" %}\n{% endif %}",
+  "docs": "This task demonstrates how to write to a Shopify metafield, belonging to a specific resource - in this case, a customer.\n\nThis example covers:\n\n* Retrieving an existing metafield, if any, having the desired namespace and key\n* Re-use the existing metafield's ID to perform a metafield update, if applicable, and resulting in a newly-created metafield otherwise\n\nTo use this task, provide the numeric ID of a customer in your store. ([Need help finding the customer ID?](https://learn.mechanic.dev/techniques/finding-a-resource-id)) Then, add in the desired metafield namespace and key (which will uniquely identify the metafield), and the metafield value (which will be stored within the metafield). Finally, choose between REST and GraphQL for performing the Shopify API operation, noting how the [task preview](https://learn.mechanic.dev/core-concepts/tasks/previews) changes to reflect your choice.\n\nRun the task to see the metafield create/update in action.\n\nTo verify that the metafield operation succeeded, use an app like [Metafields Guru](https://apps.shopify.com/metafields-editor-2), or look up `/metafields.json` for the customer in your Shopify admin area. For example, for a customer with the ID 12345, on a store called example.myshopify.com, the following URL would show all the metafields for that customer:\n\nhttps://example.myshopify.com/admin/customers/12345/metafields.json",
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "tags": [
+    "Demonstration",
+    "Metafields"
+  ]
+}

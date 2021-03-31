@@ -1,0 +1,56 @@
+{% assign customer_id = options.customer_id__number_required %}
+{% assign metafield_namespace = options.metafield_namespace__required %}
+{% assign metafield_key = options.metafield_key__required %}
+{% assign metafield_value = options.metafield_value__required %}
+
+{% assign customer = shop.customers[customer_id] %}
+{% assign existing_metafield = customer.metafields | where: "namespace", metafield_namespace | where: "key", metafield_key | first %}
+
+{% if options.use_rest_api__boolean %}
+  {% action "shopify" %}
+    [
+      "update",
+      [
+        "customer",
+        {{ customer_id | json }}
+      ],
+      {
+        "metafields": [
+          {
+            "id": {{ existing_metafield.id | json }},
+            "namespace": {{ metafield_namespace | json }},
+            "key": {{ metafield_key | json }},
+            "value": {{ metafield_value | json }},
+            "value_type": "string"
+          }
+        ]
+      }
+    ]
+  {% endaction %}
+{% elsif options.use_graphql_api__boolean %}
+  {% action "shopify" %}
+    mutation {
+      customerUpdate(
+        input: {
+          id: {{ customer.admin_graphql_api_id | json }}
+          metafields: [
+            {
+              id: {{ existing_metafield.admin_graphql_api_id | json }}
+              namespace: {{ metafield_namespace | json }}
+              key: {{ metafield_key | json }}
+              value: {{ metafield_value | json }}
+              valueType: STRING
+            }
+          ]
+        }
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% else %}
+  {% error "Choose at least one API option to continue. :)" %}
+{% endif %}

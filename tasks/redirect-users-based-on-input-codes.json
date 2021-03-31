@@ -16,5 +16,8 @@
   "halt_action_run_sequence_on_error": false,
   "online_store_javascript": "var redirects = {{ options.redirects_and_codes__keyval_multiline | json }};\nvar codesToRedirects = {};\n\nObject.getOwnPropertyNames(redirects).forEach(function (redirect) {\n  redirects[redirect].split(\"\\n\").map(function (code) {\n    {% if options.require_case_sensitive_codes__boolean %}\n      return code.toLowerCase().trim();\n    {% else %}\n      return code.trim();\n    {% endif %}\n  }).forEach(function (code) {\n    codesToRedirects[code] = redirect;\n  });\n});\n\nwindow.attemptRedirectByCode = function (code) {\n  {% unless options.require_case_sensitive_codes__boolean %}code = code.toLowerCase();{% endunless %}\n  code = code.trim();\n  \n  if (codesToRedirects[code]) {\n    window.location.href = codesToRedirects[code];\n    return true;\n  } else {\n    alert({{ options.invalid_code_message__required | json }});\n    return false;\n  }\n};",
   "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false
+  "perform_action_runs_in_sequence": false,
+  "tags": [
+    "Redirects"
+  ]
 }

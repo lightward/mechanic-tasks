@@ -1,5 +1,7 @@
 # Raise the price of a product after every sale
 
+Tags: Price, Products
+
 This task monitors purchases for a specific product ID, and raises the price every time it's purchased, by the amount that you specify. (To be specific, this task will raise the price on the _individual variant_ that was purchased.)
 
 * View in the task library: [usemechanic.com/task/raise-the-price-of-a-product-after-every-sale](https://usemechanic.com/task/raise-the-price-of-a-product-after-every-sale)

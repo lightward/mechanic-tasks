@@ -1,5 +1,7 @@
 # Automatically send account invite to new customers
 
+Tags: Customers, Email, Invite
+
 This task keeps an eye on customers as you create or import them in Shopify, and automatically sends account invitations to any customers that have an email address.
 
 * View in the task library: [usemechanic.com/task/automatically-send-account-invite-to-new-customers](https://usemechanic.com/task/automatically-send-account-invite-to-new-customers)

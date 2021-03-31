@@ -1,5 +1,7 @@
 # Auto-tag orders with their tracking numbers
 
+Tags: Auto-Tag, Orders, Shipping, Tracking
+
 Tracking numbers aren't generally searchable within Shopify. Use this task to fix that, by copying all fulfillment tracking numbers over to the order itself, as (searchable!) order tags.
 
 * View in the task library: [usemechanic.com/task/auto-tag-orders-with-their-tracking-numbers](https://usemechanic.com/task/auto-tag-orders-with-their-tracking-numbers)

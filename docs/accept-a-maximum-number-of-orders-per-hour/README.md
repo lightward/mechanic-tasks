@@ -1,5 +1,7 @@
 # Accept a maximum number of orders per hour
 
+Tags: Max Orders, Orders
+
 This task works by monitoring the number of orders created per hour, and clearing the inventory for all in-stock items when the hourly order limit is reached. Optionally, this task can restore inventory to its original levels at minute zero of the next hour, or on demand.
 
 * View in the task library: [usemechanic.com/task/accept-a-maximum-number-of-orders-per-hour](https://usemechanic.com/task/accept-a-maximum-number-of-orders-per-hour)

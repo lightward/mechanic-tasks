@@ -1,5 +1,7 @@
 # Auto-tag customers when another tag is added
 
+Tags: Auto-Tag, Customers, Tag
+
 Does exactly as it says. :) Optionally, use combinations of tags to require, and/or combinations of tags to add.
 
 * View in the task library: [usemechanic.com/task/auto-tag-customers-when-another-tag-is-added](https://usemechanic.com/task/auto-tag-customers-when-another-tag-is-added)

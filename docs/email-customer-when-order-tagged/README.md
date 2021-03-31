@@ -1,5 +1,7 @@
 # Email customers when their order is tagged
 
+Tags: Customers, Email, Orders, Tag, Watch
+
 Improve your customer relationships without complicated your workflow - use this task to send automatic emails whenever your staff adds a certain tag to an order. (Mechanic will add another tag to your order when the email is sent, for visibility.)
 
 * View in the task library: [usemechanic.com/task/email-customer-when-order-tagged](https://usemechanic.com/task/email-customer-when-order-tagged)
