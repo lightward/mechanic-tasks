@@ -183,7 +183,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Email your customers after a quiet period of no orders](./email-your-customers-after-a-quiet-period-of-no-orders)
 * [Export a CSV of order shipping addresses](./export-a-csv-of-order-shipping-addresses)
 * [Export all products to SFTP, as a Shopify-friendly CSV](./export-all-products-to-sftp-as-a-shopify-friendly-csv)
-* [Find all Duplicate SKU's](./duplicate-sku-finder)
+* [Find all Exact Duplicate SKU's](./duplicate-sku-finder)
 * [Flag orders that aren't fulfilled after several days](./flag-orders-that-arent-fulfilled-after-two-days)
 * [Generate a discount code when a certain product is purchased](./generate-a-discount-code-when-a-certain-product-is-purchased)
 * [Generate a product discount when a voucher product is purchased](./generate-a-product-discount-when-a-voucher-product-is-purchased)
