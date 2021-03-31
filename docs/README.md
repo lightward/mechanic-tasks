@@ -136,6 +136,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Automatically publish and unpublish on a monthly cycle](./automatically-publish-and-unpublish-on-a-monthly-cycle)
 * [Automatically send account invite to new customers](./automatically-send-account-invite-to-new-customers)
 * [Backfill customer names from order addresses](./backfill-customer-names-from-order)
+* [Backup inventory to SFTP in Shopify CSV format](./backup-scheduled-inventory-exports-in-shopifys-csv-format)
 * [Bulk capture orders by order number](./bulk-capture-by-order-number)
 * [Calculate total quantities purchased by SKU](./calculate-total-quantities-purchased-by-sku)
 * [Cancel and close unpaid orders after x hours/days](./cancel-and-close-unpaid-orders-after-two-days)
