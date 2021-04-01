@@ -10,8 +10,8 @@ jobs:
     steps:
       - name: 'CLA Assistant'
         if: (github.event.comment.body == 'recheck' || github.event.comment.body == 'I have read the CLA Document and I hereby sign the CLA') || github.event_name == 'pull_request_target'
-        # Alpha Release
-        uses: cla-assistant/github-action@v2.0.2-alpha
+        # Beta Release
+        uses: cla-assistant/github-action@v2.1.2-beta
         env: 
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PERSONAL_ACCESS_TOKEN : ${{ secrets.PERSONAL_ACCESS_TOKEN }}
@@ -22,6 +22,6 @@ jobs:
           allowlist: isaacbowen
           use-dco-flag: false #'Set this to true if you want to use a dco instead of a cla'
           create-file-commit-message: 'creating file for storing CLA signatures'
-          signed-commit-message: '$contributorName has signed the CLA in $pullRequestNo'
+          signed-commit-message: '$contributorName has signed the CLA in #$pullRequestNo'
           custom-notsigned-prcomment: 'Thank you for your contribution! Please read and sign our CLA: $pathToCLADocument'
           custom-allsigned-prcomment: 'All contributors have signed the CLA.'
