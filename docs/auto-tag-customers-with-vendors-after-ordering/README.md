@@ -13,6 +13,7 @@ This task tags customers with the name of each vendor in their order, as soon as
 ```liquid
 shopify/orders/create
 mechanic/user/trigger
+mechanic/shopify/bulk_operation
 ```
 
 [Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
