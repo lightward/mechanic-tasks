@@ -14,6 +14,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Archive orders when fulfilled](./archive-orders-when-fulfilled)
 * [Archive orders when tagged](./archive-orders-when-tagged)
 * [Ask for reviews a week after order fulfillment](./ask-for-reviews-a-week-after-order-fulfillment)
+* [Auto-add an order note for customers having a certain tag](./auto-add-an-order-note-for-customers-having-a-certain-tag)
 * [Auto-add an order note for returning customers](./auto-add-an-order-note-for-returning-customers)
 * [Auto-add default custom attributes to new orders](./auto-add-default-custom-attributes-to-new-orders)
 * [Auto-add phone numbers to unfulfilled orders, when the customer is updated](./auto-add-phone-numbers-to-unfulfilled-orders-when-the-customer-is-updated)

@@ -1,0 +1,37 @@
+{% assign required_customer_tag_downcased = options.required_customer_tag__required | downcase %}
+
+{% if event.preview %}
+  {% capture order_json %}
+    {
+      "note": "An existing order note",
+      "name": "#9999",
+      "admin_graphql_api_id": "gid:\/\/shopify\/Order\/1234567890",
+      "customer": {
+        "tags": {{ options.required_customer_tag__required | json }}
+      }
+    }
+  {% endcapture %}
+
+  {% assign order = order_json | parse_json %}
+{% endif %}
+
+{% assign customer_tags_downcased = order.customer.tags | downcase | split: ", " %}
+{% if customer_tags_downcased contains required_customer_tag_downcased %}
+  {% assign note = order.note | append: newline | append: newline | append: options.order_note_to_add__required_multiline | strip %}
+
+  {% action "shopify" %}
+    mutation {
+      orderUpdate(
+        input: {
+          id: {{ order.admin_graphql_api_id | json }}
+          note: {{ note | json }}
+        }
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}
