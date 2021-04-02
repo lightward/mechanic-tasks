@@ -1,25 +1,62 @@
-{% assign customers = array %}
+{% comment %}
+Options ordering:
+  {{ options.customer_tag_to_add__required }}
+  {{ options.only_tag_confirmed_opt_ins__boolean }}
+  {{ options.tag_single_and_confirmed_opt_ins__boolean }}
+{% endcomment %}
 
-{% if event.preview %}
-  {% assign customer = hash %}
-  {% assign customer["admin_graphql_api_id"] = "gid://shopify/Customer/1234567890" %}
-  {% assign customer["accepts_marketing"] = true %}
-  {% assign customer["tags"] = "" %}
-  {% assign customers[0] = customer %}
-{% elsif event.topic contains "shopify/customers/" %}
-  {% assign customers[0] = customer %}
-{% else %}
-  {% assign customers = shop.customers %}
+{% if options.only_tag_confirmed_opt_ins__boolean and options.tag_single_and_confirmed_opt_ins__boolean %}
+  {% error "Choose either 'Only tag confirmed opt-ins' and 'Tag single and confirmed opt-ins', or neither, but not both" %}
 {% endif %}
 
-{% for customer in customers %}
+{% if event.topic contains "shopify/customers/" %}
+  {% if event.preview %}
+    {% assign customer = hash %}
+    {% assign customer["admin_graphql_api_id"] = "gid://shopify/Customer/1234567890" %}
+    {% assign customer["accepts_marketing"] = true %}
+    {% assign customer["updated_at"] = "2021-01-01T12:34:56-07:00" %}
+    {% assign customer["accepts_marketing_updated_at"] = "2021-01-01T12:34:56-07:00" %}
+    {% assign customer["marketing_opt_in_level"] = "confirmed_opt_in" %}
+    {% assign customer["tags"] = "" %}
+  {% endif %}
+
   {% assign customer_tags = customer.tags | split: ", " %}
 
-  {% if customer.accepts_marketing %}
-    {% unless customer_tags contains options.customer_tag_to_add__required %}
+  {% if customer.updated_at == customer.accepts_marketing_updated_at %}
+    {% assign qualifies_for_tag = false %}
+
+    {% if options.only_tag_confirmed_opt_ins__boolean %}
+      {% if customer.marketing_opt_in_level == "confirmed_opt_in" %}
+        {% assign qualifies_for_tag = true %}
+      {% endif %}
+    {% elsif options.tag_single_and_confirmed_opt_ins__boolean %}
+      {% if customer.marketing_opt_in_level == "confirmed_opt_in" or customer.marketing_opt_in_level == "single_opt_in" %}
+        {% assign qualifies_for_tag = true %}
+      {% endif %}
+    {% elsif customer.accepts_marketing %}
+      {% assign qualifies_for_tag = true %}
+    {% endif %}
+
+    {% if qualifies_for_tag %}
+      {% unless customer_tags contains options.customer_tag_to_add__required %}
+        {% action "shopify" %}
+          mutation {
+            tagsAdd(
+              id: {{ customer.admin_graphql_api_id | json }}
+              tags: {{ options.customer_tag_to_add__required | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+      {% endunless %}
+    {% elsif customer_tags contains options.customer_tag_to_add__required %}
       {% action "shopify" %}
         mutation {
-          tagsAdd(
+          tagsRemove(
             id: {{ customer.admin_graphql_api_id | json }}
             tags: {{ options.customer_tag_to_add__required | json }}
           ) {
@@ -30,20 +67,103 @@
           }
         }
       {% endaction %}
-    {% endunless %}
-  {% elsif customer_tags contains options.customer_tag_to_add__required %}
-    {% action "shopify" %}
-      mutation {
-        tagsRemove(
-          id: {{ customer.admin_graphql_api_id | json }}
-          tags: {{ options.customer_tag_to_add__required | json }}
-        ) {
-          userErrors {
-            field
-            message
+    {% endif %}
+
+  {% else %}
+    {% log message: "Customer update does not appear to be marketing preference related by timestamp; skipping", customer_updated_at: customer.updated_at, accepts_marketing_updated_at: customer.accepts_marketing_updated_at %}
+  {% endif %}
+
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% capture bulk_operation_query %}
+    query {
+      customers {
+        edges {
+          node {
+            id
+            tags
+            acceptsMarketing
+            marketingOptInLevel
           }
         }
       }
-    {% endaction %}
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture bulkOperation_objects_jsonl %}
+      {"id":"gid:\/\/shopify\/Customer\/1234567890","tags":[],"acceptsMarketing":true,"marketingOptInLevel":"SINGLE_OPT_IN"}
+      {"id":"gid:\/\/shopify\/Customer\/2345678901","tags":[{{ options.customer_tag_to_add__required | json }}],"acceptsMarketing":false,"marketingOptInLevel":null}
+      {"id":"gid:\/\/shopify\/Customer\/3456789012","tags":[{{ options.customer_tag_to_add__required | json }}],"acceptsMarketing":true,"marketingOptInLevel":"SINGLE_OPT_IN"}
+      {"id":"gid:\/\/shopify\/Customer\/4567890123","tags":[],"acceptsMarketing":true,"marketingOptInLevel":"CONFIRMED_OPT_IN"}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = bulkOperation_objects_jsonl | parse_jsonl %}
   {% endif %}
-{% endfor %}
+
+  {% for customer in bulkOperation.objects %}
+    {% assign qualifies_for_tag = false %}
+
+    {% if options.only_tag_confirmed_opt_ins__boolean %}
+      {% if customer.marketingOptInLevel == "CONFIRMED_OPT_IN" %}
+        {% assign qualifies_for_tag = true %}
+      {% endif %}
+    {% elsif options.tag_single_and_confirmed_opt_ins__boolean %}
+      {% if customer.marketingOptInLevel == "CONFIRMED_OPT_IN" or customer.marketingOptInLevel == "SINGLE_OPT_IN" %}
+        {% assign qualifies_for_tag = true %}
+      {% endif %}
+    {% elsif customer.acceptsMarketing %}
+      {% assign qualifies_for_tag = true %}
+    {% endif %}
+
+    {% if qualifies_for_tag %}
+      {% unless customer.tags contains options.customer_tag_to_add__required %}
+        {% action "shopify" %}
+          mutation {
+            tagsAdd(
+              id: {{ customer.id | json }}
+              tags: {{ options.customer_tag_to_add__required | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+      {% endunless %}
+    {% elsif customer.tags contains options.customer_tag_to_add__required %}
+      {% action "shopify" %}
+        mutation {
+          tagsRemove(
+            id: {{ customer.id | json }}
+            tags: {{ options.customer_tag_to_add__required | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
