@@ -1,28 +1,141 @@
-{% assign order = fulfillment.order %}
-{% assign order_tags_to_save = order.tags %}
-
-{% for keyval in options.shipping_status_tags__keyval_required %}
-  {% assign order_tags_to_save = order_tags_to_save | remove_tag: keyval[1] %}
-{% endfor %}
-
-{% for fulfillment in order.fulfillments %}
-  {% assign order_tags_to_save = order_tags_to_save | add_tag: options.shipping_status_tags__keyval_required[fulfillment.shipment_status] %}
-{% endfor %}
-
-{% if event.preview or order.tags != order_tags_to_save %}
-  {
-    "action": {
-      "type": "shopify",
-      "options": [
-        "update",
-        [
-          "order",
-          {{ order.id | json }}
-        ],
-        {
-          "tags": {{ order_tags_to_save | json }}
+{% if event.topic contains "shopify/fulfillments/" %}
+  {% capture query %}
+    query {
+      order(id: {{ fulfillment.order.admin_graphql_api_id | json }}) {
+        id
+        tags
+        fulfillments {
+          displayStatus
         }
-      ]
+      }
     }
-  }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "order": {
+            "id": "gid://shopify/Order/1234567890",
+            "tags": [],
+            "fulfillments": [
+              {
+                "displayStatus": "IN_TRANSIT"
+              },
+              {
+                "displayStatus": "CANCELED"
+              },
+              {
+                "displayStatus": "OUT_FOR_DELIVERY"
+              }
+            ]
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign orders = array %}
+  {% assign orders[0] = result.data.order %}
+
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% capture bulk_operation_query %}
+    query {
+      orders {
+        edges {
+          node {
+            id
+            tags
+            fulfillments {
+              displayStatus
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture objects_jsonl %}
+      {"id":"gid:\/\/shopify\/Order\/1234567890","tags":[],"fulfillments":[{"displayStatus":"IN_TRANSIT"},{"displayStatus":"CANCELED"},{"displayStatus":"OUT_FOR_DELIVERY"}]}
+      {"id":"gid:\/\/shopify\/Order\/2345678901","tags":[],"fulfillments":[{"displayStatus":"DELIVERED"}]}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = objects_jsonl | parse_jsonl %}
+  {% endif %}
+
+  {% assign orders = bulkOperation.objects %}
 {% endif %}
+
+{% for order in orders %}
+  {% assign tags_to_add = array %}
+  {% assign tags_to_remove = array %}
+
+  {% assign display_statuses = order.fulfillments | map: "displayStatus" %}
+
+  {% for keyval in options.shipping_statuses_and_tags__keyval_required %}
+    {% assign shipping_status = keyval.first %}
+    {% assign tag = keyval.last %}
+
+    {% if display_statuses contains shipping_status %}
+      {% unless order.tags contains tag %}
+        {% assign tags_to_add[tags_to_add.size] = tag %}
+      {% endunless %}
+    {% elsif order.tags contains tag %}
+      {% assign tags_to_remove[tags_to_remove.size] = tag %}
+    {% endif %}
+  {% endfor %}
+
+  {% if tags_to_add != empty or tags_to_remove != blank %}
+    {% action "shopify" %}
+      mutation {
+        {% if tags_to_add != empty %}
+          tagsAdd(
+            id: {{ order.id | json }}
+            tags: {{ tags_to_add | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        {% endif %}
+
+        {% if tags_to_remove != empty %}
+          tagsRemove(
+            id: {{ order.id | json }}
+            tags: {{ tags_to_remove | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        {% endif %}
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}
