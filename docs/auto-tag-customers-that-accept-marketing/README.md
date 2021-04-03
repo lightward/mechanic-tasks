@@ -2,7 +2,7 @@
 
 Tags: Auto-Tag, Customers, Marketing
 
-Use this task to auto-tag customers whose marketing preferences have been updated, adding a tag for those that do accept marketing and removing it from customers who do not. Optionally, choose whether to limit tags to customers who have single or confirmed opt-in levels.
+Use this task to auto-tag customers whose marketing preferences have been updated, adding a tag for those that do accept marketing and removing it from customers who do not. Optionally, choose whether to limit tags to customers who have single or confirmed opt-in levels. Run this task manually to scan all customers at once.
 
 * View in the task library: [usemechanic.com/task/auto-tag-customers-that-accept-marketing](https://usemechanic.com/task/auto-tag-customers-that-accept-marketing)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-customers-that-accept-marketing.json)
@@ -32,9 +32,11 @@ mechanic/shopify/bulk_operation
 
 ## Documentation
 
-Use this task to auto-tag customers whose marketing preferences have been updated, adding a tag for those that do accept marketing and removing it from customers who do not. Optionally, choose whether to limit tags to customers who have single or confirmed opt-in levels.
+Use this task to auto-tag customers whose marketing preferences have been updated, adding a tag for those that do accept marketing and removing it from customers who do not. Optionally, choose whether to limit tags to customers who have single or confirmed opt-in levels. Run this task manually to scan all customers at once.
 
-Run this task manually to sync that tag for **ALL** customers that accept marketing (and if checked, with required opt-in level), regardless of their last marketing preference update. Note: If you have many customers, running this task manually could take a long time!
+[Learn more from Shopify](https://help.shopify.com/en/manual/promoting-marketing/create-marketing/customer-emails#enable-double-opt-in-for-subscribers) about confirmed opt-in (aka double opt-in), and how to configure this for your store.
+
+Note: Running this task manually will sync that tag for **ALL** customers that accept marketing (and if checked, with required opt-in level), regardless of when their marketing preferences were last updated. If you have many customers, running this task manually could take a long time!
 
 ## Installing this task
 

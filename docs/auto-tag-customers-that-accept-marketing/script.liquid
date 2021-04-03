@@ -1,11 +1,11 @@
 {% comment %}
-Options ordering:
+  Options ordering:
   {{ options.customer_tag_to_add__required }}
   {{ options.only_tag_confirmed_opt_ins__boolean }}
-  {{ options.tag_single_and_confirmed_opt_ins__boolean }}
+  {{ options.tag_both_single_and_confirmed_opt_ins__boolean }}
 {% endcomment %}
 
-{% if options.only_tag_confirmed_opt_ins__boolean and options.tag_single_and_confirmed_opt_ins__boolean %}
+{% if options.only_tag_confirmed_opt_ins__boolean and options.tag_both_single_and_confirmed_opt_ins__boolean %}
   {% error "Choose either 'Only tag confirmed opt-ins' and 'Tag single and confirmed opt-ins', or neither, but not both" %}
 {% endif %}
 
@@ -29,7 +29,7 @@ Options ordering:
       {% if customer.marketing_opt_in_level == "confirmed_opt_in" %}
         {% assign qualifies_for_tag = true %}
       {% endif %}
-    {% elsif options.tag_single_and_confirmed_opt_ins__boolean %}
+    {% elsif options.tag_both_single_and_confirmed_opt_ins__boolean %}
       {% if customer.marketing_opt_in_level == "confirmed_opt_in" or customer.marketing_opt_in_level == "single_opt_in" %}
         {% assign qualifies_for_tag = true %}
       {% endif %}
@@ -126,7 +126,7 @@ Options ordering:
       {% if customer.marketingOptInLevel == "CONFIRMED_OPT_IN" %}
         {% assign qualifies_for_tag = true %}
       {% endif %}
-    {% elsif options.tag_single_and_confirmed_opt_ins__boolean %}
+    {% elsif options.tag_both_single_and_confirmed_opt_ins__boolean %}
       {% if customer.marketingOptInLevel == "CONFIRMED_OPT_IN" or customer.marketingOptInLevel == "SINGLE_OPT_IN" %}
         {% assign qualifies_for_tag = true %}
       {% endif %}
