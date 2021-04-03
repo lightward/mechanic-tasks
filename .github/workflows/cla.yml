@@ -18,7 +18,7 @@ jobs:
         with: 
           path-to-signatures: 'signatures/version1/cla.json'
           path-to-document: 'https://github.com/lightward/mechanic-tasks/blob/master/CLA.md'
-          branch: 'master'
+          branch: 'main'
           allowlist: isaacbowen
           use-dco-flag: false #'Set this to true if you want to use a dco instead of a cla'
           create-file-commit-message: 'creating file for storing CLA signatures'
