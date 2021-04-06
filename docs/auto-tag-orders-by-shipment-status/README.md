@@ -13,16 +13,24 @@ Easily segment your orders by shipment status. Tagging your orders as "Delivered
 ```json
 {
   "shipping_statuses_and_tags__keyval_required": {
+    "ATTEMPTED_DELIVERY": "Delivery attempted",
+    "CANCELED": "Fulfillment Canceled",
+    "CONFIRMED": "Delivery confirmed",
+    "DELIVERED": "Delivery complete",
+    "FAILURE": "Delivery failed",
+    "FULFILLED": "Fulfilled",
+    "IN_TRANSIT": "Delivery in transit",
     "LABEL_PRINTED": "Shipping label printed",
     "LABEL_PURCHASED": "Shipping label purchased",
-    "ATTEMPTED_DELIVERY": "Delivery attempted",
-    "READY_FOR_PICKUP": "Delivery ready for pickup",
-    "CONFIRMED": "Delivery confirmed",
-    "IN_TRANSIT": "Delivery in transit",
+    "LABEL_VOIDED": "Shipping label voided",
+    "MARKED_AS_FULFILLED": "Marked as fulfilled",
+    "NOT_DELIVERED": "Not delivered",
     "OUT_FOR_DELIVERY": "Out for delivery",
-    "DELIVERED": "Delivery complete",
-    "FAILURE": "Delivery failed"
-  }
+    "PICKED_UP": "Picked up",
+    "READY_FOR_PICKUP": "Delivery ready for pickup",
+    "SUBMITTED": "Submitted"
+  },
+  "limit_to_orders_matching_this_query_for_manual_runs": null
 }
 ```
 
@@ -47,7 +55,11 @@ This task monitors fulfillments for your orders. Whenever a fulfillment is updat
 
 This task comes pre-configured with friendly tags, but feel free to update the tag names on the right-hand side. Do not modify the labels on the left! These correspond directly to shipment statuses as they're recorded by Shopify.
 
-For a complete description of all Shopify shipment statuses, [see Shopify's "shipment_status" documentation](https://help.shopify.com/en/api/reference/shipping-and-fulfillment/fulfillment#shipment-status-property).
+For a reference on Shopify's fulfillment statuses, see the [FulfillmentDisplayStatus documentation](https://shopify.dev/docs/admin-api/graphql/reference/shipping-and-fulfillment/fulfillmentdisplaystatus). (More details may be available in the [REST documentation for Fulfillment.shipment_status](https://shopify.dev/docs/admin-api/rest/reference/shipping-and-fulfillment/fulfillment#shipment-status-property-2021-04).)
+
+The "Limit to orders matching this query for manual runs" option uses the same query syntax as the "Orders" section of the Shopify admin area. For example, to only include paid orders, use this query:
+
+financial_status:paid
 
 ## Installing this task
 
