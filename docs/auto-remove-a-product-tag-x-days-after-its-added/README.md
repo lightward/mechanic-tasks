@@ -22,7 +22,6 @@ Use this this task to monitor for the addition of a new product tag, and to sche
 ## Subscriptions
 
 ```liquid
-shopify/products/create
 shopify/products/update
 user/task/untag_product
 ```

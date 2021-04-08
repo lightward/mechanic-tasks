@@ -22,7 +22,6 @@ Use this this task to monitor for the addition of a new customer tag, and to sch
 ## Subscriptions
 
 ```liquid
-shopify/customers/create
 shopify/customers/update
 user/task/untag_customer
 ```
