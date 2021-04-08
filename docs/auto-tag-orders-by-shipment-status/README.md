@@ -12,17 +12,25 @@ Easily segment your orders by shipment status. Tagging your orders as "Delivered
 
 ```json
 {
-  "shipping_status_tags__keyval_required": {
-    "label_printed": "Shipping label printed",
-    "label_purchased": "Shipping label purchased",
-    "attempted_delivery": "Delivery attempted",
-    "ready_for_pickup": "Delivery ready for pickup",
-    "confirmed": "Delivery confirmed",
-    "in_transit": "Delivery in transit",
-    "out_for_delivery": "Out for delivery",
-    "delivered": "Delivery complete",
-    "failure": "Delivery failed"
-  }
+  "shipping_statuses_and_tags__keyval_required": {
+    "ATTEMPTED_DELIVERY": "Delivery attempted",
+    "CANCELED": "Fulfillment Canceled",
+    "CONFIRMED": "Delivery confirmed",
+    "DELIVERED": "Delivery complete",
+    "FAILURE": "Delivery failed",
+    "FULFILLED": "Fulfilled",
+    "IN_TRANSIT": "Delivery in transit",
+    "LABEL_PRINTED": "Shipping label printed",
+    "LABEL_PURCHASED": "Shipping label purchased",
+    "LABEL_VOIDED": "Shipping label voided",
+    "MARKED_AS_FULFILLED": "Marked as fulfilled",
+    "NOT_DELIVERED": "Not delivered",
+    "OUT_FOR_DELIVERY": "Out for delivery",
+    "PICKED_UP": "Picked up",
+    "READY_FOR_PICKUP": "Delivery ready for pickup",
+    "SUBMITTED": "Submitted"
+  },
+  "limit_to_orders_matching_this_query_for_manual_runs": null
 }
 ```
 
@@ -33,6 +41,8 @@ Easily segment your orders by shipment status. Tagging your orders as "Delivered
 ```liquid
 shopify/fulfillments/create
 shopify/fulfillments/update
+mechanic/user/trigger
+mechanic/shopify/bulk_operation
 ```
 
 [Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
@@ -41,11 +51,15 @@ shopify/fulfillments/update
 
 Easily segment your orders by shipment status. Tagging your orders as "Delivered", or "Out for delivery", or "Attempted delivery", or any other status, allows you to stay on top of your order flow. And, adding these tags makes it easier to wire up additional automation, keeping the connection live between your customers and their orders.
 
-This task monitors fulfillments for your orders. Whenever a fulfillment is updated, this task removes any shipment-related tags that might already be on the order, then adds whatever tag is relevant for the current shipment status. If there are multiple fulfillments for the order, and they have different statuses, this task will add more than one tag. (Naturally, if there are multiple fulfillments but they all have the same status, this task will only add one tag to the order.)
+This task monitors fulfillments for your orders. Whenever a fulfillment is updated, this task removes any shipment-related tags that might already be on the order, then adds whatever tag is relevant for the current shipment status. If there are multiple fulfillments for the order, and they have different statuses, this task will add more than one tag. Use the "Run task" button to scan all orders. To process orders older than 60 days, [enable "Read all orders"](https://docs.usemechanic.com/article/375-enabling-read-all-orders).
 
 This task comes pre-configured with friendly tags, but feel free to update the tag names on the right-hand side. Do not modify the labels on the left! These correspond directly to shipment statuses as they're recorded by Shopify.
 
-For a complete description of all Shopify shipment statuses, [see Shopify's "shipment_status" documentation](https://help.shopify.com/en/api/reference/shipping-and-fulfillment/fulfillment#shipment-status-property).
+For a reference on Shopify's fulfillment statuses, see the [FulfillmentDisplayStatus documentation](https://shopify.dev/docs/admin-api/graphql/reference/shipping-and-fulfillment/fulfillmentdisplaystatus). (More details may be available in the [REST documentation for Fulfillment.shipment_status](https://shopify.dev/docs/admin-api/rest/reference/shipping-and-fulfillment/fulfillment#shipment-status-property-2021-04).)
+
+The "Limit to orders matching this query for manual runs" option uses the same query syntax as the "Orders" section of the Shopify admin area. For example, to only include paid orders, use this query:
+
+financial_status:paid
 
 ## Installing this task
 
