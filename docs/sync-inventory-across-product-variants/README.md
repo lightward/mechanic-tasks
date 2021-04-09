@@ -44,7 +44,7 @@ Useful for multiple price points, or for offering customizations of the same ite
 
 * This task only works with a single location. Multiple locations are not supported.
 * To manually change inventory levels for a product, adjust _only one_ variant to the desired level. During the next scheduled run, the task will bring the other variants into sync.
-* By default, Mechanic will check your inventory every 10 minutes. Feel free to change that subscription to "mechanic/scheduler/hourly", or [something else that suits your needs](https://help.usemechanic.com/events/all-event-topics#mechanic).
+* By default, Mechanic will check your inventory every 10 minutes. Feel free to change that subscription to "mechanic/scheduler/hourly", or [something else that suits your needs](https://learn.mechanic.dev/core-concepts/events/event-topic-reference/mechanic#scheduler).
 
 ## Installing this task
 
