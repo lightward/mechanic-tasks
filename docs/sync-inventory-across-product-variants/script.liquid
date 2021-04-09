@@ -163,6 +163,10 @@
       {% assign starting_inventory = starting_inventory_for_preview %}
     {% endif %}
 
+    {% if starting_inventory == blank %}
+      {% error message: "The inventory for this product has not yet been cached. Manually synchronize the inventory for this product and run this task manually per steps 2 and 3 in the task instructions.", product_id: product_id %}
+    {% endif %}    
+
     {% assign inventory_list = variants | map: "inventoryQuantity" %}
     {% assign inventory_total = inventory_list | sum %}
     {% assign inventory_diff = starting_inventory | times: inventory_list.size | minus: inventory_total %}
