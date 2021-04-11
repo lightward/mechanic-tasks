@@ -50,7 +50,7 @@
   {% assign initial_threshold_s = now_s | minus: initial_delay_period_s %}
   {% assign interval_period_between_emails_s = options.interval_period_between_emails__number_required | times: period_unit_s %}
 
-  {% capture orders_query %}-status:cancelled AND (financial_status:pending{% if options.include_partially_paid_orders__boolean %} OR financial_status:partially_paid){% endif %}{% endcapture %}
+  {% capture orders_query %}-status:cancelled AND (financial_status:pending{% if options.include_partially_paid_orders__boolean %} OR financial_status:partially_paid{% endif %}){% endcapture %}
 
   {% if options.limit_to_orders_matching_this_query != blank %}
     {% assign orders_query = orders_query | append: " AND (" | append: options.limit_to_orders_matching_this_query | append: ")" %}
