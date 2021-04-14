@@ -1,11 +1,8 @@
-# Find all Exact Duplicate SKUs
+# Find duplicate SKUs
 
 Tags: Products, SKU
 
-This task scans your entire product library for Exact Match Duplicate SKU's and outputs a list of duplicate SKU's found.
-The report only contains one version of each SKU.
-The report is limited to 500 iterations of 250 variants (125,000 variants). 
-Empty SKUs will appear once.
+This task scans your entire product list, looking for duplicate SKUs using exact matching, and returning the list of duplicate SKUs (and the associated product variant IDs) if any are found.
 
 * View in the task library: [usemechanic.com/task/find-duplicate-skus](https://usemechanic.com/task/find-duplicate-skus)
 * Task JSON, for direct import: [task.json](../../tasks/find-duplicate-skus.json)
@@ -31,12 +28,13 @@ mechanic/user/trigger
 
 ## Documentation
 
-This task scans your entire product library for Exact Match Duplicate SKU's and outputs a list of duplicate SKU's found.
-The report only contains one version of each SKU.
-The report is limited to 500 iterations of 250 variants (125,000 variants). 
-Empty SKUs will appear once.
+This task scans your entire product list, looking for duplicate SKUs using exact matching, and returning the list of duplicate SKUs (and the associated product variant IDs) if any are found.
 
-"Exclude inventory not tracked" will exclude any product thats inventory is not tracked in Shopify.
+Note: SKUs that are identical apart from being uppercase/lowercase, for example, do not count as exact matches, and would not be considered duplicates by this task.
+
+This report will only scan a store's first 125,000 product variants.
+
+"Exclude products that do not track inventory" will exclude any product whose inventory is not tracked in Shopify.
 
 ## Installing this task
 
