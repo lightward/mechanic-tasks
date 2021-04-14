@@ -12,7 +12,7 @@ This task scans your entire product list, looking for duplicate SKUs using exact
 
 ```json
 {
-  "exclude_inventory_not_tracked__boolean": true
+  "exclude_products_that_do_not_track_inventory__boolean": null
 }
 ```
 
