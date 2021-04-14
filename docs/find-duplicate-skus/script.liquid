@@ -3,58 +3,62 @@
 {% assign cursor = nil %}
 
 {% for i in (0..500) %}
-
   {% assign after = i | times: 250 %}
   {% capture query %}
-  query {
-    productVariants(first:250, after: {{ cursor | json }}) {
-      pageInfo {
-        hasNextPage
-      }
-      edges {
-        node {
-          id
-          sku
-          inventoryItem{
-          tracked
-          }
+    query {
+      productVariants(
+        first: 250
+        after: {{ cursor | json }}
+      ) {
+        pageInfo {
+          hasNextPage
         }
-        cursor
+        edges {
+          node {
+            id
+            sku
+            inventoryItem {
+              tracked
+            }
+          }
+          cursor
+        }
       }
     }
-  }
   {% endcapture %}
+
   {% assign result = query | shopify %}
 
   {% if event.preview %}
     {% capture result_json %}
-    {
-      "data": {
-        "productVariants": {
-          "edges": [
-            {
-              "node": {
-                "id": "gid://shopify/ProductVariant/1234567890",
-                "sku": "sku123",
-                "inventoryItem": {
-                  "tracked": "true"
+      {
+        "data": {
+          "productVariants": {
+            "edges": [
+              {
+                "node": {
+                  "id": "gid://shopify/ProductVariant/1234567890",
+                  "sku": "sku123",
+                  "inventoryItem": {
+                    "tracked": "true"
+                  }
+                }
+              },
+              {
+                "node": {
+                  "id": "gid://shopify/ProductVariant/123456789",
+                  "sku": "sku123",
+                  "inventoryItem": {
+                    "tracked": "true"
+                  }
                 }
               }
-            },
-            {
-              "node": {
-                "id": "gid://shopify/ProductVariant/123456789",
-                "sku": "sku123",
-                "inventoryItem": {
-                  "tracked": "true"
-                }
-              }
-            }
-          ]
+            ]
+          }
         }
       }
-    }
     {% endcapture %}
+
     {% assign result = result_json | parse_json %}
   {% endif %}
   
@@ -65,12 +69,15 @@
     {% if pv.sku == null or pv.sku == empty %}
       {% continue %}
     {% endif %}
+
     {% if options.exclude_inventory_not_tracked__boolean == true %}
       {% if pv.inventoryItem.tracked == false %}
         {% continue %}
       {% endif %}
     {% endif %}
+
     {% assign existingPv = mappings[pv.sku] %}
+
     {% if existingPv %}
       {% if existingPv != pv.id %}
         {% assign dups[pv.sku] = true %}
@@ -83,14 +90,14 @@
   {% unless result.data.productVariants.pageInfo.hasNextPage %}
     {% break %}
   {% endunless %}
-
 {% endfor %}
 
-{% assign skus = productVariants | map:"sku" %}
+{% assign skus = productVariants | map: "sku" %}
 {% assign uniqskus = skus | uniq %}
+
 {% if skus.size == uniqskus.size %}
   {% comment %}No exact duplicate SKUS {% endcomment %}
-  {%break %}
+  {% break %}
 {% endif %}
 
 {% action "echo" dups %}
