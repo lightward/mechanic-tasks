@@ -99,7 +99,12 @@
   {% assign variant_id = pair[0] %}
   {% assign sku = pair[1] %}
 
-  {% assign sku_count = all_skus | where: sku | size %}
+  {% assign sku_count = 0 %}
+  {% for some_sku in all_skus %}
+    {% if some_sku == sku %}
+      {% assign sku_count = sku_count | plus: 1 %}
+    {% endif %}
+  {% endfor %}
 
   {% if sku_count == 1 %}
     {% comment %}
