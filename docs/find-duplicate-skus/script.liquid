@@ -111,5 +111,11 @@
   {% assign variant_ids_by_duplicate_sku[sku] = variant_ids_by_duplicate_sku[sku] | default: array | push: variant_id %}
 {% endfor %}
 
-{% assign duplicate_sku_count = variant_ids_by_duplicate_sku | size %}
-{% log message: "Found duplicate SKU(s)", duplicate_sku_count: duplicate_sku_count, variant_ids_by_duplicate_sku: variant_ids_by_duplicate_sku %}
+{% assign duplicate_skus = variant_ids_by_duplicate_sku | keys %}
+
+{% log
+  message: "Found duplicate SKU(s)",
+  duplicate_skus_size: duplicate_skus.size,
+  duplicate_skus: duplicate_skus,
+  variant_ids_by_duplicate_sku: variant_ids_by_duplicate_sku
+%}
