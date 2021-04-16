@@ -5,6 +5,7 @@
   {% assign order["cancelled_at"] = nil %}
   {% assign order["email"] = "customer@example.com" %}
   {% assign order["name"] = "#1234" %}
+  {% assign order["id"] = 1234567890 %}
 {% else %}
   {% assign order = order.reload %}
 {% endif %}
