@@ -1,115 +1,197 @@
+{% assign collection = shop.collections[options.collection_id__number_required] %}
 {% assign days_to_keep_products = options.number_of_days_to_keep_a_product_in_this_collection__number %}
 {% assign product_count = options.number_of_products_to_keep_in_this_collection__number %}
 
 {% if event.preview %}
-  {% if days_to_keep_products == blank and product_count == blank %}
-    {"error": "Please fill in either \"Number of days to keep a product in this collection\" or \"Number of products to keep in this collection\" (but not both!)."}
-  {% elsif days_to_keep_products != blank and product_count != blank %}
-    {"error": "Please choose one of the options, but not both! :)"}
-  {% else %}
+  {% capture collection_json %}
     {
-      "action": {
-        "type": "shopify",
-        "options": [
-          "create",
-          "collect",
-          {
-            "collection_id": 1234567890,
-            "product_id": 1234567890
-          }
-        ]
-      }
+      "admin_graphql_api_id": "gid://shopify/Collection/1234567890",
+      "products": [
+        {
+          "admin_graphql_api_id": "gid://shopify/Product/9876543210"
+        }
+      ]
     }
+  {% endcapture %}
 
-    {
-      "action": {
-        "type": "shopify",
-        "options": [
-          "delete",
-          [
-            "collect",
-            1234567890
-          ]
-        ]
-      }
-    }
+  {% assign collection = collection_json | parse_json %}
+{% endif %}
+
+{% if collection == blank %}
+  {% error "Configured collection ID does not exist in this shop." %}
+{% endif %}
+
+{% if days_to_keep_products == blank and product_count == blank %}
+  {% error %}
+    "Please fill in either \"Number of days to keep a product in this collection\" or \"Number of products to keep in this collection\" (but not both!)."
+  {% enderror %}
+{% elsif days_to_keep_products != blank and product_count != blank %}
+  {% error "Please choose one of the options, but not both! :)" %}
+{% endif %}
+
+{% assign loop_count = 100 %}
+{% assign first_elements = 250 %}
+{% assign products_query = "status:active" %}
+
+{% if days_to_keep_products != blank %}
+  {% if days_to_keep_products < 1 %}
+    {% error %}
+      "\"Number of days to keep a product in this collection\" should be > 0"
+    {% enderror %}
   {% endif %}
-{% else %}
-  {% assign sorted_products = shop.products.published | sort: "created_at" | reverse %}
-  {% assign final_products = nil %}
 
+  {% assign now_s = "now" | date: "%s" | times: 1 %}
+  {% assign days_to_keep_products_s = days_to_keep_products | times: 86400 %}
+  {% assign created_at_threshold_s = now_s | minus: days_to_keep_products_s %}
+  {% assign created_at_threshold = created_at_threshold_s | date: "%Y-%m-%d" %}
+  {% assign products_query = products_query
+    | append: " created_at:>="
+    | append: created_at_threshold
+  %}
+{% elsif product_count != blank %}
+  {% if product_count < 1 %}
+    {% error %}
+      "\"Number of products to keep in this collection\" should be > 0"
+    {% enderror %}
+  {% endif %}
+
+  {% assign loop_count = product_count | divided_by: 250 %}
+  {% assign remaining = product_count | modulo: 250 %}
+{% endif %}
+
+{% assign cursor = nil %}
+{% assign qualifying_product_ids = array %}
+
+{% for n in (0..loop_count) %}
   {% if product_count != blank %}
-    {% assign final_products = sorted_products | slice: 0, product_count %}
-  {% elsif days_to_keep_products != blank %}
-    {% assign now_s = "now" | date: "%s" | times: 1 %}
-    {% assign days_to_keep_products_s = days_to_keep_products | times: 24 | times: 60 | times: 60 %}
-    {% assign created_at_threshold_s = now_s | minus: days_to_keep_products_s %}
-
-    {% assign product_count_by_age = nil %}
-    {% for product in sorted_products %}
-      {% assign product_created_at_s = product.created_at | date: "%s" | times: 1 %}
-      {% if product_created_at_s < created_at_threshold_s %}
-        {% assign product_count_by_age = forloop.index0 %}
+    {% if forloop.last %}
+      {% if remaining == 0 %}
         {% break %}
       {% endif %}
-    {% endfor %}
 
-    {% if product_count_by_age == nil %}
-      {% assign final_products = sorted_products %}
-    {% else %}
-      {% assign final_products = sorted_products | slice: 0, product_count_by_age %}
+      {% assign first_elements = remaining %}
     {% endif %}
   {% endif %}
 
-  {% assign collection = shop.collections[options.collection_id__number_required] %}
-  {% assign current_collects = collection.collects %}
-
-  {% assign current_product_ids = current_collects | map: "product_id" %}
-
-  {% assign product_ids_to_keep = "[]" | parse_json %}
-  {% for product in final_products %}
-    {% if current_product_ids contains product.id %}
-      {% assign product_id_array = "[" | append: product.id | append: "]" | parse_json %}
-      {% assign product_ids_to_keep = product_ids_to_keep | concat: product_id_array %}
-    {% endif %}
-  {% endfor %}
-
-  {% for collect in current_collects %}
-    {% if product_ids_to_keep contains collect.product_id %}
-      {% continue %}
-    {% endif %}
-
-    {
-      "action": {
-        "type": "shopify",
-        "options": [
-          "delete",
-          [
-            "collect",
-            {{ collect.id | json }}
-          ]
-        ]
-      }
-    }
-  {% endfor %}
-
-  {% for product in final_products %}
-    {% if product_ids_to_keep contains product.id %}
-      {% continue %}
-    {% endif %}
-
-    {
-      "action": {
-        "type": "shopify",
-        "options": [
-          "create",
-          "collect",
-          {
-            "collection_id": {{ collection.id | json }},
-            "product_id": {{ product.id | json }}
+  {% capture query %}
+    query {
+      products(
+        first: {{ first_elements }}
+        after: {{ cursor | json }}
+        query: {{ products_query | json }}
+        reverse: true
+        sortKey: CREATED_AT
+      ) {
+        pageInfo {
+          hasNextPage
+        }
+        edges {
+          cursor
+          node {
+            id
           }
-        ]
+        }
       }
     }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "products": {
+            "edges": [
+              {
+                "node": {
+                  "id": "gid://shopify/Product/1234567890"
+                }
+              }
+            ]
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign result_product_ids = result.data.products.edges | map: "node" | map: "id" %}
+  {% assign qualifying_product_ids = qualifying_product_ids | concat: result_product_ids %}
+
+  {% if result.data.products.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.products.edges.last.cursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% assign current_product_ids =  collection.products | map: "admin_graphql_api_id" %}
+
+{% assign product_ids_to_add = array %}
+{% assign product_ids_to_remove = array %}
+
+{% for qualifying_product_id in qualifying_product_ids %}
+  {% unless current_product_ids contains qualifying_product_id %}
+    {% assign product_ids_to_add = product_ids_to_add | push: qualifying_product_id %}
+  {% endunless %}
+{% endfor %}
+
+{% for current_product_id in current_product_ids %}
+  {% unless qualifying_product_ids contains current_product_id %}
+    {% assign product_ids_to_remove = product_ids_to_remove | push: current_product_id %}
+  {% endunless %}
+{% endfor %}
+
+{% assign mutations = array %}
+
+{% if product_ids_to_add != blank  %}
+  {% assign groups_of_product_ids_to_add = product_ids_to_add | in_groups_of: 250, fill_with: false %}
+
+  {% for group_of_product_ids_to_add in groups_of_product_ids_to_add %}
+    {% capture mutation %}
+      collectionAddProducts{{ forloop.index0 }}: collectionAddProducts(
+        id: {{ collection.admin_graphql_api_id | json }}
+        productIds: {{ group_of_product_ids_to_add | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    {% endcapture %}
+
+    {% assign mutations = mutations | push: mutation %}
   {% endfor %}
+{% endif %}
+
+{% if product_ids_to_remove != blank  %}
+  {% assign groups_of_product_ids_to_remove = product_ids_to_remove | in_groups_of: 250, fill_with: false %}
+
+  {% for group_of_product_ids_to_remove in groups_of_product_ids_to_remove %}
+    {% capture mutation %}
+      collectionRemoveProducts{{ forloop.index0 }}: collectionRemoveProducts(
+        id: {{ collection.admin_graphql_api_id | json }}
+        productIds: {{ group_of_product_ids_to_remove | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    {% endcapture %}
+
+    {% assign mutations = mutations | push: mutation %}
+  {% endfor %}
+{% endif %}
+
+{% if mutations != blank %}
+  {% action "shopify" %}
+    mutation {
+      {{ mutations | join: newline }}
+    }
+  {% endaction %}
+{% else %}
+  {% log "This collection already has the correct number of products." %}
 {% endif %}
