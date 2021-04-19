@@ -1,0 +1,126 @@
+{% assign skus_by_variant_id = hash %}
+{% assign cursor = nil %}
+
+{% for i in (0..500) %}
+  {% capture query %}
+    query {
+      productVariants(
+        first: 250
+        after: {{ cursor | json }}
+      ) {
+        pageInfo {
+          hasNextPage
+        }
+        edges {
+          node {
+            id
+            sku
+            inventoryItem {
+              tracked
+            }
+          }
+          cursor
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "productVariants": {
+            "edges": [
+              {
+                "node": {
+                  "id": "gid://shopify/ProductVariant/1234567890",
+                  "sku": "sku123",
+                  "inventoryItem": {
+                    "tracked": true
+                  }
+                }
+              },
+              {
+                "node": {
+                  "id": "gid://shopify/ProductVariant/2345678901",
+                  "sku": "sku123",
+                  "inventoryItem": {
+                    "tracked": true
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+  
+  {% assign cursor = result.data.productVariants.edges.last.cursor %}
+  {% assign productVariants = result.data.productVariants.edges | map: "node" %}
+
+  {% for variant in productVariants %}
+    {% if variant.sku == blank %}
+      {% continue %}
+    {% endif %}
+
+    {% if options.exclude_products_that_do_not_track_inventory__boolean %}
+      {% if variant.inventoryItem.tracked == false %}
+        {% continue %}
+      {% endif %}
+    {% endif %}
+
+    {% assign skus_by_variant_id[variant.id] = variant.sku %}
+  {% endfor %}
+
+  {% unless result.data.productVariants.pageInfo.hasNextPage %}
+    {% break %}
+  {% endunless %}
+{% endfor %}
+
+{% assign all_skus = skus_by_variant_id | values %}
+{% assign unique_skus = all_skus | uniq %}
+
+{% if all_skus.size == unique_skus.size %}
+  {% comment %}
+    No exact duplicate SKUs, so let's end execution early
+  {% endcomment %}
+  {% log message: "No duplicate SKUs found! :)" %}
+  {% break %}
+{% endif %}
+
+{% assign variant_ids_by_duplicate_sku = hash %}
+
+{% for pair in skus_by_variant_id %}
+  {% assign variant_id = pair[0] %}
+  {% assign sku = pair[1] %}
+
+  {% assign sku_count = 0 %}
+  {% for some_sku in all_skus %}
+    {% if some_sku == sku %}
+      {% assign sku_count = sku_count | plus: 1 %}
+    {% endif %}
+  {% endfor %}
+
+  {% if sku_count == 1 %}
+    {% comment %}
+      Ignore SKUs that only occur once.
+    {% endcomment %}
+    {% continue %}
+  {% endif %}
+
+  {% assign variant_ids_by_duplicate_sku[sku] = variant_ids_by_duplicate_sku[sku] | default: array | push: variant_id %}
+{% endfor %}
+
+{% assign duplicate_skus = variant_ids_by_duplicate_sku | keys %}
+
+{% log
+  message: "Found duplicate SKU(s)",
+  duplicate_skus_size: duplicate_skus.size,
+  duplicate_skus: duplicate_skus,
+  variant_ids_by_duplicate_sku: variant_ids_by_duplicate_sku
+%}
