@@ -10,6 +10,15 @@
   {% assign order = order.reload %}
 {% endif %}
 
+{% if order == nil %}
+  {% comment %}
+    Happens when the order has been deleted
+  {% endcomment %}
+
+  {% log "Order has been deleted; skipping" %}
+  {% break %}
+{% endif %}
+
 {% assign order_qualifies = false %}
 
 {% if order.fulfillment_status == blank %}
