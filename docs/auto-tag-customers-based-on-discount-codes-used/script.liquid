@@ -75,9 +75,11 @@
 {% elsif event.topic == "mechanic/user/trigger" %}
   {% assign query_parts = array %}
   {% for keyval in options.discount_codes_and_tags__keyval_required %}
-    {% assign query_parts[query_parts.size] = "discount_code:" | append: keyval[0] %}
+    {% assign query_parts[query_parts.size] = keyval[0] | json | prepend: "discount_code:" %}
   {% endfor %}
-  {% assign orders_query = query_parts | join: " " %}
+  {% assign orders_query = query_parts | join: " OR " %}
+
+  {% log orders_query: orders_query %}
 
   {% assign orders_cursor = nil %}
   {% for n in (0..100) %}
