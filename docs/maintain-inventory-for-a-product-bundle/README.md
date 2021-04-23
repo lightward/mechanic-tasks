@@ -2,7 +2,7 @@
 
 Tags: Bundle, Inventory, Products
 
-Use this task to automatically sync inventory for a simple product bundle – no theme modifications required. When configured with product SKUs for the bundle and its components, and with quantities needed from each component for each bundle unit, this task keeps the bundle inventory set to the greatest possible value, given the quantities of its components. It also appropriately subtracts from component inventory whenever the bundle is ordered, and appropriately raises component inventory when a bundle order is refunded.
+Use this task to automatically sync inventory for a simple product bundle – no theme modifications required. When configured with unique SKUs for the bundle and its components, and with quantities needed from each component for each bundle unit, this task keeps the bundle inventory set to the greatest possible value, given the quantities of its components. It also appropriately subtracts from component inventory whenever the bundle is ordered, and appropriately raises component inventory when a bundle order is refunded.
 
 * View in the task library: [usemechanic.com/task/maintain-inventory-for-a-product-bundle](https://usemechanic.com/task/maintain-inventory-for-a-product-bundle)
 * Task JSON, for direct import: [task.json](../../tasks/maintain-inventory-for-a-product-bundle.json)
@@ -37,7 +37,7 @@ mechanic/user/trigger
 
 ## Documentation
 
-Use this task to automatically sync inventory for a simple product bundle – no theme modifications required. When configured with product SKUs for the bundle and its components, and with quantities needed from each component for each bundle unit, this task keeps the bundle inventory set to the greatest possible value, given the quantities of its components. It also appropriately subtracts from component inventory whenever the bundle is ordered, and appropriately raises component inventory when a bundle order is refunded.
+Use this task to automatically sync inventory for a simple product bundle – no theme modifications required. When configured with unique SKUs for the bundle and its components, and with quantities needed from each component for each bundle unit, this task keeps the bundle inventory set to the greatest possible value, given the quantities of its components. It also appropriately subtracts from component inventory whenever the bundle is ordered, and appropriately raises component inventory when a bundle order is refunded.
 
 Usage:
 
@@ -47,7 +47,8 @@ Usage:
 Requirements:
 
 * This task does not support multiple inventory locations.
-* Configure this task with product SKUs for the bundle product and its component products (making sure each SKU only appears once in the task configuration). These SKUs must not be re-used for any other product variants in your store. However, any component SKU may be used for multiple copies of this task.
+* Configure this task with unique SKUs for the bundle product.
+* Bundle Components can be duplicate SKU's, however, all duplicate SKU's must have the same inventory level. 
 * Use the right-hand side of the "Component product SKUs and quantities per bundle" option to control how many units of each component SKU is required for each single bundle unit. If your bundle requires one wrench and two sprockets, for example, make sure to add "1" and "2" on the right-hand side, each number associated with the right SKU.
 
 Notes:
