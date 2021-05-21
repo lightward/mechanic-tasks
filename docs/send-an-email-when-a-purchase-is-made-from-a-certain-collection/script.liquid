@@ -1,29 +1,103 @@
+{% capture query %}
+  query {
+    collection(id: "gid://shopify/Collection/{{ options.required_collection_id__number_required }}") {
+      id
+      title
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "collection": {
+          "id": "gid://shopify/Collection/{{ options.required_collection_id__number_required }}",
+          "title": "[sample collection]"
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% assign collection = result.data.collection %}
+
+{% unless collection %}
+  {% error message: "Couldn't find a collection with the configured ID", collection_id: options.required_collection_id__number_required %}
+  {% break %}
+{% endunless %}
+
+{% capture query %}
+  query {
+    order(id: {{ order.admin_graphql_api_id | json }}) {
+      lineItems(first: 250) {
+        edges {
+          node {
+            id
+            title
+            product {
+              inCollection(id: {{ collection.id | json }})
+            }
+          }
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "order": {
+          "lineItems": {
+            "edges": [
+              {
+                "node": {
+                  "id": "gid://shopify/LineItem/1234567890",
+                  "title": "[sample product]",
+                  "product": {
+                    "inCollection": true
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
 {% assign qualifying_line_item_titles = array %}
 
-{% for line_item in order.line_items %}
-  {% if line_item.product_id %}
-    {% assign line_item_collection_ids = line_item.product.collects | map: "collection_id" %}
-    {% if line_item_collection_ids contains options.required_collection_id__number_required %}
-      {% assign qualifying_line_item_titles[qualifying_line_item_titles.size] = line_item.title %}
-    {% endif %}
+{% for lineItem_edge in result.data.order.lineItems.edges %}
+  {% if lineItem_edge.node.product.inCollection %}
+    {% assign qualifying_line_item_titles[qualifying_line_item_titles.size] = lineItem_edge.node.title %}
   {% endif %}
 {% endfor %}
 
-{% if event.preview or qualifying_line_item_titles != empty %}
-  {% assign line_item_titles = qualifying_line_item_titles | uniq | join: ", " %}
-  {% assign collection_title = shop.collections[options.required_collection_id__number_required].title %}
-
-  {% if event.preview %}
-    {% assign line_item_titles = "(products)" %}
-    {% assign collection_title = "(collection)" %}
-  {% endif %}
-
-  {% action "email" %}
-    {
-      "to": {{ options.email_address__required | json }},
-      "subject": {{ options.email_subject__required | replace: "COLLECTION_TITLE", collection_title | replace: "LINE_ITEM_TITLES", line_item_titles | json }},
-      "body": {{ options.email_body__multiline_required | replace: "COLLECTION_TITLE", collection_title | replace: "LINE_ITEM_TITLES", line_item_titles | strip | newline_to_br | json }},
-      "from_display_name": {{ shop.name | json }}
-    }
-  {% endaction %}
+{% if qualifying_line_item_titles == empty %}
+  {% log message: "No line items found from the configured collection", collection: collection, order: result.data.order %}
+  {% break %}
 {% endif %}
+
+{% assign line_item_titles = qualifying_line_item_titles | uniq | join: ", " %}
+{% assign collection_title = collection.title %}
+
+{% action "email" %}
+  {
+    "to": {{ options.email_address__required | json }},
+    "subject": {{ options.email_subject__required | replace: "COLLECTION_TITLE", collection_title | replace: "LINE_ITEM_TITLES", line_item_titles | json }},
+    "body": {{ options.email_body__multiline_required | replace: "COLLECTION_TITLE", collection_title | replace: "LINE_ITEM_TITLES", line_item_titles | strip | newline_to_br | json }},
+    "from_display_name": {{ shop.name | json }}
+  }
+{% endaction %}

@@ -2,7 +2,7 @@
 
 Tags: Collections, Email, Orders
 
-This task will monitor incoming orders for any products that are included in the collection you choose. [Learn where to find the collection ID.](https://help.usemechanic.com/articles/2946120-how-do-i-find-an-id-for-a-product-collection-order-or-something-else)
+This task will monitor incoming orders for any products that are included in the collection you choose. [Learn where to find the collection ID.](https://learn.mechanic.dev/techniques/finding-a-resource-id)
 
 * View in the task library: [usemechanic.com/task/send-an-email-when-a-purchase-is-made-from-a-certain-collection](https://usemechanic.com/task/send-an-email-when-a-purchase-is-made-from-a-certain-collection)
 * Task JSON, for direct import: [task.json](../../tasks/send-an-email-when-a-purchase-is-made-from-a-certain-collection.json)
@@ -31,7 +31,7 @@ shopify/orders/paid
 
 ## Documentation
 
-This task will monitor incoming orders for any products that are included in the collection you choose. [Learn where to find the collection ID.](https://help.usemechanic.com/articles/2946120-how-do-i-find-an-id-for-a-product-collection-order-or-something-else)
+This task will monitor incoming orders for any products that are included in the collection you choose. [Learn where to find the collection ID.](https://learn.mechanic.dev/techniques/finding-a-resource-id)
 
 Please note: This task _does not_ determine what collection the customer may have been browsing when they added the product to the cart. This task simply checks to see which collections contain each purchased product, looking for a match with the collection you choose.
 
