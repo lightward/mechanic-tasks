@@ -16,8 +16,8 @@
         edges {
           cursor
           node {
+            id
             title
-            legacyResourceId
           }
         }
       }
@@ -26,8 +26,32 @@
 
   {% assign result = query | shopify %}
 
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "products": {
+            "pageInfo": {
+              "hasNextPage": false
+            },
+            "edges": [
+              {
+                "node": {
+                  "id": "gid://shopify/Product/1234567890",
+                  "title": "[sample product]"
+                }
+              }
+            ]
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
   {% for product_edge in result.data.products.edges %}
-    {% assign product_ids_and_titles[product_edge.node.legacyResourceId] = product_edge.node.title %}
+    {% assign product_ids_and_titles[product_edge.node.id] = product_edge.node.title %}
   {% endfor %}
 
   {% if result.data.products.pageInfo.hasNextPage %}
@@ -37,31 +61,28 @@
   {% endif %}
 {% endfor %}
 
-{% if event.preview %}
-  {% assign product_ids_and_titles = '{"1234567890": "Short Sleeve T-Shirt"}' | parse_json %}
-{% endif %}
-
 {% if options.test_mode__boolean and options.live_mode__boolean %}
-  {"error": "Please choose either test mode or live mode. (We use two separate checkboxes, as a safeguard.)"}
+  {% error "Please choose either test mode or live mode." %}
 {% elsif options.test_mode__boolean == false and options.live_mode__boolean == false %}
-  {"error": "Please choose either test mode or live mode. (We use two separate checkboxes, as a safeguard.)"}
+  {% error "Please choose either test mode or live mode." %}
 {% elsif options.test_mode__boolean %}
-  {% capture message %}
-    The test scan resulted in {{ product_ids_and_titles.size }} product(s).
-    {% for keyval in product_ids_and_titles %}
-      {{ forloop.index }}. {{ keyval[1] }} (https://{{ shop.domain }}/admin/products/{{ keyval[0] }})
-    {% endfor %}
-  {% endcapture %}
-  {% assign message = message | unindent | strip %}
-
-  {% action "echo" message %}
+  {% log products_found_count: product_ids_and_titles.size, products_found: product_ids_and_titles %}
 {% elsif options.live_mode__boolean %}
   {% for keyval in product_ids_and_titles %}
     {% action "shopify" %}
-      [
-        "delete",
-        ["product", {{ keyval[0] | json }}]
-      ]
+      mutation {
+        productDelete(
+          input: {
+            id: {{ keyval[0] | json }}
+          }
+        ) {
+          deletedProductId
+          userErrors {
+            field
+            message
+          }
+        }
+      }
     {% endaction %}
   {% endfor %}
 {% endif %}
