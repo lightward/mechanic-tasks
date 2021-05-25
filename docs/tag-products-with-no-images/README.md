@@ -14,7 +14,7 @@ Running manually or on a schedule, this task scans all products in your store, a
 {
   "product_tag_to_add__required": null,
   "remove_product_tag_if_images_are_found__boolean": null,
-  "run_every_10_minutes": null,
+  "run_every_10_minutes__boolean": null,
   "run_hourly__boolean": null,
   "run_daily__boolean": null
 }
@@ -27,7 +27,7 @@ Running manually or on a schedule, this task scans all products in your store, a
 ```liquid
 mechanic/user/trigger
 
-{% if options.run_every_10_minutes %}
+{% if options.run_every_10_minutes__boolean %}
   mechanic/scheduler/10min
 {% elsif options.run_hourly__boolean %}
   mechanic/scheduler/hourly
