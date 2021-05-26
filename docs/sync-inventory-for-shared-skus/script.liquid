@@ -1,9 +1,14 @@
 {% assign primary_location = shop.locations[shop.primary_location_id] %}
 {% assign skus = options.product_skus_to_monitor__array_required %}
 {% assign variants_by_sku = hash %}
+{% assign skus_quoted = array %}
+
+{% for sku in skus %}
+  {% assign skus_quoted[forloop.index0] = sku | json %}
+{% endfor %}
 
 {% capture search_query %}
-location_id:{{ shop.primary_location_id }} AND (sku:{{ skus | join: " OR sku:" }})
+location_id:{{ shop.primary_location_id }} AND (sku:{{ skus_quoted  | join: " OR sku:" }})
 {% endcapture %}
 
 {% assign cursor = nil %}
