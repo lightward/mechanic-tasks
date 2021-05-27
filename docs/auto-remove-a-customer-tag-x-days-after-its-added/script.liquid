@@ -6,7 +6,7 @@
 
 {% assign tag = options.tag_to_monitor__required %}
 {% assign untag_flag_tag = tag | append: " - will be auto-removed by Mechanic" %}
-{% assign tag_removal_interval_s = options.days_to_wait_before_untagging__number_required | times: 24 | times: 60 | times: 60 %}
+{% assign tag_removal_interval_s = options.days_to_wait_before_untagging__number_required | times: 24 | times: 60 | times: 60 | round %}
 {% assign now_s = "now" | date: "%s" | times: 1 %}
 {% assign metafield_key = task.id | sha256 | slice: 0, 7 %}
 
@@ -103,7 +103,7 @@
         "data": {
           "customer_id": {{ customer.id | json }}
         },
-        "run_at": {{ now_s | plus: tag_removal_interval_s | round | json }},
+        "run_at": {{ now_s | plus: tag_removal_interval_s | json }},
         "task_id": {{ task.id | json }}
       }
     {% endaction %}
