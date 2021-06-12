@@ -1,3 +1,15 @@
+{% if event.preview %}
+  {% capture inventory_level_json %}
+    {
+      "inventory_item_id": 271878346596884015,
+      "location_id": 48752903,
+      "available": 5,
+    }
+  {% endcapture %}
+
+  {% assign inventory_level = inventory_level_json | parse_json %}
+{% endif %}
+
 {% assign cache_key = "inventory_level:" | append: inventory_level.inventory_item_id | append: "/" | append: inventory_level.location_id %}
 
 {% assign previous_available = cache[cache_key] %}
