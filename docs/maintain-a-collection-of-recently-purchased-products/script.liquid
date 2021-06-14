@@ -84,6 +84,14 @@
                       "id": "gid://shopify/Product/1234567890"
                     }
                   }
+                },
+                {
+                  "node": {
+                    {% comment %}
+                      Prove that line items having no product are ignored
+                    {% endcomment %}
+                    "product": null
+                  }
                 }
               ]
             }
@@ -97,6 +105,9 @@
 
   {% for lineItem_edge in result.data.order.lineItems.edges %}
     {% assign product = lineItem_edge.node.product %}
+    {% if product == nil %}
+      {% continue %}
+    {% endif %}
 
     {% if options.ignore_products_that_are_sold_out__boolean and product.totalInventory <= 0 %}
       {% continue %}
