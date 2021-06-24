@@ -1,40 +1,17 @@
-{% assign orders = array %}
-
-{% if event.preview %}
-  {% action "shopify" %}
-    mutation {
-      tagsAdd(
-        id: "gid://shopify/Order/1234567890"
-        tags: {{ options.collections_and_tags__keyval_required.first.last | json }}
-      ) {
-        userErrors {
-          field
-          message
-        }
-      }
-    }
-  {% endaction %}
-{% elsif event.topic contains "shopify/orders/" %}
-  {% assign orders[0] = order %}
-{% elsif event.topic == "mechanic/user/trigger" %}
-  {% assign orders = shop.orders.any %}
-{% endif %}
-
-{% for order in orders %}
+{% if event.topic contains "shopify/orders/" %}
   {% assign existing_tags = order.tags | split: ", " %}
   {% assign tags_to_add = array %}
+  {% assign order_collections = nil %}
 
-  {% unless event.preview %}
-    {% assign order_collections = nil %}
-    {% for line_item in order.line_items %}
-      {% if line_item.product_id != blank %}
-        {% assign order_collections = order_collections | concat: line_item.product.collections %}
-      {% endif %}
-    {% endfor %}
-    {% assign order_collection_ids = order_collections | map: "id" | join: "," | split: "," %}
-    {% assign order_collection_titles = order_collections | map: "title" %}
-    {% assign order_collection_handles = order_collections | map: "handle" %}
-  {% endunless %}
+  {% for line_item in order.line_items %}
+    {% if line_item.product != blank %}
+      {% assign order_collections = order_collections | concat: line_item.product.collections %}
+    {% endif %}
+  {% endfor %}
+
+  {% assign order_collection_ids = order_collections | map: "id" | join: "," | split: "," %}
+  {% assign order_collection_titles = order_collections | map: "title" %}
+  {% assign order_collection_handles = order_collections | map: "handle" %}
 
   {% for pair in options.collections_and_tags__keyval_required %}
     {% assign required_collection = pair[0] %}
@@ -53,12 +30,16 @@
     {% endif %}
   {% endfor %}
 
+  {% if event.preview %}
+    {% assign tags_to_add[0] = options.collections_and_tags__keyval_required.first.last %}
+  {% endif %}
+
   {% if tags_to_add != empty %}
     {% action "shopify" %}
       mutation {
         tagsAdd(
           id: {{ order.admin_graphql_api_id | json }}
-          tags: {{ tags_to_add | json }}
+          tags: {{ tags_to_add | uniq | json }}
         ) {
           userErrors {
             field
@@ -68,4 +49,126 @@
       }
     {% endaction %}
   {% endif %}
-{% endfor %}
+
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% capture bulk_operation_query %}
+    query {
+      orders {
+        edges {
+          node {
+            __typename
+            id
+            tags
+            lineItems {
+              edges {
+                node {
+                  __typename
+                  id
+                  product {
+                    id
+                    collections {
+                      edges {
+                        node {
+                          __typename
+                          id
+                          legacyResourceId
+                          title
+                          handle
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture bulkOperation_objects_jsonl %}
+      {"__typename":"Order","id":"gid:\/\/shopify\/Order\/1234567890","tags":[]}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = bulkOperation_objects_jsonl | parse_jsonl %}
+  {% endif %}
+
+  {% assign orders = bulkOperation.objects | where: "__typename", "Order" %}
+  {% assign line_items = bulkOperation.objects | where: "__typename", "LineItem" %}
+  {% assign collections = bulkOperation.objects | where: "__typename", "Collection" %}
+
+  {% for order in orders %}
+    {% assign tags_to_add = array %}
+    {% assign order_collections = nil %}
+
+    {% assign order_line_items = line_items | where: "__parentId", order.id %}
+
+    {% for line_item in order_line_items %}
+      {% assign line_item_collections = collections | where: "__parentId", line_item.id %}
+      {% assign order_collections = order_collections | concat: line_item_collections %}
+    {% endfor %}
+
+    {% assign order_collections = order_collections | compact %}
+    {% assign order_collection_ids = order_collections | map: "legacyResourceId" %}
+    {% assign order_collection_titles = order_collections | map: "title" %}
+    {% assign order_collection_handles = order_collections | map: "handle" %}
+
+    {% for pair in options.collections_and_tags__keyval_required %}
+      {% assign required_collection = pair[0] %}
+      {% assign tags = pair[1] | split: "," %}
+
+      {% if order_collection_ids contains required_collection
+            or order_collection_titles contains required_collection
+            or order_collection_handles contains required_collection
+      %}
+        {% for tag in tags %}
+          {% assign stripped_tag = tag | strip %}
+          {% unless order.tags contains stripped_tag %}
+            {% assign tags_to_add[tags_to_add.size] = stripped_tag %}
+          {% endunless %}
+        {% endfor %}
+      {% endif %}
+    {% endfor %}
+
+    {% if event.preview %}
+      {% assign tags_to_add[0] = options.collections_and_tags__keyval_required.first.last %}
+    {% endif %}
+
+    {% if tags_to_add != empty %}
+      {% action "shopify" %}
+        mutation {
+          tagsAdd(
+            id: {{ order.id | json }}
+            tags: {{ tags_to_add | uniq | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endif %}
+  {% endfor %}
+{% endif %}

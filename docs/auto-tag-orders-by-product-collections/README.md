@@ -26,6 +26,7 @@ Use this task to automatically tag orders based on what collection(s) the custom
 ```liquid
 shopify/orders/create
 mechanic/user/trigger
+mechanic/shopify/bulk_operation
 ```
 
 [Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
@@ -36,7 +37,7 @@ Use this task to automatically tag orders based on what collection(s) the custom
 
 Fill in the "Collections and tags" option with the collection on the left, and tags on the right. When specifying the collection, you can use the collection title (e.g. "Summer Swimware"), handle ("e.g. summer-swimware"), or ID (e.g. 27359487103). These are all case-sensitive, so double-check your work!
 
-Run this task manually to scan and tag every order in your store.
+Run this task manually to scan and tag every order in your store. (To process orders older than 60 days, [enable "read all orders"](https://learn.mechanic.dev/platform/shopify/read-all-orders).)
 
 ## Installing this task
 
