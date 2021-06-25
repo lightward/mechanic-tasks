@@ -265,6 +265,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Set product templates based on product tags](./set-product-templates-based-on-product-tags)
 * [Standardize UK postcodes](./standardize-uk-shipping-postcodes)
 * [Sync an inverse customer tag](./sync-an-inverse-customer-tag)
+* [Sync an inverse order tag](./sync-an-inverse-order-tag)
 * [Sync an inverse product tag](./sync-an-inverse-product-tag)
 * [Sync inventory across a product type](./sync-inventory-across-a-product-type)
 * [Sync inventory across product variants](./sync-inventory-across-product-variants)
