@@ -1,0 +1,86 @@
+{% assign orders = array %}
+
+{% if event.topic contains "shopify/orders/" %}
+  {% if event.preview %}
+    {% assign order = hash %}
+    {% assign order["admin_graphql_api_id"] = "gid://shopify/order/1234567890" %}
+    {% assign order["tags"] = "" %}
+  {% endif %}
+
+  {% assign order_node = hash %}
+  {% assign order_node["id"] = order.admin_graphql_api_id %}
+  {% assign order_node["tags"] = order.tags | split: ", " %}
+  {% assign orders[0] = order_node %}
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% capture bulk_operation_query %}
+    query {
+      orders {
+        edges {
+          node {
+            id
+            tags
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture objects_jsonl %}
+      {"id":"gid://shopify/order/1234567890","tags": []}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = objects_jsonl | parse_jsonl %}
+  {% endif %}
+
+  {% assign orders = bulkOperation.objects %}
+{% endif %}
+
+{% for order in orders %}
+  {% assign add_tag = false %}
+  {% assign remove_tag = false %}
+
+  {% if order.tags contains options.order_tag_to_watch__required %}
+    {% if order.tags contains options.order_tag_to_use_when_missing__required %}
+      {% assign remove_tag = true %}
+    {% endif %}
+  {% else %}
+    {% unless order.tags contains options.order_tag_to_use_when_missing__required %}
+      {% assign add_tag = true %}
+    {% endunless %}
+  {% endif %}
+
+  {% if add_tag or remove_tag %}
+    {% action "shopify" %}
+      mutation {
+        tags{% if add_tag %}Add{% else %}Remove{% endif %}(
+          id: {{ order.id | json }}
+          tags: {{ options.order_tag_to_use_when_missing__required | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}
