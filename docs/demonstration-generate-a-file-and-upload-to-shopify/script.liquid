@@ -1,0 +1,56 @@
+{% if event.topic == "mechanic/user/trigger" %}
+  {% action "files" %}
+    {
+      "invoice.pdf": {
+        "pdf": {
+          "html": "<h1>Order #12345</h1>\n<p>It's due!</p>"
+        }
+      }
+    }
+  {% endaction %}
+{% elsif event.topic == "mechanic/actions/perform" %}
+  {% if event.preview %}
+    {% capture action_json %}
+      {
+        "type": "files",
+        "run": {
+          "result": {
+            "invoice.pdf": {
+              "url": "https://usemechanic.com/file/0000/invoice.pdf"
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign action = action_json | parse_json %}
+  {% endif %}
+
+  {% if action.type == "files" %}
+    {% action "shopify" %}
+      mutation {
+        fileCreate(
+          files: [
+            {
+              originalSource: {{ action.run.result["invoice.pdf"].url | json }}
+            }
+          ]
+        ) {
+          files {
+            fileStatus
+            fileErrors {
+              code
+              details
+              message
+            }
+          }
+          userErrors {
+            code
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endif %}

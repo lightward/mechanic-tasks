@@ -1,6 +1,6 @@
 # Download and email a file to a customer, when purchased
 
-Tags: Download, Email, Orders
+Tags: Download, Email, Files, Orders
 
 This task watches for newly-paid orders. When an order contains a certain line item, this task retrieves a file from the URL of your choice, and emails that file to the customer. Because URLs are easier to share, this makes for a safer way to distribute downloadable materials.
 

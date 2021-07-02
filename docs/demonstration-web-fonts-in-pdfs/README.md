@@ -1,6 +1,6 @@
 # Demonstration: Web fonts in PDFs
 
-Tags: Demonstration, PDF
+Tags: Demonstration, Files, PDF
 
 This task illustrates how to use a typeface from Google Fonts, embedding it in a generated PDF which is then emailed to the recipient of your choice.
 
