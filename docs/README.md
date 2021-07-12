@@ -276,6 +276,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Sync variant inventory within a product by pack size](./sync-variant-inventory-within-a-product-by-pack-size)
 * [Tag customers by order tier](./tag-customers-by-order-tier)
 * [Tag customers in bulk by email address](./tag-customers-in-bulk-by-email-address)
+* [Tag customers on the anniversary of their first order](./tag-customers-on-the-anniversary-of-their-first-order)
 * [Tag customers when their last order is before/after x days ago](./tag-customers-when-their-last-order-is-before-after-x-days-ago)
 * [Tag online orders by their ?ref= referral codes](./tag-orders-by-url-referrer)
 * [Tag orders in bulk by order name](./tag-orders-in-bulk-by-order-name)

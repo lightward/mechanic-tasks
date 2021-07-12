@@ -1,0 +1,125 @@
+{% assign customer_tag_to_apply = options.customer_tag_to_apply__required %}
+{% assign search_query = options.customer_search_query %}
+{% assign days_to_wait_before_tagging = options.days_to_wait_before_tagging__number %}
+{% assign use_account_creation_date = options.use_account_creation_date_instead_of_first_order_date__boolean %}
+
+{% assign origin_threshold = "now - 1 year" | date: "%Y-%m-%d" %}
+
+{% if days_to_wait_before_tagging > 0 %}
+  {% assign seconds_to_wait_before_tagging = days_to_wait_before_tagging | times: 86400 %}
+  {% assign origin_threshold = origin_threshold | date: "%s" | minus: seconds_to_wait_before_tagging | date: "%Y-%m-%d" %}
+{% endif %}
+
+{% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% capture bulk_operation_query %}
+    query {
+      customers(
+        query: {{ search_query | json }}
+      ) {
+        edges {
+          node {
+            __typename
+            id
+            createdAt
+            tags
+            orders(
+              sortKey: PROCESSED_AT
+              query: {{ "processed_at:<=" | append: origin_threshold | json }}
+            ) {
+              edges {
+                node {
+                  __typename
+                  id
+                  processedAt
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture bulkOperation_objects_jsonl %}
+      {"__typename":"Customer","id":"gid:\/\/shopify\/Customer\/1234567890","createdAt":{{ origin_threshold | json }},"tags":null}
+      {"__typename":"Order","id":"gid:\/\/shopify\/Order\/1234567890","processedAt":{{ origin_threshold | json }},"__parentId":"gid:\/\/shopify\/Customer\/1234567890"}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = bulkOperation_objects_jsonl | parse_jsonl %}
+  {% endif %}
+
+  {% assign customers = bulkOperation.objects | where: "__typename", "Customer" %}
+  {% assign orders = bulkOperation.objects | where: "__typename", "Order" %}
+
+  {% for customer in customers %}
+    {% assign should_be_tagged = false %}
+
+    {% if use_account_creation_date %}
+      {% if customer.createdAt <= origin_threshold %}
+        {% assign should_be_tagged = true %}
+      {% endif %}
+
+    {% else %}
+      {% assign customer_orders = orders | where: "__parentId", customer.id %}
+
+      {% if customer_orders != blank %}
+        {% assign should_be_tagged = true %}
+      {% endif %}
+    {% endif %}
+
+    {% if customer.tags contains customer_tag_to_apply %}
+      {% unless should_be_tagged %}
+        {% action "shopify" %}
+          mutation {
+            tagsRemove(
+              id: {{ customer.id | json }}
+              tags: {{ customer_tag_to_apply | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+      {% endunless %}
+
+    {% else %}
+      {% if should_be_tagged %}
+        {% action "shopify" %}
+          mutation {
+            tagsAdd(
+              id: {{ customer.id | json }}
+              tags: {{ customer_tag_to_apply | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
