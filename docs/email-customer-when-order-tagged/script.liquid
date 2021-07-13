@@ -21,7 +21,7 @@
   {% assign order = order_json | parse_json %}
 {% endif %}
 
-{% capture email_sent_tag %}{{ options.tag_to_watch_for__required }}-email-sent{% endcapture %}
+{% capture email_sent_tag %}{{ options.tag_to_watch_for__required | slice: 0, 29 }}-email-sent{% endcapture %}
 {% assign order_tags = order.tags | split: ", " %}
 
 {% assign order_qualifies = true %}
