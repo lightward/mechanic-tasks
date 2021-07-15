@@ -40,6 +40,7 @@ This task monitors incoming orders, and updates to existing orders, looking for 
 **Important notes**
 
 * This task also adds a _second_ tag to the order when the email is sent, as a flag to mark the order as having had that email sent. This helps Mechanic remember what orders should _not_ have an email sent.
+* This second tag defaults to a concatenation of the tag to watch for and "-email-sent"; however, because Shopify has a 40 character limit on order tags, the tag to watch for will be truncated to the first 29 characters if needed to form the concatenated tag. This truncation will only affect the email sent tag, not the original tag being watched for.
 * Use the "Ignore orders older than this task" option to avoid a flood of unexpected email, instructing Mechanic to ignore any existing or new tags on older orders.
 
 ## Installing this task
