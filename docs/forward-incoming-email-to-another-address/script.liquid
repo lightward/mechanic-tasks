@@ -1,0 +1,16 @@
+{% assign attachments = hash %}
+{% for attachment in email.attachments %}
+  {% assign attachments[attachment.name] = hash %}
+  {% assign attachments[attachment.name]["base64"] = attachment.content %}
+{% endfor %}
+
+{% action "email" %}
+  {
+    "to": {{ options.email_recipient__email_required | json }},
+    "subject": {{ email.subject | json }},
+    "body": {{ email.html_body | json }},
+    "reply_to": {{ email.from | json }},
+    "from_display_name": {{ email.from_name | append: " (via Mechanic)" | json }},
+    "attachments": {{ attachments | json }}
+  }
+{% endaction %}

@@ -1,0 +1,19 @@
+{
+  "name": "Forward incoming email to another address",
+  "options": {
+    "email_recipient__email_required": null
+  },
+  "subscriptions": [
+    "mechanic/emails/received"
+  ],
+  "subscriptions_template": "mechanic/emails/received",
+  "script": "{% assign attachments = hash %}\n{% for attachment in email.attachments %}\n  {% assign attachments[attachment.name] = hash %}\n  {% assign attachments[attachment.name][\"base64\"] = attachment.content %}\n{% endfor %}\n\n{% action \"email\" %}\n  {\n    \"to\": {{ options.email_recipient__email_required | json }},\n    \"subject\": {{ email.subject | json }},\n    \"body\": {{ email.html_body | json }},\n    \"reply_to\": {{ email.from | json }},\n    \"from_display_name\": {{ email.from_name | append: \" (via Mechanic)\" | json }},\n    \"attachments\": {{ attachments | json }}\n  }\n{% endaction %}",
+  "docs": "This task monitors for [incoming mail](https://learn.mechanic.dev/platform/email/receiving-email), sent directly to your Mechanic account, and forwards all of it (including attachments) to the address of your choice. (Note that only emails less than 10MB in total size will be sent.)",
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "tags": [
+    "Email"
+  ]
+}

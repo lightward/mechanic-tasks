@@ -189,6 +189,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Export all products to SFTP, as a Shopify-friendly CSV](./export-all-products-to-sftp-as-a-shopify-friendly-csv)
 * [Find duplicate SKUs](./find-duplicate-skus)
 * [Flag orders that aren't fulfilled after several days](./flag-orders-that-arent-fulfilled-after-two-days)
+* [Forward incoming email to another address](./forward-incoming-email-to-another-address)
 * [Generate a discount code when a certain product is purchased](./generate-a-discount-code-when-a-certain-product-is-purchased)
 * [Generate a product discount when a voucher product is purchased](./generate-a-product-discount-when-a-voucher-product-is-purchased)
 * [Generate a report of orders that still require payment](./generate-a-report-of-orders-that-still-require-payment)
