@@ -1,6 +1,6 @@
 # Tag customers on the anniversary of their first order
 
-Tags: (not tagged!)
+Tags: Customers, Tag
 
 Running daily, or manually, this task scans all customers and tags them if their __first__ order was a year or more ago. Alternatively, you may choose to tag customers if their account was created at least a year ago.
 
