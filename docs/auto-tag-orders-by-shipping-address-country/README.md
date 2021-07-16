@@ -12,8 +12,7 @@ This task automatically adds the tag of your choice to incoming orders, based on
 
 ```json
 {
-  "country_code__required": null,
-  "tag_to_apply__required": null
+  "tags_to_apply_and_country_codes__keyval_required": null
 }
 ```
 
@@ -31,7 +30,9 @@ shopify/orders/create
 
 This task automatically adds the tag of your choice to incoming orders, based on the country in the order's shipping address.
 
-This task automatically tags orders based on the country in the shipping address. The "Country code" option expects the two-character country code in all caps. [Find country codes here.](https://help.shopify.com/en/api/storefront-api/reference/enum/countrycode)
+Begin by clicking the __Add item__ link next to the _Tags to apply and country codes_ field. Enter tags on the left (one per row), and for each tag add one or more two-character country codes on the right, separated by commas. Country codes should be entered in all caps. [Find country codes here.](https://help.shopify.com/en/api/storefront-api/reference/enum/countrycode)
+
+Example input: Central America > BZ,CR,SV,GT,HN,NI,PA
 
 ## Installing this task
 
