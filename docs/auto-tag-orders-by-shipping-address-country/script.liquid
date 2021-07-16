@@ -1,23 +1,27 @@
+{% assign tags_to_apply_and_country_codes = options.tags_to_apply_and_country_codes__keyval_required %}    
+
 {% if event.preview %}
   {% assign order = '{"admin_graphql_api_id": "gid://shopify/Order/1234567890"}' | parse_json %}
   {% assign order["shipping_address"] = hash %}
-  {% assign order["shipping_address"]["country_code"] = options.country_code__required %}
+  {% assign order["shipping_address"]["country_code"] = tags_to_apply_and_country_codes.first.last %}
 {% endif %}
 
-{% if order.shipping_address.country_code == options.country_code__required %}
-
-  {% action "shopify" %}
-    mutation {
-      tagsAdd(
-        id: {{ order.admin_graphql_api_id | json }}
-        tags: {{ options.tag_to_apply__required | json }}
-      ) {
-        userErrors {
-          field
-          message
+{% for tag_to_apply_and_country_codes in tags_to_apply_and_country_codes %}
+  {% if tag_to_apply_and_country_codes.last contains order.shipping_address.country_code %}
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {{ order.admin_graphql_api_id | json }}
+          tags: {{ tag_to_apply_and_country_codes.first | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
         }
       }
-    }
-  {% endaction %}
+    {% endaction %}
 
-{% endif %}
+    {% break %}
+  {% endif %}
+{% endfor %}
