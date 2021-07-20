@@ -45,6 +45,8 @@ Conversely, you may configure this task to _exclude_ certain collections using e
 
 The combination of inclusion and exclusion options _can_ allow multiple copies of this task to run (to use different base sorting for instance), provided they are configured properly.
 
+This task will skip any collections it encounters if the collection sorting is not already set to manual. Check the "Force manual sorting on collections" option to have the task update those collections to the manual sorting required by this task.
+
 You may use any of these options for the base sort order:
 
 * MANUAL
