@@ -13,7 +13,9 @@ This task re-sorts your collections, beginning with the sort order of your choic
 ```json
 {
   "base_sort_order__required": "ALPHA_DESC",
-  "collection_titles_or_ids__array_required": null,
+  "collection_titles_or_ids_to_include__array": null,
+  "collection_titles_or_ids_to_exclude__array": null,
+  "force_manual_sorting_on_collections__boolean": false,
   "run_hourly__boolean": false,
   "run_daily__boolean": false
 }
@@ -27,7 +29,6 @@ This task re-sorts your collections, beginning with the sort order of your choic
 mechanic/user/trigger
 {% if options.run_hourly__boolean %}mechanic/scheduler/hourly{% endif %}
 {% if options.run_daily__boolean %}mechanic/scheduler/daily{% endif %}
-user/reorder_collection/stage_2
 ```
 
 [Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
@@ -38,18 +39,24 @@ This task re-sorts your collections, beginning with the sort order of your choic
 
 Run this task manually to re-sort your collections on demand. Optionally, configure this task to run hourly or nightly as well.
 
-Configure this task for certain collections using each collection's title, or its ID. [Learn how to find the collection IDs.](https://help.usemechanic.com/en/articles/2946120-how-do-i-find-an-id-for-a-product-collection-order-or-something-else)
+By default, this task will run against **ALL** of your collections. Alternatively, you may configure this task to only _include_ certain collections using each collection's title, or its ID. [Learn how to find the collection IDs.](https://learn.mechanic.dev/techniques/finding-a-resource-id)
+
+Conversely, you may configure this task to _exclude_ certain collections using each collection's title, or its ID, in which case it will run against all collections except the ones in this list. [Note: if there are any collections entered into the inclusion list, then the exclusion list will be ignored.]
+
+The combination of inclusion and exclusion options _can_ allow multiple copies of this task to run (to use different base sorting for instance), provided they are configured properly.
+
+This task will skip any collections it encounters if the collection sorting is not already set to manual. Check the "Force manual sorting on collections" option to have the task update those collections to the manual sorting required by this task.
 
 You may use any of these options for the base sort order:
 
 * MANUAL
-* BEST_SELLING
 * ALPHA_ASC
 * ALPHA_DESC
-* PRICE_DESC
-* PRICE_ASC
-* CREATED_DESC
+* BEST_SELLING
 * CREATED
+* CREATED_DESC
+* PRICE_ASC
+* PRICE_DESC
 
 __Note__: To function correctly, the "Perform action runs in sequence" option should stay enabled in the task's advanced settings.
 
