@@ -103,6 +103,7 @@
       query {
         collection(id: {{ collection.admin_graphql_api_id | json }}) {
           products(
+            sortKey: COLLECTION_DEFAULT
             first: 250
             after: {{ cursor | json }}
           ) {
