@@ -95,9 +95,46 @@
     {% endif %}
   {% endif %}
 
+  {% assign all_product_ids_current_sort = array %}
+  {% assign cursor = nil %}
+
+  {% for n in (0..100) %}
+    {% capture query %}
+      query {
+        collection(id: {{ collection.admin_graphql_api_id | json }}) {
+          products(
+            first: 250
+            after: {{ cursor | json }}
+          ) {
+            pageInfo {
+              hasNextPage
+            }
+            edges {
+              cursor
+              node {
+                id
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% for product_edge in result.data.collection.products.edges %}
+      {% assign all_product_ids_current_sort[all_product_ids_current_sort.size] = product_edge.node.id %}
+    {% endfor %}
+
+    {% if result.data.collection.products.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.collection.products.edges.last.cursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
   {% assign in_stock_product_ids = array %}
   {% assign out_of_stock_product_ids = array %}
-
   {% assign cursor = nil %}
 
   {% for n in (0..100) %}
@@ -192,10 +229,8 @@
 
   {% assign moves = array %}
 
-  {% assign current_product_ids_sorted = collection.products | map: "admin_graphql_api_id" %}
-
   {% for product_id in all_product_ids %}
-    {% if current_product_ids_sorted[forloop.index0] != product_id %}
+    {% if all_product_ids_current_sort[forloop.index0] != product_id %}
       {% assign move = hash %}
       {% assign move["id"] = product_id %}
       {% assign move["newPosition"] = "" | append: forloop.index0 %}
