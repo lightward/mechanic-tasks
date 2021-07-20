@@ -60,6 +60,8 @@ Optionally, choose to ignore options that only appear on out-of-stock variants, 
 
 Change the separator to change the way tags are built. Using a dash results in "Color-Blue", an underscore results in "Color_Blue", and a colon with a space yields "Color: Blue".
 
+This task will remove option tags that are no longer applicable, by scanning for tag prefixes using the list of product options to consider.
+
 ## Installing this task
 
 Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-products-by-their-options), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-products-by-their-options.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
