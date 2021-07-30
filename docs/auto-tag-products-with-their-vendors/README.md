@@ -2,11 +2,21 @@
 
 Tags: Auto-Tag, Products, Vendor
 
-Use this task to copy each product's vendor to the product's tag. :)
+Use this task to copy each product's vendor to the product's tag. Optionally, you can apply a prefix to all vendor tags (e.g. "vendor-"). Run this task manually to scan every product in your store. Otherwise, this task will run for specific products, whenever a product is created or updated.
 
 * View in the task library: [usemechanic.com/task/auto-tag-products-with-their-vendors](https://usemechanic.com/task/auto-tag-products-with-their-vendors)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-products-with-their-vendors.json)
 * Preview task code: [script.liquid](./script.liquid)
+
+## Default options
+
+```json
+{
+  "apply_this_prefix_to_vendor_tags": null
+}
+```
+
+[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
 
 ## Subscriptions
 
@@ -20,9 +30,9 @@ mechanic/user/trigger
 
 ## Documentation
 
-Use this task to copy each product's vendor to the product's tag. :)
+Use this task to copy each product's vendor to the product's tag. Optionally, you can apply a prefix to all vendor tags (e.g. "vendor-"). Run this task manually to scan every product in your store. Otherwise, this task will run for specific products, whenever a product is created or updated.
 
-Run this task manually to scan every product in your store. Otherwise, this task will run for specific products, whenever a product is created or updated.
+__Note__: When using the vendor tag prefix option, any tags on a product that contain that prefix, but do not match the current vendor, will be removed. This does _not_ happen when the prefix option is not used or has been changed.
 
 ## Installing this task
 

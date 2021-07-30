@@ -1,37 +1,110 @@
-{% if event.preview %}
-  {% action "shopify" %}
-    mutation {
-      tagsAdd(
-        id: "gid://shopify/Product/1234576890"
-        tags: "Nike"
-      ) {
-        userErrors {
-          field
-          message
-        }
-      }
-    }
-  {% endaction %}
-{% endif %}
+{% assign vendor_tag_prefix = options.apply_this_prefix_to_vendor_tags %}
 
 {% if event.topic == "mechanic/user/trigger" %}
-  {% assign products = shop.products %}
-{% elsif event.topic contains "shopify/products/" %}
+  {% assign cursor = nil %}
   {% assign products = array %}
-  {% assign products[0] = product %}
+
+  {% for n in (0..100) %}
+    {% capture query %}
+      query {
+        products(
+          first: 250
+          after: {{ cursor | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+          }
+          edges {
+            cursor
+            node {
+              id
+              tags
+              vendor
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% assign products_result = result.data.products.edges | map: "node" | where: "vendor" %}
+    {% assign products = products | concat: products_result %}
+
+    {% if result.data.products.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.products.edges.last.cursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+{% elsif event.topic contains "shopify/products/" %}
+  {% if product.vendor == blank %}
+    {% break %}
+  {% endif %}
+
+  {% assign graphql_product = hash %}
+  {% assign graphql_product["id"] = product.admin_graphql_api_id %}
+  {% assign graphql_product["tags"] = product.tags | split: ", " %}
+  {% assign graphql_product["vendor"] = product.vendor %}
+
+  {% assign products = array %}
+  {% assign products[0] = graphql_product %}
+{% endif %}
+
+{% if event.preview %}
+  {% capture products_json %}
+    [
+      {
+        "id": "gid://shopify/Product/1234567890",
+        "vendor": "ACME"
+      }
+    ]
+  {% endcapture %}
+
+  {% assign products = products_json | parse_json %}
 {% endif %}
 
 {% for product in products %}
-  {% if product.vendor == blank %}
-    {% continue %}
+  {% assign tags_to_remove = array %}
+  {% assign vendor_tag = product.vendor %}
+
+  {% if vendor_tag_prefix != blank %}
+    {% assign vendor_tag = vendor_tag | prepend: vendor_tag_prefix %}
+
+    {% for tag in product.tags %}
+      {% if tag contains vendor_tag_prefix and tag != vendor_tag %}
+        {% assign trimmed_tag = tag | slice: 0, vendor_tag_prefix.size %}
+        
+        {% if trimmed_tag == vendor_tag_prefix %}
+          {% assign tags_to_remove = tags_to_remove | push: tag %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+
+    {% if tags_to_remove != blank %}
+      {% action "shopify" %}
+        mutation {
+          tagsRemove(
+            id: {{ product.id | json }}
+            tags: {{ tags_to_remove | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}      
+    {% endif %}
   {% endif %}
 
-  {% unless product.tags contains product.vendor %}
+  {% unless product.tags contains vendor_tag %}
     {% action "shopify" %}
       mutation {
         tagsAdd(
-          id: {{ product.admin_graphql_api_id | json }}
-          tags: {{ product.vendor | json }}
+          id: {{ product.id | json }}
+          tags: {{ vendor_tag | json }}
         ) {
           userErrors {
             field
