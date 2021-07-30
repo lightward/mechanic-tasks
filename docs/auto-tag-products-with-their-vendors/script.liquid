@@ -74,7 +74,11 @@
 
     {% for tag in product.tags %}
       {% if tag contains vendor_tag_prefix and tag != vendor_tag %}
-        {% assign tags_to_remove = tags_to_remove | push: tag %}
+        {% assign trimmed_tag = tag | slice: 0, vendor_tag_prefix.size %}
+        
+        {% if trimmed_tag == vendor_tag_prefix %}
+          {% assign tags_to_remove = tags_to_remove | push: tag %}
+        {% endif %}
       {% endif %}
     {% endfor %}
 
