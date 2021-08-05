@@ -1,0 +1,1190 @@
+{% assign from_today = options.report_on_sales_from_today__boolean %}
+{% assign from_yesterday = options.report_on_sales_from_yesterday__boolean %}
+{% assign in_past_week = options.report_on_sales_in_past_week__boolean %}
+{% assign in_past_month = options.report_on_sales_in_past_month__boolean %}
+{% assign in_past_quarter = options.report_on_sales_in_past_quarter__boolean %}
+{% assign in_past_year = options.report_on_sales_in_past_year__boolean %}
+
+{% assign today = "now" | date: "%Y-%m-%d" %}
+{% assign yesterday = "now - 1 day" | date: "%Y-%m-%d" %}
+
+{% assign date_query = nil %}
+{% assign report_title = "Sales by Product" %}
+
+{% if from_today %}
+  {% unless from_yesterday or in_past_week or in_past_month or in_past_quarter or in_past_year %}
+    {% assign date_query = "processed_at:past_day" %}
+    {% assign report_title = report_title | append: " (Today)" %}
+  {% endunless %}
+
+{% elsif from_yesterday %}
+  {% unless in_past_week or in_past_month or in_past_quarter or in_past_year %}
+    {% assign date_query = "processed_at:" | append: yesterday %}
+    {% assign report_title = report_title | append: " (Yesterday)" %}
+  {% endunless %}
+
+{% elsif in_past_week %}
+  {% unless in_past_month or in_past_quarter or in_past_year %}
+    {% assign date_query = "processed_at:past_week" %}
+    {% assign report_title = report_title | append: " (Past week)" %}
+  {% endunless %}
+
+{% elsif in_past_month %}
+  {% unless in_past_quarter or in_past_year %}
+    {% assign date_query = "processed_at:past_month" %}
+    {% assign report_title = report_title | append: " (Past month)" %}
+  {% endunless %}
+
+{% elsif in_past_quarter %}
+  {% unless in_past_year %}
+    {% assign date_query = "processed_at:past_quarter" %}
+    {% assign report_title = report_title | append: " (Past quarter)" %}
+  {% endunless %}
+
+{% elsif in_past_year %}
+  {% assign date_query = "processed_at:past_year" %}
+  {% assign report_title = report_title | append: " (Past year)" %}
+{% endif %}
+
+{% if date_query %}
+  {% action "echo" date_query: date_query %}
+{% else %}
+  {% error "Choose exactly one reporting period option: today, yesterday, past week, past month, past quarter, or past year." %}
+{% endif %}
+
+{% assign report_title_with_date
+  = report_title
+  | append: " - "
+  | append: today
+%}
+
+{% if event.topic contains "mechanic/scheduler/" or event.topic == "mechanic/user/trigger" %}
+  {% capture bulk_operation_query %}
+    query {
+      orders(
+        query: {{ date_query | json }}
+      ) {
+        edges {
+          node {
+            __typename
+            id
+            name
+            lineItems {
+              edges {
+                node {
+                  __typename
+                  id
+                  product {
+                    __typename
+                    id
+                    title
+                    productType
+                  }
+                  vendor
+                  quantity
+                  discountAllocations {
+                    allocatedAmountSet {
+                      shopMoney {
+                        amount
+                      }
+                    }
+                  }
+                  discountedTotalSet {
+                    shopMoney {
+                      amount
+                    }
+                  }
+                  originalTotalSet {
+                    shopMoney {
+                      amount
+                    }
+                  }
+                  totalDiscountSet {
+                    shopMoney {
+                      amount
+                    }
+                  }
+                  taxLines {
+                    priceSet {
+                      shopMoney {
+                        amount
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            refunds {
+              id
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture jsonl_string %}
+      {"__typename":"Order","id":"gid:\/\/shopify\/Order\/1234567890","name":"#TEST123","refunds":[{"id":"gid:\/\/shopify\/Refund\/1234567890"}]}
+      {"__typename":"LineItem","id":"gid:\/\/shopify\/LineItem\/1234567890","product":{"id":"gid:\/\/shopify\/Product\/1234567890","title":"ACME - Widget","productType":"Widget"},"vendor":"ACME","quantity":3,"discountAllocations":[{"allocatedAmountSet":{"shopMoney":{"amount":"6.24"}}}],"discountedTotalSet":{"shopMoney":{"amount":"86.97"}},"originalTotalSet":{"shopMoney":{"amount":"86.97"}},"totalDiscountSet":{"shopMoney":{"amount":"0.0"}},"taxLines":[{"rate":0.05,"ratePercentage":5.0,"title":"GST","priceSet":{"shopMoney":{"amount":"4.04"}}}],"__parentId":"gid:\/\/shopify\/Order\/1234567890"}
+      {"__typename":"LineItem","id":"gid:\/\/shopify\/LineItem\/2345678901","product":{"id":"gid:\/\/shopify\/Product\/2345678901","title":"ACME - Brick","productType":"Brick"},"vendor":"ACME","quantity":3,"discountAllocations":[{"allocatedAmountSet":{"shopMoney":{"amount":"2.59"}}}],"discountedTotalSet":{"shopMoney":{"amount":"36.0"}},"originalTotalSet":{"shopMoney":{"amount":"36.0"}},"totalDiscountSet":{"shopMoney":{"amount":"0.0"}},"taxLines":[{"rate":0.05,"ratePercentage":5.0,"title":"GST","priceSet":{"shopMoney":{"amount":"1.67"}}}],"__parentId":"gid:\/\/shopify\/Order\/1234567890"}
+      {"__typename":"LineItem","id":"gid:\/\/shopify\/LineItem\/3456789012","product":{"id":"gid:\/\/shopify\/Product\/3456789012","title":"Blammo - Widget","productType":"Widget"},"vendor":"Blammo","quantity":3,"discountAllocations":[{"allocatedAmountSet":{"shopMoney":{"amount":"17.4"}}},{"allocatedAmountSet":{"shopMoney":{"amount":"5.0"}}}],"discountedTotalSet":{"shopMoney":{"amount":"69.6"}},"originalTotalSet":{"shopMoney":{"amount":"87.0"}},"totalDiscountSet":{"shopMoney":{"amount":"17.4"}},"taxLines":[{"rate":0.05,"ratePercentage":5.0,"title":"GST","priceSet":{"shopMoney":{"amount":"3.23"}}}],"__parentId":"gid:\/\/shopify\/Order\/1234567890"}
+      {"__typename":"LineItem","id":"gid:\/\/shopify\/LineItem\/4567890123","product":{"id":"gid:\/\/shopify\/Product\/4567890123","title":"Blammo - Log","productType":"Log"},"vendor":"Blammo","quantity":2,"discountAllocations":[{"allocatedAmountSet":{"shopMoney":{"amount":"1.5"}}}],"discountedTotalSet":{"shopMoney":{"amount":"21.0"}},"originalTotalSet":{"shopMoney":{"amount":"21.0"}},"totalDiscountSet":{"shopMoney":{"amount":"0.0"}},"taxLines":[{"rate":0.05,"ratePercentage":5.0,"title":"GST","priceSet":{"shopMoney":{"amount":"0.98"}}}],"__parentId":"gid:\/\/shopify\/Order\/1234567890"}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = jsonl_string | parse_jsonl %}
+  {% endif %}
+
+  {% assign orders = bulkOperation.objects | where: "__typename", "Order" %}
+  {% assign line_items = bulkOperation.objects | where: "__typename", "LineItem" | where: "product" %}
+
+  {% if orders == empty %}
+    {% log message: "This task run did not generate any data to report on." %}
+    {% break %}
+  {% endif %}
+
+  {% assign all_product_types_in_this_period
+    = line_items
+    | map: "product"
+    | map: "productType"
+    | uniq
+    | sort_natural
+  %}
+
+  {% assign all_vendors_in_this_period
+    = line_items
+    | map: "vendor"
+    | uniq
+    | sort_natural
+  %}
+
+  {% assign summary_totals = hash %}
+  {% assign product_data_by_id = hash %}
+  {% assign product_data_by_type = hash %}
+  {% assign product_data_by_vendor = hash %}
+
+  {% for order in orders %}
+    {% if order.refunds != blank %}
+      {% assign order_refund_line_items = array %}
+
+      {% for refund in order.refunds %}
+        {% comment %}
+        -- NOTE: Need to query for refund line items separately from bulk op query due to Shopify constraint...
+        "Queries that contain a connection field within a list field are not currently supported."
+        {% endcomment %}
+        {% capture query %}
+          query {
+            refund(id: {{ refund.id | json }}) {
+              refundLineItems(first: 25) {
+                edges {
+                  node {
+                    lineItem {
+                      id
+                    }
+                    quantity
+                    totalTaxSet {
+                      shopMoney {
+                        amount
+                      }
+                    }
+                    subtotalSet {
+                      shopMoney {
+                        amount
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        {% endcapture %}
+
+        {% assign result = query | shopify %}
+
+        {% if event.preview %}
+          {% capture result_json %}
+            {
+              "data": {
+                "refund": {
+                  "refundLineItems": {
+                    "edges": [
+                      {
+                        "node": {
+                          "lineItem": {
+                            "id": "gid://shopify/LineItem/9641853847372"
+                          },
+                          "quantity": 1,
+                          "totalTaxSet": {
+                            "shopMoney": {
+                              "amount": "1.07"
+                            }
+                          },
+                          "subtotalSet": {
+                            "shopMoney": {
+                              "amount": "21.53"
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "node": {
+                          "lineItem": {
+                            "id": "gid://shopify/LineItem/9641853814604"
+                          },
+                          "quantity": 2,
+                          "totalTaxSet": {
+                            "shopMoney": {
+                              "amount": "1.11"
+                            }
+                          },
+                          "subtotalSet": {
+                            "shopMoney": {
+                              "amount": "22.27"
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "node": {
+                          "lineItem": {
+                            "id": "gid://shopify/LineItem/9641853945676"
+                          },
+                          "quantity": 3,
+                          "totalTaxSet": {
+                            "shopMoney": {
+                              "amount": "4.18"
+                            }
+                          },
+                          "subtotalSet": {
+                            "shopMoney": {
+                              "amount": "83.52"
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          {% endcapture %}
+
+          {% assign result = result_json | parse_json %}
+        {% endif %}
+
+        {% assign refund_line_items = result.data.refund.refundLineItems.edges | map: "node" %}
+        {% assign order_refund_line_items = order_refund_line_items | concat: refund_line_items %}
+      {% endfor %}{% comment %}-- END: order.refunds loop --{% endcomment %}
+    {% endif %}
+
+    {% assign order_line_items = line_items | where: "__parentId", order.id %}
+
+    {% for line_item in order_line_items %}
+      {% assign refund_line_item_quantity = 0 %}
+      {% assign refund_line_item_taxes = 0 %}
+      {% assign refund_line_item_subtotal = 0 %}
+
+      {% for refund_line_item in order_refund_line_items %}
+        {% if refund_line_item.lineItem.id == line_item.id %}
+          {% assign refund_line_item_quantity
+            = refund_line_item_quantity
+            | plus: refund_line_item.quantity
+          %}
+          {% assign refund_line_item_taxes
+            = refund_line_item_taxes
+            | plus: refund_line_item.totalTaxSet.shopMoney.amount
+          %}
+          {% assign refund_line_item_subtotal
+            = refund_line_item_subtotal
+            | plus: refund_line_item.subtotalSet.shopMoney.amount
+          %}
+        {% endif %}
+      {% endfor %}
+
+      {% assign line_item_quantity = line_item.quantity | minus: refund_line_item_quantity %}
+
+      {% assign line_item_taxes = 0 %}
+
+      {% for tax_line in line_item.taxLines %}
+        {% assign line_item_taxes
+          = line_item_taxes
+          | plus: tax_line.priceSet.shopMoney.amount
+        %}
+      {% endfor %}
+
+      {% assign line_item_taxes = line_item_taxes | minus: refund_line_item_taxes %}
+
+      {% assign line_item_discounts = 0 %}
+
+      {% for discount_allocation in line_item.discountAllocations %}
+        {% assign line_item_discounts
+          = line_item_discounts
+          | plus: discount_allocation.allocatedAmountSet.shopMoney.amount
+        %}
+      {% endfor %}
+
+      {% assign line_item_net_sales
+        = line_item.originalTotalSet.shopMoney.amount
+        | minus: line_item_discounts
+        | minus: refund_line_item_subtotal
+      %}
+      {% assign line_item_total_sales
+        = line_item_net_sales
+        | plus: line_item_taxes
+      %}
+
+      {% comment %}
+        -- aggregate by product id
+      {% endcomment %}
+
+      {% assign product_id = line_item.product.id %}
+
+      {% assign product_data_by_id[product_id]
+        = product_data_by_id[product_id]
+        | default: hash
+      %}
+      {% assign product_data_by_id[product_id]["title"] = line_item.product.title %}
+      {% assign product_data_by_id[product_id]["vendor"] = line_item.vendor %}
+      {% assign product_data_by_id[product_id]["product_type"] = line_item.product.productType %}
+      {% assign product_data_by_id[product_id]["total_quantity"]
+        = product_data_by_id[product_id]["total_quantity"]
+        | default: 0
+        | plus: line_item_quantity
+      %}
+      {% assign product_data_by_id[product_id]["total_gross"]
+        = product_data_by_id[product_id]["total_gross"]
+        | default: 0
+        | plus: line_item.originalTotalSet.shopMoney.amount
+      %}
+      {% assign product_data_by_id[product_id]["total_discounted"]
+        = product_data_by_id[product_id]["total_discounted"]
+        | default: 0
+        | plus: line_item.discountedTotalSet.shopMoney.amount
+      %}
+      {% assign product_data_by_id[product_id]["total_discounts"]
+        = product_data_by_id[product_id]["total_discounts"]
+        | default: 0
+        | plus: line_item_discounts
+      %}
+      {% assign product_data_by_id[product_id]["total_returns"]
+        = product_data_by_id[product_id]["total_returns"]
+        | default: 0
+        | plus: refund_line_item_subtotal
+      %}
+      {% assign product_data_by_id[product_id]["total_taxes"]
+        = product_data_by_id[product_id]["total_taxes"]
+        | default: 0
+        | plus: line_item_taxes
+      %}
+      {% assign product_data_by_id[product_id]["net_sales"]
+        = product_data_by_id[product_id]["net_sales"]
+        | default: 0
+        | plus: line_item_net_sales
+      %}
+      {% assign product_data_by_id[product_id]["total_sales"]
+        = product_data_by_id[product_id]["total_sales"]
+        | default: 0
+        | plus: line_item_total_sales
+      %}
+
+      {% comment %}
+        -- aggregate all products for summary row
+      {% endcomment %}
+
+      {% assign summary_totals["total_quantity"]
+        = summary_totals["total_quantity"]
+        | default: 0
+        | plus: line_item_quantity
+      %}
+      {% assign summary_totals["total_gross"]
+        = summary_totals["total_gross"]
+        | default: 0
+        | plus: line_item.originalTotalSet.shopMoney.amount
+      %}
+      {% assign summary_totals["total_discounted"]
+        = summary_totals["total_discounted"]
+        | default: 0
+        | plus: line_item.discountedTotalSet.shopMoney.amount
+      %}
+      {% assign summary_totals["total_discounts"]
+        = summary_totals["total_discounts"]
+        | default: 0
+        | plus: line_item_discounts
+      %}
+      {% assign summary_totals["total_returns"]
+        = summary_totals["total_returns"]
+        | default: 0
+        | plus: refund_line_item_subtotal
+      %}
+      {% assign summary_totals["total_taxes"]
+        = summary_totals["total_taxes"]
+        | default: 0
+        | plus: line_item_taxes
+      %}
+      {% assign summary_totals["net_sales"]
+        = summary_totals["net_sales"]
+        | default: 0
+        | plus: line_item_net_sales
+      %}
+      {% assign summary_totals["total_sales"]
+        = summary_totals["total_sales"]
+        | default: 0
+        | plus: line_item_total_sales
+      %}
+
+      {% comment %}
+        -- aggregate by product type
+      {% endcomment %}
+
+      {% assign product_type = line_item.product.productType %}
+
+      {% if options.group_by_product_type__boolean and product_type != blank %}
+        {% assign product_data_by_type[product_type]
+          = product_data_by_type[product_type]
+          | default: hash
+        %}
+        {% assign product_data_by_type[product_type]["product_type"]
+          = line_item.product.productType
+        %}
+        {% assign product_data_by_type[product_type]["total_quantity"]
+          = product_data_by_type[product_type]["total_quantity"]
+          | default: 0
+          | plus: line_item_quantity
+        %}
+        {% assign product_data_by_type[product_type]["total_gross"]
+          = product_data_by_type[product_type]["total_gross"]
+          | default: 0
+          | plus: line_item.originalTotalSet.shopMoney.amount
+        %}
+        {% assign product_data_by_type[product_type]["total_discounted"]
+          = product_data_by_type[product_type]["total_discounted"]
+          | default: 0
+          | plus: line_item.discountedTotalSet.shopMoney.amount
+        %}
+        {% assign product_data_by_type[product_type]["total_discounts"]
+          = product_data_by_type[product_type]["total_discounts"]
+          | default: 0
+          | plus: line_item_discounts
+        %}
+        {% assign product_data_by_type[product_type]["total_returns"]
+          = product_data_by_type[product_type]["total_returns"]
+          | default: 0
+          | plus: refund_line_item_subtotal
+        %}
+        {% assign product_data_by_type[product_type]["total_taxes"]
+          = product_data_by_type[product_type]["total_taxes"]
+          | default: 0
+          | plus: line_item_taxes
+        %}
+        {% assign product_data_by_type[product_type]["net_sales"]
+          = product_data_by_type[product_type]["net_sales"]
+          | default: 0
+          | plus: line_item_net_sales
+        %}
+        {% assign product_data_by_type[product_type]["total_sales"]
+          = product_data_by_type[product_type]["total_sales"]
+          | default: 0
+          | plus: line_item_total_sales
+        %}
+      {% endif %}
+
+      {% comment %}
+        -- aggregate by vendor
+      {% endcomment %}
+
+      {% assign vendor = line_item.vendor %}
+
+      {% if options.group_by_vendor__boolean and vendor != blank %}
+        {% assign product_data_by_vendor[vendor]
+          = product_data_by_vendor[vendor]
+          | default: hash
+        %}
+        {% assign product_data_by_vendor[vendor]["vendor"]
+          = line_item.vendor
+        %}
+        {% assign product_data_by_vendor[vendor]["total_quantity"]
+          = product_data_by_vendor[vendor]["total_quantity"]
+          | default: 0
+          | plus: line_item_quantity
+        %}
+        {% assign product_data_by_vendor[vendor]["total_gross"]
+          = product_data_by_vendor[vendor]["total_gross"]
+          | default: 0
+          | plus: line_item.originalTotalSet.shopMoney.amount
+        %}
+        {% assign product_data_by_vendor[vendor]["total_discounted"]
+          = product_data_by_vendor[vendor]["total_discounted"]
+          | default: 0
+          | plus: line_item.discountedTotalSet.shopMoney.amount
+        %}
+        {% assign product_data_by_vendor[vendor]["total_discounts"]
+          = product_data_by_vendor[vendor]["total_discounts"]
+          | default: 0
+          | plus: line_item_discounts
+        %}
+        {% assign product_data_by_vendor[vendor]["total_returns"]
+          = product_data_by_vendor[vendor]["total_returns"]
+          | default: 0
+          | plus: refund_line_item_subtotal
+        %}
+        {% assign product_data_by_vendor[vendor]["total_taxes"]
+          = product_data_by_vendor[vendor]["total_taxes"]
+          | default: 0
+          | plus: line_item_taxes
+        %}
+        {% assign product_data_by_vendor[vendor]["net_sales"]
+          = product_data_by_vendor[vendor]["net_sales"]
+          | default: 0
+          | plus: line_item_net_sales
+        %}
+        {% assign product_data_by_vendor[vendor]["total_sales"]
+          = product_data_by_vendor[vendor]["total_sales"]
+          | default: 0
+          | plus: line_item_total_sales
+        %}
+      {% endif %}
+    {% endfor %}{% comment %}-- END: line_items loop --{% endcomment %}
+  {% endfor %}{% comment %}-- END: orders loop --{% endcomment %}
+
+  {% comment %}
+    -- create HTML output blocks for PDF generation
+  {% endcomment %}
+
+  {% capture table_header_row_html %}
+    <tr>
+      <td>Title</td>
+      <td>Vendor</td>
+      <td>Type</td>
+      <td>Quantity</td>
+      <td>Gross</td>
+      <td>Discounts</td>
+      <td>Returns</td>
+      <td>Net</td>
+      <td>Tax</td>
+      <td>Total</td>
+    </tr>
+  {% endcapture %}
+
+  {% assign sorted_product_data_by_id
+    = product_data_by_id
+    | values
+    | sort: "total_sales"
+    | reverse
+  %}
+  {% assign product_id_chart_labels
+    = sorted_product_data_by_id
+    | map: "title"
+  %}
+  {% assign product_id_chart_data
+    = sorted_product_data_by_id
+    | map: "total_sales"
+  %}
+
+  {% if sorted_product_data_by_id.size > 10 %}
+    {% assign product_id_chart_labels
+      = product_id_chart_labels
+      | slice: 0, 10
+      | push: "ALL OTHERS"
+    %}
+    {% assign sum_all_others
+      = product_id_chart_data
+      | slice: 10, sorted_product_data_by_id.size
+      | sum
+    %}
+    {% assign product_id_chart_data
+      = product_id_chart_data
+      | slice: 0, 10
+      | push: sum_all_others
+    %}
+  {% endif %}
+
+  {% action "echo"
+    product_id_chart_labels: product_id_chart_labels,
+    product_id_chart_data: product_id_chart_data
+  %}
+
+  {% capture total_discounts_html %}
+    {% if summary_totals.total_discounts > 0 %}
+      <td nowrap>-{{ summary_totals.total_discounts | currency }}</td>
+    {% else %}
+      <td>{{ 0 | currency }}</td>
+    {% endif %}
+  {% endcapture %}
+
+  {% capture total_returns_html %}
+    {% if summary_totals.total_returns > 0 %}
+      <td nowrap>-{{ summary_totals.total_returns | currency }}</td>
+    {% else %}
+      <td>{{ 0 | currency }}</td>
+    {% endif %}
+  {% endcapture %}
+
+  {% capture summary_row_html %}
+    <tr class="summary-row">
+      <td colspan="3">Summary</td>
+      <td>{{ summary_totals.total_quantity }}</td>
+      <td>{{ summary_totals.total_gross | currency }}</td>
+      {{ total_discounts_html | strip }}
+      {{ total_returns_html | strip }}
+      <td>{{ summary_totals.net_sales | currency }}</td>
+      <td>{{ summary_totals.total_taxes | currency }}</td>
+      <td>{{ summary_totals.total_sales | currency }}</td>
+    </tr>
+  {% endcapture %}
+
+  {% assign report_rows = array | push: summary_row_html %}
+
+  {% for product in sorted_product_data_by_id %}
+    {% capture product_total_discounts_html %}
+      {% if product.total_discounts > 0 %}
+        <td nowrap>-{{ product.total_discounts | currency }}</td>
+      {% else %}
+        <td>{{ 0 | currency }}</td>
+      {% endif %}
+    {% endcapture %}
+
+    {% capture product_total_returns_html %}
+      {% if product.total_returns > 0 %}
+        <td nowrap>-{{ product.total_returns | currency }}</td>
+      {% else %}
+        <td>{{ 0 | currency }}</td>
+      {% endif %}
+    {% endcapture %}
+
+    {% capture product_row_html %}
+      <tr>
+        <td>{{ product.title }}</td>
+        <td>{{ product.vendor }}</td>
+        <td>{{ product.product_type }}</td>
+        <td>{{ product.total_quantity }}</td>
+        <td>{{ product.total_gross | currency }}</td>
+        {{ product_total_discounts_html | strip }}
+        {{ product_total_returns_html | strip }}
+        <td>{{ product.net_sales | currency }}</td>
+        <td>{{ product.total_taxes | currency }}</td>
+        <td>{{ product.total_sales | currency }}</td>
+      </tr>
+    {% endcapture %}
+
+    {% assign report_rows = report_rows | push: product_row_html %}
+  {% endfor %}
+
+  {% capture group_by_id_table %}
+    <table>
+      <thead>
+        {{ table_header_row_html }}
+      </thead>
+      <tbody>
+        {{ report_rows | join: newline }}
+      </tbody>
+    </table>
+  {% endcapture %}
+
+  {% if options.group_by_product_type__boolean %}
+    {% assign sorted_product_data_by_type
+      = product_data_by_type
+      | values
+      | sort: "total_sales"
+      | reverse
+    %}
+    {% assign product_type_chart_labels
+      = sorted_product_data_by_type
+      | map: "product_type"
+    %}
+    {% assign product_type_chart_data
+      = sorted_product_data_by_type
+      | map: "total_sales"
+    %}
+
+    {% if sorted_product_data_by_type.size > 10 %}
+      {% assign product_type_chart_labels
+        = product_type_chart_labels
+        | slice: 0, 10
+        | push: "ALL OTHERS"
+      %}
+      {% assign sum_all_others
+        = product_type_chart_data
+        | slice: 10, sorted_product_data_by_type.size
+        | sum
+      %}
+      {% assign product_type_chart_data
+        = product_type_chart_data
+        | slice: 0, 10
+        | push: sum_all_others
+      %}
+    {% endif %}
+
+    {% action "echo"
+      product_type_chart_labels: product_type_chart_labels,
+      product_type_chart_data: product_type_chart_data
+    %}
+
+    {% assign group_by_type_tables = array %}
+
+    {% for product_type in all_product_types_in_this_period %}
+      {% assign summary_row_data = product_data_by_type[product_type] %}
+
+      {% capture total_discounts_html %}
+        {% if summary_row_data.total_discounts > 0 %}
+          <td nowrap>-{{ summary_row_data.total_discounts | currency }}</td>
+        {% else %}
+          <td>{{ 0 | currency }}</td>
+        {% endif %}
+      {% endcapture %}
+
+      {% capture total_returns_html %}
+        {% if summary_row_data.total_returns > 0 %}
+          <td nowrap>-{{ summary_row_data.total_returns | currency }}</td>
+        {% else %}
+          <td>{{ 0 | currency }}</td>
+        {% endif %}
+      {% endcapture %}
+
+      {% capture summary_row_html %}
+        <tr class="summary-row">
+          <td colspan="3">Summary</td>
+          <td>{{ summary_row_data.total_quantity }}</td>
+          <td>{{ summary_row_data.total_gross | currency }}</td>
+          {{ total_discounts_html | strip }}
+          {{ total_returns_html | strip }}
+          <td>{{ summary_row_data.net_sales | currency }}</td>
+          <td>{{ summary_row_data.total_taxes | currency }}</td>
+          <td>{{ summary_row_data.total_sales | currency }}</td>
+        </tr>
+      {% endcapture %}
+
+      {% assign report_rows = array | push: summary_row_html %}
+
+      {% assign sorted_product_data_by_type
+        = sorted_product_data_by_id
+        | where: "product_type", product_type
+      %}
+
+      {% for product in sorted_product_data_by_type %}
+        {% capture product_total_discounts_html %}
+          {% if product.total_discounts > 0 %}
+            <td nowrap>-{{ product.total_discounts | currency }}</td>
+          {% else %}
+            <td>{{ 0 | currency }}</td>
+          {% endif %}
+        {% endcapture %}
+
+        {% capture product_total_returns_html %}
+          {% if product.total_returns > 0 %}
+            <td nowrap>-{{ product.total_returns | currency }}</td>
+          {% else %}
+            <td>{{ 0 | currency }}</td>
+          {% endif %}
+        {% endcapture %}
+
+        {% capture product_row_html %}
+          <tr>
+            <td>{{ product.title }}</td>
+            <td>{{ product.vendor }}</td>
+            <td>{{ product.product_type }}</td>
+            <td>{{ product.total_quantity }}</td>
+            <td>{{ product.total_gross | currency }}</td>
+            {{ product_total_discounts_html | strip }}
+            {{ product_total_returns_html | strip }}
+            <td>{{ product.net_sales | currency }}</td>
+            <td>{{ product.total_taxes | currency }}</td>
+            <td>{{ product.total_sales | currency }}</td>
+          </tr>
+        {% endcapture %}
+
+        {% assign report_rows = report_rows | push: product_row_html %}
+      {% endfor %}
+
+      {% capture table_html %}
+        <table>
+          <thead>
+            {{ table_header_row_html }}
+          </thead>
+          <tbody>
+            {{ report_rows | join: newline }}
+          </tbody>
+        </table>
+      {% endcapture %}
+
+      {% assign group_by_type_tables = group_by_type_tables | push: table_html %}
+    {% endfor %}{% comment %}-- END: all product types loop --{% endcomment %}
+  {% endif %}
+
+  {% if options.group_by_vendor__boolean %}
+    {% assign sorted_product_data_by_vendor
+      = product_data_by_vendor
+      | values
+      | sort: "total_sales"
+      | reverse
+    %}
+    {% assign product_vendor_chart_labels
+      = sorted_product_data_by_vendor
+      | map: "vendor"
+    %}
+    {% assign product_vendor_chart_data
+      = sorted_product_data_by_vendor
+      | map: "total_sales"
+    %}
+
+    {% if sorted_product_data_by_vendor.size > 10 %}
+      {% assign product_vendor_chart_labels
+        = product_vendor_chart_labels
+        | slice: 0, 10
+        | push: "ALL OTHERS"
+      %}
+      {% assign sum_all_others
+        = product_vendor_chart_data
+        | slice: 10, sorted_product_data_by_type.size
+        | sum
+      %}
+      {% assign product_vendor_chart_data
+        = product_vendor_chart_data
+        | slice: 0, 10
+        | push: sum_all_others
+      %}
+    {% endif %}
+
+    {% action "echo"
+      product_vendor_chart_labels: product_vendor_chart_labels,
+      product_vendor_chart_data: product_vendor_chart_data
+    %}
+
+    {% assign group_by_vendor_tables = array %}
+
+    {% for vendor in all_vendors_in_this_period %}
+      {% assign summary_data = product_data_by_vendor[vendor] %}
+
+      {% capture total_discounts_html %}
+        {% if summary_data.total_discounts > 0 %}
+          <td nowrap>-{{ summary_data.total_discounts | currency }}</td>
+        {% else %}
+          <td>{{ 0 | currency }}</td>
+        {% endif %}
+      {% endcapture %}
+
+      {% capture total_returns_html %}
+        {% if summary_data.total_returns > 0 %}
+          <td nowrap>-{{ summary_data.total_returns | currency }}</td>
+        {% else %}
+          <td>{{ 0 | currency }}</td>
+        {% endif %}
+      {% endcapture %}
+
+      {% capture summary_row_html %}
+        <tr class="summary-row">
+          <td colspan="3">Summary</td>
+          <td>{{ summary_data.total_quantity }}</td>
+          <td>{{ summary_data.total_gross | currency }}</td>
+          {{ total_discounts_html | strip }}
+          {{ total_returns_html | strip }}
+          <td>{{ summary_data.net_sales | currency }}</td>
+          <td>{{ summary_data.total_taxes | currency }}</td>
+          <td>{{ summary_data.total_sales | currency }}</td>
+        </tr>
+      {% endcapture %}
+
+      {% assign report_rows = array | push: summary_row_html %}
+
+      {% assign sorted_product_data_by_vendor
+        = sorted_product_data_by_id
+        | where: "vendor", vendor
+      %}
+
+      {% for product in sorted_product_data_by_vendor %}
+        {% capture product_total_discounts_html %}
+          {% if product.total_discounts > 0 %}
+            <td nowrap>-{{ product.total_discounts | currency }}</td>
+          {% else %}
+            <td>{{ 0 | currency }}</td>
+          {% endif %}
+        {% endcapture %}
+
+        {% capture product_total_returns_html %}
+          {% if product.total_returns > 0 %}
+            <td nowrap>-{{ product.total_returns | currency }}</td>
+          {% else %}
+            <td>{{ 0 | currency }}</td>
+          {% endif %}
+        {% endcapture %}
+
+        {% capture product_row_html %}
+          <tr>
+            <td>{{ product.title }}</td>
+            <td>{{ product.vendor }}</td>
+            <td>{{ product.product_type }}</td>
+            <td>{{ product.total_quantity }}</td>
+            <td>{{ product.total_gross | currency }}</td>
+            {{ product_total_discounts_html | strip }}
+            {{ product_total_returns_html | strip }}
+            <td>{{ product.net_sales | currency }}</td>
+            <td>{{ product.total_taxes | currency }}</td>
+            <td>{{ product.total_sales | currency }}</td>
+          </tr>
+        {% endcapture %}
+
+        {% assign report_rows = report_rows | push: product_row_html %}
+      {% endfor %}
+
+      {% capture table_html %}
+        <table>
+          <thead>
+            {{ table_header_row_html }}
+          </thead>
+          <tbody>
+            {{ report_rows | join: newline }}
+          </tbody>
+        </table>
+      {% endcapture %}
+
+      {% assign group_by_vendor_tables = group_by_vendor_tables | push: table_html %}
+    {% endfor %}{% comment %}-- END: all vendors loop --{% endcomment %}
+  {% endif %}
+
+  {% comment %}
+  -- generate PDF and send email
+  {% endcomment %}
+
+  {% assign slice_colors
+    = "#24425C,#386890,#4682B4,#6B9BC3,#89AFCF,#A1BFD9,#B4CCE1,#C3D6E7,#D9E5F0,#E7EEF5,#F1F1F1"
+    | split: ","
+  %}
+
+  {% capture html %}
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="utf-8">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/1.0.0/chartjs-plugin-datalabels.min.js"></script>
+      <style>
+        .chart-container {
+          width: 960px;
+          margin: 50px auto;
+          page-break-after: always;
+        }
+        .report-data {
+          width: 960px;
+          margin: 0 auto;
+          font-size: 15px;
+        }
+        section + section {
+          page-break-before: always;
+        }
+        table {
+          margin: 0 auto;
+          max-width: 100%;
+          width: 100%;
+          border-collapse: collapse;
+        }
+        table + table {
+          margin-top: 20px;
+        }
+        thead {
+          background-color: lightsteelblue;
+          font-weight: bold;
+        }
+        tbody > tr:nth-child(odd):not(.summary-row) {
+          background-color: rgba(176,196,222,0.15);
+        }
+        td {
+          border: 1px solid steelblue;
+          padding: 5px;
+        }
+        tr > td:nth-child(n+4) {
+          text-align: right;
+        }
+        .summary-row {
+          background-color: rgba(176,196,222,0.4);
+          font-weight: bold;
+          border-bottom: 2px solid lightsteelblue;
+        }
+        tr.summary-row > td:nth-child(n+2) {
+          text-align: right;
+        }
+      </style>
+    </head>
+    <body>
+      <section id="sales-by-product-id">
+        <div class="chart-container">
+          <canvas id="product-id-chart"></canvas>
+        </div>
+        <div class="report-data">
+          <h2>{{ report_title }}</h2>
+          {{ group_by_id_table }}
+        </div>
+      </section>
+      {% if options.group_by_product_type__boolean %}
+        <section id="sales-by-product-type">
+          <div class="chart-container">
+            <canvas id="product-type-chart"></canvas>
+          </div>
+          <div class="report-data">
+            <h2>{{ report_title }} [Grouped by Product Type]</h2>
+            {{ group_by_type_tables | join: newline }}
+          </div>
+        </section>
+      {% endif %}
+      {% if options.group_by_vendor__boolean %}
+        <section id="sales-by-vendor">
+          <div class="chart-container">
+            <canvas id="product-vendor-chart"></canvas>
+          </div>
+          <div class="report-data">
+            <h2>{{ report_title }} [Grouped by Vendor]</h2>
+            {{ group_by_vendor_tables | join: newline }}
+          </div>
+        </section>
+      {% endif %}
+
+      <script type="text/javascript">
+        function drawGraphs() {
+          Chart.helpers.merge(Chart.defaults.global.plugins.datalabels, {
+            align: 'start',
+            anchor: 'end',
+            backgroundColor: 'rgba(0,0,0,0.2)',
+            borderRadius: '5',
+            color: 'white',
+            formatter: function (value, ctx) {
+              var dataArr = ctx.chart.data.datasets[0].data;
+              var sum = dataArr.reduce(function (acc, curr) {
+                return acc + curr
+              });
+              return (value * 100 / sum).toFixed(1) + "%";
+            },
+            labels: {
+              title: {
+                font: {
+                  weight: 'bold'
+                }
+              },
+              value: {
+                color: 'white'
+              }
+            }
+          });
+
+          new Chart(document.getElementById("product-id-chart"), {
+            type: 'pie',
+            data: {
+              labels: {{ product_id_chart_labels | json }},
+              datasets: [{
+                backgroundColor: {{ slice_colors | json }},
+                data: {{ product_id_chart_data | json }}
+              }]
+            },
+            plugins: [ChartDataLabels],
+            options: {
+              title: {
+                display: true,
+                text: '% Sales by Product'
+              },
+              animation: {
+                animateRotate: false
+              }
+            }
+          });
+
+          {% if options.group_by_product_type__boolean %}
+            new Chart(document.getElementById("product-type-chart"), {
+              type: 'pie',
+              data: {
+                labels: {{ product_type_chart_labels | json }},
+                datasets: [{
+                  backgroundColor: {{ slice_colors | json }},
+                  data: {{ product_type_chart_data | json }}
+                }]
+              },
+              plugins: [ChartDataLabels],
+              options: {
+                title: {
+                  display: true,
+                  text: '% Sales by Product Type'
+                },
+                animation: {
+                  animateRotate: false
+                }
+              }
+            });
+          {% endif %}
+
+          {% if options.group_by_vendor__boolean %}
+            new Chart(document.getElementById("product-vendor-chart"), {
+              type: 'pie',
+              data: {
+                labels: {{ product_vendor_chart_labels | json }},
+                datasets: [{
+                  backgroundColor: {{ slice_colors | json }},
+                  data: {{ product_vendor_chart_data | json }}
+                }]
+              },
+              plugins: [ChartDataLabels],
+              options: {
+                title: {
+                  display: true,
+                  text: '% Sales by Vendor'
+                },
+                animation: {
+                  animateRotate: false
+                }
+              }
+            });
+          {% endif  %}
+        }
+
+        window.onload = function () {
+          drawGraphs();
+        };
+      </script>
+    </body>
+    </html>
+  {% endcapture %}
+
+  {% action "echo" html %}
+
+  {% capture header_html %}
+    <div style="display:flex;justify-content:space-between;">
+      <div>{{ today }}</div>
+      <div>{{ report_title }}</div>
+      <div>Page <span class="pdfcrowd-page-number"></span> of <span class="pdfcrowd-page-count"></span></div>
+    </div>
+  {% endcapture %}
+
+  {% action "email" %}
+    {
+      "to": {{ options.email_report_to__array_required | join: "," | json }},
+      "subject": {{ report_title_with_date | json }},
+      "body": "Please see the attached PDF. :)",
+      "reply_to": {{ shop.customer_email | json }},
+      "from_display_name": {{ shop.name | json }},
+      "attachments": {
+        {{ report_title_with_date | handleize | append: ".pdf" | json }}: {
+          "pdf": {
+            "html": {{ html | json }},
+            "__force_pdfcrowd": true,
+            "orientation": "landscape",
+            "header_html": {{ header_html | json }}
+          }
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}

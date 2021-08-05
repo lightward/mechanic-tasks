@@ -159,6 +159,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Delete the oldest x products from a specific collection](./delete-the-oldest-x-products-from-a-specific-collection)
 * [Delete variants having a metafield date that has passed](./delete-variants-having-a-metafield-date-that-has-passed)
 * [Demonstration: Fetch an external configuration file](./demonstration-fetch-an-external-configuration-file)
+* [Demonstration: Generate product sales report PDF with pie chart](./demonstration-generate-product-sales-report-pdf-with-pie-chart)
 * [Demonstration: Generating a file and uploading it to Shopify](./demonstration-generate-a-file-and-upload-to-shopify)
 * [Demonstration: Order editing](./demonstration-order-editing)
 * [Demonstration: Performing action runs in sequence](./demonstration-performing-action-runs-in-sequence)
