@@ -21,7 +21,7 @@ This task demonstrates how a product sales report can be generated as PDF and em
   "group_by_product_type__boolean": null,
   "group_by_vendor__boolean": null,
   "email_report_to__array_required": null,
-  "run_this_task_daily__boolean": false
+  "run_this_task_daily__boolean": null
 }
 ```
 
