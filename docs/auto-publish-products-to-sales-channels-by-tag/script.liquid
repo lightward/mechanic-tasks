@@ -1,0 +1,182 @@
+{% assign sales_channel_names = options.sales_channel_names__array_required %}
+{% assign product_tag = options.product_tag__required %}
+
+{% capture query %}
+  query {
+    publications(first: 250) {
+      edges {
+        node {
+          id
+          name
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "publications": {
+          "edges": [
+            {
+              "node": {
+                "id": "gid://shopify/Publication/1234567890",
+                "name": "Online Store"
+              }
+            },
+            {
+              "node": {
+                "id": "gid://shopify/Publication/2345678901",
+                "name": "Buy Button"
+              }
+            }
+          ]
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% assign publications = result.data.publications.edges | map: "node" %}
+{% assign publications_indexed_by_name = publications | index_by: "name" %}
+
+{% capture published_on_publications %}
+  {% for sales_channel_name in sales_channel_names %}
+    published_on_publication{{ forloop.index }}: publishedOnPublication(
+      publicationId: {{ publications_indexed_by_name[sales_channel_name].id | json }}
+    )
+  {%- endfor %}
+{% endcapture %}
+
+{% assign products = array %}
+
+{% if event.topic contains "shopify/products/" %}
+  {% capture query %}
+    query {
+      product(id: {{ product.admin_graphql_api_id | json }}) {
+        id
+        tags
+        {{ published_on_publications | join: newline }}
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% assign products[0] = result.data.product %}
+
+{% elsif event.topic contains "mechanic/user/trigger" %}
+  {% assign cursor = nil %}
+
+  {% for n in (0..200) %}
+    {% capture query %}
+      query {
+        products(
+          first: 250
+          after: {{ cursor | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+          }
+          edges {
+            node {
+              id
+              tags
+              {{ published_on_publications | join: newline }}
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% assign products_batch = result.data.products.edges | map: "node" %}
+    {% assign products = products | concat: products_batch %}
+
+    {% if result.data.products.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.products.edges.last.cursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+{% if event.preview %}
+  {% capture products_json %}
+    [
+      {
+        "id": "gid://shopify/Product/1234567890",
+        "published_on_publication1": false,
+        "published_on_publication2": true,
+        "tags": {{ product_tag | json }}
+      }
+    ]
+  {% endcapture %}
+
+  {% assign products = products_json | parse_json %}
+{% endif %}
+
+{% for product in products %}
+  {% assign mutations = array %}
+  {% assign should_be_published = false %}
+
+  {% if product.tags contains product_tag %}
+    {% assign should_be_published = true %}
+  {% endif %}
+
+  {% for publication in publications %}
+    {% assign publication_key = "published_on_publication" | append: forloop.index %}
+
+    {% if product[publication_key] %}
+      {% unless should_be_published %}
+        {% capture mutation %}
+          publishableUnpublish{{ forloop.index }}: publishableUnpublish(
+            id: {{ product.id | json }}
+            input: {
+              publicationId: {{ publication.id | json }}
+            }
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        {% endcapture %}
+
+        {% assign mutations = mutations | push: mutation %}
+      {% endunless %}
+
+    {% elsif should_be_published %}
+      {% capture mutation %}
+        publishablePublish{{ forloop.index }}: publishablePublish(
+          id: {{ product.id | json }}
+          input: {
+            publicationId: {{ publication.id | json }}
+          }
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      {% endcapture %}
+
+      {% assign mutations = mutations | push: mutation %}
+    {% endif %}
+  {% endfor %}
+
+  {% if mutations != blank %}
+    {% action "shopify" %}
+      mutation {
+        {{ mutations | join: newline }}
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}
