@@ -44,7 +44,10 @@
 {% endif %}
 
 {% assign publications = result.data.publications.edges | map: "node" %}
+{% assign publication_names = publications | map: "name" | sort %}
 {% assign publications_indexed_by_name = publications | index_by: "name" %}
+
+{% log available_publications: publication_names %}
 
 {% capture published_on_publications %}
   {% for sales_channel_name in sales_channel_names %}
