@@ -1,5 +1,5 @@
 {
-  "name": "Auto publish products to sales channels by tag",
+  "name": "Auto publish products by tag",
   "options": {
     "sales_channel_names__array_required": null,
     "product_tag__required": null

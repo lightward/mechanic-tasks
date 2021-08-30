@@ -1,4 +1,4 @@
-# Auto publish products to sales channels by tag
+# Auto publish products by tag
 
 Tags: Products, Publish, Sales Channel, Unpublish
 
