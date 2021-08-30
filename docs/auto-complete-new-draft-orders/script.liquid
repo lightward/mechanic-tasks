@@ -1,0 +1,25 @@
+{% assign payment_pending = true %}
+{% if options.mark_new_orders_as_fully_paid__boolean %}
+  {% assign payment_pending = false %}
+{% endif %}
+
+{% action "shopify" %}
+  mutation {
+    draftOrderComplete(
+      id: {{ draft_order.admin_graphql_api_id | json }}
+      paymentPending: {{ payment_pending | json }}
+    ) {
+      draftOrder {
+        order {
+          id
+          name
+          fullyPaid
+        }
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+{% endaction %}
