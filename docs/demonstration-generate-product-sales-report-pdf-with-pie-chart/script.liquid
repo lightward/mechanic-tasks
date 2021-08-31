@@ -47,7 +47,7 @@
 {% endif %}
 
 {% if date_query %}
-  {% action "echo" date_query: date_query %}
+  {% log date_query: date_query %}
 {% else %}
   {% error "Choose exactly one reporting period option: today, yesterday, past week, past month, past quarter, or past year." %}
 {% endif %}
@@ -617,7 +617,7 @@
     %}
   {% endif %}
 
-  {% action "echo"
+  {% log
     product_id_chart_labels: product_id_chart_labels,
     product_id_chart_data: product_id_chart_data
   %}
@@ -733,7 +733,7 @@
       %}
     {% endif %}
 
-    {% action "echo"
+    {% log
       product_type_chart_labels: product_type_chart_labels,
       product_type_chart_data: product_type_chart_data
     %}
@@ -863,7 +863,7 @@
       %}
     {% endif %}
 
-    {% action "echo"
+    {% log
       product_vendor_chart_labels: product_vendor_chart_labels,
       product_vendor_chart_data: product_vendor_chart_data
     %}
@@ -1168,7 +1168,7 @@
 
   {% action "email" %}
     {
-      "to": {{ options.email_report_to__array_required | join: "," | json }},
+      "to": {{ options.email_report_recipients__array_required | join: "," | json }},
       "subject": {{ report_title_with_date | json }},
       "body": "Please see the attached PDF. :)",
       "reply_to": {{ shop.customer_email | json }},
