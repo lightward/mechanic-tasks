@@ -265,12 +265,12 @@
     {% if event.preview %}
       {% assign inventory_levels_cache_group["value"] = array %}
       {% assign inventory_levels_cache_group["value"][0] = hash %}
-      {% assign id = "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890" %}
-      {% assign inventory_levels_cache_group["value"][0][id] = 20 %}
+      {% assign inventory_levels_cache_group["value"][0]["id"] = "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890" %}
+      {% assign inventory_levels_cache_group["value"][0]["available"] = 20 %}
     {% endif %}
 
     {% if inventory_levels_cache_group != blank %}
-      {% for n in (0..1000) %}
+      {% for n in (0..100) %}
         {% assign inventory_levels_to_restore = inventory_levels_to_restore | concat: inventory_levels_cache_group.value %}
         {% assign cache_keys = cache_keys | push: cache_key %}
 
