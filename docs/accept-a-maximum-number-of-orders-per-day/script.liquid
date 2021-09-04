@@ -20,8 +20,7 @@
   {% assign orders_today = 0 %}
   {% assign previous_midnight = "now" | date: "%Y-%m-%dT00:00:00%z" %}
   {% assign previous_midnight_s = previous_midnight | date: "%s" %}
-  {% assign cache_key = "inventory_to_restore:" | append: previous_midnight_s %}
-  {% assign inventory_levels_to_zero = cache[cache_key] | default: hash %}
+  {% assign inventory_levels_to_zero = array %}
 
   {% capture orders_query %}
     created_at:>={{ previous_midnight | json }} {{ options.only_count_orders_matching_this_query }}
@@ -179,7 +178,7 @@
             {% continue %}
           {% endif %}
 
-          {% assign inventory_levels_to_zero[inventoryLevel_edge.node.id] = inventoryLevel_edge.node.available %}
+          {% assign inventory_levels_to_zero[inventory_levels_to_zero.size] = inventoryLevel_edge.node %}
         {% endfor %}
       {% endfor %}
 
@@ -191,16 +190,13 @@
     {% endfor %}
 
     {% if inventory_levels_to_zero.size > 0 %}
-      {% for keyval in inventory_levels_to_zero %}
-        {% assign inventory_level_id = keyval[0] %}
-        {% assign inventory_level_available = keyval[1] %}
-
+      {% for inventory_level in inventory_levels_to_zero %}
         {% action "shopify" %}
           mutation {
             inventoryAdjustQuantity(
               input: {
-                inventoryLevelId: {{ inventory_level_id | json }}
-                availableDelta: {{ inventory_level_available | times: -1 | json }}
+                inventoryLevelId: {{ inventory_level.id | json }}
+                availableDelta: {{ inventory_level.available | times: -1 | json }}
               }
             ) {
               inventoryLevel {
@@ -216,7 +212,25 @@
       {% endfor %}
 
       {% if options.restore_inventory_levels_the_next_day__boolean or options.restore_inventory_levels_on_demand__boolean %}
-        {% action "cache", "set", cache_key, inventory_levels_to_zero %}
+        {% comment %}
+          -- NOTE: large inventories can run up against the 256kb Mechanic cache limit, so need to paginate (2000 entries ~200kb)
+        {% endcomment %}
+        {% assign inventory_levels_to_zero_in_groups = inventory_levels_to_zero | in_groups_of: 2000, fill_with: false %}
+
+        {% assign base_cache_key = "inventory_to_restore:" | append: previous_midnight_s %}
+
+        {% for inventory_levels_to_zero_group in inventory_levels_to_zero_in_groups %}
+          {% assign cache_key = base_cache_key | append: "_group" | append: forloop.index0 %}
+          {% assign cache_value = hash %}
+          {% assign cache_value["value"] = inventory_levels_to_zero_group %}
+
+          {% unless forloop.last %}
+            {% assign next_cache_key = base_cache_key | append: "_group" | append: forloop.index %}
+            {% assign cache_value["next_key"] = next_cache_key %}
+          {% endunless %}
+
+          {% action "cache", "set", cache_key, cache_value %}
+        {% endfor %}
       {% endif %}
     {% endif %}
   {% endif %}
@@ -231,39 +245,53 @@
 
   {% if proceed %}
     {% action "cache", "del", inventory_is_zeroed_cache_key %}
+    {% assign cache_keys = array %}
 
     {% assign day_in_s = 60 | times: 60 | times: 24 %}
     {% assign midnight = "now" | date: "%s" | minus: day_in_s | date: "%Y-%m-%dT00:00:00%z" %}
     {% assign midnight_s = midnight | date: "%s" %}
-    {% assign cache_key = "inventory_to_restore:" | append: midnight_s %}
+    {% assign cache_key = "inventory_to_restore:" | append: midnight_s | append: "_group0" %}
+    {% assign inventory_levels_cache_group = cache[cache_key] | default: hash %}
 
-    {% assign inventory_levels_to_restore = cache[cache_key] | default: hash %}
-
-    {% if inventory_levels_to_restore == blank %}
+    {% if inventory_levels_cache_group == blank %}
       {% assign midnight = "now" | date: "%Y-%m-%dT00:00:00%z" %}
       {% assign midnight_s = midnight | date: "%s" %}
-      {% assign cache_key = "inventory_to_restore:" | append: midnight_s %}
-      {% assign inventory_levels_to_restore = cache[cache_key] | default: hash %}
+      {% assign cache_key = "inventory_to_restore:" | append: midnight_s | append: "_group0" %}
+      {% assign inventory_levels_cache_group = cache[cache_key] | default: hash %}
     {% endif %}
 
+    {% assign inventory_levels_to_restore = array %}
+
     {% if event.preview %}
-      {% assign inventory_levels_to_restore = hash %}
-      {% assign id = "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890" %}
-      {% assign inventory_levels_to_restore[id] = 20 %}
+      {% assign inventory_levels_cache_group["value"] = array %}
+      {% assign inventory_levels_cache_group["value"][0] = hash %}
+      {% assign inventory_levels_cache_group["value"][0]["id"] = "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890" %}
+      {% assign inventory_levels_cache_group["value"][0]["available"] = 20 %}
+    {% endif %}
+
+    {% if inventory_levels_cache_group != blank %}
+      {% for n in (0..100) %}
+        {% assign inventory_levels_to_restore = inventory_levels_to_restore | concat: inventory_levels_cache_group.value %}
+        {% assign cache_keys = cache_keys | push: cache_key %}
+
+        {% if inventory_levels_cache_group.next_key %}
+          {% assign cache_key = inventory_levels_cache_group.next_key %}
+          {% assign inventory_levels_cache_group = cache[cache_key] %}
+        {% else %}
+          {% break %}
+        {% endif %}
+      {% endfor %}
     {% endif %}
 
     {% log inventory_levels_to_restore_count: inventory_levels_to_restore.size, inventory_levels_to_restore: inventory_levels_to_restore, since: midnight %}
 
-    {% for keyval in inventory_levels_to_restore %}
-      {% assign inventory_level_id = keyval[0] %}
-      {% assign inventory_level_available = keyval[1] %}
-
+    {% for inventory_level in inventory_levels_to_restore %}
       {% action "shopify" %}
         mutation {
           inventoryAdjustQuantity(
             input: {
-              inventoryLevelId: {{ inventory_level_id | json }}
-              availableDelta: {{ inventory_level_available | json }}
+              inventoryLevelId: {{ inventory_level.id | json }}
+              availableDelta: {{ inventory_level.available | json }}
             }
           ) {
             inventoryLevel {
@@ -279,7 +307,9 @@
     {% endfor %}
 
     {% if inventory_levels_to_restore != blank %}
-      {% action "cache", "del", cache_key %}
+      {% for cache_key in cache_keys %}
+        {% action "cache", "del", cache_key %}
+      {% endfor %}
     {% endif %}
   {% endif %}
 {% endif %}
