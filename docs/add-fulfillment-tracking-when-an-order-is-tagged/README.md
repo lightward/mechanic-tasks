@@ -39,7 +39,6 @@ Configure this tag with a mapping of country codes to tracking companies and URL
 ## Subscriptions
 
 ```liquid
-shopify/orders/create
 shopify/orders/updated
 ```
 

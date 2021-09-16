@@ -28,7 +28,6 @@ Use this task to monitor order tags, and notify staff, vendors, or any other int
 ## Subscriptions
 
 ```liquid
-shopify/orders/create
 shopify/orders/updated
 ```
 

@@ -26,7 +26,6 @@ Keep customers happy by making sure your vendors have up-to-date shipping inform
 ## Subscriptions
 
 ```liquid
-shopify/orders/create
 shopify/orders/updated
 ```
 

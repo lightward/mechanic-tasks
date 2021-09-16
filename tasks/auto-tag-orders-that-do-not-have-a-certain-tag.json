@@ -5,10 +5,9 @@
     "order_tag_to_add__required": null
   },
   "subscriptions": [
-    "shopify/orders/create",
     "shopify/orders/updated"
   ],
-  "subscriptions_template": "shopify/orders/create\nshopify/orders/updated",
+  "subscriptions_template": "shopify/orders/updated",
   "script": "{% if event.preview %}\n  {% assign order = hash %}\n  {% assign order[\"admin_graphql_api_id\"] = \"gid://shopify/Order/1234567890\" %}\n  {% assign order[\"tags\"] = \"\" %}\n{% endif %}\n\n{% assign order_tags = order.tags | split: \", \" %}\n{% assign add_tag = false %}\n{% assign remove_tag = false %}\n\n{% if order_tags contains options.order_tag_to_watch_for__required %}\n  {% if order_tags contains options.order_tag_to_add__required %}\n    {% assign remove_tag = true %}\n  {% endif %}\n{% else %}\n  {% unless order_tags contains options.order_tag_to_add__required %}\n    {% assign add_tag = true %}\n  {% endunless %}\n{% endif %}\n\n{% if add_tag or remove_tag %}\n  {% action \"shopify\" %}\n    mutation {\n      tags{% if add_tag %}Add{% else %}Remove{% endif %}(\n        id: {{ order.admin_graphql_api_id | json }}\n        tags: {{ options.order_tag_to_add__required | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}",
   "docs": "This task monitors for new and updated orders, adding a tag if a certain other tag is found missing. If and when the order does receive that certain other tag, the task's tag will be removed.",
   "halt_action_run_sequence_on_error": false,

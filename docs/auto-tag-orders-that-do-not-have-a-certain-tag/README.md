@@ -22,7 +22,6 @@ This task monitors for new and updated orders, adding a tag if a certain other t
 ## Subscriptions
 
 ```liquid
-shopify/orders/create
 shopify/orders/updated
 ```
 

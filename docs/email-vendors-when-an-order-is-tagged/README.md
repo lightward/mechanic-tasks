@@ -28,7 +28,6 @@ Use this task to automatically keep vendors up to date as an order evolves. Conf
 ## Subscriptions
 
 ```liquid
-shopify/orders/create
 shopify/orders/updated
 ```
 

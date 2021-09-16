@@ -30,7 +30,6 @@ This task watches new and updated orders, and updates their tags according to th
 ## Subscriptions
 
 ```liquid
-shopify/orders/create
 shopify/orders/updated
 ```
 

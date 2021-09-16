@@ -23,7 +23,6 @@ This task watches for order tags, and adds a corresponding tag to the customer w
 ## Subscriptions
 
 ```liquid
-shopify/orders/create
 shopify/orders/updated
 ```
 

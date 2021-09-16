@@ -21,7 +21,6 @@ This task appends order notes to the related customer's note, whenever the order
 ## Subscriptions
 
 ```liquid
-shopify/orders/create
 shopify/orders/updated
 ```
 

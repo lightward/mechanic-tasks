@@ -25,7 +25,6 @@ Improve your customer relationships without complicated your workflow - use this
 ## Subscriptions
 
 ```liquid
-shopify/orders/create
 shopify/orders/updated
 ```
 

@@ -22,7 +22,6 @@ Does exactly as it says. :)
 ## Subscriptions
 
 ```liquid
-shopify/orders/create
 shopify/orders/updated
 ```
 
