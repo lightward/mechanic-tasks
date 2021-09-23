@@ -1,0 +1,180 @@
+{% assign update_customer_first_and_last_name = options.update_customer_first_and_last_name__boolean %}
+{% assign update_customer_phone = options.update_customer_phone__boolean %}
+
+{% unless update_customer_first_and_last_name or update_customer_phone %}
+  {% error "Choose at least one of the update customer options." %}
+{% endunless %}
+
+{% if event.topic == "shopify/customers/update" %}
+  {% assign customers = array %}
+
+  {% capture query %}
+    query {
+      customer(id: {{ customer.admin_graphql_api_id | json }}) {
+        id
+        firstName
+        lastName
+        phone
+        defaultAddress {
+          firstName
+          lastName
+          phone
+        }
+        addresses {
+          firstName
+          lastName
+          phone
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% assign customers[0] = result.data.customer %}
+
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% capture bulk_operation_query %}
+    query {
+      customers {
+        edges {
+          node {
+            id
+            firstName
+            lastName
+            phone
+            defaultAddress {
+              firstName
+              lastName
+              phone
+            }
+            addresses {
+              firstName
+              lastName
+              phone
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% assign customers = bulkOperation.objects %}
+{% endif %}
+
+{% if event.preview %}
+  {% capture customers_json %}
+    [
+      {
+        "id": "gid://shopify/Customer/1234567890",
+        "phone": null,
+        "defaultAddress": {
+          "firstName": "Jean",
+          "lastName": "Deaux"
+        },
+        "addresses": [
+          {
+            "phone": null
+          },
+          {
+            "phone": "+18885559876"
+          }
+        ]
+      }
+    ]
+  {% endcapture %}
+
+  {% assign customers = customers_json | parse_json %}
+{% endif %}
+
+{% for customer in customers %}
+  {% assign first_name = nil %}
+  {% assign last_name = nil %}
+  {% assign phone = nil %}
+
+  {% assign customer_addresses
+    = customer.addresses
+    | unshift: customer.defaultAddress
+  %}
+
+  {% if update_customer_first_and_last_name %}
+    {% if customer.firstName == blank %}
+      {% for customer_address in customer_addresses %}
+        {% unless customer_address.firstName == blank %}
+          {% assign first_name = customer_address.firstName %}
+          {% break %}
+        {% endunless %}
+      {% endfor %}
+    {% endif %}
+
+    {% if customer.lastName == blank %}
+      {% for customer_address in customer_addresses %}
+        {% unless customer_address.lastName == blank %}
+          {% assign last_name = customer_address.lastName %}
+          {% break %}
+        {% endunless %}
+      {% endfor %}
+    {% endif %}
+  {% endif %}
+
+  {% if update_customer_phone %}
+    {% if customer.phone == blank %}
+      {% for customer_address in customer_addresses %}
+        {% unless customer_address.phone == blank %}
+          {% assign phone = customer_address.phone %}
+          {% break %}
+        {% endunless %}
+      {% endfor %}
+    {% endif %}
+  {% endif %}
+
+  {% if first_name or last_name or phone %}
+    {% action "shopify" %}
+      mutation {
+        customerUpdate(
+          input: {
+            id: {{ customer.id | json }}
+            {% if first_name %}
+              firstName: {{ first_name | json }}
+            {% endif %}
+            {% if last_name %}
+              lastName: {{ last_name | json }}
+            {% endif %}
+            {% if phone %}
+              phone: {{ phone | json }}
+            {% endif %}
+          }
+        ) {
+          customer {
+            id
+            firstName
+            lastName
+            phone
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}

@@ -138,7 +138,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Automatically cancel orders with certain risk indicators](./automatically-cancel-orders-with-certain-risk-indicators)
 * [Automatically publish and unpublish on a monthly cycle](./automatically-publish-and-unpublish-on-a-monthly-cycle)
 * [Automatically send account invite to new customers](./automatically-send-account-invite-to-new-customers)
-* [Backfill customer names from order addresses](./backfill-customer-names-from-order)
 * [Backup inventory to SFTP in Shopify CSV format](./backup-scheduled-inventory-exports-in-shopifys-csv-format)
 * [Bulk capture orders by order number](./bulk-capture-by-order-number)
 * [Calculate total quantities purchased by SKU](./calculate-total-quantities-purchased-by-sku)
@@ -298,4 +297,5 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Unpublish products that have been out of stock for x days](./unpublish-products-that-have-been-out-of-stock-for-x-days)
 * [Unpublish products when tagged](./unpublish-products-when-tagged)
 * [Untag orders when paid](./untag-orders-when-paid)
+* [Update empty customer data from addresses](./update-empty-customer-data-from-addresses)
 * [Update product description when out of stock](./update-product-description-when-out-of-stock)
