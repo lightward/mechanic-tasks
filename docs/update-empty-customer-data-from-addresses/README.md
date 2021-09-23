@@ -39,8 +39,6 @@ Running when a customer is updated, this task will fill empty customer names and
 
 This task is a combination of two separate merchant requests, the first desiring a way to backfill empty customer registration names once initial orders were made, and the second which noted that customer phone numbers were only set when they opted in to receive SMS updates during checkout.
 
-Submit your [task requests](https://mechanic.canny.io/task-requests) for consideration by the Mechanic community, and they may be chosen for development and inclusion in the [task library](https://tasks.mechanic.dev/)!
-
 __Note:__ To avoid conflicts with this task running on customer updates (the default configuration), the manual run mode must be toggled by checking the "Enable manual runs to scan all customers" option AND saving the task. This will prevent the task from running on customer updates until this option is unchecked.
 
 ## Installing this task
