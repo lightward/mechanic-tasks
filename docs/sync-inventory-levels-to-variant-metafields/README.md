@@ -25,6 +25,7 @@ Use this task to easily make your inventory levels available in your online stor
 shopify/inventory_levels/connect
 shopify/inventory_levels/update
 mechanic/user/trigger
+mechanic/shopify/bulk_operation
 ```
 
 [Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
@@ -35,17 +36,9 @@ Use this task to easily make your inventory levels available in your online stor
 
 This task runs automatically, whenever an inventory level is adjusted or whenever a variant is stocked for the first time at a new location.
 
-Run this task manually to backfill metafields for all variants that are stocked the locations you've connfigured in this task.
+Run this task manually to backfill metafields for all variants that are stocked in the locations you've configured in this task.
 
-Find your location IDs by navigating to Settings > Locations in the Shopify admin area. Then, select an individual location from the list. Its location ID can be found at the very end of the URL in your browser's address bar. For example, the location at this URL:
-
-```
-https://example.myshopify.com/admin/locations/1234567890
-```
-
-... has a location ID of `1234567890`.
-
-Use this ID on the left-hand side of the "Location IDs and metafield keys" option.
+Populate the left-hand side of the "Location IDs and metafield keys" option with your location IDs. [Learn how to find location IDs here.](https://learn.mechanic.dev/techniques/finding-a-resource-id)
 
 ## Installing this task
 
