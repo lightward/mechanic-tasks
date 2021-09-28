@@ -160,6 +160,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Delete product or product variant metafields in bulk](./delete-product-or-product-variant-metafields-in-bulk)
 * [Delete the oldest x products from a specific collection](./delete-the-oldest-x-products-from-a-specific-collection)
 * [Delete variants having a metafield date that has passed](./delete-variants-having-a-metafield-date-that-has-passed)
+* [Demonstration: Auto-tag new orders, with scheduled reconciliation](./demonstration-auto-tag-new-orders-with-reconciliation)
 * [Demonstration: Fetch an external configuration file](./demonstration-fetch-an-external-configuration-file)
 * [Demonstration: Generate product sales report PDF with pie chart](./demonstration-generate-product-sales-report-pdf-with-pie-chart)
 * [Demonstration: Generating a file and uploading it to Shopify](./demonstration-generate-a-file-and-upload-to-shopify)

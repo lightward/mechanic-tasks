@@ -1,0 +1,25 @@
+{
+  "name": "Demonstration: Auto-tag new orders, with scheduled reconciliation",
+  "options": {
+    "run_on_order_create__boolean": true,
+    "reconcile_every_15_minutes__boolean": true,
+    "reconcile_on_manual_run__boolean": true
+  },
+  "subscriptions": [
+    "shopify/orders/create",
+    "mechanic/scheduler/15min",
+    "mechanic/user/trigger"
+  ],
+  "subscriptions_template": "{% if options.run_on_order_create__boolean %}\n  shopify/orders/create\n{% endif %}\n\n{% if options.reconcile_every_15_minutes__boolean %}\n  mechanic/scheduler/15min\n{% endif %}\n\n{% if options.reconcile_on_manual_run__boolean %}\n  mechanic/user/trigger\n{% endif %}",
+  "script": "{% assign order_processed_tag = \"processed-by-autotagger\" %}\n\n{% assign order_ids_to_process = array %}\n\n{% if event.topic contains \"shopify/orders/\" %}\n  {% if event.preview %}\n    {% assign order = hash %}\n    {% assign order[\"admin_graphql_api_id\"] = \"gid://shopify/Order/1234567890\" %}\n  {% endif %}\n\n  {% assign order_tags = order.tags | split: \", \" %}\n  {% if order_tags contains order_processed_tag %}\n    {% log message: \"Order is already processed; skipping\" %}\n  {% else %}\n    {% assign order_ids_to_process[order_ids_to_process.size] = order.admin_graphql_api_id %}\n  {% endif %}\n{% elsif event.topic contains \"mechanic/scheduler/\" or event.topic == \"mechanic/user/trigger\" %}\n  {% assign cursor = nil %}\n  \n  {% assign orders_query_parts = array %}\n  {% assign orders_query_parts[0] = order_processed_tag | json | prepend: \"-tag:\" %}\n  {% assign orders_query_parts[1] = \"now - 15 minutes\" | date: \"%Y-%m-%dT%H:%M:%SZ\", tz: \"UTC\" | json | prepend: \"created_at:>=\" %}\n  {% assign orders_query = orders_query_parts | join: \" \" %}\n  \n  {% log orders_query: orders_query %}\n  \n  {% for n in (0..100) %}\n    {% capture query %}\n      query {\n        orders(\n          first: 250\n          after: {{ cursor | json }}\n          query: {{ orders_query | json }}\n        ) {\n          pageInfo {\n            hasNextPage\n          }\n          edges {\n            cursor\n            node {\n              id\n              tags\n            }\n          }\n        }\n      }\n    {% endcapture %}\n  \n    {% assign result = query | shopify %}\n  \n    {% if event.preview %}\n      {% capture result_json %}\n        {\n          \"data\": {\n            \"orders\": {\n              \"edges\": [\n                {\n                  \"node\": {\n                    \"id\": \"gid://shopify/Order/1234567890\",\n                    \"tags\": []\n                  }\n                }\n              ]\n            }\n          }\n        }\n      {% endcapture %}\n  \n      {% assign result = result_json | parse_json %}\n    {% endif %}\n  \n    {% for order_edge in result.data.orders.edges %}\n      {% comment %}\n        Double-checking this, to ward against stale search results from the API.\n      {% endcomment %}\n      {% unless order_edge.node.tags contains order_processed_tag %}\n        {% assign order_ids_to_process[order_ids_to_process.size] = order_edge.node.id %}\n      {% endunless %}\n    {% endfor %}\n  \n    {% if result.data.orders.pageInfo.hasNextPage %}\n      {% assign cursor = result.data.orders.edges.last.cursor %}\n    {% else %}\n      {% break %}\n    {% endif %}\n  {% endfor %}\n{% endif %}\n\n{% for order_id_to_process in order_ids_to_process %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ order_id_to_process | json }}\n        tags: [{{ order_processed_tag | json }}]\n      ) {\n        node {\n          # retrieving some post-tagging data, to ease debugging\n          ... on Order {\n            id\n            name\n            tags\n          }\n        }\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endfor %}",
+  "docs": "This task illustrates Shopify's recommendation of implementing reconciliation, in the case of missing Shopify events. This implementation handles the rare case that Shopify fails to deliver a webhook (orders/create, in this example), by scanning for unprocessed orders every 15 minutes.\n\nTo learn more about this kind of scenario, see https://learn.mechanic.dev/core/shopify/events/reconciling-missing-events.",
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "tags": [
+    "Demonstration",
+    "Orders",
+    "Tag"
+  ]
+}
