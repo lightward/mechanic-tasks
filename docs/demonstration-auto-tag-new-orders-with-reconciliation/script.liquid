@@ -1,0 +1,111 @@
+{% assign order_processed_tag = "processed-by-autotagger" %}
+
+{% assign order_ids_to_process = array %}
+
+{% if event.topic contains "shopify/orders/" %}
+  {% if event.preview %}
+    {% assign order = hash %}
+    {% assign order["admin_graphql_api_id"] = "gid://shopify/Order/1234567890" %}
+  {% endif %}
+
+  {% assign order_tags = order.tags | split: ", " %}
+  {% if order_tags contains order_processed_tag %}
+    {% log message: "Order is already processed; skipping" %}
+  {% else %}
+    {% assign order_ids_to_process[order_ids_to_process.size] = order.admin_graphql_api_id %}
+  {% endif %}
+{% elsif event.topic contains "mechanic/scheduler/" or event.topic == "mechanic/user/trigger" %}
+  {% assign cursor = nil %}
+  
+  {% assign orders_query_parts = array %}
+  {% assign orders_query_parts[0] = order_processed_tag | json | prepend: "-tag:" %}
+  {% assign orders_query_parts[1] = "now - 15 minutes" | date: "%Y-%m-%dT%H:%M:%SZ", tz: "UTC" | json | prepend: "created_at:>=" %}
+  {% assign orders_query = orders_query_parts | join: " " %}
+  
+  {% log orders_query: orders_query %}
+  
+  {% for n in (0..100) %}
+    {% capture query %}
+      query {
+        orders(
+          first: 250
+          after: {{ cursor | json }}
+          query: {{ orders_query | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+          }
+          edges {
+            cursor
+            node {
+              id
+              tags
+            }
+          }
+        }
+      }
+    {% endcapture %}
+  
+    {% assign result = query | shopify %}
+  
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "orders": {
+              "edges": [
+                {
+                  "node": {
+                    "id": "gid://shopify/Order/1234567890",
+                    "tags": []
+                  }
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+  
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+  
+    {% for order_edge in result.data.orders.edges %}
+      {% comment %}
+        Double-checking this, to ward against stale search results from the API.
+      {% endcomment %}
+      {% unless order_edge.node.tags contains order_processed_tag %}
+        {% assign order_ids_to_process[order_ids_to_process.size] = order_edge.node.id %}
+      {% endunless %}
+    {% endfor %}
+  
+    {% if result.data.orders.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.orders.edges.last.cursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+{% for order_id_to_process in order_ids_to_process %}
+  {% action "shopify" %}
+    mutation {
+      tagsAdd(
+        id: {{ order_id_to_process | json }}
+        tags: [{{ order_processed_tag | json }}]
+      ) {
+        node {
+          # retrieving some post-tagging data, to ease debugging
+          ... on Order {
+            id
+            name
+            tags
+          }
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endfor %}
