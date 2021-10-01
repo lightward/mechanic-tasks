@@ -93,9 +93,7 @@
 {% elsif event.topic == "mechanic/user/trigger" %}
   {% capture bulk_operation_query %}
     query {
-      productVariants(
-        query: ""
-      ) {
+      productVariants {
         edges {
           node {
             id
