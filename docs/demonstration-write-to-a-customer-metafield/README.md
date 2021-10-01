@@ -17,7 +17,8 @@ This task demonstrates how to write to a Shopify metafield, belonging to a speci
   "metafield_key__required": "bar",
   "metafield_value__required": "baz",
   "use_rest_api__boolean": false,
-  "use_graphql_api__boolean": false
+  "use_graphql_api__boolean": false,
+  "use_metafields_set_mutation__boolean": false
 }
 ```
 
@@ -38,15 +39,16 @@ This task demonstrates how to write to a Shopify metafield, belonging to a speci
 This example covers:
 
 * Retrieving an existing metafield, if any, having the desired namespace and key
-* Re-use the existing metafield's ID to perform a metafield update, if applicable, and resulting in a newly-created metafield otherwise
+* Re-using the existing metafield's ID to perform a metafield update, if applicable, and resulting in a newly-created metafield otherwise
+* Using the [metafieldsSet](https://shopify.dev/api/admin-graphql/2021-10/mutations/metafieldsset) GraphQL mutation, which does not require a metafield ID [Note: this mutation is available as of the 2021-10 API release]
 
-To use this task, provide the numeric ID of a customer in your store. ([Need help finding the customer ID?](https://learn.mechanic.dev/techniques/finding-a-resource-id)) Then, add in the desired metafield namespace and key (which will uniquely identify the metafield), and the metafield value (which will be stored within the metafield). Finally, choose between REST and GraphQL for performing the Shopify API operation, noting how the [task preview](https://learn.mechanic.dev/core-concepts/tasks/previews) changes to reflect your choice.
+To use this task, provide the numeric ID of a customer in your store. ([Need help finding the customer ID?](https://learn.mechanic.dev/techniques/finding-a-resource-id)) Then, add in the desired metafield namespace and key (which will uniquely identify the metafield), and the metafield value (which will be stored within the metafield). Finally, choose between REST and GraphQL for performing the Shopify API operation, noting how the [task preview](https://learn.mechanic.dev/core/tasks/previews) changes to reflect your choice.
 
 Run the task to see the metafield create/update in action.
 
 To verify that the metafield operation succeeded, use an app like [Metafields Guru](https://apps.shopify.com/metafields-editor-2), or look up `/metafields.json` for the customer in your Shopify admin area. For example, for a customer with the ID 12345, on a store called example.myshopify.com, the following URL would show all the metafields for that customer:
 
-https://example.myshopify.com/admin/customers/12345/metafields.json
+`https://example.myshopify.com/admin/customers/12345/metafields.json`
 
 ## Installing this task
 
