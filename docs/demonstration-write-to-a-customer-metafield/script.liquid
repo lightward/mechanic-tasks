@@ -21,12 +21,13 @@
             "namespace": {{ metafield_namespace | json }},
             "key": {{ metafield_key | json }},
             "value": {{ metafield_value | json }},
-            "value_type": "string"
+            "type": "single_line_text_field"
           }
         ]
       }
     ]
   {% endaction %}
+
 {% elsif options.use_graphql_api__boolean %}
   {% action "shopify" %}
     mutation {
@@ -39,7 +40,7 @@
               namespace: {{ metafield_namespace | json }}
               key: {{ metafield_key | json }}
               value: {{ metafield_value | json }}
-              valueType: STRING
+              type: "single_line_text_field"
             }
           ]
         }
@@ -51,6 +52,42 @@
       }
     }
   {% endaction %}
+
+{% elsif options.use_metafields_set_mutation__boolean %}
+  {% action "shopify" %}
+    mutation {
+      metafieldsSet(
+        metafields: [
+          {
+            ownerId: {{ customer.admin_graphql_api_id | json }}
+            namespace: {{ metafield_namespace | json }}
+            key: {{ metafield_key | json }}
+            value: {{ metafield_value | json }}
+            type: "single_line_text_field"
+          }
+        ]
+      ) {
+        metafields {
+          id
+          namespace
+          key
+          type
+          value
+          owner {
+            ... on Customer {
+              id
+            }
+          }
+        }
+        userErrors {
+          code
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
 {% else %}
   {% error "Choose at least one API option to continue. :)" %}
 {% endif %}
