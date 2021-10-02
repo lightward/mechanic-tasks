@@ -75,7 +75,7 @@
                 namespace: "mechanic"
                 key: {{ metafield_key | json }}
                 value: {{ "now" | date: "%s" | plus: tag_removal_interval_s | append: "" | json }}
-                valueType: INTEGER
+                type: "number_integer"
                 description: {{ "Auto-removal time for product tag " | append: tag | append: ", for task " | append: task.id | json }}
               }
             ]
