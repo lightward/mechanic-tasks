@@ -45,7 +45,7 @@ This task monitors changes to inventory level, records the time at which a produ
 
 This task operates in two phases.
 
-Phase one runs in response to inventory level changes. When a change brings a product's total inventory to at or above your configured threshold, a [metafield](https://help.shopify.com/en/manual/products/metafields) will be added to your product, indicating when it returned to "back in stock" status. (Note: when this task encounters a product for the first time, and the product is _already_ considered "back in stock", the task will record the current time.)
+Phase one runs in response to inventory level changes. When a change brings a product's total inventory to at or above your configured threshold, a [metafield](https://help.shopify.com/en/manual/metafields) will be added to your product, indicating when it returned to "back in stock" status. (Note: when this task encounters a product for the first time, and the product is _already_ considered "back in stock", the task will record the current time.)
 
 Phase two occurs when you run this task manually, or when it is run daily or hourly. In this phase, the task scans every product in your Shopify account, and updates tags in bulk, according to the task's configuration and according to the recorded "back in stock" time for each product.
 
