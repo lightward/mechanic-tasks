@@ -96,7 +96,7 @@
               id: {{ metafield.id | json }}
               namespace: "mechanic"
               key: "previous-state"
-              valueType: STRING
+              type: "single_line_text_field"
               value: {% if event.preview %}"DISABLED"{% else %}{{ newState | json }}{% endif %}
             }
           ]
