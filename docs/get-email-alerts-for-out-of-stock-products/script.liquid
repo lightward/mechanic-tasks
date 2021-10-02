@@ -109,25 +109,47 @@
   {% assign out_of_stock_email_product_title = 'Premium T-Shirt' %}
 {% endif %}
 
+{% assign metafields = array %}
 {% assign mutations = array %}
 
 {% for product_id in newly_out_of_stock_product_ids %}
+  {% capture metafield %}
+    {
+      ownerId: {{ product_id | json }}
+      namespace: "mechanic"
+      key: {{ metafield_key | json }}
+      type: "number_integer"
+      value: "1"
+    }
+  {% endcapture %}
+
+  {% assign metafields = metafields | push: metafield %}
+{% endfor %}
+
+{% assign groups_of_metafields = metafields | in_groups_of: 25, fill_with: false %}
+
+{% for group_of_metafields in groups_of_metafields %}
   {% capture mutation %}
     mutation {
-      productUpdate(
-        input: {
-          id: {{ product_id | json }}
-          metafields: [
-            {
-              namespace: "mechanic"
-              key: {{ metafield_key | json }}
-              valueType: INTEGER
-              value: "1"
-            }
-          ]
-        }
+      metafieldsSet(
+        metafields: [
+          {{ group_of_metafields | join: newline }}
+        ]
       ) {
+        metafields {
+          id
+          namespace
+          key
+          type
+          value
+          owner {
+            ... on Product {
+              id
+            }
+          }
+        }
         userErrors {
+          code
           field
           message
         }
