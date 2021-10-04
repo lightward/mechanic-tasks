@@ -84,7 +84,7 @@
     {% capture email_body %}
       Hello,
 
-      {{ variant_name }} was found to have a unit cost of {{ unit_cost | times: 100 | money_with_currency }}, while its price is set to {{ price | times: 100 | money_with_currency }}.
+      {{ variant_name }} was found to have a unit cost of {{ unit_cost | currency }}, while its price is set to {{ price | currency }}.
 
       <a href="https://{{ shop.myshopify_domain }}/admin/products/{{ product.id }}/variants/{{ variant_edge.node.legacyResourceId }}">Manage this in Shopify</a>
 
@@ -115,7 +115,7 @@
               id: {{ result.data.product.metafield.id | json }}
               namespace: "mechanic"
               key: "variant_costs"
-              valueType: JSON_STRING
+              type: "json"
               value: {{ current_costs | json | json }}
             }
           ]
