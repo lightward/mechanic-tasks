@@ -86,7 +86,7 @@
             "owner_id": 1234567890,
             "namespace": "mechanic",
             "key": "feature_count",
-            "value_type": "integer",
+            "type": "number_integer",
             "value": 1
           }
         ]
@@ -117,7 +117,7 @@
 
       {% assign tags_to_save = nil %}
       {% if max_feature_times != blank and options.tag_to_add_after_a_product_has_been_featured_for_the_last_time != blank %}
-        {% assign current_feature_count = product.metafields.mechanic.feature_count | default: 0 %}
+        {% assign current_feature_count = product.metafields.mechanic.feature_count.value | default: 0 %}
         {% if current_feature_count >= max_feature_times %}
           {% assign tags_to_save = product.tags | add_tag: options.tag_to_add_after_a_product_has_been_featured_for_the_last_time %}
         {% endif %}
@@ -194,7 +194,7 @@
       {% endif %}
 
       {% if max_feature_times != blank %}
-        {% assign current_feature_count = shop.products[product_id_to_be_featured].metafields.mechanic.feature_count | default: 0 %}
+        {% assign current_feature_count = shop.products[product_id_to_be_featured].metafields.mechanic.feature_count.value | default: 0 %}
         {% if current_feature_count >= max_feature_times %}
           {% capture message %}Product {{ product_id_to_be_featured }} has already been published {{ current_feature_count }} time(s); skipping{% endcapture %}
           {"log": {{ message | json }}}
@@ -268,7 +268,7 @@
                 "owner_id": {{ product_id_to_be_featured | json }},
                 "namespace": "mechanic",
                 "key": "feature_count",
-                "value_type": "integer",
+                "type": "number_integer",
                 "value": {{ current_feature_count | plus: 1 | json }}
               }
             ]
