@@ -90,7 +90,7 @@
                 {
                   namespace: "mechanic"
                   key: "out_of_stock_at"
-                  valueType: STRING
+                  type: "date_time"
                   value: {{ "now" | date: time_format | json }}
                 }
               ]
@@ -257,7 +257,7 @@
                     {
                       namespace: "mechanic"
                       key: "out_of_stock_at"
-                      valueType: STRING
+                      type: "date_time"
                       value: {{ "now" | date: time_format | json }}
                     }
                   ]
