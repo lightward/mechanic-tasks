@@ -49,7 +49,7 @@
                 {
                   namespace: "mechanic"
                   key: {{ metafield_key | json }}
-                  valueType: STRING
+                  type: "date_time"
                   value: {{ "now" | date: "%FT%T%:z" | json }}
                 }
               ]
