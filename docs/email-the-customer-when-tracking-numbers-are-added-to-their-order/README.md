@@ -34,7 +34,7 @@ Use this task with services that add tracking numbers to fulfillments after fulf
 
 This task works by monitoring created and updated fulfillments. It scans for and saves the tracking numbers currently available for an order, and whenever that set changes, it sends an email to the customer.
 
-Use "TRACKING_NUMBERS" in your email body to insert a list of tracking numbers for the customer's order. Or, use "{{ fulfillment.tracking_number }}", to insert the single tracking number of the fulfillment   that the task has just been created or updated.
+Use "TRACKING_NUMBERS" in your email body to insert a list of tracking numbers for the customer's order. Or, use "{{ fulfillment.tracking_number }}", to insert the single tracking number of the fulfillment that has just been created or updated.
 
 [YouTube: Watch the development video!](https://youtu.be/W9VztafUY84)
 
