@@ -33,7 +33,7 @@ shopify/fulfillments/update
 
 Use this task to notify customers about product-specific information, that should only be delivered when a successful fulfillment is registered for their purchased product.
 
-This task requires a product ID. [Learn where to find this.](https://help.usemechanic.com/en/articles/2946120-how-do-i-find-an-id-for-a-product-collection-order-or-something-else)
+This task requires a product ID. [Learn where to find this.](https://learn.mechanic.dev/techniques/finding-a-resource-id)
 
 [YouTube: Watch the development video!](https://youtu.be/5atvVttJnbY)
 

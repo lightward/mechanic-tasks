@@ -56,7 +56,7 @@
           {
             "namespace": "mechanic",
             "key": {{ metafield_key | json }},
-            "value_type": "integer",
+            "type": "number_integer",
             "value": "1",
             "description": {{ "Mechanic sent an email for this fulfillment, for product " | append: options.required_product_id__number_required | append: ", in task " | append: task.id | json }}
           }
