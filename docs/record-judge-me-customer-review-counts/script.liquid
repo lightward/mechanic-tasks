@@ -1,33 +1,65 @@
+{% assign metafield_namespace = options.metafield_namespace__required %}
+{% assign metafield_key = options.metafield_key__required %}
+
 {% assign customer = shop.customers[review.reviewer.external_id] %}
 
-{% if customer or event.preview %}
-  {% assign current_review_count = customer.metafields[options.metafield_namespace_required][options.metafield_key__required] | default: 0 %}
+{% if event.preview %}
+  {% capture customer_json %}
+    {
+      "admin_graphql_api_id": "gid://shopify/Customer/1234567890",
+      "metafields": [
+        {
+          "namespace": {{ metafield_namespace | json }},
+          "key": {{ metafield_key | json }},
+          "value": 0
+        }
+      ]
+    }
+  {% endcapture %}
+
+  {% assign customer = customer_json | parse_json %}
+{% endif %}
+
+{% if customer %}
+  {% assign current_review_count = customer.metafields[metafield_namespace][metafield_key].value | default: 0 %}
   {% assign next_review_count = current_review_count | plus: 1 %}
-
-  {% assign metafield = hash %}
-  {% assign metafield["namespace"] = options.metafield_namespace_required %}
-  {% assign metafield["key"] = options.metafield_key__required %}
-  {% assign metafield["value_type"] = "integer" %}
-  {% assign metafield["value"] = next_review_count %}
-  {% assign params = hash %}
-  {% assign params["metafield"] = metafield %}
-
-  {% if event.preview %}
-    {% assign metafield_url = "/admin/customers/1234567890/metafields.json" %}
-  {% else %}
-    {% assign metafield_url = "/admin/customers/" | append: customer.id | append: "/metafields.json" %}
-  {% endif %}
-
-  {% action "shopify" "post", metafield_url, params %}
-
   {% assign next_review_count_as_string = next_review_count | append: "" %}
   {% assign tag = options.tags_to_apply_for_review_counts__keyval[next_review_count_as_string] %}
 
-  {% if tag != blank %}
-    {% capture query %}
-      mutation {
+  {% action "shopify" %}
+    mutation {
+      metafieldsSet(
+        metafields: [
+          {
+            ownerId: {{ customer.admin_graphql_api_id | json }}
+            namespace: {{ metafield_namespace | json }}
+            key: {{ metafield_key | json }}
+            value: {{ next_review_count_as_string | json }}
+            type: "number_integer"
+          }
+        ]
+      ) {
+        metafields {
+          id
+          namespace
+          key
+          type
+          value
+          owner {
+            ... on Customer {
+              id
+            }
+          }
+        }
+        userErrors {
+          code
+          field
+          message
+        }
+      }
+      {% if tag != blank %}
         tagsAdd(
-          id: {% if event.preview %}"gid://shopify/Customer/1234567890"{% else %}{{ customer.admin_graphql_api_id | json }}{% endif %}
+          id: {{ customer.admin_graphql_api_id | json }}
           tags: {{ tag | json }}
         ) {
           node {
@@ -38,9 +70,7 @@
             message
           }
         }
-      }
-    {% endcapture %}
-
-    {% action "shopify" query %}
-  {% endif %}
+      {% endif %}
+    }
+  {% endaction %}
 {% endif %}
