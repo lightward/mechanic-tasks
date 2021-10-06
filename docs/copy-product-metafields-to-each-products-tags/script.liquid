@@ -2,21 +2,43 @@
   An opinion about object order:
 
   {{ options.metafield_namespace__required }}
-  {{ options.metafield_key__required }}
+  {{ options.metafield_keys_and_tag_prefixes__keyval_required }}
   {{ options.monitor_new_products__boolean }}
   {{ options.test_mode__boolean }}
 {% endcomment %}
 
-{% assign product_ids_and_tags = hash %}
+{% assign metafield_namespace = options.metafield_namespace__required %}
+{% assign metafield_keys_and_tag_prefixes = options.metafield_keys_and_tag_prefixes__keyval_required %}
+{% assign metafield_keys = metafield_keys_and_tag_prefixes | keys %}
+
+{% assign metafields = array %}
+
+{% for metafield_key in metafield_keys %}
+  {% if metafield_key != blank %}
+    {% capture metafield %}
+      {{ metafield_key }}: metafield(
+        namespace: {{ metafield_namespace | json }}
+        key: {{ metafield_key | json }}
+      ) {
+        type
+        value
+      }
+    {% endcapture %}
+
+    {% assign metafields = metafields | push: metafield %}
+  {% endif %}
+{% endfor %}
+
+{% assign products = array %}
 
 {% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
   {% assign cursor = nil %}
 
-  {% for n in (0..100) %}
+  {% for n in (0..1000) %}
     {% capture query %}
       query {
         products(
-          first: 250
+          first: 25
           after: {{ cursor | json }}
         ) {
           pageInfo {
@@ -27,12 +49,7 @@
             node {
               id
               tags
-              metafield(
-                namespace: {{ options.metafield_namespace__required | json }}
-                key: {{ options.metafield_key__required | json }}
-              ) {
-                value
-              }
+              {{ metafields | join: newline }}
             }
           }
         }
@@ -41,19 +58,9 @@
 
     {% assign result = query | shopify %}
 
-    {% for product_edge in result.data.products.edges %}
-      {% assign product = product_edge.node %}
+    {% assign products_batch = result.data.products.edges | map: "node" %}
 
-      {% if product.metafield == nil %}
-        {% continue %}
-      {% endif %}
-
-      {% if product.tags contains product.metafield.value %}
-        {% continue %}
-      {% endif %}
-
-      {% assign product_ids_and_tags[product.id] = product.metafield.value %}
-    {% endfor %}
+    {% assign products = products | concat: products_batch %}
 
     {% if result.data.products.pageInfo.hasNextPage %}
       {% assign cursor = result.data.products.edges.last.cursor %}
@@ -61,35 +68,113 @@
       {% break %}
     {% endif %}
   {% endfor %}
+
 {% elsif event.topic contains "shopify/products/" %}
   {% capture query %}
     query {
       product(id: {{ product.admin_graphql_api_id | json }}) {
         id
         tags
-        metafield(
-          namespace: {{ options.metafield_namespace__required | json }}
-          key: {{ options.metafield_key__required | json }}
-        ) {
-          value
-        }
+        {{ metafields | join: newline }}
       }
     }
   {% endcapture %}
 
   {% assign result = query | shopify %}
-  {% assign product = result.data.product %}
 
-  {% if product.metafield %}
-    {% unless product.tags contains product.metafield.value %}
-      {% assign product_ids_and_tags[product.id] = product.metafield.value %}
-    {% endunless %}
-  {% endif %}
+  {% assign products[0] = result.data.product %}
 {% endif %}
 
 {% if event.preview %}
-  {% assign product_ids_and_tags["gid://shopify/Product/1234567890"] = "Delta" %}
+  {% capture products_json %}
+    [
+      {
+        "id": "gid://shopify/Product/1234567890",
+        "tags": null,
+        {{ metafield_keys.first | json }}: {
+          "type": "single_line_text_field",
+          "value": "Lorem ipsum"
+        }
+      }
+    ]
+  {% endcapture %}
+
+  {% assign products = products_json | parse_json %}
 {% endif %}
+
+{% assign product_ids_and_tags = hash %}
+
+{% for product in products %}
+  {% assign tags = array %}
+
+  {% unless event.preview %}
+    {% log product_before_tagging: product %}
+  {% endunless %}
+
+  {% for metafield_key in metafield_keys %}
+    {% assign tag = nil %}
+    {% assign tag_prefix = metafield_keys_and_tag_prefixes[metafield_key] %}
+    {% assign product_metafield = product[metafield_key] %}
+
+    {% if product_metafield != blank %}
+      {% case product_metafield.type %}
+        {% when "boolean" %}
+          {% capture tag %}{{ tag_prefix }}{{ product_metafield.value }}{% endcapture %}
+
+        {% when "color" %}
+          {% capture tag %}{{ tag_prefix }}{{ product_metafield.value }}{% endcapture %}
+
+        {% when "date" %}
+          {% capture tag %}{{ tag_prefix }}{{ product_metafield.value }}{% endcapture %}
+
+        {% when "date_time" %}
+          {% capture tag %}{{ tag_prefix }}{{ product_metafield.value }}{% endcapture %}
+
+        {% when "dimension" %}
+          {% assign product_metafield_value = product_metafield.value | parse_json %}
+          {% capture tag %}{{ tag_prefix }}{{ product_metafield_value.value }} {{ product_metafield_value.unit }}{% endcapture %}
+
+        {% when "number_decimal" %}
+          {% capture tag %}{{ tag_prefix }}{{ product_metafield.value }}{% endcapture %}
+
+        {% when "number_integer" or "integer" %}
+          {% capture tag %}{{ tag_prefix }}{{ product_metafield.value }}{% endcapture %}
+
+        {% when "rating" %}
+          {% assign product_metafield_value = product_metafield.value | parse_json %}
+          {% capture tag %}{{ tag_prefix }}{{ product_metafield_value.value }} / {{ product_metafield_value.scale_max }}{% endcapture %}
+
+        {% when "single_line_text_field" or "string" %}
+          {% capture tag %}{{ tag_prefix }}{{ product_metafield.value }}{% endcapture %}
+
+        {% when "volume" %}
+          {% assign product_metafield_value = product_metafield.value | parse_json %}
+          {% capture tag %}{{ tag_prefix }}{{ product_metafield_value.value }} {{ product_metafield_value.unit }}{% endcapture %}
+
+        {% when "weight" %}
+          {% assign product_metafield_value = product_metafield.value | parse_json %}
+          {% capture tag %}{{ tag_prefix }}{{ product_metafield_value.value }} {{ product_metafield_value.unit }}{% endcapture %}
+
+        {% else %}
+          {% log
+            message: "Unsupported metafield type for this task",
+            metafield_type: product_metafield.type,
+            product_id: product.id
+          %}
+      {% endcase %}
+
+      {% if tag %}
+        {% unless product.tags contains tag %}
+          {% assign tags = tags | push: tag %}
+        {% endunless %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+
+  {% if tags != blank %}
+    {% assign product_ids_and_tags[product.id] = tags %}
+  {% endif %}
+{% endfor %}
 
 {% if options.test_mode__boolean %}
   {% action "echo" %}
@@ -98,16 +183,17 @@
       "product_ids_and_tags": {{ product_ids_and_tags | json }}
     }
   {% endaction %}
+
 {% else %}
   {% for keyval in product_ids_and_tags %}
     {% assign product_id = keyval[0] %}
-    {% assign tag = keyval[1] %}
+    {% assign tags = keyval[1] %}
 
     {% action "shopify" %}
       mutation {
         tagsAdd(
           id: {{ product_id | json }}
-          tags: {{ tag | json }}
+          tags: {{ tags | json }}
         ) {
           userErrors {
             field
