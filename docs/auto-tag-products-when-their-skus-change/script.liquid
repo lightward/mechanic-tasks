@@ -141,6 +141,8 @@
   {% endif %}
 {% endif %}
 
+{% assign metafields = array %}
+
 {% for product in products_that_need_a_metafield_update %}
   {% assign metafield_value = hash %}
   {% assign existing_metafield = product.metafields.mechanic | where: "key", metafield_key | first %}
@@ -153,27 +155,51 @@
   {% assign metafield_value_json = metafield_value | json %}
 
   {% if existing_metafield.value == metafield_value_json %}
-    {% log message: "Product metafield is already up to date", product_id: product_id %}
+    {% log message: "Product metafield is already up to date", product_id: product.id %}
+
   {% else %}
-    {% action "shopify" %}
-      [
-        "update",
-        [
-          "product",
-          {{ product.id | json }}
-        ],
-        {
-          "metafields": [
-            {
-              {% if existing_metafield %}"id": {{ existing_metafield.id | json }},{% endif %}
-              "namespace": "mechanic",
-              "key": {{ metafield_key | json }},
-              "value": {{ metafield_value_json | json }},
-              "value_type": "json_string"
-            }
-          ]
-        }
-      ]
-    {% endaction %}
+    {% capture metafield %}
+      {
+        ownerId: {{ product.admin_graphql_api_id | json }}
+        namespace: "mechanic"
+        key: {{ metafield_key | json }}
+        value: {{ metafield_value_json | json }}
+        type: "json"
+      }
+    {% endcapture %}
+
+    {% assign metafields = metafields | push: metafield %}
   {% endif %}
+{% endfor %}
+
+{% assign groups_of_metafields = metafields | in_groups_of: 25, fill_with: false %}
+
+{% for group_of_metafields in groups_of_metafields %}
+  {% action "shopify" %}
+    mutation {
+      metafieldsSet(
+        metafields: [
+          {{ group_of_metafields | join: newline }}
+        ]
+      ) {
+        metafields {
+          id
+          namespace
+          key
+          type
+          value
+          owner {
+            ... on Product {
+              id
+            }
+          }
+        }
+        userErrors {
+          code
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
 {% endfor %}
