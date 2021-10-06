@@ -124,8 +124,8 @@
             {
               namespace: "mechanic"
               key: {{ tag_processed_metafield_key | json }}
+              type: "number_integer"
               value: "1"
-              valueType: INTEGER
             }
           ]
         }) {
@@ -209,21 +209,46 @@
     {% endif %}
   {% endfor %}
 
+  {% assign metafields = array %}
+
   {% for customer_id in customer_ids_to_mark %}
+    {% capture metafield %}
+      {
+        ownerId: {{ customer_id | json }}
+        namespace: "mechanic"
+        key: {{ tag_processed_metafield_key | json }}
+        type: "number_integer"
+        value: "1"
+      }
+    {% endcapture %}
+
+    {% assign metafields = metafields | push: metafield %}
+  {% endfor %}
+
+  {% assign groups_of_metafields = metafields | in_groups_of: 25, fill_with: false %}
+
+  {% for group_of_metafields in groups_of_metafields %}
     {% action "shopify" %}
       mutation {
-        customerUpdate(input: {
-          id: {{ customer_id | json }}
+        metafieldsSet(
           metafields: [
-            {
-              namespace: "mechanic"
-              key: {{ tag_processed_metafield_key | json }}
-              value: "1"
-              valueType: INTEGER
-            }
+            {{ group_of_metafields | join: newline }}
           ]
-        }) {
+        ) {
+          metafields {
+            id
+            namespace
+            key
+            type
+            value
+            owner {
+              ... on Customer {
+                id
+              }
+            }
+          }
           userErrors {
+            code
             field
             message
           }
@@ -233,15 +258,36 @@
   {% endfor %}
 
   {% action "shopify" %}
-    [
-      "create",
-      "metafield",
-      {
-        "namespace": "mechanic",
-        "key": {{ customers_scanned_metafield_key | json }},
-        "value_type": "integer",
-        "value": "1"
+    mutation {
+      metafieldsSet(
+        metafields: [
+          {
+            ownerId: {{ "gid://shopify/Shop/" | append: shop.id | json }}
+            namespace: "mechanic"
+            key: {{ customers_scanned_metafield_key | json }}
+            type: "number_integer"
+            value: "1"
+          }
+        ]
+      ) {
+        metafields {
+          id
+          namespace
+          key
+          type
+          value
+          owner {
+            ... on Shop {
+              id
+            }
+          }
+        }
+        userErrors {
+          code
+          field
+          message
+        }
       }
-    ]
+    }
   {% endaction %}
 {% endif %}
