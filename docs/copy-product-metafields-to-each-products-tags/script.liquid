@@ -3,7 +3,8 @@
 
   {{ options.metafield_namespace__required }}
   {{ options.metafield_keys_and_tag_prefixes__keyval_required }}
-  {{ options.monitor_new_products__boolean }}
+  {{ options.monitor_new_and_updated_products__boolean }}
+  {{ options.remove_outdated_prefixed_tags__boolean }}
   {{ options.test_mode__boolean }}
 {% endcomment %}
 
@@ -12,8 +13,12 @@
 {% assign metafield_keys = metafield_keys_and_tag_prefixes | keys %}
 
 {% assign metafields = array %}
+{% assign tag_prefixes_hash = hash %}
 
-{% for metafield_key in metafield_keys %}
+{% for keyval in metafield_keys_and_tag_prefixes %}
+  {% assign metafield_key = keyval[0] %}
+  {% assign tag_prefix = keyval[1] %}
+
   {% if metafield_key != blank %}
     {% capture metafield %}
       {{ metafield_key }}: metafield(
@@ -26,8 +31,14 @@
     {% endcapture %}
 
     {% assign metafields = metafields | push: metafield %}
+
+    {% if tag_prefix != blank %}
+      {% assign tag_prefixes_hash[metafield_key] = tag_prefix | lstrip %}
+    {% endif %}
   {% endif %}
 {% endfor %}
+
+{% assign tag_prefixes = tag_prefixes_hash | values %}
 
 {% assign products = array %}
 
@@ -90,7 +101,9 @@
     [
       {
         "id": "gid://shopify/Product/1234567890",
-        "tags": null,
+        "tags": [
+          {{ tag_prefixes.first | append: "sample" | json }}
+        ],
         {{ metafield_keys.first | json }}: {
           "type": "single_line_text_field",
           "value": "Lorem ipsum"
@@ -105,15 +118,17 @@
 {% assign product_ids_and_tags = hash %}
 
 {% for product in products %}
-  {% assign tags = array %}
+  {% assign tags_should_have = array %}
+  {% assign tags_to_add = array %}
+  {% assign tags_to_remove = array %}
 
   {% unless event.preview %}
-    {% log product_before_tagging: product %}
+    {% log product_before_tagging_updates: product %}
   {% endunless %}
 
   {% for metafield_key in metafield_keys %}
     {% assign tag = nil %}
-    {% assign tag_prefix = metafield_keys_and_tag_prefixes[metafield_key] %}
+    {% assign tag_prefix = tag_prefixes_hash[metafield_key] %}
     {% assign product_metafield = product[metafield_key] %}
 
     {% if product_metafield != blank %}
@@ -164,15 +179,43 @@
       {% endcase %}
 
       {% if tag %}
-        {% unless product.tags contains tag %}
-          {% assign tags = tags | push: tag %}
-        {% endunless %}
+        {% assign tags_should_have = tags_should_have | push: tag %}
       {% endif %}
     {% endif %}
   {% endfor %}
 
-  {% if tags != blank %}
-    {% assign product_ids_and_tags[product.id] = tags %}
+  {% if options.remove_outdated_prefixed_tags__boolean %}
+    {% for tag_prefix in tag_prefixes %}
+      {% assign tag_prefix_size = tag_prefix.size %}
+
+      {% for product_tag in product.tags %}
+        {% assign product_tag_slice = product_tag | slice: 0, tag_prefix_size %}
+
+        {% if product_tag.size > tag_prefix_size and product_tag_slice == tag_prefix %}
+          {% unless tags_should_have contains product_tag %}
+            {% assign tags_to_remove = tags_to_remove | push: product_tag %}
+          {% endunless %}
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+  {% endif %}
+
+  {% for tag_should_have in tags_should_have %}
+    {% unless product.tags contains tag_should_have %}
+      {% assign tags_to_add = tags_to_add | push: tag_should_have %}
+    {% endunless %}
+  {% endfor %}
+
+  {% if tags_to_add != blank or tags_to_remove != blank %}
+    {% assign product_ids_and_tags[product.id] = hash %}
+    {% assign product_ids_and_tags[product.id]["tags_to_add"] = tags_to_add %}
+    {% assign product_ids_and_tags[product.id]["tags_to_remove"] = tags_to_remove %}
+
+  {% else %}
+    {% log
+      message: "No tagging operations needed for this product; skipping.",
+      product: product.id
+    %}
   {% endif %}
 {% endfor %}
 
@@ -187,20 +230,36 @@
 {% else %}
   {% for keyval in product_ids_and_tags %}
     {% assign product_id = keyval[0] %}
-    {% assign tags = keyval[1] %}
+    {% assign tags_to_add = keyval[1].tags_to_add %}
+    {% assign tags_to_remove = keyval[1].tags_to_remove %}
 
-    {% action "shopify" %}
-      mutation {
-        tagsAdd(
-          id: {{ product_id | json }}
-          tags: {{ tags | json }}
-        ) {
-          userErrors {
-            field
-            message
-          }
+    {% if tags_to_add != blank or tags_to_remove != blank %}
+      {% action "shopify" %}
+        mutation {
+          {% if tags_to_add != blank %}
+            tagsAdd(
+              id: {{ product_id | json }}
+              tags: {{ tags_to_add | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          {% endif %}
+          {% if tags_to_remove != blank %}
+            tagsRemove(
+              id: {{ product_id | json }}
+              tags: {{ tags_to_remove | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          {% endif %}
         }
-      }
-    {% endaction %}
+      {% endaction %}
+    {% endif %}
   {% endfor %}
 {% endif %}
