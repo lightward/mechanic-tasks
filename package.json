@@ -13,6 +13,6 @@
     "build": "node ./lib/build.js"
   },
   "engines": {
-    "node": ">=12.10.0"
+    "node": ">=14.14.0"
   }
 }
