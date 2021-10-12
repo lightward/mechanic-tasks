@@ -204,6 +204,8 @@
     {% enderror %}
   {% endif %}
 
+  {% log variants_found: variants %}
+
   {% action "shopify" %}
     mutation {
       {% for variant in variants %}
@@ -327,6 +329,8 @@
       {{ "Expected to find " | append: all_skus.size | append: " matching component product variants with unique SKUs, based on the task configuration, but found " | append: variants.size | append: " matching variants with " | append: found_skus.size | append: " unique SKUs instead. Make sure each SKU for this task only has one associated product in your store." | json }}
     {% enderror %}
   {% endif %}
+
+  {% log variants_found: variants %}
 
   {% assign minimum_inventory_variant = nil %}
   {% assign minimum_inventory_variant_bundle_quantity = nil %}
