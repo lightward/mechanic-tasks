@@ -55,6 +55,13 @@
         first: 50
         after: {{ cursor | json }}
         query: {{ orders_query | json }}
+
+        # this piece is important for stores that have read_all_orders
+        # disabled. without this, we run the risk of getting an empty
+        # set of edges back, preventing us from getting any cursors
+        # with which to move on to the next page.
+        sortKey: CREATED_AT
+        reverse: true
       ) {
         pageInfo {
           hasNextPage
