@@ -44,3 +44,7 @@ Find this task [in the library at usemechanic.com](https://usemechanic.com/task/
 ## Contributions
 
 Found a bug? Got an improvement to add? Start here: [../../CONTRIBUTING.md](../../CONTRIBUTING.md).
+
+## Task requests
+
+Submit your [task requests](https://mechanic.canny.io/task-requests) for consideration by the Mechanic community, and they may be chosen for development and inclusion in the [task library](https://tasks.mechanic.dev/)!
