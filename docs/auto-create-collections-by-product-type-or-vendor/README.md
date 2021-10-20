@@ -1,6 +1,6 @@
 # Auto-create collections by product type or vendor
 
-Tags: (not tagged!)
+Tags: Collections, Products, Publish, Vendor
 
 When products are created, this task will auto-create smart collections by product type and/or vendor, if such collections don't already exist. Additionally, configuring one or more __exact__ sales channel names will enable publishing of any _newly created_ collections by this task to those sales channels.
 
