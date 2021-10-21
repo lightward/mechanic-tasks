@@ -1,0 +1,345 @@
+{% assign create_collections_by_product_type = options.create_collections_by_product_type__boolean %}
+{% assign create_collections_by_vendor = options.create_collections_by_vendor__boolean %}
+{% assign sales_channel_names = options.names_of_sales_channels_to_publish_collections_to__array %}
+
+{% unless create_collections_by_product_type or create_collections_by_vendor %}
+  {% error "Choose at least one 'Create collections by' option" %}
+{% endunless %}
+
+{% assign product_types = array %}
+{% assign vendors = array %}
+
+{% if event.topic == "mechanic/user/trigger" or event.topic == "shopify/products/update" %}
+  {% if event.topic == "mechanic/user/trigger" %}
+    {% assign cursor = nil %}
+
+    {% for n in (1..1000) %}
+      {% capture query %}
+        query {
+          products(
+            first: 250
+            after: {{ cursor | json }}
+          ) {
+            pageInfo {
+              hasNextPage
+            }
+            edges {
+              cursor
+              node {
+                productType
+                vendor
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = query | shopify %}
+
+      {% assign products = result.data.products.edges | map: "node" %}
+
+      {% for product in products %}
+        {% unless product.productType == blank or product_types contains product.productType %}
+          {% assign product_types = product_types | push: product.productType %}
+        {% endunless %}
+
+        {% unless product.vendor == blank or vendors contains product.vendor %}
+          {% assign vendors = vendors | push: product.vendor %}
+        {% endunless %}
+      {% endfor %}
+
+      {% if result.data.products.pageInfo.hasNextPage %}
+        {% assign cursor = result.data.products.edges.last.cursor %}
+      {% else %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+
+  {% elsif event.topic == "shopify/products/update" %}
+    {% unless product.product_type == blank %}
+      {% assign product_types[0] = product.product_type %}
+    {% endunless %}
+
+    {% unless product.vendor == blank %}
+      {% assign vendors[0] = product.vendor %}
+    {% endunless %}
+  {% endif %}
+
+  {% if event.preview %}
+    {% assign product_types[0] = "Widget" %}
+    {% assign vendors[0] = "ACME" %}
+  {% endif %}
+
+  {% if sales_channel_names != blank %}
+    {% assign publication_ids = array %}
+
+    {% capture query %}
+      query {
+        publications(first: 250) {
+          edges {
+            node {
+              id
+              name
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "publications": {
+              "edges": [
+                {
+                  "node": {
+                    "id": "gid://shopify/Publication/1234567890",
+                    "name": {{ sales_channel_names[0] | json }}
+                  }
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign publications = result.data.publications.edges | map: "node" %}
+    {% assign publication_names = publications | map: "name" | sort %}
+    {% assign publications_indexed_by_name = publications | index_by: "name" %}
+
+    {% for sales_channel_name in sales_channel_names %}
+      {% if publication_names contains sales_channel_name %}
+        {% assign publication_ids = publication_ids | push: publications_indexed_by_name[sales_channel_name].id %}
+
+      {% else %}
+        {% unless event.preview %}
+          {% error
+            message: "A configured sales channel name does not match any of the publication names available in this shop.",
+            sales_channel_name: sales_channel_name,
+            publication_names: publication_names
+          %}
+        {% endunless %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
+  {% if create_collections_by_product_type %}
+    {% for product_type in product_types %}
+      {% capture query %}
+        query {
+          collections(
+            first: 1
+            query: {{ product_type | json | prepend: "title:" | json }}
+          ) {
+            edges {
+              node {
+                id
+                title
+                handle
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = query | shopify %}
+
+      {% if result.data.collections.edges != blank %}
+        {% log
+          message: "A collection title matching this product type already exists; skipping.",
+          product_type: product_type,
+          collection: result.data.collections.edges.first.node
+        %}
+
+      {% else %}
+        {% capture mutation %}
+          mutation {
+            collectionCreate(
+              input: {
+                title: {{ product_type | json }}
+                ruleSet: {
+                  appliedDisjunctively: false
+                  rules: [
+                    {
+                      column: TYPE
+                      relation: EQUALS
+                      condition: {{ product_type | json }}
+                    }
+                  ]
+                }
+              }
+            ) {
+              collection {
+                id
+                title
+                handle
+              }
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endcapture %}
+
+        {% action %}
+          {
+            "type": "shopify",
+            "options": {{ mutation | json }},
+            "meta": {
+              "publication_ids": {{ publication_ids | json }}
+            }
+          }
+        {% endaction %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
+  {% if create_collections_by_vendor %}
+    {% for vendor in vendors %}
+      {% capture query %}
+        query {
+          collections(
+            first: 1
+            query: {{ vendor | json | prepend: "title:" | json }}
+          ) {
+            edges {
+              node {
+                id
+                title
+                handle
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = query | shopify %}
+
+      {% if result.data.collections.edges != blank %}
+        {% log
+          message: "A collection title matching this vendor already exists; skipping.",
+          vendor: vendor,
+          collection: result.data.collections.edges.first.node
+        %}
+
+      {% else %}
+        {% capture mutation %}
+          mutation {
+            collectionCreate(
+              input: {
+                title: {{ vendor | json }}
+                ruleSet: {
+                  appliedDisjunctively: false
+                  rules: [
+                    {
+                      column: VENDOR
+                      relation: EQUALS
+                      condition: {{ vendor | json }}
+                    }
+                  ]
+                }
+              }
+            ) {
+              collection {
+                id
+                title
+                handle
+              }
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endcapture %}
+
+        {% action %}
+          {
+            "type": "shopify",
+            "options": {{ mutation | json }},
+            "meta": {
+              "publication_ids": {{ publication_ids | json }}
+            }
+          }
+        {% endaction %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
+{% elsif event.topic == "mechanic/actions/perform" %}
+  {% if event.preview %}
+    {% capture action_json %}
+      {
+        "type": "shopify",
+        "meta": {
+          "publication_ids": [
+            "gid://shopify/Publication/1234567890"
+          ]
+        },
+        "run": {
+          "ok": true,
+          "result": {
+            "data": {
+              "collectionCreate": {
+                "collection": {
+                  "id": "gid://shopify/Collection/1234567890",
+                  "title": "ACME",
+                  "handle": "acme"
+                }
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign action = action_json | parse_json %}
+  {% endif %}
+
+  {% if action.run.ok %}
+    {% assign collection_id = action.run.result.data.collectionCreate.collection.id %}
+    {% assign publication_ids = action.meta.publication_ids %}
+
+    {% assign mutations = array %}
+
+    {% for publication_id in publication_ids %}
+      {% capture mutation %}
+          publishablePublish{{ forloop.index }}: publishablePublish(
+            id: {{ collection_id | json }}
+            input: {
+              publicationId: {{ publication_id | json }}
+            }
+          ) {
+            publishable {
+              ... on Collection {
+                id
+                title
+                handle
+              }
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        {% endcapture %}
+
+        {% assign mutations = mutations | push: mutation %}
+    {% endfor %}
+
+    {% if mutations != blank %}
+      {% action "shopify" %}
+        mutation {
+          {{ mutations | join: newline }}
+        }
+      {% endaction %}
+    {% endif %}
+  {% endif %}
+{% endif %}
