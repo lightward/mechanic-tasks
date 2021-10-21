@@ -123,7 +123,7 @@
             message: "A configured sales channel name does not match any of the publication names available in this shop.",
             sales_channel_name: sales_channel_name,
             publication_names: publication_names
-          %}          
+          %}
         {% endunless %}
       {% endif %}
     {% endfor %}
@@ -188,15 +188,15 @@
           }
         {% endcapture %}
 
-        {
-          "action": {
+        {% action %}
+          {
             "type": "shopify",
             "options": {{ mutation | json }},
             "meta": {
               "publication_ids": {{ publication_ids | json }}
             }
           }
-        }
+        {% endaction %}
       {% endif %}
     {% endfor %}
   {% endif %}
@@ -260,24 +260,22 @@
           }
         {% endcapture %}
 
-        {
-          "action": {
+        {% action %}
+          {
             "type": "shopify",
             "options": {{ mutation | json }},
             "meta": {
               "publication_ids": {{ publication_ids | json }}
             }
           }
-        }
+        {% endaction %}
       {% endif %}
     {% endfor %}
   {% endif %}
 
 {% elsif event.topic == "mechanic/actions/perform" %}
-  {% assign event_data = event.data %}
-
   {% if event.preview %}
-    {% capture event_data_json %}
+    {% capture action_json %}
       {
         "type": "shopify",
         "meta": {
@@ -302,12 +300,12 @@
       }
     {% endcapture %}
 
-    {% assign event_data = event_data_json | parse_json %}
+    {% assign action = action_json | parse_json %}
   {% endif %}
 
-  {% if event_data.run.ok %}
-    {% assign collection_id = event_data.run.result.data.collectionCreate.collection.id %}
-    {% assign publication_ids = event_data.meta.publication_ids %}
+  {% if action.run.ok %}
+    {% assign collection_id = action.run.result.data.collectionCreate.collection.id %}
+    {% assign publication_ids = action.meta.publication_ids %}
 
     {% assign mutations = array %}
 
