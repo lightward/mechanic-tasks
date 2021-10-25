@@ -1,0 +1,142 @@
+{% comment %} 
+  In this example we are showing how to use all four Shopify Flow tiggers:
+  1. General
+  2. Customer
+  3. Order
+  4. Product
+{% endcomment %}
+
+{% assign customer_id = options.customer_id__number %}
+{% assign order_id = options.order_id__number %}
+{% assign product_id = options.product_id__number %}
+
+{% if event.preview or event.topic == "mechanic/user/trigger" %}
+
+  {% comment %} 
+    Testing the Mechanic customer Flow trigger
+  {% endcomment %}
+
+  {% if customer_id%}
+    {% action "flow" %}
+      {
+        {% comment %}
+          If you want your Mechanic Flow trigger to be associated
+          with a Shopify resource, you may include its numeric ID
+          below. Only one resource at a time is supported. Leave
+          this out entirely to use the general Mechanic Flow trigger.
+        {% endcomment %}
+        "customer_id": {{ customer_id | json}},
+
+        {% comment %}
+          Keep as many of the following as you like. Any omitted
+          keys *will* be submitted anyway, using the default value
+          given below. If you don't want to use Mechanic's default
+          value, make sure to *keep* the key in place below, setting
+          it to whatever you like.
+        {% endcomment %}
+        "user_number":  55,
+        "user_string":  "Love!"
+      }
+    {% endaction %}
+  {% endif %}
+
+  {% comment %} 
+    Testing the Mechanic order Flow trigger
+  {% endcomment %}
+
+  {% if order_id%}
+    {% action "flow" %}
+      {
+        {% comment %}
+          If you want your Mechanic Flow trigger to be associated
+          with a Shopify resource, you may include its numeric ID
+          below. Only one resource at a time is supported. Leave
+          this out entirely to use the general Mechanic Flow trigger.
+        {% endcomment %}
+        "order_id": {{ order_id | json}},
+
+        {% comment %}
+          Keep as many of the following as you like. Any omitted
+          keys *will* be submitted anyway, using the default value
+          given below. If you don't want to use Mechanic's default
+          value, make sure to *keep* the key in place below, setting
+          it to whatever you like.
+        {% endcomment %}
+        "user_number":  55,
+        "user_string":  "Love!"
+      }
+    {% endaction %}
+  {% endif %}
+
+  {% comment %} 
+    Testing the Mechanic product Flow trigger
+  {% endcomment %}
+
+  {% if product_id%}
+    {% action "flow" %}
+      {
+        {% comment %}
+          If you want your Mechanic Flow trigger to be associated
+          with a Shopify resource, you may include its numeric ID
+          below. Only one resource at a time is supported. Leave
+          this out entirely to use the general Mechanic Flow trigger.
+        {% endcomment %}
+        "product_id": {{ product_id | json}},
+
+        {% comment %}
+          Keep as many of the following as you like. Any omitted
+          keys *will* be submitted anyway, using the default value
+          given below. If you don't want to use Mechanic's default
+          value, make sure to *keep* the key in place below, setting
+          it to whatever you like.
+        {% endcomment %}
+        "user_number":  55,
+        "user_string":  "Love!"
+      }
+    {% endaction %}
+  {% endif %}
+
+  {% comment %} 
+    Testing the Mechanic customer Flow trigger
+  {% endcomment %}
+
+  {% action "flow" %}
+    {
+      {% comment %}
+        Keep as many of the following as you like. Any omitted
+        keys *will* be submitted anyway, using the default value
+        given below. If you don't want to use Mechanic's default
+        value, make sure to *keep* the key in place below, setting
+        it to whatever you like.
+      {% endcomment %}
+      "user_boolean": false,
+      "user_email":   "hey@mechanic.invalid",
+      "user_number":  0,
+      "user_string":  "",
+      "user_url":     "https://mechanic.invalid/"
+     }
+  {% endaction %}
+
+{% endif %}
+
+
+{% comment %} 
+  Next, we show triggering a Mechanic task from a Flow action.  
+  A few quick points: 
+   - This could be in any Mechanic task, we have this example as part of this task for demonstration purposes.
+   - To test this part of the task, you'll need to set up a Shopify Flow to send an action to this event topic.
+{% endcomment %}
+
+{% comment %}
+  The event topic can be anything in the user domain.  We choose user/flow/customer but it could be something like user/flow/xyz
+{% endcomment %}
+
+{% if event.topic == "user/flow/customer" %}
+
+{% action "echo" %}
+  {
+    "event": {{ event.data | parse_json | json}}
+  }
+{% endaction %}
+
+{% endif %}
