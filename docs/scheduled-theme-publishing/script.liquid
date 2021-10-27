@@ -1,0 +1,83 @@
+{% assign theme_ids_and_publish_dates = options.theme_ids_and_publish_dates__keyval %}
+
+{% if event.preview %}
+  {% assign theme_to_publish = hash %}
+  {% assign theme_to_publish["id"] = 1234567890 %}
+
+{% elsif event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% assign shop_theme_ids = shop.themes | map: "id" %}
+
+  {% assign publication_candidates = array %}
+
+  {% for keyval in theme_ids_and_publish_dates %}
+    {% assign theme_id = keyval.first %}
+    {% assign publish_date = keyval.last %}
+
+    {% assign theme = shop.themes[theme_id] %}
+
+    {% if theme == blank %}
+      {% error
+        message: "A theme with this id was not found in this shop.",
+        theme_id: theme_id,
+        shop_theme_ids: shop_theme_ids
+      %}
+    {% endif %}
+
+    {% assign valid_publish_date = publish_date | parse_date: "%Y-%m-%d %H:%M" %}
+
+    {% unless valid_publish_date %}
+      {% assign valid_publish_date = publish_date | parse_date: "%Y-%m-%d" %}
+    {% endunless %}
+
+    {% if valid_publish_date == blank %}
+      {% error
+        message: "A theme publish date could not be parsed. Refer to the task documentation for valid date/time formats.",
+        theme_id: theme_id,
+        publish_date: publish_date
+      %}
+    {% endif %}
+
+    {% assign publication_candidate = hash %}
+    {% assign publication_candidate["theme"] = theme %}
+    {% assign publication_candidate["publish_date"] = valid_publish_date | date: "%s" %}
+    {% assign publication_candidates = publication_candidates | push: publication_candidate %}
+  {% endfor %}
+
+  {% assign publication_candidates = publication_candidates | sort: "publish_date" %}
+
+  {% assign now = "now" | date: "%s" %}
+  {% assign theme_to_publish = nil %}
+
+  {% for publication_candidate in publication_candidates %}
+    {% if publication_candidate.publish_date <= now %}
+      {% assign theme_to_publish = publication_candidate.theme %}
+
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+{% if theme_to_publish != blank %}
+  {% if theme_to_publish.role == "main" %}
+    {% log
+      message: "The theme to be published is already set as the main theme on the shop; skipping.",
+      theme_to_publish: theme_to_publish
+    %}
+
+  {% else %}
+    {% action "shopify" %}
+      [
+        "update",
+        "theme",
+        {
+          "id": {{ theme_to_publish.id }},
+          "role": "main"
+        }
+      ]
+    {% endaction %}
+  {% endif %}
+
+{% else %}
+  {% log "No themes qualify to be published based on their configured publish dates." %}
+{% endif %}

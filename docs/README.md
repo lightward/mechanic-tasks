@@ -236,6 +236,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Schedule a storefront banner](./schedule-a-storefront-banner)
 * [Schedule customer auto-tagging after a purchase](./schedule-customer-auto-tagging-after-a-purchase)
 * [Schedule product tags by date](./schedule-product-tags-by-date)
+* [Scheduled theme publishing](./scheduled-theme-publishing)
 * [Send a PDF invoice when an order is created](./send-a-pdf-invoice-when-an-order-is-created)
 * [Send a customer signup email](./customer-signup-email)
 * [Send a follow-up email after order cancellation](./send-a-follow-up-email-after-order-cancellation)
