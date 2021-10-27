@@ -18,7 +18,7 @@ Use this task to automatically sync inventory for a simple product bundle – no
     "BUNDLE-B": 2,
     "BUNDLE-C": 3
   },
-  "inventory_buffer_quantity__number": 1
+  "inventory_buffer_quantity__number": "1"
 }
 ```
 
