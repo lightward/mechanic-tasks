@@ -1,13 +1,6 @@
 {% capture query %}
   query {
     product(id: {{ product.admin_graphql_api_id | json }}) {
-      metafield(
-        namespace: "mechanic"
-        key: "variant_costs"
-      ) {
-        id
-        value
-      }
       variants(first: 250) {
         edges {
           node {
@@ -20,6 +13,13 @@
               unitCost {
                 amount
               }
+            }
+            known_cost_and_price: metafield(
+              namespace: "mechanic"
+              key: "known_cost_and_price"
+            ) {
+              id
+              value
             }
           }
         }
@@ -35,16 +35,15 @@
     {
       "data": {
         "product": {
-          "metafield": null,
           "variants": {
             "edges": [
               {
                 "node": {
                   "id": "gid://shopify/ProductVariant/1234567890",
                   "legacyResourceId": "1234567890",
-                  "price": "5.00",
                   "sku": "ABC123",
                   "title": "Default Title",
+                  "price": "5.00",
                   "inventoryItem": {
                     "unitCost": {
                       "amount": "10.0"
@@ -62,17 +61,44 @@
   {% assign result = result_json | parse_json %}
 {% endif %}
 
-{% assign known_costs = result.data.product.metafield.value | default: "{}" | parse_json %}
-{% assign current_costs = hash %}
+{% assign product = result.data.product %}
+{% assign variants = product.variants.edges | map: "node" %}
 
-{% for variant_edge in result.data.product.variants.edges %}
-  {% assign unit_cost = variant_edge.node.inventoryItem.unitCost.amount | times: 1 %}
-  {% assign price = variant_edge.node.price | times: 1 %}
+{% assign metafields = array %}
 
-  {% assign current_costs[variant_edge.node.id] = unit_cost %}
+{% for variant in variants %}
+  {% assign unit_cost = variant.inventoryItem.unitCost.amount | times: 1 %}
+  {% assign price = variant.price | times: 1 %}
+  {% assign known_cost_and_price = variant.known_cost_and_price.value | default: "{}" | parse_json %}
 
-  {% if price < unit_cost and known_costs[variant_edge.node.id] != unit_cost %}
-    {% assign variant_name = variant_edge.node.sku | default: variant_edge.node.title %}
+  {% assign current_cost_and_price = hash %}
+  {% assign current_cost_and_price["cost"] = unit_cost %}
+  {% assign current_cost_and_price["price"] = price %}
+
+  {% log
+    variant_id: variant.id,
+    known_cost_and_price: known_cost_and_price,
+    current_cost_and_price: current_cost_and_price
+  %}
+
+  {% if price >= unit_cost and variant.known_cost_and_price != blank %}
+    {% action "shopify" %}
+      mutation {
+        metafieldDelete(
+          input: {
+            id: {{ variant.known_cost_and_price.id | json }}
+          }
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+
+  {% elsif price < unit_cost and known_cost_and_price != current_cost_and_price %}
+    {% assign variant_name = variant.sku | default: variant.title %}
     {% if variant_name == "Default Title" %}
       {% assign variant_name = product.title %}
     {% endif %}
@@ -86,7 +112,7 @@
 
       {{ variant_name }} was found to have a unit cost of {{ unit_cost | currency }}, while its price is set to {{ price | currency }}.
 
-      <a href="https://{{ shop.myshopify_domain }}/admin/products/{{ product.id }}/variants/{{ variant_edge.node.legacyResourceId }}">Manage this in Shopify</a>
+      <a href="https://{{ shop.myshopify_domain }}/admin/products/{{ product.id }}/variants/{{ variant.legacyResourceId }}">Manage this in Shopify</a>
 
       Thanks,
       Mechanic, for {{ shop.name }}
@@ -101,31 +127,49 @@
         "from_display_name": {{ shop.name | json }}
       }
     {% endaction %}
+
+    {% capture metafield %}
+      {
+        ownerId: {{ variant.id | json }}
+        namespace: "mechanic"
+        key: "known_cost_and_price"
+        type: "json"
+        value: {{ current_cost_and_price | json | json }}
+      }
+    {% endcapture %}
+
+    {% assign metafields = metafields | push: metafield %}
   {% endif %}
 {% endfor %}
 
-{% if known_costs != current_costs %}
+{% assign groups_of_metafields = metafields | in_groups_of: 25, fill_with: false %}
+
+{% for group_of_metafields in groups_of_metafields %}
   {% action "shopify" %}
     mutation {
-      productUpdate(
-        input: {
-          id: {{ product.admin_graphql_api_id | json }}
-          metafields: [
-            {
-              id: {{ result.data.product.metafield.id | json }}
-              namespace: "mechanic"
-              key: "variant_costs"
-              type: "json"
-              value: {{ current_costs | json | json }}
-            }
-          ]
-        }
+      metafieldsSet(
+        metafields: [
+          {{ group_of_metafields | join: newline }}
+        ]
       ) {
+        metafields {
+          id
+          namespace
+          key
+          type
+          value
+          owner {
+            ... on ProductVariant {
+              id
+            }
+          }
+        }
         userErrors {
+          code
           field
           message
         }
       }
     }
   {% endaction %}
-{% endif %}
+{% endfor %}
