@@ -1,54 +1,149 @@
-{% if event.preview %}
-  {% assign preview_tag = options.tag_for_any | default: options.tag_for_open | default: options.tag_for_submitted | default: options.tag_for_won | default: options.tag_for_lost %}
+{% assign tag_for_any = options.tag_for_any__required | strip  %}
 
-  {
-    "action": {
-      "type": "shopify",
-      "options": [
-        "update",
-        [
-          "order",
-          12345
-        ],
-        {
-          "tags": {{ preview_tag | json }}
+{% assign statuses_and_tags = hash %}
+{% assign statuses_and_tags["ACCEPTED"] = options.tag_for_accepted__required | strip %}
+{% assign statuses_and_tags["CHARGE_REFUNDED"] = options.tag_for_charge_refunded__required | strip %}
+{% assign statuses_and_tags["LOST"] = options.tag_for_lost__required | strip %}
+{% assign statuses_and_tags["NEEDS_RESPONSE"] = options.tag_for_needs_response__required | strip %}
+{% assign statuses_and_tags["UNDER_REVIEW"] = options.tag_for_under_review__required | strip %}
+{% assign statuses_and_tags["WON"] = options.tag_for_won__required | strip %}
+
+{% assign status_tags = statuses_and_tags | values %}
+
+{% assign cursor = nil %}
+
+{% for n in (0..100) %}
+  {% capture query %}
+    query {
+      orders (
+        first: 250
+        after: {{ cursor | json }}
+        query:"chargeback_status:any"
+      ) {
+        pageInfo {
+          hasNextPage
         }
-      ]
+        edges {
+          cursor
+          node {
+            id
+            disputes {
+              initiatedAs
+              status
+            }
+            tags
+          }
+        }
+      }
     }
-  }
-{% else %}
-  {% assign statuses = "open,submitted,won,lost,any" | split: "," %}
+  {% endcapture %}
 
-  {% for status in statuses %}
-    {% assign option_key = "tag_for_" | append: status %}
+  {% assign result = query | shopify %}
 
-    {% assign chargeback_filter_key = "chargeback_" | append: status %}
-    {% for order in shop.orders[chargeback_filter_key] %}
-      {% assign tags_to_save = order.tags | add_tag: options[option_tag_key] %}
-
-      {% if status == "submitted" %}
-        {% assign tags_to_save = tags_to_save | remove_tag: options.tag_for_open %}
-      {% elsif status == "won" or status == "lost" %}
-        {% assign tags_to_save = tags_to_save | remove_tag: options.tag_for_open | remove_tag: options.tag_for_submitted %}
-      {% endif %}
-
-      {% if tags_to_save != order.tags %}
-        {
-          "action": {
-            "type": "shopify",
-            "options": [
-              "update",
-              [
-                "order",
-                {{ order.id | json }}
-              ],
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "orders": {
+            "edges": [
               {
-                "tags": {{ tags_to_save | json }}
+                "node": {
+                  "id": "gid://shopify/Order/1234567890",
+                  "legacyResourceId": "1234567890",
+                  "disputes": [
+                    {
+                      "initiatedAs": "CHARGEBACK",
+                      "status": "NEEDS_RESPONSE"
+                    }
+                  ]
+                }
               }
             ]
           }
         }
-      {% endif %}
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign orders = result.data.orders.edges | map: "node"  %}
+
+  {% for order in orders %}
+    {% assign tags_should_have = array %}
+    {% assign tags_to_add = array %}
+    {% assign tags_to_remove = array %}
+
+    {% unless tag_for_any == blank %}
+      {% assign tags_should_have = tags_should_have | push: tag_for_any %}
+    {% endunless %}
+
+    {% assign dispute_statuses
+      = order.disputes
+      | where: "initiatedAs", "CHARGEBACK"
+      | map: "status"
+    %}
+
+    {% for dispute_status in dispute_statuses %}
+      {% assign tags_should_have = tags_should_have | push: statuses_and_tags[dispute_status] %}
     {% endfor %}
+
+    {% for status_tag in status_tags %}
+      {% unless tags_should_have contains status_tag %}
+        {% if order.tags contains status_tag %}
+          {% assign tags_to_remove = tags_to_remove | push: status_tag %}
+        {% endif %}
+      {% endunless %}
+    {% endfor %}
+
+    {% for tag_should_have in tags_should_have %}
+      {% unless order.tags contains tag_should_have %}
+        {% assign tags_to_add = tags_to_add | push: tag_should_have %}
+      {% endunless %}
+    {% endfor %}
+
+    {% log
+      order_id: order.legacyResourceId,
+      dispute_statuses: dispute_statuses,
+      order_tags: order.tags,
+      tags_should_have: tags_should_have,
+      tags_to_add: tags_to_add,
+      tags_to_remove: tags_to_remove
+    %}
+
+    {% if tags_to_add != blank or tags_to_remove != blank %}
+      {% action "shopify" %}
+        mutation {
+          {% if tags_to_add != blank %}
+            tagsAdd(
+              id: {{ order.id | json }}
+              tags: {{ tags_to_add | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          {% endif %}
+          {% if tags_to_remove != blank %}
+            tagsRemove(
+              id: {{ order.id | json }}
+              tags: {{ tags_to_remove | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          {% endif %}
+        }
+      {% endaction %}
+    {% endif %}
   {% endfor %}
-{% endif %}
+
+  {% if result.data.orders.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.orders.edges.last.cursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}

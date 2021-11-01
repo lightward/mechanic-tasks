@@ -12,11 +12,13 @@ Stay on top of chargebacks and inquiries! Nightly or on-demand, this task will s
 
 ```json
 {
-  "tag_for_any": "chargeback-any",
-  "tag_for_open": "chargeback-open",
-  "tag_for_submitted": "chargeback-submitted",
-  "tag_for_won": "chargeback-won",
-  "tag_for_lost": "chargeback-lost"
+  "tag_for_any__required": "chargeback-any",
+  "tag_for_accepted__required": "chargeback-accepted",
+  "tag_for_charge_refunded__required": "chargeback-refunded",
+  "tag_for_lost__required": "chargeback-lost",
+  "tag_for_needs_response__required": "chargeback-needs-response",
+  "tag_for_under_review__required": "chargeback-under-review",
+  "tag_for_won__required": "chargeback-won"
 }
 ```
 
@@ -35,7 +37,7 @@ mechanic/scheduler/daily
 
 Stay on top of chargebacks and inquiries! Nightly or on-demand, this task will scan the last 60 days of your order records, and apply the tags of your choice to orders with chargeback or inquiry activity, based on what that activity looks like.
 
-Nightly or on-demand, this task scans the last 60 days of your order records, and apply the tags of your choice to orders with chargeback or inquiry activity, based on where that process is for each order.
+If you would like for the task to scan orders beyond 60 days, you can enable [read all orders](https://learn.mechanic.dev/platform/shopify/read-all-orders) in your Mechanic settings.
 
 Learn more about chargebacks in the Shopify documentation:
 
