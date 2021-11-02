@@ -74,9 +74,7 @@
     {% assign tags_to_add = array %}
     {% assign tags_to_remove = array %}
 
-    {% unless tag_for_any == blank %}
-      {% assign tags_should_have = tags_should_have | push: tag_for_any %}
-    {% endunless %}
+    {% assign tags_should_have = tags_should_have | push: tag_for_any %}
 
     {% assign dispute_statuses
       = order.disputes
