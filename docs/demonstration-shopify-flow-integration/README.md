@@ -14,7 +14,8 @@ This task demonstrates how to use the four Mechanic Shopify Flow triggers: Gener
 {
   "customer_id__number": "",
   "order_id__number": "",
-  "product_id__number": ""
+  "product_id__number": "",
+  "use_general_trigger__boolean": true
 }
 ```
 
@@ -24,6 +25,7 @@ This task demonstrates how to use the four Mechanic Shopify Flow triggers: Gener
 
 ```liquid
 mechanic/user/trigger
+
 user/flow/customer
 user/flow/order
 user/flow/product
@@ -38,7 +40,7 @@ This task demonstrates how to use the four Mechanic Shopify Flow triggers: Gener
 
 You'll learn about the user-defined data that we can send to Shopify Flow: user_boolean, user_email, user_number, user_string, user_url.
 
-We demonstrate subscribing to an event topic fired by a Shopify Flow action. You'll need to set up a Flow in the Shopify Flow app to trigger this event topic. This example could be in any Mechanic task; we have this as part of this task for demonstration purposes. The event topic can be anything in the user domain. We choose user/flow/customer, but it could be something like user/flow/xyz.
+We demonstrate subscribing to an event topic fired by a Shopify Flow action. You'll need to set up a workflow in the Shopify Flow app to trigger this event topic. This example could be in any Mechanic task; we have this as part of this task for demonstration purposes. The event topic can be anything in the user domain. We choose user/flow/customer (etc), but it could be something like user/flow/xyz.
 
 ## Installing this task
 
