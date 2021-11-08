@@ -15,7 +15,7 @@ This task demonstrates how to use the four Mechanic Shopify Flow triggers: Gener
   "customer_id__number": "",
   "order_id__number": "",
   "product_id__number": "",
-  "use_general_trigger__boolean": true
+  "send_general_trigger__boolean": true
 }
 ```
 
