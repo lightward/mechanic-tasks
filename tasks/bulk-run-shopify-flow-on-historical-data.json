@@ -1,0 +1,22 @@
+{
+  "name": "Bulk run Shopify Flow on historical data",
+  "options": {
+    "start_date": "",
+    "end_date": ""
+  },
+  "subscriptions": [
+    "mechanic/user/trigger",
+    "mechanic/shopify/bulk_operation"
+  ],
+  "subscriptions_template": "mechanic/user/trigger\nmechanic/shopify/bulk_operation",
+  "script": "{% assign start_date = options.start_date %}\n{% assign end_date = options.end_date %}\n\n{% if start_date %}\n  {% assign valid_start_date = start_date | parse_date: \"%Y-%m-%d\" %}\n  {% if valid_start_date == blank %}\n    {% error\n      message: \"A start date could not be parsed. If you choose to include, ensure the format is YYYY-MM-DD.\"  %}\n    {% endif %}\n{% endif %}\n\n{% if end_date %}\n  {% assign valid_end_date = end_date | parse_date: \"%Y-%m-%d\" %}\n  {% if valid_end_date == blank %}\n    {% error\n      message: \"An end date could not be parsed. If you choose to include, ensure the format is YYYY-MM-DD.\"  %}\n    {% endif %}\n{% endif %}\n\n{% if event.topic == \"mechanic/user/trigger\" %}\n  {% capture bulk_operation_query %}\n    query {\n      orders\n      {% if start_date and end_date %}\n        (query: \"created_at:>={{start_date}} AND created_at:<{{end_date}}\")     \n      {% elsif start_date %}\n        (query: \"created_at:>={{start_date}}\")\n      {% elsif end_date %}\n        (query: \"created_at:<{{end_date}}\")    \n      {% endif %}  \n       {\n        edges {\n          node {\n            __typename\n            legacyResourceId \n          }\n        }\n      }\n    }\n  {% endcapture %}\n\n  {% action \"shopify\" %}\n    mutation {\n      bulkOperationRunQuery(\n        query: {{ bulk_operation_query | json }}\n      ) {\n        bulkOperation {\n          id\n          status\n        }\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% elsif event.topic == \"mechanic/shopify/bulk_operation\" %}\n  {% if event.preview %}\n    {% capture bulkOperation_objects_jsonl %}\n      {\"__typename\":\"Order\",\"legacyResourceId\":\"1234567890\"}\n    {% endcapture %}\n\n    {% assign bulkOperation = hash %}\n    {% assign bulkOperation[\"objects\"] = bulkOperation_objects_jsonl | parse_jsonl %}\n  {% endif %}\n\n  {% assign orders = bulkOperation.objects | where: \"__typename\", \"Order\" %}\n{% endif %}\n\n{% for order in orders %}\n  {% action \"flow\" %}\n    {\n      \"order_id\": {{order.legacyResourceId}}\n    }\n  {% endaction %}\n{% endfor %}",
+  "docs": "Do you wish Shopify Flow workflows could run on historical data? While they can now! \n\nThis task queries your orders and calls Shopify Flow for each order returned. You can optionally provide a date range to limit the orders to be processed. If provided, these dates must be in this format *YYYY-MM-DD*.\n\nTo process Products or Customers, update the bulk operation query in the code and update Mechanic Flow action to send `product_id` or `customer_id`.",
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "tags": [
+    "Integration",
+    "Shopify Flow"
+  ]
+}
