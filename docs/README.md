@@ -293,6 +293,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Temporarily add an order note](./temporarily-add-an-order-note)
 * [Temporarily enable tax-exempt status when a customer is tagged](./temporarily-enable-tax-exempt-status-when-a-customer-is-tagged)
 * [Track incoming donations in a store metafield](./track-incoming-donations-in-a-store-metafield)
+* [Trigger Shopify Flow with a time delay](./trigger-shopify-flow-with-a-time-delay)
 * [Trigger order emails with a tag](./trigger-order-emails-with-a-tag)
 * [Tutorial: Trigger a task from a contact form, using webhooks](./tutorial-trigger-a-task-from-a-contact-form-using-webhooks)
 * [Unpublish a certain collection, daily](./unpublish-a-certain-collection-daily)
