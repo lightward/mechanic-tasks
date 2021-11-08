@@ -4,17 +4,15 @@
 {% if start_date %}
   {% assign valid_start_date = start_date | parse_date: "%Y-%m-%d" %}
   {% if valid_start_date == blank %}
-    {% error
-      message: "A start date could not be parsed. If you choose to include, ensure the format is YYYY-MM-DD."  %}
-    {% endif %}
+    {% error message: "A start date could not be parsed. If you choose to include, ensure the format is YYYY-MM-DD."  %}
+  {% endif %}
 {% endif %}
 
 {% if end_date %}
   {% assign valid_end_date = end_date | parse_date: "%Y-%m-%d" %}
   {% if valid_end_date == blank %}
-    {% error
-      message: "An end date could not be parsed. If you choose to include, ensure the format is YYYY-MM-DD."  %}
-    {% endif %}
+    {% error message: "An end date could not be parsed. If you choose to include, ensure the format is YYYY-MM-DD."  %}
+  {% endif %}
 {% endif %}
 
 {% if event.topic == "mechanic/user/trigger" %}
@@ -71,7 +69,15 @@
 {% for order in orders %}
   {% action "flow" %}
     {
-      "order_id": {{order.legacyResourceId}}
+      {% comment %}
+        Remember, Flow only accepts numeric IDs - not full global ID strings.
+      {% endcomment %}
+      "order_id": {{ order.legacyResourceId | json }},
+
+      {% comment %}
+        This flag value is intended to be used in Flow conditions; see the task docs for more details.
+      {% endcomment %}
+      "user_string": {{ options.flag_value | append: "" | json }}
     }
   {% endaction %}
 {% endfor %}

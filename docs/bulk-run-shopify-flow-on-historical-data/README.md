@@ -2,7 +2,7 @@
 
 Tags: Integration, Shopify Flow
 
-Do you wish Shopify Flow workflows could run on historical data? While they can now! 
+Do you wish Shopify Flow workflows could run on historical data? Now they can! :D
 
 * View in the task library: [usemechanic.com/task/bulk-run-shopify-flow-on-historical-data](https://usemechanic.com/task/bulk-run-shopify-flow-on-historical-data)
 * Task JSON, for direct import: [task.json](../../tasks/bulk-run-shopify-flow-on-historical-data.json)
@@ -13,7 +13,8 @@ Do you wish Shopify Flow workflows could run on historical data? While they can 
 ```json
 {
   "start_date": "",
-  "end_date": ""
+  "end_date": "",
+  "flag_value": "mechanic-batch"
 }
 ```
 
@@ -30,11 +31,13 @@ mechanic/shopify/bulk_operation
 
 ## Documentation
 
-Do you wish Shopify Flow workflows could run on historical data? While they can now! 
+Do you wish Shopify Flow workflows could run on historical data? Now they can! :D
 
-This task queries your orders and calls Shopify Flow for each order returned. You can optionally provide a date range to limit the orders to be processed. If provided, these dates must be in this format *YYYY-MM-DD*.
+This task queries your orders, and calls Shopify Flow for each order returned. You can optionally provide a date range to limit the orders to be processed. If provided, these dates must be in this format *YYYY-MM-DD*.
 
-To process Products or Customers, update the bulk operation query in the code and update Mechanic Flow action to send `product_id` or `customer_id`.
+It includes a flag value, intended to help Flow workflows identify the Mechanic order triggers that are relevant, ignoring those that are not. The flag value _only_ has significance if there are Flow workflows looking for its value, using workflow conditions. A Flow condition for this purpose might read like, _if User string is equal to 'mechanic-import'_.
+
+This task is written to process orders, but can be modified to process products or customers. To make a change like this, open the task code, and update the bulk operation to query for the right resources. Then, update the Flow action to send `product_id` or `customer_id` as appropriate, instead of `order_id`.
 
 ## Installing this task
 
