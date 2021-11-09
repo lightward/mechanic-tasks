@@ -1,0 +1,113 @@
+{% comment %}
+  In this example we show how to use all four Shopify Flow tiggers:
+  1. General
+  2. Customer
+  3. Order
+  4. Product
+{% endcomment %}
+
+{% assign customer_id = options.customer_id__number %}
+{% assign order_id = options.order_id__number %}
+{% assign product_id = options.product_id__number %}
+
+{% if event.topic == "mechanic/user/trigger" %}
+  {% comment %}
+    Testing the Customer trigger for Flow
+  {% endcomment %}
+
+  {% if customer_id %}
+    {% action "flow" %}
+      {
+        "customer_id": {{ customer_id | json }},
+
+        "user_number":  55,
+        "user_string":  "Love!"
+      }
+    {% endaction %}
+  {% endif %}
+
+  {% if order_id %}
+    {% comment %}
+      Testing the Order trigger for Flow
+    {% endcomment %}
+
+    {% action "flow" %}
+      {
+        "order_id": {{ order_id | json }},
+
+        "user_number":  55,
+        "user_string":  "Love!"
+      }
+    {% endaction %}
+  {% endif %}
+
+  {% if product_id %}
+    {% comment %}
+      Testing the Product trigger for Flow
+    {% endcomment %}
+
+    {% action "flow" %}
+      {
+        "product_id": {{ product_id | json }},
+
+        "user_number":  55,
+        "user_string":  "Love!"
+      }
+    {% endaction %}
+  {% endif %}
+
+  {% if options.send_general_trigger__boolean %}
+    {% comment %}
+      Testing the General trigger for Flow
+    {% endcomment %}
+
+    {% action "flow" %}
+      {
+        {% comment %}
+          Keep as many of the following as you like. Any omitted
+          keys *will* be submitted anyway, using the default value
+          given below. If you don't want to use Mechanic's default
+          value, make sure to *keep* the key in place below, setting
+          it to whatever you like.
+        {% endcomment %}
+        "user_boolean": false,
+        "user_email":   "hey@mechanic.invalid",
+        "user_number":  0,
+        "user_string":  "",
+        "user_url":     "https://mechanic.invalid/"
+       }
+    {% endaction %}
+  {% endif %}
+{% endif %}
+
+{% comment %}
+  Next, we show triggering a Mechanic task from a Flow action.
+
+  A few quick points:
+   - This could be in any Mechanic task. we have this example as part
+     of this task for demonstration purposes.
+   - To exercise this part of the task, you'll need to set up a Shopify
+     Flow to send an action to this event topic.
+   - The event topic can be anything in the user domain. We use topics
+     starting with "user/flow/", but it could be something like
+     "user/foo/bar" too.
+
+  To quickly test echoing data from Mechanic *back* to Mechanic, add a
+  Mechanic action to your Flow workflow configured with the following
+  event data value:
+
+  {
+    "user_boolean": {{ userBoolean | json }},
+    "user_email": {{ userEmail | json }},
+    "user_number": {{ userNumber | json }},
+    "user_string": {{ userString | json }},
+    "user_url": {{ userUrl | json }},
+    "mechanic_event_topic": {{ mechanicEventTopic | json }},
+    "mechanic_task_id": {{ mechanicTaskId | json }},
+    "mechanic_event_inspector_url": {{ mechanicEventInspectorUrl | json }}
+  }
+{% endcomment %}
+
+{% if event.topic contains "user/flow/" %}
+  {% log flow_event_data: event.data %}
+{% endif %}

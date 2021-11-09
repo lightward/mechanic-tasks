@@ -1,0 +1,24 @@
+{% action "flow" %}
+  {
+    {% comment %}
+      If you want your Mechanic Flow trigger to be associated
+      with a Shopify resource, you may include its numeric ID
+      below. Only one resource at a time is supported. Leave
+      this out entirely to use the General Mechanic Flow trigger.
+    {% endcomment %}
+    "order_id": {{order.id }},
+
+    {% comment %}
+      Keep as many of the following as you like. Any omitted
+      keys *will* be submitted anyway, using the default value
+      given below. If you don't want to use Mechanic's default
+      value, make sure to *keep* the key in place below, setting
+      it to whatever you like.
+    {% endcomment %}
+    "user_boolean": false,
+    "user_email":   "hey@mechanic.invalid",
+    "user_number":  0,
+    "user_string":  "",
+    "user_url":     "https://mechanic.invalid/"
+  }
+{% endaction %}

@@ -1,0 +1,83 @@
+{% assign start_date = options.start_date %}
+{% assign end_date = options.end_date %}
+
+{% if start_date %}
+  {% assign valid_start_date = start_date | parse_date: "%Y-%m-%d" %}
+  {% if valid_start_date == blank %}
+    {% error message: "A start date could not be parsed. If you choose to include, ensure the format is YYYY-MM-DD."  %}
+  {% endif %}
+{% endif %}
+
+{% if end_date %}
+  {% assign valid_end_date = end_date | parse_date: "%Y-%m-%d" %}
+  {% if valid_end_date == blank %}
+    {% error message: "An end date could not be parsed. If you choose to include, ensure the format is YYYY-MM-DD."  %}
+  {% endif %}
+{% endif %}
+
+{% if event.topic == "mechanic/user/trigger" %}
+  {% capture bulk_operation_query %}
+    query {
+      orders
+      {% if start_date and end_date %}
+        (query: "created_at:>={{start_date}} AND created_at:<{{end_date}}")     
+      {% elsif start_date %}
+        (query: "created_at:>={{start_date}}")
+      {% elsif end_date %}
+        (query: "created_at:<{{end_date}}")    
+      {% endif %}  
+       {
+        edges {
+          node {
+            __typename
+            legacyResourceId 
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture bulkOperation_objects_jsonl %}
+      {"__typename":"Order","legacyResourceId":"1234567890"}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = bulkOperation_objects_jsonl | parse_jsonl %}
+  {% endif %}
+
+  {% assign orders = bulkOperation.objects | where: "__typename", "Order" %}
+{% endif %}
+
+{% for order in orders %}
+  {% action "flow" %}
+    {
+      {% comment %}
+        Remember, Flow only accepts numeric IDs - not full global ID strings.
+      {% endcomment %}
+      "order_id": {{ order.legacyResourceId | json }},
+
+      {% comment %}
+        This flag value is intended to be used in Flow conditions; see the task docs for more details.
+      {% endcomment %}
+      "user_string": {{ options.flag_value | append: "" | json }}
+    }
+  {% endaction %}
+{% endfor %}
