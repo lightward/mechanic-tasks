@@ -1,5 +1,5 @@
 {
-  "name": "Bulk run Shopify Flow on historical data",
+  "name": "Bulk trigger Shopify Flow with historical data",
   "options": {
     "start_date": "",
     "end_date": "",

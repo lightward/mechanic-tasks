@@ -141,7 +141,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Automatically send account invite to new customers](./automatically-send-account-invite-to-new-customers)
 * [Backup inventory to SFTP in Shopify CSV format](./backup-scheduled-inventory-exports-in-shopifys-csv-format)
 * [Bulk capture orders by order number](./bulk-capture-by-order-number)
-* [Bulk run Shopify Flow on historical data](./bulk-run-shopify-flow-on-historical-data)
+* [Bulk trigger Shopify Flow with historical data](./bulk-trigger-shopify-flow-with-historical-data)
 * [Calculate total quantities purchased by SKU](./calculate-total-quantities-purchased-by-sku)
 * [Cancel and close unpaid orders after x hours/days](./cancel-and-close-unpaid-orders-after-two-days)
 * [Cancel fulfillments when an order is fully refunded](./cancel-fulfillments-when-an-order-is-fully-refunded)
