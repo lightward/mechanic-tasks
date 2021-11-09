@@ -1,11 +1,11 @@
-# Bulk run Shopify Flow on historical data
+# Bulk trigger Shopify Flow with historical data
 
 Tags: Integration, Shopify Flow
 
 Do you wish Shopify Flow workflows could run on historical data? Now they can! :D
 
-* View in the task library: [usemechanic.com/task/bulk-run-shopify-flow-on-historical-data](https://usemechanic.com/task/bulk-run-shopify-flow-on-historical-data)
-* Task JSON, for direct import: [task.json](../../tasks/bulk-run-shopify-flow-on-historical-data.json)
+* View in the task library: [usemechanic.com/task/bulk-trigger-shopify-flow-with-historical-data](https://usemechanic.com/task/bulk-trigger-shopify-flow-with-historical-data)
+* Task JSON, for direct import: [task.json](../../tasks/bulk-trigger-shopify-flow-with-historical-data.json)
 * Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
@@ -41,7 +41,7 @@ This task is written to process orders, but can be modified to process products 
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/bulk-run-shopify-flow-on-historical-data), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/bulk-run-shopify-flow-on-historical-data.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/bulk-trigger-shopify-flow-with-historical-data), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/bulk-trigger-shopify-flow-with-historical-data.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
 
 ## Contributions
 
