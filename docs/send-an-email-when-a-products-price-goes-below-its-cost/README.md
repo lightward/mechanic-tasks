@@ -30,8 +30,6 @@ shopify/products/update
 
 This task watches for product updates, and sends an email (to the recipient of your choice) for each variant that's found to have a unit cost that's greater than the variant's for-sale price.
 
-It will only send one email per variant, per the last observed change to that specific variant cost and price pairing where the cost was greater than the price.
-
 If a product is updated that the task hasn't had a chance to previously observe, emails will be sent immediately for any variants that have a unit cost greater than their price.
 
 [YouTube: Watch the development video!](https://youtu.be/LrFu6bV1f1o)
