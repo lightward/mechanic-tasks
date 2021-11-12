@@ -11,7 +11,12 @@
 
 {% assign primary_location = shop.locations[shop.primary_location_id] %}
 
-{% log primary_location: primary_location, bundle_sku: bundle_sku, component_skus_and_quantities: component_skus_and_quantities %}
+{% log
+  primary_location: primary_location,
+  bundle_sku: bundle_sku,
+  component_skus_and_quantities: component_skus_and_quantities,
+  inventory_buffer_quantity: options.inventory_buffer_quantity__number
+%}
 
 {% assign do_full_sync = false %}
 {% assign do_component_adjustment = false %}
@@ -338,7 +343,13 @@
     {% assign bundle_delta = bundle_delta | minus: options.inventory_buffer_quantity__number %}
   {% endif %}
 
-  {% log bundle_variant: bundle_variant, available_delta: bundle_delta, minimum_inventory_component_variant_sku: minimum_inventory_component_variant.sku, minimum_inventory_component_variant_quantity: minimum_inventory_component_variant.inventoryItem.inventoryLevel.available, minimum_inventory_component_variant_bundle_quantity: minimum_inventory_component_variant_bundle_quantity %}
+  {% log
+    bundle_variant: bundle_variant,
+    minimum_inventory_component_variant_sku: minimum_inventory_component_variant.sku,
+    minimum_inventory_component_variant_quantity: minimum_inventory_component_variant.inventoryItem.inventoryLevel.available, minimum_inventory_component_variant_bundle_quantity: minimum_inventory_component_variant_bundle_quantity,
+    inventory_buffer_quantity: options.inventory_buffer_quantity__number,
+    available_delta: bundle_delta
+  %}
 
   {% if bundle_delta == 0 %}
     {% log "Lowest quantity component SKU had an inventory that was appropriate for the bundle's current inventory. No change needed." %}

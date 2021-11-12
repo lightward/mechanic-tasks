@@ -1,6 +1,6 @@
 # Maintain inventory for a product bundle
 
-Tags: Bundle, Inventory, Products
+Tags: Bundle, Inventory, Products, SKU, Sync
 
 Use this task to automatically sync inventory for a simple product bundle – no theme modifications required. When configured with unique SKUs for the bundle and its components, and with quantities needed from each component for each bundle unit, this task keeps the bundle inventory set to the greatest possible value, given the quantities of its components. It also appropriately subtracts from component inventory whenever the bundle is ordered, and appropriately raises component inventory when a bundle order is refunded.
 
@@ -46,15 +46,15 @@ Usage:
 
 Requirements:
 
-* This task does not support multiple inventory locations.
+* This task only considers inventory from the default location configured in the shop.
 * Configure this task with a unique SKU for the bundle product. The bundle product SKU must not be re-used by any other products.
-* This task can sync inventory across multiple product variants sharing the same component SKU. But, if a single SKU is used for multiple variants in the same store, all such variants must start at the same inventory level.
+* This task can sync inventory across multiple product variants sharing the same component SKU. But, if a single SKU is used for multiple variants in the same store, all such variants must start with and maintain equal inventory levels.
 * Use the right-hand side of the "Component product SKUs and quantities per bundle" option to control how many units of each component SKU is required for each single bundle unit. If your bundle requires one wrench and two sprockets, for example, make sure to add "1" and "2" on the right-hand side, each number associated with the right SKU.
 
 Notes:
 
 * Whenever this task runs, any inventory updates to the bundle product will be overwritten. For the purposes of this task, the bundle's inventory is exclusively derived from the inventory of its components. (This also means that this task does not support "nested" bundles, in which a bundle component product is itself a bundle managed by another copy of this task.)
-* Feel free to manually adjust inventory for component products. The bundle product's inventory will be synced appropriately.
+* Feel free to manually adjust inventory for component products, keeping in mind that components with shared SKUs must be kept equal to each other. The bundle product's inventory will be synced appropriately.
 * Use the "Inventory buffer quantity" option to artificially keep the bundle product's inventory lower than the actual available quantity.
 
 ## Installing this task
