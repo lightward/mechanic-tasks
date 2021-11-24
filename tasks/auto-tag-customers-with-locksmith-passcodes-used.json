@@ -1,13 +1,13 @@
 {
   "name": "Auto-tag customers with Locksmith passcodes used",
   "options": {
-    "echo_all_locksmith_session_pings__boolean": null
+    "echo_all_locksmith_session_pings__boolean": false
   },
   "subscriptions": [
     "locksmith/sessions/ping"
   ],
   "subscriptions_template": "locksmith/sessions/ping",
-  "script": "{% if event.preview %}\n  {% capture event_json %}\n    {\n      \"preview\": true,\n      \"data\": {\n        \"customer\": {\n          \"admin_graphql_api_id\": \"gid://shopify/Customer/1234567890\"\n        },\n        \"params\": {\n          \"passcode\": \"passcode\" \n         }\n      }\n    }\n  {% endcapture %}\n\n  {% assign event = event_json | parse_json %}\n\n{% endif %}\n\n{% if options.echo_all_locksmith_session_pings__boolean %}\n\n  {% action \"echo\" %}\n    {\n      \"event\": {{ event.data | json }}\n    }\n  {% endaction %}\n\n{% endif %}\n\n{% assign customer_admin_graphql_api_id = event.data.customer.admin_graphql_api_id | json %}\n    \n{% assign passcode = event.data.params.passcode %}\n \n{% log customer_admin_graphql_api_id:customer_admin_graphql_api_id, passcode: passcode %}\n    \n{% if customer_admin_graphql_api_id and passcode %}\n    \n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ customer_admin_graphql_api_id }}\n        tags: {{ passcode | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %} \n\n{% endif %}",
+  "script": "{% if event.preview %}\n  {% capture event_json %}\n    {\n      \"preview\": true,\n      \"data\": {\n        \"customer\": {\n          \"admin_graphql_api_id\": \"gid://shopify/Customer/1234567890\"\n        },\n        \"params\": {\n          \"passcode\": \"passcode\"\n         }\n      }\n    }\n  {% endcapture %}\n\n  {% assign event = event_json | parse_json %}\n{% endif %}\n\n{% if options.echo_all_locksmith_session_pings__boolean %}\n  {% action \"echo\", event_data: event.data %}\n{% endif %}\n\n{% assign customer_admin_graphql_api_id = event.data.customer.admin_graphql_api_id %}\n{% assign passcode = event.data.params.passcode %}\n\n{% log\n  customer_admin_graphql_api_id: customer_admin_graphql_api_id,\n  passcode: passcode\n%}\n\n{% if customer_admin_graphql_api_id and passcode %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ customer_admin_graphql_api_id | json }}\n        tags: {{ passcode | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}",
   "docs": "Are you using [Locksmith](https://apps.shopify.com/locksmith?utm_source=mechanic&utm_medium=task-library) for access control on your online store? Use this task to tag customers with the [passcode keys](https://docs.uselocksmith.com/article/164-passcode-keys) they've used.\n\nNotes: After installing this task, email [team@uselocksmith.com](mailto:team@uselocksmith.com) and ask to have your Locksmith webhooks sent to Mechanic.",
   "halt_action_run_sequence_on_error": false,
   "online_store_javascript": null,

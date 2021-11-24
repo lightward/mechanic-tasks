@@ -7,38 +7,32 @@
           "admin_graphql_api_id": "gid://shopify/Customer/1234567890"
         },
         "params": {
-          "passcode": "passcode" 
+          "passcode": "passcode"
          }
       }
     }
   {% endcapture %}
 
   {% assign event = event_json | parse_json %}
-
 {% endif %}
 
 {% if options.echo_all_locksmith_session_pings__boolean %}
-
-  {% action "echo" %}
-    {
-      "event": {{ event.data | json }}
-    }
-  {% endaction %}
-
+  {% action "echo", event_data: event.data %}
 {% endif %}
 
-{% assign customer_admin_graphql_api_id = event.data.customer.admin_graphql_api_id | json %}
-    
+{% assign customer_admin_graphql_api_id = event.data.customer.admin_graphql_api_id %}
 {% assign passcode = event.data.params.passcode %}
- 
-{% log customer_admin_graphql_api_id:customer_admin_graphql_api_id, passcode: passcode %}
-    
+
+{% log
+  customer_admin_graphql_api_id: customer_admin_graphql_api_id,
+  passcode: passcode
+%}
+
 {% if customer_admin_graphql_api_id and passcode %}
-    
   {% action "shopify" %}
     mutation {
       tagsAdd(
-        id: {{ customer_admin_graphql_api_id }}
+        id: {{ customer_admin_graphql_api_id | json }}
         tags: {{ passcode | json }}
       ) {
         userErrors {
@@ -47,6 +41,5 @@
         }
       }
     }
-  {% endaction %} 
-
+  {% endaction %}
 {% endif %}

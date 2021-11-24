@@ -12,7 +12,7 @@ Are you using [Locksmith](https://apps.shopify.com/locksmith?utm_source=mechanic
 
 ```json
 {
-  "echo_all_locksmith_session_pings__boolean": null
+  "echo_all_locksmith_session_pings__boolean": false
 }
 ```
 
