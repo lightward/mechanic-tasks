@@ -132,6 +132,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag products that meet a sales threshold](./auto-tag-products-that-meet-a-sales-threshold)
 * [Auto-tag products when another tag is added](./auto-tag-products-when-another-tag-is-added)
 * [Auto-tag products when their variants change](./auto-tag-products-when-their-skus-change)
+* [Auto-tag products with incoming inventory](./auto-tag-products-with-incoming-inventory)
 * [Auto-tag products with their vendors](./auto-tag-products-with-their-vendors)
 * [Auto-untag customers when a certain product is refunded](./auto-untag-customers-when-a-certain-product-is-refunded)
 * [Auto-update inventory policy based on a "preorder" tag](./auto-update-inventory-policy-based-on-a-preorder-tag)
