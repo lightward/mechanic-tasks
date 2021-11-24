@@ -10,6 +10,7 @@
         "type": "string",
         "enum": [
           "Abandoned Checkout",
+          "Access Control",
           "Account",
           "Address",
           "Age",
@@ -60,6 +61,7 @@
           "Kount",
           "Localization",
           "Location",
+          "Locksmith",
           "Low Stock",
           "Loyalty",
           "Marketing",
