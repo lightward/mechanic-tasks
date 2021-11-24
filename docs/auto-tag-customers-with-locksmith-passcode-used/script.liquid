@@ -1,0 +1,52 @@
+{% if event.preview %}
+  {% capture event_json %}
+    {
+      "preview": true,
+      "data": {
+        "customer": {
+          "admin_graphql_api_id": "gid://shopify/Customer/1234567890"
+        },
+        "params": {
+          "passcode": "passcode" 
+         }
+      }
+    }
+  {% endcapture %}
+
+  {% assign event = event_json | parse_json %}
+
+{% endif %}
+
+{% if options.echo_all_locksmith_session_pings__boolean %}
+
+  {% action "echo" %}
+    {
+      "event": {{ event.data | json }}
+    }
+  {% endaction %}
+
+{% endif %}
+
+{% assign customer_admin_graphql_api_id = event.data.customer.admin_graphql_api_id | json %}
+    
+{% assign passcode = event.data.params.passcode %}
+ 
+{% log customer_admin_graphql_api_id:customer_admin_graphql_api_id, passcode: passcode %}
+    
+{% if customer_admin_graphql_api_id and passcode %}
+    
+  {% action "shopify" %}
+    mutation {
+      tagsAdd(
+        id: {{ customer_admin_graphql_api_id }}
+        tags: {{ passcode | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %} 
+
+{% endif %}

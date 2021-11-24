@@ -65,6 +65,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag customers when their order is tagged](./auto-tag-customers-when-their-order-is-tagged)
 * [Auto-tag customers when they purchase a matching product](./auto-tag-customers-upon-product-purchase)
 * [Auto-tag customers who purchase an item on sale](./auto-tag-customers-who-purchase-an-item-on-sale)
+* [Auto-tag customers with Locksmith passcode used](./auto-tag-customers-with-locksmith-passcode-used)
 * [Auto-tag customers with product tags from their order](./tag-customers-with-product-tags-from-their-order)
 * [Auto-tag customers with the location of their purchase](./auto-tag-customers-with-the-location-of-their-purchase)
 * [Auto-tag customers with vendors after ordering](./auto-tag-customers-with-vendors-after-ordering)
