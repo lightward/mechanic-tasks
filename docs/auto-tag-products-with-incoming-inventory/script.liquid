@@ -1,7 +1,3 @@
-{% comment %}
-  New task: Auto-tag products with incoming inventory
-{% endcomment %}
-
 {% assign product_tag_to_apply = options.product_tag_to_apply__required | strip %}
 
 {% if event.topic == "shopify/inventory_levels/update" %}

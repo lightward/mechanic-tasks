@@ -1,6 +1,6 @@
 # Auto-tag products with incoming inventory
 
-Tags: Auto-Tag, Bulk, Inventory, Products
+Tags: Auto-Tag, Bulk, Inventory, Products, Transfer
 
 Keep track of which products in your shop have incoming inventory with this task! Running when inventory levels are updated, this task will tag the product with the tag of your choice if _any_ of that product's variants at _any_ of your locations has an incoming transfer. Conversely, the tag will be removed when there are no pending transfers.
 
