@@ -1,0 +1,256 @@
+{% assign product_tag_to_apply = options.product_tag_to_apply__required | strip %}
+
+{% if event.topic == "shopify/inventory_levels/update" %}
+  {% assign qualifies_to_be_tagged = nil %}
+
+  {% assign cursor = nil %}
+
+  {% for n in (1..20) %}
+    {% capture query %}
+      query {
+        product(id: {{ inventory_level.variant.product.admin_graphql_api_id | json }}) {
+          id
+          tags
+          variants(
+            first: 5
+            after: {{ cursor | json }}
+          ) {
+            pageInfo {
+              hasNextPage
+            }
+            edges {
+              cursor
+              node {
+                inventoryItem {
+                  inventoryLevels(first: 100) {
+                    edges {
+                      node {
+                        incoming
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "product": {
+              "id": "gid://shopify/Product/1234567890",
+              "variants": {
+                "edges": [
+                  {
+                    "node": {
+                      "inventoryItem": {
+                        "inventoryLevels": {
+                          "edges": [
+                            {
+                              "node": {
+                                "incoming": 1
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign product = result.data.product %}
+
+    {% assign inventory_levels
+      = product.variants.edges
+      | map: "node"
+      | map: "inventoryItem"
+      | map: "inventoryLevels"
+      | map: "edges"
+      | map: "node"
+    %}
+
+    {% for inventory_level in inventory_levels %}
+      {% if inventory_level.incoming > 0 %}
+        {% assign qualifies_to_be_tagged = true %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+
+    {% if qualifies_to_be_tagged or product.variants.pageInfo.hasNextPage == false %}
+      {% break %}
+    {% else %}
+      {% assign cursor = product.variants.edges.last.cursor %}
+    {% endif %}
+  {% endfor %}
+
+  {% if qualifies_to_be_tagged %}
+    {% unless product.tags contains product_tag_to_apply %}
+      {% action "shopify" %}
+        mutation {
+          tagsAdd(
+            id: {{ product.id | json }}
+            tags: {{ product_tag_to_apply | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endunless %}
+
+  {% else %}
+    {% if product.tags contains product_tag_to_apply %}
+      {% action "shopify" %}
+        mutation {
+          tagsRemove(
+            id: {{ product.id | json }}
+            tags: {{ product_tag_to_apply | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endif %}
+  {% endif %}
+
+{% elsif event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% capture bulk_operation_query %}
+    query {
+      products {
+        edges {
+          node {
+            __typename
+            id
+            tags
+            variants {
+              edges {
+                node {
+                  __typename
+                  id
+                  inventoryItem {
+                    inventoryLevels {
+                      edges {
+                        node {
+                          __typename
+                          id
+                          incoming
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture jsonl_string %}
+      {"__typename":"Product","id":"gid:\/\/shopify\/Product\/1234567890","tags":["testing"]}
+      {"__typename":"ProductVariant","id":"gid:\/\/shopify\/ProductVariant\/1234567890","inventoryItem":{},"__parentId":"gid:\/\/shopify\/Product\/1234567890"}
+      {"__typename":"InventoryLevel","id":"gid:\/\/shopify\/InventoryLevel\/95549063338?inventory_item_id=1234567890","incoming":1,"__parentId":"gid:\/\/shopify\/ProductVariant\/1234567890"}
+      {"__typename":"Product","id":"gid:\/\/shopify\/Product\/2345678901","tags":[{{ product_tag_to_apply | json }}]}
+      {"__typename":"ProductVariant","id":"gid:\/\/shopify\/ProductVariant\/2345678901","inventoryItem":{},"__parentId":"gid:\/\/shopify\/Product\/2345678901"}
+      {"__typename":"InventoryLevel","id":"gid:\/\/shopify\/InventoryLevel\/95549063338?inventory_item_id=2345678901","incoming":0,"__parentId":"gid:\/\/shopify\/ProductVariant\/2345678901"}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = jsonl_string | parse_jsonl %}
+  {% endif %}
+
+  {% assign products = bulkOperation.objects | where: "__typename", "Product" %}
+  {% assign all_variants = bulkOperation.objects | where: "__typename", "ProductVariant" %}
+  {% assign all_inventory_levels = bulkOperation.objects | where: "__typename", "InventoryLevel" %}
+
+  {% for product in products %}
+    {% assign qualifies_to_be_tagged = nil %}
+
+    {% assign variants = all_variants | where: "__parentId", product.id %}
+
+    {% for variant in variants %}
+      {% assign inventory_levels = all_inventory_levels | where: "__parentId", variant.id %}
+
+      {% for inventory_level in inventory_levels %}
+        {% if inventory_level.incoming > 0 %}
+          {% assign qualifies_to_be_tagged = true %}
+          {% break %}
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+
+    {% if qualifies_to_be_tagged %}
+      {% unless product.tags contains product_tag_to_apply %}
+        {% action "shopify" %}
+          mutation {
+            tagsAdd(
+              id: {{ product.id | json }}
+              tags: {{ product_tag_to_apply | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+      {% endunless %}
+
+    {% else %}
+      {% if product.tags contains product_tag_to_apply %}
+        {% action "shopify" %}
+          mutation {
+            tagsRemove(
+              id: {{ product.id | json }}
+              tags: {{ product_tag_to_apply | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
