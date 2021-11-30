@@ -56,9 +56,9 @@
   configured_publications: configured_publications
 %}
 
-{% capture published_on_publications %}
+{% capture published_on_publications_selections %}
   {% for configured_publication in configured_publications %}
-    published_on_publication{{ forloop.index }}: publishedOnPublication(
+    publishedOnPublication{{ configured_publication.id | split: "/" | last }}: publishedOnPublication(
       publicationId: {{ configured_publication.id | json }}
     )
   {%- endfor %}
@@ -72,7 +72,7 @@
       product(id: {{ product.admin_graphql_api_id | json }}) {
         id
         tags
-        {{ published_on_publications | join: newline }}
+        {{ published_on_publications_selections }}
       }
     }
   {% endcapture %}
@@ -98,7 +98,7 @@
             node {
               id
               tags
-              {{ published_on_publications | join: newline }}
+              {{ published_on_publications_selections }}
             }
           }
         }
@@ -123,8 +123,8 @@
     [
       {
         "id": "gid://shopify/Product/1234567890",
-        {% for sales_channel_name in sales_channel_names %}
-          "published_on_publication{{ forloop.index }}": false,
+        {% for configured_publication in configured_publications %}
+          "publishedOnPublication{{ configured_publication.id | split: "/" | last }}": false,
         {% endfor %}
         "tags": {{ product_tag | json }}
       }
@@ -133,6 +133,8 @@
 
   {% assign products = products_json | parse_json %}
 {% endif %}
+
+{% log products: products %}
 
 {% for product in products %}
   {% assign mutations = array %}
@@ -143,12 +145,12 @@
   {% endif %}
 
   {% for configured_publication in configured_publications %}
-    {% assign publication_key = "published_on_publication" | append: forloop.index %}
+    {% assign publication_key = configured_publication.id | split: "/" | last | prepend: "publishedOnPublication" %}
 
     {% if product[publication_key] %}
       {% unless should_be_published %}
         {% capture mutation %}
-          publishableUnpublish{{ forloop.index }}: publishableUnpublish(
+          publishableUnpublish{{ configured_publication.id | split: "/" | last }}: publishableUnpublish(
             id: {{ product.id | json }}
             input: {
               publicationId: {{ configured_publication.id | json }}
@@ -166,7 +168,7 @@
 
     {% elsif should_be_published %}
       {% capture mutation %}
-        publishablePublish{{ forloop.index }}: publishablePublish(
+        publishablePublish{{ configured_publication.id | split: "/" | last }}: publishablePublish(
           id: {{ product.id | json }}
           input: {
             publicationId: {{ configured_publication.id | json }}
