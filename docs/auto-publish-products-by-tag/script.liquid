@@ -45,13 +45,12 @@
 
 {% assign publications = result.data.publications.edges | map: "node" %}
 {% assign publication_names = publications | map: "name" | sort %}
-{% assign publications_indexed_by_name = publications | index_by: "name" %}
 
 {% assign configured_publications = array %}
 
-{% for sales_channel_name in sales_channel_names %}
-  {% if publication_names contains sales_channel_name %}
-    {% assign configured_publications = configured_publications | push: publications_indexed_by_name[sales_channel_name] %}
+{% for publication in publications %}
+  {% if sales_channel_names contains publication.name %}
+    {% assign configured_publications = configured_publications | push: publication %}
   {% endif %}
 {% endfor %}
 
