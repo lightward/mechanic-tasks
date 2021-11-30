@@ -47,12 +47,23 @@
 {% assign publication_names = publications | map: "name" | sort %}
 {% assign publications_indexed_by_name = publications | index_by: "name" %}
 
-{% log available_publications: publication_names %}
+{% assign configured_publications = array %}
+
+{% for sales_channel_name in sales_channel_names %}
+  {% if publication_names contains sales_channel_name %}
+    {% assign configured_publications = configured_publications | push: publications_indexed_by_name[sales_channel_name] %}
+  {% endif %}
+{% endfor %}
+
+{% log
+  available_publications: publication_names,
+  configured_publications: configured_publications
+%}
 
 {% capture published_on_publications %}
-  {% for sales_channel_name in sales_channel_names %}
+  {% for configured_publication in configured_publications %}
     published_on_publication{{ forloop.index }}: publishedOnPublication(
-      publicationId: {{ publications_indexed_by_name[sales_channel_name].id | json }}
+      publicationId: {{ configured_publication.id | json }}
     )
   {%- endfor %}
 {% endcapture %}
@@ -77,7 +88,7 @@
 {% elsif event.topic contains "mechanic/user/trigger" %}
   {% assign cursor = nil %}
 
-  {% for n in (0..200) %}
+  {% for n in (0..300) %}
     {% capture query %}
       query {
         products(
@@ -134,7 +145,7 @@
     {% assign should_be_published = true %}
   {% endif %}
 
-  {% for publication in publications %}
+  {% for configured_publication in configured_publications %}
     {% assign publication_key = "published_on_publication" | append: forloop.index %}
 
     {% if product[publication_key] %}
@@ -143,7 +154,7 @@
           publishableUnpublish{{ forloop.index }}: publishableUnpublish(
             id: {{ product.id | json }}
             input: {
-              publicationId: {{ publication.id | json }}
+              publicationId: {{ configured_publication.id | json }}
             }
           ) {
             userErrors {
@@ -161,7 +172,7 @@
         publishablePublish{{ forloop.index }}: publishablePublish(
           id: {{ product.id | json }}
           input: {
-            publicationId: {{ publication.id | json }}
+            publicationId: {{ configured_publication.id | json }}
           }
         ) {
           userErrors {
