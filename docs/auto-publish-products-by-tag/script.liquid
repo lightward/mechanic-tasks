@@ -22,18 +22,15 @@
       "data": {
         "publications": {
           "edges": [
-            {
-              "node": {
-                "id": "gid://shopify/Publication/1234567890",
-                "name": "Online Store"
+            {% for sales_channel_name in sales_channel_names %}
+              {
+                "node": {
+                  "id": "gid://shopify/Publication/{{ forloop.index }}",
+                  "name": {{ sales_channel_name | json }}
+                }
               }
-            },
-            {
-              "node": {
-                "id": "gid://shopify/Publication/2345678901",
-                "name": "Buy Button"
-              }
-            }
+              {% unless forloop.last %},{% endunless %}
+            {% endfor %}
           ]
         }
       }
@@ -126,8 +123,9 @@
     [
       {
         "id": "gid://shopify/Product/1234567890",
-        "published_on_publication1": false,
-        "published_on_publication2": true,
+        {% for sales_channel_name in sales_channel_names %}
+          "published_on_publication{{ forloop.index }}": false,
+        {% endfor %}
         "tags": {{ product_tag | json }}
       }
     ]

@@ -12,8 +12,8 @@ This task runs when products are updated (which includes product creation) and m
 
 ```json
 {
-  "sales_channel_names__array_required": null,
-  "product_tag__required": null
+  "sales_channel_names__array_required": [],
+  "product_tag__required": ""
 }
 ```
 
