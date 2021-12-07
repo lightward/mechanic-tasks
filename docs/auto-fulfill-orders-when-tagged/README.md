@@ -32,7 +32,7 @@ shopify/orders/updated
 
 This task monitors order tags, and when a certain tag is added to an order, it auto-fulfills all unfulfilled items in the order. Optionally, you can choose to notify customers when their order is fulfilled by this task.
 
-This task auto-fulfills from the store's default location.
+__Note__: If a qualifying order has open fulfillments assigned to multiple locations when this task fulfills the order, then the customer will receive multiple notifications if that option is enabled in the task.
 
 ## Installing this task
 
