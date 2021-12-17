@@ -2,7 +2,7 @@
 
 Tags: Fulfillment, Payment
 
-Short and simple. :) Upon the fulfillment of an authorized order, this task attempts to capture payment for that order.
+Upon the fulfillment of an authorized or partially paid order, this task attempts to capture all open authorized payments for that order. (Multiple authorizations can exist on edited orders or with post-purchase upsells.)
 
 * View in the task library: [usemechanic.com/task/capture-order-payment-upon-fulfillment](https://usemechanic.com/task/capture-order-payment-upon-fulfillment)
 * Task JSON, for direct import: [task.json](../../tasks/capture-order-payment-upon-fulfillment.json)
@@ -18,11 +18,11 @@ shopify/orders/fulfilled
 
 ## Documentation
 
-Short and simple. :) Upon the fulfillment of an authorized order, this task attempts to capture payment for that order.
+Upon the fulfillment of an authorized or partially paid order, this task attempts to capture all open authorized payments for that order. (Multiple authorizations can exist on edited orders or with post-purchase upsells.)
 
 For expected results, be sure to enable "Manually capture payment for orders" in Shopify, [using this guide](https://help.shopify.com/en/manual/payments/payment-authorization#set-up-manual-capture-of-credit-card-payments).
 
-Please note: This task will *only* capture payment for orders that have the financial status "authorized". You are responsible for ensuring that fulfillment occurs within the order payment's authorization period.
+__Please note__: You are responsible for ensuring that fulfillment occurs within the order payment's authorization period.
 
 ## Installing this task
 
