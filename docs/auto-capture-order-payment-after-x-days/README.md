@@ -2,7 +2,7 @@
 
 Tags: Payment, Schedule
 
-Short and simple. Captures order payment for un-cancelled orders that have a financial status of "authorized", after waiting 30 days (or another timespan of your choice).
+After waiting 7 days (or another timespan of your choice), this task attempts to capture all open authorized payments for an order. (Multiple authorizations can exist on edited orders or with post-purchase upsells.)
 
 * View in the task library: [usemechanic.com/task/auto-capture-order-payment-after-x-days](https://usemechanic.com/task/auto-capture-order-payment-after-x-days)
 * Task JSON, for direct import: [task.json](../../tasks/auto-capture-order-payment-after-x-days.json)
@@ -12,7 +12,7 @@ Short and simple. Captures order payment for un-cancelled orders that have a fin
 
 ```json
 {
-  "days_to_wait_before_capturing__number_required": 30
+  "days_to_wait_before_capturing__number_required": "7"
 }
 ```
 
@@ -21,16 +21,14 @@ Short and simple. Captures order payment for un-cancelled orders that have a fin
 ## Subscriptions
 
 ```liquid
-shopify/orders/create+{{ options.days_to_wait_before_capturing__number_required | default: 30 }}.days
+shopify/orders/create+{{ options.days_to_wait_before_capturing__number_required | default: 7 }}.days
 ```
 
 [Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
 
 ## Documentation
 
-Short and simple. Captures order payment for un-cancelled orders that have a financial status of "authorized", after waiting 30 days (or another timespan of your choice).
-
-This task captures order payment for un-cancelled orders that have a financial status of "authorized", after waiting 30 days (or another timespan of your choice).
+After waiting 7 days (or another timespan of your choice), this task attempts to capture all open authorized payments for an order. (Multiple authorizations can exist on edited orders or with post-purchase upsells.)
 
 ## Installing this task
 

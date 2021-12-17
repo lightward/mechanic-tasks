@@ -1,19 +1,84 @@
-{% comment %}
-  Since we're running on a delay, make sure we have up-to-date data.
-{% endcomment %}
-{% assign order = order.reload %}
+{% capture query %}
+  query {
+    order(id: {{ order.admin_graphql_api_id | json }}) {
+      id
+      name
+      displayFinancialStatus
+      transactions(capturable: true) {
+        id
+        kind
+        totalUnsettledSet {
+          shopMoney {
+            amount
+          }
+        }
+      }
+    }
+  }
+{% endcapture %}
 
-{% assign order_qualifies = false %}
-{% if order.financial_status == "authorized" and order.cancelled_at == blank %}
-  {% assign order_qualifies = true %}
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "order": {
+          "id": "gid://shopify/Order/1234567890",
+          "name": "#SAMPLE",
+          "displayFinancialStatus": "AUTHORIZED",
+          "transactions": [
+            {
+              "id": "gid://shopify/OrderTransaction/1234567890",
+              "kind": "AUTHORIZATION",
+              "totalUnsettledSet": {
+                "shopMoney": {
+                  "amount": "12.34"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
 {% endif %}
 
-{% if event.preview or order_qualifies %}
-  {% action "shopify" %}
-    [
-      "post",
-      "/admin/orders/{{ order.id }}/transactions.json",
-      { "transaction": { "kind": "capture" } }
-    ]
-  {% endaction %}
+{% assign order = result.data.order %}
+
+{% if order.displayFinancialStatus == "AUTHORIZED" or order.displayFinancialStatus == "PARTIALLY_PAID" %}
+  {% assign authorized_transactions = order.transactions | where: "kind", "AUTHORIZATION" %}
+
+  {% for transaction in authorized_transactions %}
+    {% assign unsettled_amount = transaction.totalUnsettledSet.shopMoney.amount | times: 1.0 %}
+
+    {% if unsettled_amount > 0 %}
+      {% action "shopify" %}
+        mutation {
+          orderCapture(
+            input: {
+              id: {{ order.id | json }}
+              parentTransactionId: {{ transaction.id | json }}
+              amount: {{ unsettled_amount | json }}
+            }
+          ) {
+            transaction {
+              id
+              status
+              parentTransaction {
+                id
+                kind
+              }
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endif %}
+  {% endfor %}
 {% endif %}
