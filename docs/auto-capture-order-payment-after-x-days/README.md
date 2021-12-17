@@ -4,8 +4,8 @@ Tags: Payment, Schedule
 
 Short and simple. Captures order payment for un-cancelled orders that have a financial status of "authorized", after waiting 30 days (or another timespan of your choice).
 
-* View in the task library: [usemechanic.com/task/auto-capture-order-payment-after-30-days](https://usemechanic.com/task/auto-capture-order-payment-after-30-days)
-* Task JSON, for direct import: [task.json](../../tasks/auto-capture-order-payment-after-30-days.json)
+* View in the task library: [usemechanic.com/task/auto-capture-order-payment-after-x-days](https://usemechanic.com/task/auto-capture-order-payment-after-x-days)
+* Task JSON, for direct import: [task.json](../../tasks/auto-capture-order-payment-after-x-days.json)
 * Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
@@ -34,7 +34,7 @@ This task captures order payment for un-cancelled orders that have a financial s
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-capture-order-payment-after-30-days), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-capture-order-payment-after-30-days.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-capture-order-payment-after-x-days), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-capture-order-payment-after-x-days.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
 
 ## Contributions
 
