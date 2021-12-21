@@ -1,18 +1,89 @@
-{% assign order_qualifies = false %}
+{% unless options.allowed_shipping_methods__required_array contains order.shipping_lines.first.title or event.preview %}
+  {% log message: "This order is not using a configured shipping method; skipping." %}  
+  {% break %}
+{% endunless %}
 
-{% if options.allowed_shipping_methods__required_array contains order.shipping_lines.first.title and order.financial_status == "authorized" %}
-  {% assign order_qualifies = true %}
-{% endif %}
-
-{% if event.preview or order_qualifies %}
-  {
-    "action": {
-      "type": "shopify",
-      "options": [
-        "post",
-        "/admin/orders/{{ order.id }}/transactions.json",
-        { "transaction": { "kind": "capture" } }
-      ]
+{% capture query %}
+  query {
+    order(id: {{ order.admin_graphql_api_id | json }}) {
+      id
+      name
+      displayFinancialStatus
+      transactions(capturable: true) {
+        id
+        kind
+        totalUnsettledSet {
+          shopMoney {
+            amount
+          }
+        }
+      }
     }
   }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "order": {
+          "id": "gid://shopify/Order/1234567890",
+          "name": "#SAMPLE",
+          "displayFinancialStatus": "AUTHORIZED",
+          "transactions": [
+            {
+              "id": "gid://shopify/OrderTransaction/1234567890",
+              "kind": "AUTHORIZATION",
+              "totalUnsettledSet": {
+                "shopMoney": {
+                  "amount": "12.34"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% assign order = result.data.order %}
+
+{% if order.displayFinancialStatus == "AUTHORIZED" or order.displayFinancialStatus == "PARTIALLY_PAID" %}
+  {% assign authorized_transactions = order.transactions | where: "kind", "AUTHORIZATION" %}
+
+  {% for transaction in authorized_transactions %}
+    {% assign unsettled_amount = transaction.totalUnsettledSet.shopMoney.amount | times: 1.0 %}
+
+    {% if unsettled_amount > 0 %}
+      {% action "shopify" %}
+        mutation {
+          orderCapture(
+            input: {
+              id: {{ order.id | json }}
+              parentTransactionId: {{ transaction.id | json }}
+              amount: {{ unsettled_amount | json }}
+            }
+          ) {
+            transaction {
+              id
+              status
+              parentTransaction {
+                id
+                kind
+              }
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endif %}
+  {% endfor %}
 {% endif %}

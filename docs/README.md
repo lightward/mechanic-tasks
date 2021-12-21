@@ -25,7 +25,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-associate products with a delivery profile, by product tag](./auto-associate-products-with-a-delivery-profile-by-product-tag)
 * [Auto-cancel fulfillments when an order is tagged](./auto-cancel-fulfillments-when-an-order-is-tagged)
 * [Auto-cancel orders with too many of a certain SKU](./auto-cancel-orders-with-too-many-of-a-certain-sku)
-* [Auto-capture order payment after x days](./auto-capture-order-payment-after-30-days)
+* [Auto-capture order payment after x days](./auto-capture-order-payment-after-x-days)
 * [Auto-capture order payment based on shipping method](./auto-capture-order-payment-based-on-shipping-method)
 * [Auto-capture order payments based on Kount risk assessments](./auto-capture-order-payments-based-on-kount-risk-assessments)
 * [Auto-capture payments when an order is created](./auto-capture-payments-when-an-order-is-created)

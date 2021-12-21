@@ -30,9 +30,9 @@ shopify/orders/create
 
 This task auto-captures payment if the customer has selected a certain shipping method. Useful for expedited order fulfillments.
 
-For expected results, be sure to enable "Manually capture payment for orders" in Shopify, [using this guide](https://help.shopify.com/en/manual/payments/payment-authorization#set-up-manual-capture-of-credit-card-payments).
+To use this task, populate the "Allowed shipping methods" list with shipping method titles (e.g. "Economy"). In Shopify, shipping method titles are configured as "rates"; you can find yours by navigating to Settings > Shipping and delivery, and then looking at the rates within each shipping zone.
 
-Please note: This task will *only* capture payment for orders that have the financial status "authorized". You are responsible for ensuring that fulfillment occurs within the order payment's authorization period.
+For expected results, be sure to enable "Manually capture payment for orders" in Shopify, [using this guide](https://help.shopify.com/en/manual/payments/payment-authorization#set-up-manual-capture-of-credit-card-payments).
 
 ## Installing this task
 
