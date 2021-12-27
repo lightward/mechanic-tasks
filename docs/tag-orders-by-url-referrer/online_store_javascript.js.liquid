@@ -27,7 +27,7 @@ var valueKeyval = window.location.search.split(/[?&]/).filter(function (keyval) 
 var valueFromCookie = cookie(parameterName);
 
 if (valueFromCookie || valueKeyval) {
-  var value = valueFromCookie || valueKeyval.split('=')[1];
+  var value = valueFromCookie || decodeURIComponent(valueKeyval.split('=')[1]);
 
   if (!valueFromCookie) {
     cookie(parameterName, value, 1000*60*60*24*365);
