@@ -33,6 +33,8 @@
           transactions {
             id
             gateway
+            kind
+            status
           }
         }
       }
@@ -55,7 +57,9 @@
               "transactions": [
                 {
                   "id": "gid://shopify/OrderTransaction/1234567890",
-                  "gateway": "bogus"
+                  "gateway": "bogus",
+                  "kind": "CAPTURE",
+                  "status": "SUCCESS"
                 }
               ]
             }
@@ -67,9 +71,21 @@
     {% endif %}
 
     {% assign suggested_refund = order_refund_result.data.order.suggestedRefund.amountSet.shopMoney.amount %}
-    {% assign transaction = order_refund_result.data.order.transactions.first %}
 
-    {% if transaction != nil %}
+    {% assign successful_transactions = order_refund_result.data.order.transactions | where: "status", "SUCCESS" %}
+
+    {% for transaction in successful_transactions %}
+      {% if transaction.kind == "CAPTURE" or transaction.kind == "SALE" %}
+        {% assign sale_or_capture_transaction = transaction %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+
+    {% comment %}
+      -- NOTE: this task only refunds the first successful capture or sale transaction, the theory being that risk analyses would run before any order edits or upsells would likely occur
+    {% endcomment %}
+
+    {% if sale_or_capture_transaction != blank %}
       {% action "shopify" %}
         mutation {
           refundCreate(input: {
@@ -77,10 +93,10 @@
               transactions: [
                 {
                   amount: {{ suggested_refund | json }}
-                  gateway: {{ transaction.gateway | json }}
+                  gateway: {{ sale_or_capture_transaction.gateway | json }}
                   kind: VOID
                   orderId: {{ order.admin_graphql_api_id | json }}
-                  parentId: {{ transaction.id | json }}
+                  parentId: {{ sale_or_capture_transaction.id | json }}
                 }
               ]
             notify: false
@@ -108,7 +124,7 @@
   {% endaction %}
 
   {% if options.add_this_order_tag_when_cancelling != blank %}
-    {% capture tag_query %}
+    {% action "shopify" %}
       mutation {
         tagsAdd(
           id: {{ order.admin_graphql_api_id | json }}
@@ -120,8 +136,6 @@
           }
         }
       }
-    {% endcapture %}
-
-    {% action "shopify" tag_query %}
+    {% endaction %}
   {% endif %}
 {% endif %}
