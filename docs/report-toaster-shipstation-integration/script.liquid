@@ -1,0 +1,50 @@
+{% comment %}
+  An opinion about option order
+
+  {{ options.api_username__required }}
+  {{ options.api_password__required }}
+{% endcomment %}
+
+{% assign authorization_header = options.api_username__required | append: ":" | append: options.api_password__required | base64 | prepend: "Basic " %}
+
+{% if event.topic == "shopify/orders/fulfilled" %}
+  {% assign order_number = order.name %}
+{% elsif event.topic == "mechanic/user/text" %}
+  {% assign order_number = event.data %}
+{% endif %}
+
+{% if order_number != blank %}
+  {% assign order_number = order_number | remove: "#" %}
+
+  {% action "http" %}
+    {
+      "method": "get",
+      "url": {{ "https://ssapi.shipstation.com/shipments?orderNumber=" | append: order_number | json }},
+      "headers": {
+        "Authorization": {{ authorization_header | json }}
+      }
+    }
+  {% endaction %}
+{% elsif event.topic == "mechanic/actions/perform" %}
+  {% assign result = action.run.result.body %}
+  {% assign shipments = result.shipments %}
+
+  {% if shipments != blank %}
+    {% for shipment in shipments %}
+      {% assign order_id = shipment.orderKey %}
+      {% assign shipping_cost = shipping_cost | plus: shipment.shipmentCost | plus: shipment.insuranceCost %}
+    {% endfor %}
+
+    {% action "report_toaster" %}
+      {
+        "operation": "update",
+        "Order": [
+          {
+            "id": {{ order_id | json }},
+            "shipping_cost": {{ shipping_cost | json }}
+          }
+        ]
+      }
+    {% endaction %}    
+  {% endif %}
+{% endif %}

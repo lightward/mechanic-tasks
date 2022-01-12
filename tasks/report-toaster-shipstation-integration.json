@@ -1,0 +1,26 @@
+{
+  "name": "Report Toaster: ShipStation Integration",
+  "options": {
+    "api_username__required": "",
+    "api_password__required": ""
+  },
+  "subscriptions": [
+    "shopify/orders/fulfilled",
+    "mechanic/actions/perform",
+    "mechanic/user/text"
+  ],
+  "subscriptions_template": "shopify/orders/fulfilled\nmechanic/actions/perform\nmechanic/user/text",
+  "script": "{% comment %}\n  An opinion about option order\n\n  {{ options.api_username__required }}\n  {{ options.api_password__required }}\n{% endcomment %}\n\n{% assign authorization_header = options.api_username__required | append: \":\" | append: options.api_password__required | base64 | prepend: \"Basic \" %}\n\n{% if event.topic == \"shopify/orders/fulfilled\" %}\n  {% assign order_number = order.name %}\n{% elsif event.topic == \"mechanic/user/text\" %}\n  {% assign order_number = event.data %}\n{% endif %}\n\n{% if order_number != blank %}\n  {% assign order_number = order_number | remove: \"#\" %}\n\n  {% action \"http\" %}\n    {\n      \"method\": \"get\",\n      \"url\": {{ \"https://ssapi.shipstation.com/shipments?orderNumber=\" | append: order_number | json }},\n      \"headers\": {\n        \"Authorization\": {{ authorization_header | json }}\n      }\n    }\n  {% endaction %}\n{% elsif event.topic == \"mechanic/actions/perform\" %}\n  {% assign result = action.run.result.body %}\n  {% assign shipments = result.shipments %}\n\n  {% if shipments != blank %}\n    {% for shipment in shipments %}\n      {% assign order_id = shipment.orderKey %}\n      {% assign shipping_cost = shipping_cost | plus: shipment.shipmentCost | plus: shipment.insuranceCost %}\n    {% endfor %}\n\n    {% action \"report_toaster\" %}\n      {\n        \"operation\": \"update\",\n        \"Order\": [\n          {\n            \"id\": {{ order_id | json }},\n            \"shipping_cost\": {{ shipping_cost | json }}\n          }\n        ]\n      }\n    {% endaction %}    \n  {% endif %}\n{% endif %}",
+  "docs": "This task enables an integration between Report Toaster and ShipStation. Each time an order is fulfilled (determined via the shopify/orders/fulfilled webhook), the ShipStation API is called to return the cost of shipping. This cost is then sent to Report Toaster as the shipping cost for the order.\n\nNote that the task currently makes a few assumptions:\n\n1. The task will get all shipping costs for an order once the order is completely fulfilled.\n2. The shipping cost will be the shipping cost + insurance cost. This could easily be changed to be controlled with an option if necessary.\n3. ShipStation does not store the \"#\" with the order name. So the task strips it out.\n\nSee your [ShipStation Settings](https://ss.shipstation.com/#/settings/api) to retrieve the API Key and Password to use in the options.\n\nThis task can be run manually as a test by entering an order name.\n\nSee the [Report Toaster](https://learn.mechanic.dev/platform/integrations/report-toaster) section of the Mechanic docs for more information on updating costs.",
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "tags": [
+    "Costs",
+    "External API",
+    "Integration",
+    "Report Toaster",
+    "Shipping"
+  ]
+}
