@@ -232,6 +232,8 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Remind customers after x days about unpaid orders](./remind-customers-after-x-days-about-unpaid-orders)
 * [Remind customers that their order is on the way](./remind-customers-that-their-order-is-on-the-way)
 * [Remove a customer tag when another tag is added](./remove-a-customer-tag-when-another-tag-is-added)
+* [Report Toaster: Deliver report PDF via email or Slack](./report-toaster-deliver-report-pdf-via-email-or-slack)
+* [Report Toaster: ShipStation Integration](./report-toaster-shipstation-integration)
 * [Reset all inventory levels to a single level, in bulk](./reset-all-inventory-levels-to-a-single-level-in-bulk)
 * [Reset inventory levels daily](./reset-inventory-levels-daily)
 * [Reset inventory levels when they get too low](./reset-inventory-levels-when-they-get-too-low)

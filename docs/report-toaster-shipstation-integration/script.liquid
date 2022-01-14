@@ -1,0 +1,132 @@
+{% comment %}
+  Preferred option order:
+
+  {{ options.api_username__required }}
+  {{ options.api_password__required }}
+{% endcomment %}
+
+{% if event.topic == "shopify/orders/fulfilled" or event.topic == "mechanic/user/text" or event.preview %}
+
+  {% assign authorization_header = options.api_username__required | append: ":" | append: options.api_password__required | base64 | prepend: "Basic " %}
+
+  {% if event.preview %}
+    {% assign order_number = 12345 %}
+  {% elsif event.topic == "shopify/orders/fulfilled" %}
+    {% assign order_number = order.name %}
+  {% elsif event.topic == "mechanic/user/text" %}
+    {% assign order_number = event.data %}
+  {% endif %}
+
+  {% if order_number != blank %}
+    {% assign order_number = order_number | remove: "#" %}
+    {% action "http" %}
+      {
+        "method": "get",
+        "url": {{ "https://ssapi.shipstation.com/shipments?orderNumber=" | append: order_number | json }},
+        "headers": {
+          "Authorization": {{ authorization_header | json }}
+        },
+        "meta": {
+          "order_number": {{ order_number | json }}
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endif %}
+
+{% if event.preview or event.topic == "mechanic/actions/perform" and action.type == "http" %}
+
+  {% if event.preview %}
+    {% capture shipments_json %}
+      [
+        {
+          "shipmentId": 28195403,
+          "orderId": 65695876,
+          "orderKey": "4244227981505",
+          "userId": "a3cf6157-11e9-46a1-b0fc-2222322",
+          "customerEmail": "email@yahoo.com",
+          "orderNumber": "5969",
+          "createDate": "2022-01-13T04:26:37.1670000",
+          "shipDate": "2022-01-13",
+          "shipmentCost": 21.02,
+          "insuranceCost": 0,
+          "trackingNumber": "123455",
+          "isReturnLabel": false,
+          "batchNumber": "100527",
+          "carrierCode": "dhl_express_uk",
+          "serviceCode": "dhl_uk_express_worldwide",
+          "packageCode": null,
+          "confirmation": null,
+          "warehouseId": 26351,
+          "voided": false,
+          "voidDate": null,
+          "marketplaceNotified": true,
+          "notifyErrorMessage": null,
+          "shipTo": {
+            "name": "Somebody",
+            "company": null,
+            "street1": "",
+            "street2": "",
+            "street3": null,
+            "city": "VANCOUVER",
+            "state": "WA",
+            "postalCode": "90210",
+            "country": "US",
+            "phone": "",
+            "residential": null,
+            "addressVerified": null
+          },
+          "weight": {
+            "value": 340,
+            "units": "grams",
+            "WeightUnits": 2
+          },
+          "dimensions": {
+            "units": "inches",
+            "length": 20,
+            "width": 10,
+            "height": 5
+          },
+          "insuranceOptions": {
+            "provider": null,
+            "insureShipment": false,
+            "insuredValue": 0
+          },
+          "advancedOptions": {
+            "billToParty": null,
+            "billToAccount": null,
+            "billToPostalCode": null,
+            "billToCountryCode": null,
+            "storeId": 45678
+          },
+          "shipmentItems": null,
+          "labelData": null,
+          "formData": null
+        }
+      ]
+    {% endcapture %}
+
+    {% assign shipments = shipments_json | parse_json %}
+  {% else %}
+    {% assign shipments = action.run.result.body.shipments %}
+  {% endif %}
+
+  {% if shipments != blank %}
+    {% for shipment in shipments %}
+      {% assign order_id = shipment.orderKey %}
+      {% assign shipping_cost = shipping_cost | plus: shipment.shipmentCost | plus: shipment.insuranceCost %}
+    {% endfor %}
+
+    {% action "report_toaster" %}
+      {
+        "operation": "update",
+        "Order": [
+          {
+            "id": {{ order_id | json }},
+            "shipping_cost": {{ shipping_cost | json }}
+          }
+        ]
+      }
+    {% endaction %}
+  {% endif %}
+{% endif %}
