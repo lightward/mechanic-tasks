@@ -4,8 +4,8 @@ Tags: Price, Products, Schedule
 
 Run task manually, and enter a keyword of __schedule__, __list__, __email__, or __cancel__. The cancel keyword must be followed by the *price change event ID*, which will be generated when an event is successfully scheduled.
 
-* View in the task library: [usemechanic.com/task/scheduled-price-changes](https://usemechanic.com/task/scheduled-price-changes)
-* Task JSON, for direct import: [task.json](../../tasks/scheduled-price-changes.json)
+* View in the task library: [usemechanic.com/task/advanced-scheduled-price-changes](https://usemechanic.com/task/advanced-scheduled-price-changes)
+* Task JSON, for direct import: [task.json](../../tasks/advanced-scheduled-price-changes.json)
 * Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
@@ -45,7 +45,7 @@ Run task manually, and enter a keyword of __schedule__, __list__, __email__, or 
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/scheduled-price-changes), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/scheduled-price-changes.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at usemechanic.com](https://usemechanic.com/task/advanced-scheduled-price-changes), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/advanced-scheduled-price-changes.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
 
 ## Contributions
 
