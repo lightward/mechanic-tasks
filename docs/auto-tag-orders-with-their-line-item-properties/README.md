@@ -33,7 +33,7 @@ mechanic/user/trigger
 
 Use this task to tag incoming orders with all of the line item properties found on the order. Optionally, configure a list of property names to be included, or a list of property names to be excluded. This task can also be run manually to scan and tag historical orders.
 
-Change the "Property name and value separator" to change the way tags are built. Using a dash results in "Name-Value", an underscore results in "Name_Value", and a colon with a space yields "Name: Value". The task preview conveiently shows what a sample tag combo will look like.
+Change the "Property name and value separator" to change the way tags are built. Using a dash results in "Name-Value", an underscore results in "Name_Value", and a colon with a space yields "Name: Value". The task preview conveniently shows what a sample tag combo will look like.
 
 Notes:
 - Configuring any property names to include means the task will ignore the property names to exclude setting entirely.
