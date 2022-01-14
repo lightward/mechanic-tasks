@@ -45,7 +45,7 @@
 
 {% if event.topic == "report_toaster/reports/create" or event.preview %}
 
-  {% if options.email_report_recipients__array != blank and event.data.meta.task_id == task.id %}  
+  {% if options.email_report_recipients__array != blank and event.data.meta.task_id == task.id %}
 
     {% action "email" %}
       {
@@ -58,7 +58,7 @@
     {% endaction %}
   {% endif %}
 
-  {% if options.slack_incoming_webhook_url != blank and event.data.meta.task_id == task.id %}  
+  {% if options.slack_incoming_webhook_url != blank and event.data.meta.task_id == task.id %}
 
     {% action "http" %}
       {

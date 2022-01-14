@@ -2,7 +2,7 @@
 
 Tags: Costs, External API, Integration, Report Toaster, Shipping
 
-This task integrates Report Toaster and ShipStation. On order fulfillment, Mechanic calls the ShipStation API  to retrieve the shipping cost, and this cost is sent to Report Toaster.
+This task integrates Report Toaster and ShipStation. On order fulfillment, Mechanic calls the ShipStation API to retrieve the shipping cost, and this cost is sent to Report Toaster.
 
 * View in the task library: [usemechanic.com/task/report-toaster-shipstation-integration](https://usemechanic.com/task/report-toaster-shipstation-integration)
 * Task JSON, for direct import: [task.json](../../tasks/report-toaster-shipstation-integration.json)
@@ -31,7 +31,7 @@ mechanic/user/text
 
 ## Documentation
 
-This task integrates Report Toaster and ShipStation. On order fulfillment, Mechanic calls the ShipStation API  to retrieve the shipping cost, and this cost is sent to Report Toaster.
+This task integrates Report Toaster and ShipStation. On order fulfillment, Mechanic calls the ShipStation API to retrieve the shipping cost, and this cost is sent to Report Toaster.
 
 Note - the task currently makes a few assumptions:
 
@@ -39,11 +39,11 @@ Note - the task currently makes a few assumptions:
 2. The shipping cost is recorded as the shipping cost + insurance cost. You can update the task code to change this logic.
 3. ShipStation does not store the "#" with the order name. So the task strips this out.
 
-See your [ShipStation Settings](https://ss.shipstation.com/#/settings/api) to retrieve the API Key and Password to use in the task options.
+See your [ShipStation settings](https://ss.shipstation.com/#/settings/api) to retrieve the API Key and Password to use in the task options.
 
 This task can be run manually as a test by entering an order name.
 
-See the [Report Toaster](https://learn.mechanic.dev/platform/integrations/report-toaster) section in the Mechanic docs for more information on updating costs.
+See the [Mechanic documentation for Report Toaster](https://learn.mechanic.dev/platform/integrations/report-toaster) for more information on updating costs.
 
 ## Installing this task
 
