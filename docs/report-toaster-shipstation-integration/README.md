@@ -2,7 +2,7 @@
 
 Tags: Costs, External API, Integration, Report Toaster, Shipping
 
-This task enables an integration between Report Toaster and ShipStation. Each time an order is fulfilled (determined via the shopify/orders/fulfilled webhook), the ShipStation API is called to return the cost of shipping. This cost is then sent to Report Toaster as the shipping cost for the order.
+This task integrates Report Toaster and ShipStation. On order fulfillment, Mechanic calls the ShipStation API  to retrieve the shipping cost, and this cost is sent to Report Toaster.
 
 * View in the task library: [usemechanic.com/task/report-toaster-shipstation-integration](https://usemechanic.com/task/report-toaster-shipstation-integration)
 * Task JSON, for direct import: [task.json](../../tasks/report-toaster-shipstation-integration.json)
@@ -12,8 +12,8 @@ This task enables an integration between Report Toaster and ShipStation. Each ti
 
 ```json
 {
-  "api_username__required": "",
-  "api_password__required": ""
+  "api_username__required": null,
+  "api_password__required": null
 }
 ```
 
@@ -31,19 +31,19 @@ mechanic/user/text
 
 ## Documentation
 
-This task enables an integration between Report Toaster and ShipStation. Each time an order is fulfilled (determined via the shopify/orders/fulfilled webhook), the ShipStation API is called to return the cost of shipping. This cost is then sent to Report Toaster as the shipping cost for the order.
+This task integrates Report Toaster and ShipStation. On order fulfillment, Mechanic calls the ShipStation API  to retrieve the shipping cost, and this cost is sent to Report Toaster.
 
-Note that the task currently makes a few assumptions:
+Note - the task currently makes a few assumptions:
 
 1. The task will get all shipping costs for an order once the order is completely fulfilled.
-2. The shipping cost will be the shipping cost + insurance cost. This could easily be changed to be controlled with an option if necessary.
-3. ShipStation does not store the "#" with the order name. So the task strips it out.
+2. The shipping cost is recorded as the shipping cost + insurance cost. You can update the task code to change this logic.
+3. ShipStation does not store the "#" with the order name. So the task strips this out.
 
-See your [ShipStation Settings](https://ss.shipstation.com/#/settings/api) to retrieve the API Key and Password to use in the options.
+See your [ShipStation Settings](https://ss.shipstation.com/#/settings/api) to retrieve the API Key and Password to use in the task options.
 
 This task can be run manually as a test by entering an order name.
 
-See the [Report Toaster](https://learn.mechanic.dev/platform/integrations/report-toaster) section of the Mechanic docs for more information on updating costs.
+See the [Report Toaster](https://learn.mechanic.dev/platform/integrations/report-toaster) section in the Mechanic docs for more information on updating costs.
 
 ## Installing this task
 

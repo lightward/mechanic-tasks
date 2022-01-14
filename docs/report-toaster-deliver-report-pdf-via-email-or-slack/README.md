@@ -1,6 +1,6 @@
 # Report Toaster: Deliver report PDF via email or Slack
 
-Tags: (not tagged!)
+Tags: Email, PDF, Report, Report Toaster, Slack
 
 This task demonstrates how a report can be requested from Report Toaster as a PDF. Once delivered, it is emailed to one or more recipients and/or sent to a Slack channel.
 
