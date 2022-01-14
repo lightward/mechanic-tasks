@@ -1,0 +1,191 @@
+{% assign separator = options.property_name_and_value_separator__required %}
+{% assign include_only_these_property_names = options.include_only_these_property_names__array %}
+{% assign exclude_these_property_names = options.exclude_these_property_names__array %}
+
+{% assign orders = array %}
+
+{% if event.topic == "shopify/orders/create" %}
+  {% if event.preview %}
+    {% assign sample_tag = "Name" | append: separator | append: "Value" %}
+    {% action "echo" sample_tag: sample_tag %}
+  {% endif %}
+
+  {% capture query %}
+    query {
+      order(id: {{ order.admin_graphql_api_id | json }}) {
+        id
+        name
+        tags
+        lineItems(first: 100) {
+          edges {
+            node {
+              id
+              customAttributes {
+                key
+                value
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% assign orders[0] = result.data.order %}
+
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% assign cursor = nil %}
+
+  {% for n in (1..10) %}
+    {% capture query %}
+      query {
+        orders(
+          first: 4
+          after: {{ cursor | json }}
+          reverse: true
+        ) {
+          pageInfo {
+            hasNextPage
+          }
+          edges {
+            cursor
+            node {
+              id
+              name
+              tags
+              lineItems(first: 100) {
+                edges {
+                  node {
+                    customAttributes {
+                      key
+                      value
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% assign orders_batch = result.data.orders.edges | map: "node" %}
+    {% assign orders = orders | concat: orders_batch %}
+
+    {% if result.data.orders.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.orders.edges.last.cursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+{% if event.preview %}
+  {% capture orders_json %}
+    [
+      {
+        "id": "gid://shopify/Order/1234567890",
+        "name": "#TEST",
+        "lineItems": {
+          "edges": [
+            {
+              "node": {
+                "customAttributes": [
+                  {
+                    "key": {{ include_only_these_property_names[0] | default: "alpha" | json }},
+                    "value": "beta"
+                  },
+                  {
+                    "key": "gamma",
+                    "value": "delta"
+                  }
+                ]
+              }
+            },
+            {
+              "node": {
+                "customAttributes": [
+                  {
+                    "key": {{ exclude_these_property_names[0] | default: "zeta" | json }},
+                    "value": "epsilon"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  {% endcapture %}
+
+  {% assign orders = orders_json | parse_json %}
+{% endif %}
+
+{% for order in orders %}
+  {% assign tags_to_add = array %}
+
+  {% assign line_items = order.lineItems.edges | map: "node" %}
+
+  {% for line_item in line_items %}
+    {% if line_item.customAttributes == blank %}
+      {% continue %}
+    {% endif %}
+
+    {% for line_item_property in line_item.customAttributes %}
+      {% assign line_item_property_name = line_item_property["key"] %}
+      {% assign line_item_property_value = line_item_property["value"] %}
+
+      {% if line_item_property_value == blank %}
+        {% continue %}
+      {% endif %}
+
+      {% if include_only_these_property_names != blank %}
+        {% unless include_only_these_property_names contains line_item_property_name %}
+          {% continue %}
+        {% endunless %}
+
+      {% elsif exclude_these_property_names != blank %}
+        {% if exclude_these_property_names contains line_item_property_name %}
+          {% continue %}
+        {% endif %}
+      {% endif %}
+
+      {% assign tag_should_have
+        = line_item_property_name
+        | append: separator
+        | append: line_item_property_value
+      %}
+
+      {% unless order.tags contains tag_should_have or tag_should_have.size > 40 %}
+        {% assign tags_to_add = tags_to_add | push: tag_should_have %}
+      {% endunless %}
+    {% endfor %}
+  {% endfor %}
+
+  {% if tags_to_add != blank %}
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {{ order.id | json }}
+          tags: {{ tags_to_add | uniq | json }}
+        ) {
+          node {
+            ... on Order {
+              id
+              name
+              tags
+            }
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}

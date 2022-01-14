@@ -118,6 +118,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag orders with mismatching billing and shipping addresses](./auto-tag-orders-with-mismatching-billing-and-shipping-addresses)
 * [Auto-tag orders with product tags](./auto-tag-orders-with-product-tags)
 * [Auto-tag orders with product vendors](./auto-tag-orders-with-product-vendors)
+* [Auto-tag orders with their line item properties](./auto-tag-orders-with-their-line-item-properties)
 * [Auto-tag orders with their tracking numbers](./auto-tag-orders-with-their-tracking-numbers)
 * [Auto-tag out-of-stock products](./auto-tag-out-of-stock-products)
 * [Auto-tag products based on their product type](./auto-tag-products-based-on-their-product-type)
