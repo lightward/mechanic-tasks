@@ -3,6 +3,12 @@
 {% assign variant_metafield_namespace = "mechanic" %}
 {% assign variant_metafield_key = "price_change_event" %}
 
+{% assign email_recipients = options.notification_email_recipients__array_required %}
+
+{% capture task_admin_link -%}
+<a href="https://{{ shop.myshopify_domain }}/admin/apps/mechanic/~/tasks/edit/{{ task.id }}">{{ task.name | remove: "ADVANCED: " }}</a>
+{%- endcapture %}
+
 {% comment %}
   -- query for shop data on every task run, since it will be needed for each valid action keyword and custom event
 {% endcomment %}
@@ -15,6 +21,7 @@
         namespace: {{ shop_metafield_namespace | json }}
         key: {{ shop_metafield_key | json }}
       ) {
+        id
         value
       }
     }
@@ -30,6 +37,7 @@
         "shop": {
           "id": "gid://shopify/Shop/1234567890",
           "metafield": {
+            "id": "gid://shopify/Metafield/9876543210",
             "value": "\n{\n  \"price_change_event__1234567890\": {\n    \"status\": \"scheduled\",\n    \"start\": \"2021-12-30 08:00\",\n    \"end\": \"2021-12-31 20:00\",\n    \"set_compare_at_prices\": true,\n    \"collection_handles_and_discounts\": {\n      \"collection-alpha\": \"20%\",\n      \"collection-beta\": \"-10\",\n      \"collection-gamma\": \"20\"\n    },\n    \"skus_to_include\": [],\n    \"sku_discount\": \"\",\n    \"skus_to_exclude\": [],\n    \"exclude_products_tagged_with\": [\n      \"clearance\"\n    ]\n  }\n}\n"
           }
         }
@@ -109,6 +117,13 @@
       {% endcomment %}
 
       {% assign discounts = collection_handles_and_discounts | values | default: array %}
+
+      {% if skus_to_include != blank and sku_discount == blank %}
+        {% unless event.preview %}
+          {% error "A SKU discount must be configured when specific SKUs are included." %}
+          {% break %}
+        {% endunless %}
+      {% endif %}
 
       {% if sku_discount != blank %}
         {% assign discounts = discounts | push: sku_discount %}
@@ -237,6 +252,40 @@
         }
       {% endaction %}
 
+      {% capture email_subject %}New price change event scheduled ({{ price_change_event_id }}){% endcapture %}
+
+      {% capture email_body %}
+        A new price change event has been scheduled, from the {{ task_admin_link }} task within the Mechanic app.
+
+        <strong>Price change event ID:</strong> {{ price_change_event_id }}
+        <strong>Status:</strong> {{ price_change_event["status"] }}
+        <strong>Event start:</strong> {{ price_change_event["start"] | date: "%F %H:%M %z" }}
+        <strong>Event end:</strong> {{ price_change_event["end"] | date: "%F %H:%M %z" }}
+        <strong>Set compare at price to original price during event:</strong> {{ price_change_event["set_compare_at_prices"] }}
+        <strong>Collection handles and discounts:</strong>
+        {% for keyval in price_change_event["collection_handles_and_discounts"] -%}
+        - {{ keyval[0] }}: {{ keyval[1] }}
+        {% else -%}
+          n/a
+        {%- endfor %}
+        <strong>SKUs to include:</strong> {{ price_change_event["skus_to_include"] | join: ", " | default: "n/a" }}
+        <strong>SKU discount:</strong> {{ price_change_event["sku_discount"] | default: "n/a" }},
+        <strong>SKUs to exclude:</strong> {{ price_change_event["skus_to_exclude"] | join: ", " | default: "n/a" }}
+        <strong>Exclude products tagged with:</strong> {{ price_change_event["exclude_products_tagged_with"] | join: ", " | default: "n/a" }}
+
+        <em><strong>Note:</strong> To cancel this event while it is still scheduled or ongoing, use the "cancel" keyword along with the price change event ID when running the task.</em>
+      {% endcapture %}
+
+      {% action "email" %}
+        {
+          "to": {{ email_recipients | json }},
+          "subject": {{ email_subject | json }},
+          "body": {{ email_body | newline_to_br | json }},
+          "reply_to": {{ shop.customer_email | json }},
+          "from_display_name": {{ shop.name | json }}
+        }
+      {% endaction %}
+
     {% when "list" %}
       {% action "echo" price_change_events: price_change_events %}
 
@@ -246,7 +295,7 @@
 
       {% else %}
         {% capture email_body %}
-          <strong>Currently configured price change events</strong>
+          Currently configured price change events, using the {{ task_admin_link }} task within the Mechanic app.
 
           {% for price_change_event in price_change_events -%}
             {%- assign price_change_event_id = price_change_event[0] -%}
@@ -260,12 +309,12 @@
             {% for keyval in price_change_event_data["collection_handles_and_discounts"] -%}
             - {{ keyval[0] }}: {{ keyval[1] }}
             {% else -%}
-            - none
+              n/a
             {%- endfor %}
-            <strong>SKUs to include:</strong> {{ price_change_event_data["skus_to_include"] | join: ", " | default: "none" }}
-            <strong>SKU discount:</strong> {{ price_change_event_data["sku_discount"] | default: "none" }},
-            <strong>SKUs to exclude:</strong> {{ price_change_event_data["skus_to_exclude"] | join: ", " | default: "none" }}
-            <strong>Exclude products tagged with:</strong> {{ price_change_event_data["exclude_products_tagged_with"] | join: ", " | default: "none" }}
+            <strong>SKUs to include:</strong> {{ price_change_event_data["skus_to_include"] | join: ", " | default: "n/a" }}
+            <strong>SKU discount:</strong> {{ price_change_event_data["sku_discount"] | default: "n/a" }},
+            <strong>SKUs to exclude:</strong> {{ price_change_event_data["skus_to_exclude"] | join: ", " | default: "n/a" }}
+            <strong>Exclude products tagged with:</strong> {{ price_change_event_data["exclude_products_tagged_with"] | join: ", " | default: "n/a" }}
             <hr />
           {%- endfor %}
         {% endcapture %}
@@ -273,7 +322,7 @@
 
       {% action "email" %}
         {
-          "to": {{ options.send_task_notiication_emails_to__array_required | json }},
+          "to": {{ email_recipients | json }},
           "subject": "All price change events as of {{ "now" | date: "%F" }}",
           "body": {{ email_body | newline_to_br | json }},
           "reply_to": {{ shop.customer_email | json }},
@@ -281,13 +330,21 @@
         }
       {% endaction %}
 
+    {% when "reset" %}
+      {% action "event" %}
+        {
+          "topic": "user/price_changes/reset",
+          "task_id": {{ task.id | json }}
+        }
+      {% endaction %}
+
     {% else %}
-      {% if action_keyword contains "cancel " %}
+      {% if action_keyword contains "cancel" %}
         {% assign price_change_event_id = action_keyword | remove: "cancel " %}
         {% assign price_change_event = price_change_events[price_change_event_id] %}
 
         {% if price_change_event == blank %}
-          {% error "Keyword of 'cancel' entered with an invalid price change event ID. Run task with 'list' keyword to see a list of all ongoing or scheduled price change events." %}
+          {% error "Keyword of 'cancel' entered with an invalid price change event ID. Run task with 'list' keyword to see a list of all configured price change events." %}
           {% break %}
         {% endif %}
 
@@ -335,6 +392,38 @@
             }
           {% endaction %}
 
+          {% capture email_subject %}Scheduled price change event has been cancelled ({{ price_change_event_id }}){% endcapture %}
+
+          {% capture email_body %}
+            A scheduled price change event has been cancelled, from the {{ task_admin_link }} task within the Mechanic app.
+
+            <strong>Price change event ID:</strong> {{ price_change_event_id }}
+            <strong>Status:</strong> {{ price_change_event["status"] }}
+            <strong>Event start:</strong> {{ price_change_event["start"] | date: "%F %H:%M %z" }}
+            <strong>Event end:</strong> {{ price_change_event["end"] | date: "%F %H:%M %z" }}
+            <strong>Set compare at price to original price during event:</strong> {{ price_change_event["set_compare_at_prices"] }}
+            <strong>Collection handles and discounts:</strong>
+            {% for keyval in price_change_event["collection_handles_and_discounts"] -%}
+            - {{ keyval[0] }}: {{ keyval[1] }}
+            {% else -%}
+              n/a
+            {%- endfor %}
+            <strong>SKUs to include:</strong> {{ price_change_event["skus_to_include"] | join: ", " | default: "n/a" }}
+            <strong>SKU discount:</strong> {{ price_change_event["sku_discount"] | default: "n/a" }},
+            <strong>SKUs to exclude:</strong> {{ price_change_event["skus_to_exclude"] | join: ", " | default: "n/a" }}
+            <strong>Exclude products tagged with:</strong> {{ price_change_event["exclude_products_tagged_with"] | join: ", " | default: "n/a" }}
+          {% endcapture %}
+
+          {% action "email" %}
+            {
+              "to": {{ email_recipients | json }},
+              "subject": {{ email_subject | json }},
+              "body": {{ email_body | newline_to_br | json }},
+              "reply_to": {{ shop.customer_email | json }},
+              "from_display_name": {{ shop.name | json }}
+            }
+          {% endaction %}
+
         {% elsif price_change_event.status == "ongoing" %}
           {% comment %}
             -- price change event in progress, so we have to revert the price changes to properly cancel it
@@ -353,7 +442,7 @@
 
         {% else %}
           {% action "echo"
-            message: "Price change event is uncancellable, because it does not have a status of 'scheduled' or 'ongoing'",
+            message: "Price change event cannot be cancelled because it does not have a status of 'scheduled' or 'ongoing'",
             price_change_event: price_change_event
           %}
         {% endif %}
@@ -594,6 +683,14 @@
           {% assign discount_to_apply = sku_discount %}
         {% endif %}
 
+        {% log
+          product_title: product.title,
+          sku: variant.sku,
+          skus_to_include: skus_to_include,
+          sku_discount: sku_discount,
+          discount_to_apply: discount_to_apply
+        %}
+
         {% if discount_to_apply == blank %}
           {% log
             message: "This variant's product is not within any configured collections, nor has this variant been specifically included by sku; skipping.",
@@ -674,7 +771,7 @@
       {% endfor %}
 
       {% if variant_updates != blank %}
-        {% capture mutation %}
+        {% action "shopify" %}
           mutation {
             productVariantsBulkUpdate(
               productId: {{ product.id | json }}
@@ -706,13 +803,7 @@
               }
             }
           }
-        {% endcapture %}
-
-        {% if options.test_mode__boolean %}
-          {% action "echo" mutation %}
-        {% else %}
-          {% action "shopify" mutation %}
-        {% endif %}
+        {% endaction %}
       {% endif %}
     {% endfor %}
 
@@ -765,6 +856,40 @@
       }
     }
   {% endaction %}
+
+    {% capture email_subject %}A scheduled price change event has started ({{ price_change_event_id }}){% endcapture %}
+
+    {% capture email_body %}
+      A scheduled price change event has started, using the {{ task_admin_link }} task within the Mechanic app.
+
+      <strong>Price change event ID:</strong> {{ price_change_event_id }}
+      <strong>Status:</strong> {{ price_change_event["status"] }}
+      <strong>Event start:</strong> {{ price_change_event["start"] | date: "%F %H:%M %z" }}
+      <strong>Event end:</strong> {{ price_change_event["end"] | date: "%F %H:%M %z" }}
+      <strong>Set compare at price to original price during event:</strong> {{ price_change_event["set_compare_at_prices"] }}
+      <strong>Collection handles and discounts:</strong>
+      {% for keyval in price_change_event["collection_handles_and_discounts"] -%}
+      - {{ keyval[0] }}: {{ keyval[1] }}
+      {% else -%}
+        n/a
+      {%- endfor %}
+      <strong>SKUs to include:</strong> {{ price_change_event["skus_to_include"] | join: ", " | default: "n/a" }}
+      <strong>SKU discount:</strong> {{ price_change_event["sku_discount"] | default: "n/a" }},
+      <strong>SKUs to exclude:</strong> {{ price_change_event["skus_to_exclude"] | join: ", " | default: "n/a" }}
+      <strong>Exclude products tagged with:</strong> {{ price_change_event["exclude_products_tagged_with"] | join: ", " | default: "n/a" }}
+
+      <em><strong>Note:</strong> To cancel this event while it is ongoing, use the "cancel" keyword along with the price change event ID when running the task.</em>
+    {% endcapture %}
+
+    {% action "email" %}
+      {
+        "to": {{ email_recipients | json }},
+        "subject": {{ email_subject | json }},
+        "body": {{ email_body | newline_to_br | json }},
+        "reply_to": {{ shop.customer_email | json }},
+        "from_display_name": {{ shop.name | json }}
+      }
+    {% endaction %}
 
 {% elsif event.topic == "user/price_changes/end" %}
   {% assign price_change_event_id = event.data.price_change_event_id %}
@@ -868,7 +993,7 @@
                             "price": "7.50",
                             "compareAtPrice": "10.00",
                             "metafield": {
-                              "id": "gid://shopify/Metafield/1234567890",
+                              "id": "gid://shopify/Metafield/9876543210",
                               "value": "\n{\n  \"price_change_event_id\": \"01234567-89ab-cdef\",\n  \"discount_to_apply\": \"25%\",\n  \"original_compare_at_price\": \"15.00\",\n  \"compare_at_price_to_set\": 7.50,\n  \"original_price\": \"10.00\",\n  \"price_to_set\": 7.50\n}\n"
                             }
                           }
@@ -1012,6 +1137,261 @@
           message
         }
       }
+    }
+  {% endaction %}
+
+  {% comment %}
+    -- send email notification about the price change event status change
+  {% endcomment %}
+
+  {% capture email_subject %}A price change event has been {{ price_change_event["status"] }} ({{ price_change_event_id }}){% endcapture %}
+
+  {% capture email_body %}
+    A price change event has been {{ price_change_event["status"] }}, using the {{ task_admin_link }} task within the Mechanic app.
+
+    <strong>Price change event ID:</strong> {{ price_change_event_id }}
+    <strong>Status:</strong> {{ price_change_event["status"] }}
+    <strong>Event start:</strong> {{ price_change_event["start"] | date: "%F %H:%M %z" }}
+    <strong>Event end:</strong> {{ price_change_event["end"] | date: "%F %H:%M %z" }}
+    <strong>Set compare at price to original price during event:</strong> {{ price_change_event["set_compare_at_prices"] }}
+    <strong>Collection handles and discounts:</strong>
+    {% for keyval in price_change_event["collection_handles_and_discounts"] -%}
+    - {{ keyval[0] }}: {{ keyval[1] }}
+    {% else -%}
+      n/a
+    {%- endfor %}
+    <strong>SKUs to include:</strong> {{ price_change_event["skus_to_include"] | join: ", " | default: "n/a" }}
+    <strong>SKU discount:</strong> {{ price_change_event["sku_discount"] | default: "n/a" }},
+    <strong>SKUs to exclude:</strong> {{ price_change_event["skus_to_exclude"] | join: ", " | default: "n/a" }}
+    <strong>Exclude products tagged with:</strong> {{ price_change_event["exclude_products_tagged_with"] | join: ", " | default: "n/a" }}
+  {% endcapture %}
+
+  {% action "email" %}
+    {
+      "to": {{ email_recipients | json }},
+      "subject": {{ email_subject | json }},
+      "body": {{ email_body | newline_to_br | json }},
+      "reply_to": {{ shop.customer_email | json }},
+      "from_display_name": {{ shop.name | json }}
+    }
+  {% endaction %}
+
+{% elsif event.topic == "user/price_changes/reset" %}
+  {% comment %}
+    -- To reset price change events, check every variant in the shop to see if the price change event metafield exists
+    -- Note: Query from the product level so that productVariantsBulkUpdate can be used, causing only one product update event to fire
+  {% endcomment %}
+
+  {% assign products = array %}
+
+  {% assign cursor = nil %}
+
+  {% for n in (1..10000) %}
+    {% capture products_query %}
+      query {
+        products(
+          first: 4
+          after: {{ cursor | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+          }
+          edges {
+            cursor
+            node {
+              id
+              title
+              tags
+              variants(first: 100) {
+                edges {
+                  node {
+                    id
+                    title
+                    sku
+                    price
+                    compareAtPrice
+                    metafield(
+                      namespace: {{ variant_metafield_namespace | json }}
+                      key: {{ variant_metafield_key | json }}
+                    ) {
+                      id
+                      value
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign products_result = products_query | shopify %}
+
+    {% if event.preview %}
+      {% capture products_result_json %}
+        {
+          "data": {
+            "products": {
+              "edges": [
+                {
+                  "node": {
+                    "id": "gid://shopify/Product/1234567890",
+                    "variants": {
+                      "edges": [
+                        {
+                          "node": {
+                            "id": "gid://shopify/ProductVariant/1234567890",
+                            "sku": "ACME-BRICK-RED",
+                            "price": "7.50",
+                            "compareAtPrice": "10.00",
+                            "metafield": {
+                              "id": "gid://shopify/Metafield/9876543210",
+                              "value": "\n{\n  \"price_change_event_id\": \"01234567-89ab-cdef\",\n  \"discount_to_apply\": \"25%\",\n  \"original_compare_at_price\": \"15.00\",\n  \"compare_at_price_to_set\": 7.50,\n  \"original_price\": \"10.00\",\n  \"price_to_set\": 7.50\n}\n"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign products_result = products_result_json | parse_json %}
+    {% endif %}
+
+    {% assign products = products_result.data.products.edges | map: "node" %}
+
+    {% for product in products %}
+      {% assign variant_updates = array %}
+      {% assign mutations = array %}
+
+      {% assign variants_with_metafield = product.variants.edges | map: "node" | where: "metafield" %}
+
+      {% log
+        product_id: product.id,
+        variants_count: product.variants.edges.size,
+        variants_with_metafield: variants_with_metafield.size
+      %}
+
+      {% for variant in variants_with_metafield %}
+        {% assign metafield = variant.metafield.value | parse_json %}
+
+        {% comment %}
+          -- revert the prices on this variant and delete the metafield
+        {% endcomment %}
+
+        {% capture variant_update %}
+          {
+            id: {{ variant.id | json}}
+            price: {{ metafield.original_price | json }}
+            {% if metafield.original_compare_at_price %}compareAtPrice: {{ metafield.original_compare_at_price | json }}{% endif %}
+          }
+        {% endcapture %}
+
+        {% assign variant_updates = variant_updates | push: variant_update %}
+
+        {% capture mutation %}
+          mutation {
+            metafieldDelete(
+              input: {
+                id: {{ variant.metafield.id | json }}
+              }
+            ) {
+              deletedId
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endcapture %}
+
+        {% assign mutations = mutations | push: mutation %}
+      {% endfor %}
+
+      {% if variant_updates != blank %}
+        {% action "shopify" %}
+          mutation {
+            productVariantsBulkUpdate(
+              productId: {{ product.id | json }}
+              variants: [
+                {{ variant_updates | join: newline }}
+              ]
+            ) {
+              product {
+                id
+                title
+              }
+              productVariants {
+                id
+                displayName
+                sku
+                price
+                compareAtPrice
+              }
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+      {% endif %}
+
+      {% for mutation in mutations %}
+        {% action "shopify" mutation %}
+      {% endfor %}
+    {% endfor %}
+
+    {% if products_result.data.products.pageInfo.hasNextPage %}
+      {% assign cursor = products_result.data.products.edges.last.cursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% comment %}
+    -- delete the price change events shop metafield
+  {% endcomment %}
+
+  {% action "shopify" %}
+    mutation {
+      metafieldDelete(
+        input: {
+          id: {{ shop.metafield.id | json }}
+        }
+      ) {
+        deletedId
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+  {% comment %}
+    -- send email notification about the price change events reset
+  {% endcomment %}
+
+  {% capture email_subject %}All price change events have been cleared{% endcapture %}
+
+  {% capture email_body %}
+    All price change events have been reverted and cleared, using the {{ task_admin_link }} task within the Mechanic app.
+  {% endcapture %}
+
+  {% action "email" %}
+    {
+      "to": {{ email_recipients | json }},
+      "subject": {{ email_subject | json }},
+      "body": {{ email_body | newline_to_br | json }},
+      "reply_to": {{ shop.customer_email | json }},
+      "from_display_name": {{ shop.name | json }}
     }
   {% endaction %}
 {% endif %}

@@ -2,6 +2,7 @@
 
 This directory is built automatically. Each task's documentation is generated from the corresponding task export file in [../tasks](../tasks/). To contribute, see [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
+* [ADVANCED: Scheduled Price Changes](./advanced-scheduled-price-changes)
 * [Abandoned checkout emails](./abandoned-checkout-emails)
 * [Accept a maximum number of orders per day](./accept-a-maximum-number-of-orders-per-day)
 * [Accept a maximum number of orders per hour](./accept-a-maximum-number-of-orders-per-hour)
@@ -240,7 +241,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Schedule a storefront banner](./schedule-a-storefront-banner)
 * [Schedule customer auto-tagging after a purchase](./schedule-customer-auto-tagging-after-a-purchase)
 * [Schedule product tags by date](./schedule-product-tags-by-date)
-* [Scheduled Price Changes](./advanced-scheduled-price-changes)
 * [Scheduled theme publishing](./scheduled-theme-publishing)
 * [Send a PDF invoice when an order is created](./send-a-pdf-invoice-when-an-order-is-created)
 * [Send a customer signup email](./customer-signup-email)
