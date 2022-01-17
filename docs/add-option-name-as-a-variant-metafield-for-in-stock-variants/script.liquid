@@ -1,0 +1,323 @@
+{% assign metafield_namespace = options.metafield_namespace__required | strip %}
+{% assign metafield_key = options.metafield_keyval__required | strip %}
+{% assign match_option_name = options.match_option_name__required | strip | downcase %}
+
+{% if event.topic == "shopify/inventory_levels/updates" %}
+    {% if event.preview %}
+        {% capture inventory_level_json %}
+        {
+        "admin_graphql_api_id": "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890"
+        }
+        {% endcapture %}
+        {% assign inventory_level = inventory_level_json | parse_json %}
+    {% endif %}
+
+    {% if metafield_namespace != blank and metafield_key != blank %}
+        {% capture query %}
+            query {
+                inventoryLevel(id: {{ inventory_level.admin_graphql_api_id | json }}) {
+                    item {
+                        variant {
+                            id
+                            inventoryPolicy
+                            availableForSale
+                            sellableOnlineQuantity
+                            selectedOptions {
+                                name
+                                value
+                            }
+                            metafield: metafield(
+                                namespace: {{ metafield_namespace | json }}
+                                key: {{ metafield_key | json }}
+                            ) {
+                                legacyResourceId
+                                value
+                            }
+                        }
+                    }
+                }
+            }
+        {% endcapture %}
+
+        {% assign result = query | shopify %}
+
+        {% if event.preview %}
+
+            {% capture result_json %}
+            {
+                "data": {
+                "inventoryItem": {
+                    "variant": {
+                    "id": "gid://shopify/ProductVariant/1234567890",
+                    "inventoryPolicy": "DENY",
+                    "availableForSale": true,
+                    "sellableOnlineQuantity": 123,
+                    "selectedOptions": [
+                        {
+                        "name": "Size",
+                        "value": "M"
+                        },
+                        {
+                        "name": "Colour",
+                        "value": "Black"
+                        }
+                    ],
+                    "metafield": {
+                        "legacyResourceId": "1234567890",
+                        "value": "M"
+                    }
+                    }
+                }
+                }
+            }
+            {% endcapture %}
+            {% assign result = result_json | parse_json %}
+        {% endif %}
+        
+        {% assign option_value = false %}
+        {% for option in result.data.inventoryLevel.item.variant.selectedOptions %}
+        {% log message: "option: ", details: option %}
+            {% assign name_clean = option.name | downcase %}
+            {% if name_clean == match_option_name %}
+                {% assign option_value = option.value %}
+            {% endif %}
+        {% endfor %}
+
+        {% assign is_in_stock = false %} 
+        {% if result.data.inventoryLevel.item.variant.inventoryPolicy == "CONTINUE" and result.data.inventoryLevel.item.variant.availableForSale %}
+            {% assign is_in_stock = true %}
+        {% elsif result.data.inventoryLevel.item.variant.sellableOnlineQuantity > 0 and result.data.inventoryLevel.item.variant.availableForSale %}
+            {% assign is_in_stock = true %} 
+        {% endif %}
+
+        {% if result.data.inventoryLevel.item.variant.metafield == null %}
+            {% assign metafield_exists = false %}
+        {% else %}
+            {% assign metafield_exists = true %}
+            {% assign existing_metafield_id = result.data.inventoryLevel.item.variant.metafield.legacyResourceId | prepend: 'gid://shopify/Metafield/' %}
+        {% endif %}
+        
+        {% assign set_metafield = false %}
+        {% if metafield_exists == false and is_in_stock and option_value %}
+            {% assign set_metafield = true %}
+        {% elsif metafield_exists and option_value != result.data.inventoryLevel.item.variant.metafield.value %}
+            {% assign set_metafield = true %} 
+        {% endif %}
+
+        {% if set_metafield or event.preview %}
+            {% action "shopify" %}
+                mutation {
+                    metafieldsSet(
+                        metafields: [
+                            {
+                                ownerId: {{ result.data.inventoryLevel.item.variant.id | json }}
+                                namespace: {{ metafield_namespace | json }}
+                                key: {{ metafield_key | json }}
+                                type: "string"
+                                value: {{ option_value | append: "" | json }}
+                            }
+                        ]
+                    ) {
+                        metafields {
+                            id
+                            namespace
+                            key
+                            type
+                            value
+                            owner {
+                                ... on ProductVariant {
+                                    id
+                                }
+                            }
+                        }
+                        userErrors {
+                            code
+                            field
+                            message
+                        }
+                    }
+                }
+            {% endaction %}
+
+        {% elsif metafield_exists and is_in_stock == false %}
+            {% action "shopify" %}
+                mutation {
+                    metafieldDelete(
+                        input: {
+                            id:  {{ existing_metafield_id | json }}
+                        }
+                    ) {
+                        userErrors {
+                            field
+                            message
+                        }
+                    }
+                }
+            {% endaction %}
+        {% endif %}
+    {% endif %}
+
+{% elsif event.topic == "mechanic/user/trigger" %}
+
+    {% capture bulk_operation_query %}
+    query {
+        productVariants {
+            edges {
+                node {
+                    id
+                    inventoryPolicy
+                    availableForSale
+                    sellableOnlineQuantity
+                    selectedOptions {
+                        name
+                        value
+                    }
+                    metafield: metafield(
+                        namespace: {{ metafield_namespace | json }}
+                        key: {{ metafield_key | json }}
+                    ) {
+                        legacyResourceId
+                        value
+                    }
+                }
+            }
+        }
+    }
+    {% endcapture %}
+
+    {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+    {% endaction %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+    {% if event.preview %}
+        {%- comment -%}To do - update preview jsonl_string, below is an approximation/best guess!{%- endcomment -%}
+        {% capture jsonl_string %}
+        {"id":"gid:\/\/shopify\/ProductVariant\/1234567890","inventoryPolicy":"CONTINUE","availableForSale":"true","sellableOnlineQuantity":"123","selectedOptions":{"Size":"M","Colour":"Black"},"metafield":{"legacyResourceId":"1234567890","value":"M"}}
+         {% endcapture %}
+        {% assign bulkOperation = hash %}
+        {% assign bulkOperation["objects"] = jsonl_string | parse_jsonl %}
+    {% endif %}
+
+    {% assign product_variants = bulkOperation.objects %}
+    {% log message: "bulkOperation.objects size: ", details: bulkOperation.objects | size %}
+    {% assign metafields_to_set = array %}
+    {% assign metafields_to_delete = array %}
+
+    {% for product_variant in product_variants %}
+
+    {% assign option_value = false %}
+    {% for option in product_variant.selectedOptions %}
+        {% assign name_clean = option.name | downcase %}
+        {% if name_clean == match_option_name %}
+            {% assign option_value = option.value %}
+        {% endif %}
+    {% endfor %}
+
+    {% assign is_in_stock = false %}  
+    {% if product_variant.inventoryPolicy == "CONTINUE" and product_variant.availableForSale %}
+        {% assign is_in_stock = true %}
+    {% elsif product_variant.sellableOnlineQuantity > 0 and product_variant.availableForSale %}
+        {% assign is_in_stock = true %} 
+    {% endif %}
+
+    {% assign metafield_exists = true %}
+    {% if product_variant.metafield == null %}
+        {% assign metafield_exists = false %}
+    {% endif %}
+    
+    {% assign set_metafield = false %}
+    {% if metafield_exists == false and is_in_stock and option_value %}
+        {% assign set_metafield = true %}
+    {% elsif metafield_exists and option_value != product_variant.metafield.value %}
+        {% assign set_metafield = true %} 
+    {% endif %}
+
+    {% if set_metafield or event.preview %}
+
+        {% capture metafield_to_set %}
+        {
+            ownerId: {{ product_variant.id | json }}
+            namespace: {{ metafield_namespace | json }}
+            key: {{ metafield_key | json }}
+            type: "string"
+            value: {{ option_value | append: "" | json }}
+        }
+        {% endcapture %}
+        {% assign metafields_to_set = metafields_to_set | push: metafield_to_set %}
+
+    {% elsif is_in_stock == false and metafield_exists %}
+
+        {% assign metafield_id_to_delete = product_variant.metafield.legacyResourceId | prepend: 'gid://shopify/Metafield/' %}
+        {% assign metafields_to_delete = metafields_to_delete | push: metafield_id_to_delete %}
+
+    {% endif %}
+
+  {% endfor %}
+
+  {% log message: "Total metafields being updated: ", details: metafields_to_set | size %}
+  {% log message: "Totla metafields being deleted: ", details: metafields_to_delete | size %}
+
+  {% assign groups_of_metafields_to_set = metafields_to_set | in_groups_of: 25, fill_with: false %}
+
+  {% for group_of_metafields_to_set in groups_of_metafields_to_set %}
+    {% action "shopify" %}
+      mutation {
+        metafieldsSet(
+          metafields: [
+            {{ group_of_metafields_to_set | join: newline }}
+          ]
+        ) {
+          metafields {
+            id
+            namespace
+            key
+            type
+            value
+            owner {
+              ... on ProductVariant {
+                id
+              }
+            }
+          }
+          userErrors {
+            code
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endfor %}
+
+  {% for metafield_id in metafields_to_delete %}
+    {% action "shopify" %}
+        mutation {
+            metafieldDelete(
+                input: {
+                    id: {{ metafield_id | json }}
+                }
+            ) {
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+    {% endaction %}
+  {% endfor %}
+
+{% endif %}
