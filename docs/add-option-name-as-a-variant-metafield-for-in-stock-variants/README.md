@@ -1,9 +1,8 @@
 # Add Option Name as a Variant Metafield for In Stock Variants
 
-Tags: (not tagged!)
+Tags: In stock, Metafields, Online Store 2.0, Variants
 
-This task was originally designed to power a "Size in Stock" filter in Online Store 2.0 filtering. It could equally be configured for "Colour in Stock" or any other option name from where you want to use the values in a filter.
-2.0 filtering does include an In Stock and Size filter by default, but the combination is unintuitive.
+This task populates variant metafields with your desired variant options for use by Online Store 2.0 filtering, taking into account whether or not a variant has inventory available for sale online. It runs when inventory levels are updated, and may also be run manually to scan all variants in your shop.
 
 * View in the task library: [usemechanic.com/task/add-option-name-as-a-variant-metafield-for-in-stock-variants](https://usemechanic.com/task/add-option-name-as-a-variant-metafield-for-in-stock-variants)
 * Task JSON, for direct import: [task.json](../../tasks/add-option-name-as-a-variant-metafield-for-in-stock-variants.json)
@@ -13,9 +12,8 @@ This task was originally designed to power a "Size in Stock" filter in Online St
 
 ```json
 {
-  "metafield_namespace__required": "mechanic",
-  "metafield_keyval__required": "size_in_stock",
-  "match_option_name__required": "Size"
+  "metafield_namespace__required": null,
+  "option_names_and_metafield_keys__keyval_required": null
 }
 ```
 
@@ -33,8 +31,11 @@ mechanic/shopify/bulk_operation
 
 ## Documentation
 
-This task was originally designed to power a "Size in Stock" filter in Online Store 2.0 filtering. It could equally be configured for "Colour in Stock" or any other option name from where you want to use the values in a filter.
-2.0 filtering does include an In Stock and Size filter by default, but the combination is unintuitive.
+This task populates variant metafields with your desired variant options for use by Online Store 2.0 filtering, taking into account whether or not a variant has inventory available for sale online. It runs when inventory levels are updated, and may also be run manually to scan all variants in your shop.
+
+Configure it with a single metafield namespace (e.g. "my_fields") and one or more variant options (e.g. "Size") paired with their respective metafield key (e.g. "size_in_stock").
+
+__Important:__ To use OS 2.0 collection and search filtering, you must configure variant metafield definitions __prior__ to configuring and enabling this task. Read Shopify's documenation on how to [Add storefront filtering](https://help.shopify.com/en/manual/online-store/themes/customizing-themes/storefront-filters) for more info.
 
 ## Installing this task
 
