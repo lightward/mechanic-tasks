@@ -38,7 +38,7 @@
 {% elsif event.topic == "mechanic/user/trigger" %}
   {% assign cursor = nil %}
 
-  {% for n in (1..10) %}
+  {% for n in (1..2500) %}
     {% capture query %}
       query {
         orders(
