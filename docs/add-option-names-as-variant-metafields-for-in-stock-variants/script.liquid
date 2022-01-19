@@ -1,0 +1,222 @@
+{% assign metafield_namespace = options.metafield_namespace__required | strip %}
+{% assign option_names_and_metafield_keys = options.option_names_and_metafield_keys__keyval_required %}
+{% assign metafield_keys = option_names_and_metafield_keys | values %}
+
+{% capture metafields_query %}
+  {% for metafield_key in metafield_keys %}
+    metafield_{{ metafield_key | md5 }}: metafield(
+      namespace: {{ metafield_namespace | json }}
+      key: {{ metafield_key | json }}
+    ) {
+      id
+      value
+    }
+  {% endfor %}
+{% endcapture %}
+
+{% assign variants = array %}
+
+{% if event.topic == "shopify/inventory_levels/update" %}
+  {% capture query %}
+    query {
+      inventoryLevel(id: {{ inventory_level.admin_graphql_api_id | json }}) {
+        item {
+          variant {
+            id
+            displayName
+            inventoryPolicy
+            availableForSale
+            sellableOnlineQuantity
+            selectedOptions {
+              name
+              value
+            }
+            {{ metafields_query }}
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% assign variants[0] = result.data.inventoryLevel.item.variant %}
+
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% capture bulk_operation_query %}
+    query {
+      productVariants {
+        edges {
+          node {
+            id
+            displayName
+            inventoryPolicy
+            availableForSale
+            sellableOnlineQuantity
+            selectedOptions {
+              name
+              value
+            }
+            {{ metafields_query }}
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% assign variants = bulkOperation.objects %}
+{% endif %}
+
+{% if event.preview %}
+  {% capture variants_json %}
+    [
+      {
+        "id": "gid://shopify/ProductVariant/1234567890",
+        "displayName": "Duffel Bag - Pleather / Large",
+        "inventoryPolicy": "DENY",
+        "availableForSale": true,
+        "sellableOnlineQuantity": 1,
+        "selectedOptions": [
+          {
+            "name": "Material",
+            "value": "Pleather"
+          },
+          {
+            "name": "Size",
+            "value": "Large"
+          }
+        ]
+      }
+    ]
+  {% endcapture %}
+
+  {% assign variants = variants_json | parse_json %}
+{% endif %}
+
+{% assign metafields_to_set = array %}
+{% assign metafields_to_delete = array %}
+
+{% for variant in variants %}
+  {% assign is_in_stock = nil %}
+
+  {% if variant.availableForSale %}
+    {% if variant.sellableOnlineQuantity > 0 or variant.inventoryPolicy == "CONTINUE" %}
+      {% assign is_in_stock = true %}
+    {% endif %}
+  {% endif %}
+
+  {% for selected_option in variant.selectedOptions %}
+    {% assign selected_option_name = selected_option.name | downcase %}
+
+    {% for keyval in option_names_and_metafield_keys %}
+      {% assign configured_option_name = keyval[0] | downcase %}
+
+      {% if configured_option_name == selected_option_name %}
+        {% assign set_metafield = nil %}
+        {% assign metafield_key = keyval[1] %}
+        {% assign metafield_alias = metafield_key | md5 | prepend: "metafield_" %}
+        {% assign metafield = variant[metafield_alias] %}
+
+        {% if metafield == blank %}
+          {% if is_in_stock %}
+            {% assign set_metafield = true %}
+          {% endif %}
+
+        {% elsif is_in_stock %}
+          {% if metafield.value != selected_option.value %}
+            {% assign set_metafield = true %}
+          {% endif %}
+
+        {% else %}
+          {% assign metafields_to_delete = metafields_to_delete | push: metafield.id %}
+        {% endif %}
+
+        {% if set_metafield %}
+          {% capture metafield_to_set %}
+            {
+              ownerId: {{ variant.id | json }}
+              namespace: {{ metafield_namespace | json }}
+              key: {{ metafield_key | json }}
+              type: "single_line_text_field"
+              value: {{ selected_option.value | append: "" | json }}
+            }
+          {% endcapture %}
+
+          {% assign metafields_to_set = metafields_to_set | push: metafield_to_set %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+{% endfor %}
+
+{% log
+  total_metafields_being_set: metafields_to_set.size,
+  total_metafields_being_deleted: metafields_to_delete.size
+%}
+
+{% assign groups_of_metafields_to_set = metafields_to_set | in_groups_of: 25, fill_with: false %}
+
+{% for group_of_metafields_to_set in groups_of_metafields_to_set %}
+  {% action "shopify" %}
+    mutation {
+      metafieldsSet(
+        metafields: [
+          {{ group_of_metafields_to_set | join: newline }}
+        ]
+      ) {
+        metafields {
+          id
+          namespace
+          key
+          type
+          value
+          owner {
+            ... on ProductVariant {
+              id
+            }
+          }
+        }
+        userErrors {
+          code
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endfor %}
+
+{% for metafield_id in metafields_to_delete %}
+  {% action "shopify" %}
+    mutation {
+      metafieldDelete(
+        input: {
+          id: {{ metafield_id | json }}
+        }
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endfor %}
