@@ -1,5 +1,5 @@
 {
-  "name": "ADVANCED: Scheduled Price Changes",
+  "name": "Advanced: Scheduled Price Changes",
   "options": {
     "notification_email_recipients__array_required": null,
     "event_start_datetime__required": null,
@@ -26,8 +26,10 @@
   "perform_action_runs_in_sequence": false,
   "tags": [
     "Advanced",
+    "Discounts",
     "Price",
     "Products",
+    "Sale",
     "Schedule"
   ]
 }

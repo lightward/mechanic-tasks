@@ -1,6 +1,8 @@
-# ADVANCED: Scheduled Price Changes
+# Advanced: Scheduled Price Changes
 
-Tags: Advanced, Price, Products, Schedule
+**🚨 This is an advanced task, intended for technical users. For tasks like these, the Mechanic team only offers support with platform-level issues. For help with task-level issues (e.g. debugging, configuration, customization, monitoring, etc), see [Hire a Mechanic developer](https://learn.mechanic.dev/hire-a-developer).**
+
+Tags: Advanced, Discounts, Price, Products, Sale, Schedule
 
 This advanced task allows you to schedule price change events for your store, useful for seasonal and flash sales. To use this task, configure a price change event using the task options, save the task and run it manually, and then enter a keyword of **schedule** in the dialog that appears. An email summary with the price change event ID will be sent upon successful scheduling.
 
