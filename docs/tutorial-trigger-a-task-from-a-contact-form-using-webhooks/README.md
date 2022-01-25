@@ -1,6 +1,6 @@
 # Tutorial: Trigger a task from a contact form, using webhooks
 
-Tags: (not tagged!)
+Tags: Tutorial
 
 This is the companion task for the [Triggering tasks from a contact form](https://learn.mechanic.dev/resources/tutorials/triggering-tasks-from-a-contact-form) tutorial.
 
