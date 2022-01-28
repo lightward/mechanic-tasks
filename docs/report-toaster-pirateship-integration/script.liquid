@@ -1,10 +1,9 @@
 {% comment %}
   An opinion about option order
-
+  {{ options.email_subject__required }}
   {{ options.order_name_column__required }}
-  {{ options.order_name_prepend_pound_sign__boolean }}
+  {{ options.prepend_pound_sign_to_order_name__boolean }}
   {{ options.shipping_cost_column__required }}
-
 {% endcomment %}
 
 {% assign updates = array %}
@@ -13,28 +12,29 @@
   {% assign update = hash %}
   {% assign update["name"] = "#1234" %}
   {% assign update["shipping_cost"] = 1.23 %}
-
   {% assign updates[updates.size] = update %}
-{% else %}
+  {% assign email = hash %}
+  {% assign email["subject"] = options.email_subject__required %}
+{% endif %}
+
+{% if email.subject == options.email_subject__required %}
   {% for attachment in email.attachments %}
     {% assign shipments = attachment.content | decode_base64 | parse_csv: headers: true %}
+      {% for shipment in shipments %}
+        {% assign order_name = shipment[options.order_name_column__required] %}
+        {% assign shipping_cost = shipment[options.shipping_cost_column__required] %}
 
-    {% for shipment in shipments %}
-      {% assign order_name = shipment[options.order_name_column__required] %}
-      {% assign shipping_cost = shipment[options.shipping_cost_column__required] %}
-
-      {% if order_name != blank %}
-        {% if options.order_name_prepend_pound_sign__boolean %}
-          {% assign order_name = order_name | prepend: "#" %}
+        {% if order_name != blank %}
+          {% if options.prepend_pound_sign_to_order_name__boolean %}
+            {% assign order_name = order_name | prepend: "#" %}
+          {% endif %}
+          {% assign update = hash %}
+          {% assign update["name"] = order_name %}
+          {% assign update["shipping_cost"] = shipping_cost %}  
+          {% assign updates[updates.size] = update %}
         {% endif %}
 
-        {% assign update = hash %}
-        {% assign update["name"] = order_name %}
-        {% assign update["shipping_cost"] = shipping_cost %}
-
-        {% assign updates[updates.size] = update %}
-      {% endif %}
-    {% endfor %}
+      {% endfor %}
   {% endfor %}
 {% endif %}
 

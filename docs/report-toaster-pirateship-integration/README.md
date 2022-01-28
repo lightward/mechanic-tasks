@@ -1,8 +1,8 @@
-# Report Toaster - Pirate Ship Integration
+# Report Toaster: Pirate Ship Integration
 
 Tags: Costs, External API, Integration, Report Toaster, Shipping
 
-This task is intended to allow Report Toaster customers to send Pirate Ship export CSV files to Mechanic. These files will then be processed to assign shipping costs to orders. 
+Email [Pirate Ship](https://www.pirateship.com/) exports to Mechanic and add those shipping costs to orders with Report Toaster.
 
 * View in the task library: [usemechanic.com/task/report-toaster-pirateship-integration](https://usemechanic.com/task/report-toaster-pirateship-integration)
 * Task JSON, for direct import: [task.json](../../tasks/report-toaster-pirateship-integration.json)
@@ -12,8 +12,9 @@ This task is intended to allow Report Toaster customers to send Pirate Ship expo
 
 ```json
 {
+  "email_subject__required": "Shipping Costs",
   "order_name_column__required": "Order ID",
-  "order_name_prepend_pound_sign__boolean": true,
+  "prepend_pound_sign_to_order_name__boolean": true,
   "shipping_cost_column__required": "Cost"
 }
 ```
@@ -30,15 +31,17 @@ mechanic/emails/received
 
 ## Documentation
 
-This task is intended to allow Report Toaster customers to send Pirate Ship export CSV files to Mechanic. These files will then be processed to assign shipping costs to orders. 
+Email [Pirate Ship](https://www.pirateship.com/) exports to Mechanic and add those shipping costs to orders with Report Toaster.
+
+Did you know your store has its very own email address for triggering Mechanic tasks? A store at example.myshopify.com can receive email at example@mail.usemechanic.com.
 
 One or more attachments can be sent and will be processed as long as they meet the following requirements:
 
-1. The order name is included in a column matching the "Order name column" option.
-2. If the order name data does not include the # sign and your shop does, use the corresponding option to havee it prepended.
-3. The shipping cost is included in a column matching the "Shipping cost column" option.
+1. The email subject must match the email subject set in the task options.
+2. The CSV attachment format matches the order and shipping column names set in the task options.
+3. If the order name data does not include the # sign and your shop does, use the prepend pound sign to order name option.
 
-Each attachment will be parsed and added to an array of updates that will be sent to Report Toaster.
+Each attachment will be parsed and sent to Report Toaster.
 
 ## Installing this task
 
