@@ -1,0 +1,26 @@
+{
+  "name": "Report Toaster: Pirate Ship Integration",
+  "options": {
+    "email_subject__required": "Shipping Costs",
+    "order_name_column__required": "Order ID",
+    "prepend_pound_sign_to_order_name__boolean": true,
+    "shipping_cost_column__required": "Cost"
+  },
+  "subscriptions": [
+    "mechanic/emails/received"
+  ],
+  "subscriptions_template": "mechanic/emails/received",
+  "script": "{% comment %}\n  An opinion about option order\n  {{ options.email_subject__required }}\n  {{ options.order_name_column__required }}\n  {{ options.prepend_pound_sign_to_order_name__boolean }}\n  {{ options.shipping_cost_column__required }}\n{% endcomment %}\n\n{% assign updates = array %}\n\n{% if event.preview %}\n  {% assign update = hash %}\n  {% assign update[\"name\"] = \"#1234\" %}\n  {% assign update[\"shipping_cost\"] = 1.23 %}\n  {% assign updates[updates.size] = update %}\n  {% assign email = hash %}\n  {% assign email[\"subject\"] = options.email_subject__required %}\n{% endif %}\n\n{% if email.subject == options.email_subject__required %}\n  {% for attachment in email.attachments %}\n    {% assign shipments = attachment.content | decode_base64 | parse_csv: headers: true %}\n      {% for shipment in shipments %}\n        {% assign order_name = shipment[options.order_name_column__required] %}\n        {% assign shipping_cost = shipment[options.shipping_cost_column__required] %}\n\n        {% if order_name != blank %}\n          {% if options.prepend_pound_sign_to_order_name__boolean %}\n            {% assign order_name = order_name | prepend: \"#\" %}\n          {% endif %}\n          {% assign update = hash %}\n          {% assign update[\"name\"] = order_name %}\n          {% assign update[\"shipping_cost\"] = shipping_cost %}  \n          {% assign updates[updates.size] = update %}\n        {% endif %}\n\n      {% endfor %}\n  {% endfor %}\n{% endif %}\n\n{% if updates != empty %}\n  {% action \"report_toaster\" %}\n    {\n      \"operation\": \"update\",\n      \"Order\": {{ updates | json }}\n    }\n  {% endaction %}\n{% endif %}",
+  "docs": "Email [Pirate Ship](https://www.pirateship.com/) exports to Mechanic and add those shipping costs to orders with Report Toaster.\n\nDid you know your store has its very own email address for triggering Mechanic tasks? A store at example.myshopify.com can receive email at example@mail.usemechanic.com.\n\nOne or more attachments can be sent and will be processed as long as they meet the following requirements:\n\n1. The email subject must match the email subject set in the task options.\n2. The CSV attachment format matches the order and shipping column names set in the task options.\n3. If the order name data does not include the # sign and your shop does, use the prepend pound sign to order name option.\n\nEach attachment will be parsed and sent to Report Toaster.",
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "tags": [
+    "Costs",
+    "External API",
+    "Integration",
+    "Report Toaster",
+    "Shipping"
+  ]
+}

@@ -236,6 +236,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Remind customers that their order is on the way](./remind-customers-that-their-order-is-on-the-way)
 * [Remove a customer tag when another tag is added](./remove-a-customer-tag-when-another-tag-is-added)
 * [Report Toaster: Deliver report PDF via email or Slack](./report-toaster-deliver-report-pdf-via-email-or-slack)
+* [Report Toaster: Pirate Ship Integration](./report-toaster-pirateship-integration)
 * [Report Toaster: ShipStation Integration](./report-toaster-shipstation-integration)
 * [Reset all inventory levels to a single level, in bulk](./reset-all-inventory-levels-to-a-single-level-in-bulk)
 * [Reset inventory levels daily](./reset-inventory-levels-daily)
