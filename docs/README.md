@@ -220,6 +220,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Manage collection templates by product inventory](./manage-collection-templates-by-product-inventory)
 * [Manage fulfillment shipment status using order tags](./manage-fulfillment-status-using-order-tags)
 * [Manage tagging for a time-limited membership product](./manage-tagging-for-a-time-limited-membership-product)
+* [Mechanic tour task](./mechanic-tour-task)
 * [Monitor customer note for certain information](./monitor-customer-note-for-certain-information)
 * [Move out-of-stock products to the end of a collection](./move-out-of-stock-products-to-the-end-of-a-collection)
 * [Notify a team when a tagged product is ordered](./notify-a-team-when-a-tagged-product-is-ordered)

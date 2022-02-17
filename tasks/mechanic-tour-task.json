@@ -1,0 +1,18 @@
+{
+  "name": "Mechanic tour task",
+  "options": {
+    "what_is_your_first_name__required": "",
+    "what_is_your_last_name__required": "",
+    "what_is_your_favorite_color__required": ""
+  },
+  "subscriptions": [
+    "mechanic/user/trigger"
+  ],
+  "subscriptions_template": "mechanic/user/trigger",
+  "script": "{% action \"echo\" %}\n  {{ options.what_is_your_first_name__required | json }}\n{% endaction %}\n\n{% action \"echo\" %}\n  {{ options.what_is_your_last_name__required | json }}\n{% endaction %}\n\n{% action \"echo\" %}\n  {{ options.what_is_your_favorite_color__required | json }}\n{% endaction %}",
+  "docs": "This task is part of the Mechanic tour! Feel free to delete this task once you are done with the tour.",
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false
+}
