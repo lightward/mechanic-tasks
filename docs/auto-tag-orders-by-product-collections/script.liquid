@@ -1,7 +1,7 @@
 {% if event.topic contains "shopify/orders/" %}
   {% assign existing_tags = order.tags | split: ", " %}
   {% assign tags_to_add = array %}
-  {% assign order_collections = nil %}
+  {% assign order_collections = array %}
 
   {% for line_item in order.line_items %}
     {% if line_item.product != blank %}
