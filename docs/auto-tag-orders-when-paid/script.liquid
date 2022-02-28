@@ -1,0 +1,18 @@
+{% action "shopify" %}
+  mutation {
+    tagsAdd(
+      id: {{ order.admin_graphql_api_id | json }}
+      tags: {{ options.order_tag_to_apply__required | json }}
+    ) {
+      userErrors {
+        field
+        message
+      }
+      node {
+        ... on Order {
+          tags
+        }
+      }
+    }
+  }
+{% endaction %}

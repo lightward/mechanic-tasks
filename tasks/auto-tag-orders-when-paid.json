@@ -1,0 +1,21 @@
+{
+  "docs": "This task watches for newly-paid orders, and adds a configurable tag to each one.",
+  "halt_action_run_sequence_on_error": false,
+  "name": "Auto-tag orders when paid",
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% action \"shopify\" %}\n  mutation {\n    tagsAdd(\n      id: {{ order.admin_graphql_api_id | json }}\n      tags: {{ options.order_tag_to_apply__required | json }}\n    ) {\n      userErrors {\n        field\n        message\n      }\n      node {\n        ... on Order {\n          tags\n        }\n      }\n    }\n  }\n{% endaction %}",
+  "subscriptions_template": "shopify/orders/paid",
+  "subscriptions": [
+    "shopify/orders/paid"
+  ],
+  "preview_event_definitions": [],
+  "options": {
+    "order_tag_to_apply__required": "paid"
+  },
+  "tags": [
+    "Auto-Tag",
+    "Orders"
+  ]
+}
