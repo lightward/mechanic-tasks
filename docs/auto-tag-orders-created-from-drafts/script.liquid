@@ -1,8 +1,58 @@
-{% if event.preview or order.source_name == "shopify_draft_order" %}
+{% assign order_qualifies = false %}
+
+{% if order.source_name == "shopify_draft_order" %}
+  {% assign order_qualifies = true %}
+{% elsif order.source_name == "1830279" %}
+  {% comment %}
+    1830279 is the ID of the "Shopify Web" app. If we're seeing it here, it means that
+    the order was created via the /admin area.
+  {% endcomment %}
+
+  {% capture query %}
+    query {
+      order(id: {{ order.admin_graphql_api_id | json }}) {
+        app {
+          name
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "order": {
+            "app": {
+              "name": "Draft Orders"
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% if result.data.order.app.name == "Draft Orders" %}
+    {% assign order_qualifies = true %}
+  {% else %}
+    {% log message: "Order does not qualify",
+        order_source_name: order.source_name,
+        order_app_name: result.data.order.app.name %}
+  {% endif %}
+{% else %}
+  {% log message: "Order does not qualify",
+      order_source_name: order.source_name %}
+{% endif %}
+
+{% if order_qualifies %}
   {% action "shopify" %}
     mutation {
       tagsAdd(
-        id: {{ order.admin_graphql_api_id | default: "gid://shopify/Order/1234567890" | json }}
+        id: {{ order.admin_graphql_api_id | json }}
         tags: {{ options.tag_to_add__required | json }}
       ) {
         userErrors {
