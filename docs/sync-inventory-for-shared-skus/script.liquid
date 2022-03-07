@@ -162,21 +162,25 @@ location_id:{{ shop.primary_location_id }} AND (sku:{{ skus_quoted  | join: " OR
     {% endfor %}
 
     {% if adjustments != empty %}
-      {% action "shopify" %}
-        mutation {
-          inventoryBulkAdjustQuantityAtLocation(
-            inventoryItemAdjustments: [
-              {{ adjustments | join: newline }}
-            ]
-            locationId: {{ primary_location.admin_graphql_api_id | json }}
-          ) {
-            userErrors {
-              field
-              message
+      {% assign groups_of_adjustments = adjustments | in_groups_of: 100, fill_with: false %}
+
+      {% for group_of_adjustments in groups_of_adjustments %}
+        {% action "shopify" %}
+          mutation {
+            inventoryBulkAdjustQuantityAtLocation(
+              inventoryItemAdjustments: [
+                {{ group_of_adjustments | join: newline }}
+              ]
+              locationId: {{ primary_location.admin_graphql_api_id | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
             }
           }
-        }
-      {% endaction %}
+        {% endaction %}
+      {% endfor %}
     {% endif %}
 
     {% if total_delta != 0 %}
