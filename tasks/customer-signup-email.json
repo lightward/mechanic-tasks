@@ -9,7 +9,7 @@
     "shopify/customers/create"
   ],
   "subscriptions_template": "shopify/customers/create",
-  "script": "{\n  \"action\": {\n    \"type\": \"email\",\n    \"options\": {\n      \"to\": {{ options.to__email_required | json }},\n      \"subject\": {{ options.subject__required | json }},\n      \"body\": {{ options.body__multiline_required | strip | newline_to_br | json }}\n    }\n  }\n}",
+  "script": "{% action \"email\" %}\n  {\n    \"to\": {{ options.to__email_required | json }},\n    \"subject\": {{ options.subject__required | json }},\n    \"body\": {{ options.body__multiline_required | strip | newline_to_br | json }},\n    \"reply_to\": {{ shop.customer_email | json }},\n    \"from_display_name\": {{ shop.name | json }}\n  }\n{% endaction %}",
   "docs": "Super basic, super useful. :) Get an email alert whenever a customer account is created.",
   "halt_action_run_sequence_on_error": false,
   "online_store_javascript": null,
