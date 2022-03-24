@@ -50,32 +50,32 @@
 {% endif %}
 
 {% assign order = result.data.order %}
-{% assign fuflillment_orders = order.fulfillmentOrders.edges | map: "node" %}
+{% assign fulfillment_orders = order.fulfillmentOrders.edges | map: "node" %}
 
-{% if fuflillment_orders != blank and order.tags contains options.order_tag_to_watch_for__required %}
+{% if fulfillment_orders != blank and order.tags contains options.order_tag_to_watch_for__required %}
   {% if options.ignore_if_this_order_tag_is_found != blank and order.tags contains options.ignore_if_this_order_tag_is_found %}
     {% log message: "Order had the tag to watch for, but it also had the ignore tag. Skipping.", order_tags: order.tags, task_options: options %}
     {% break %}
   {% endif %}
 
-  {% assign fuflillment_order_ids_by_location = hash %}
+  {% assign fulfillment_order_ids_by_location = hash %}
 
-  {% for fuflillment_order in fuflillment_orders %}
-    {% assign fuflillment_order_ids_by_location[fuflillment_order.assignedLocation.name]
-      = fuflillment_order_ids_by_location[fuflillment_order.assignedLocation.name]
+  {% for fulfillment_order in fulfillment_orders %}
+    {% assign fulfillment_order_ids_by_location[fulfillment_order.assignedLocation.name]
+      = fulfillment_order_ids_by_location[fulfillment_order.assignedLocation.name]
       | default: array
-      | push: fuflillment_order.id
+      | push: fulfillment_order.id
     %}
   {% endfor %}
 
-  {% for keyval in fuflillment_order_ids_by_location %}
+  {% for keyval in fulfillment_order_ids_by_location %}
     {% action "shopify" %}
       mutation {
         fulfillmentCreateV2(
           fulfillment: {
             lineItemsByFulfillmentOrder: [
-              {% for fuflillment_order_id in keyval[1] %}
-                { fulfillmentOrderId: {{ fuflillment_order_id | json }} }
+              {% for fulfillment_order_id in keyval[1] %}
+                { fulfillmentOrderId: {{ fulfillment_order_id | json }} }
               {% endfor %}
             ]
             notifyCustomer: {{ options.notify_customer_on_fulfillment__boolean | json }}
