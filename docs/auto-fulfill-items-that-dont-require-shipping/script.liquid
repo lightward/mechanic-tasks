@@ -183,8 +183,6 @@
 {% endif %}
 
 {% for keyval in fulfillment_orders_by_location %}
-  {% assign fulfillment_order_data = keyval.last %}
-
   {% action "shopify" %}
     mutation {
       fulfillmentCreateV2(
