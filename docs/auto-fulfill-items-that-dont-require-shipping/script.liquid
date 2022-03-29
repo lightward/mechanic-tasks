@@ -28,7 +28,6 @@
                   remainingQuantity
                   lineItem {
                     requiresShipping
-                    fulfillmentStatus
                     product {
                       tags
                     }
@@ -68,8 +67,7 @@
                           "id": "gid://shopify/FulfillmentOrderLineItem/1234567890",
                           "remainingQuantity": 1,
                           "lineItem": {
-                            "requiresShipping": false,
-                            "fulfillmentStatus": "unfulfilled"
+                            "requiresShipping": false
                           }
                         }
                       },
@@ -79,7 +77,6 @@
                           "remainingQuantity": 2,
                           "lineItem": {
                             "requiresShipping": false,
-                            "fulfillmentStatus": "unfulfilled",
                             "product": {
                               "tags": [
                                 {{ options.ignore_products_with_this_tag | json }}
@@ -105,10 +102,9 @@
                       {
                         "node": {
                           "id": "gid://shopify/FulfillmentOrderLineItem/3456789012",
-                          "remainingQuantity": 1,
+                          "remainingQuantity": 0,
                           "lineItem": {
-                            "requiresShipping": true,
-                            "fulfillmentStatus": "fulfilled"
+                            "requiresShipping": true
                           }
                         }
                       }
@@ -154,7 +150,7 @@
       {% endif %}
     {% endif %}
 
-    {% if fulfillment_order_line_item.lineItem.fulfillmentStatus != "fulfilled" %}
+    {% if fulfillment_order_line_item.remainingQuantity > 0 %}
       {% if fulfillment_order_line_item.lineItem.requiresShipping %}
         {% assign has_unfulfilled_shippable_items = true %}
 
