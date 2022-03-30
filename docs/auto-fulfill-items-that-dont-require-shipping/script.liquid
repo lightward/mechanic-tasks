@@ -5,98 +5,211 @@
   {{ options.ignore_products_with_this_tag }}
 {% endcomment %}
 
-{% assign line_items_to_fulfill = array %}
-
-{% if event.preview %}
-  {% capture order_json %}
-    {
-      "id": 1234567890,
-      "line_items": [
-        {
-          "id": 1234567890,
-          "requires_shipping": false,
-          "fulfillment_status": null
-        },
-        {
-          "id": 2345678901,
-          "requires_shipping": false,
-          "fulfillment_status": null,
-          "product": {
-            "tags": {{ options.ignore_products_with_this_tag | json }}
-          }
-        },
-        {
-          "id": 3456789012,
-          "requires_shipping": true,
-          "fulfillment_status": "fulfilled"
-        },
-        {
-          "id": 4567890123,
-          "requires_shipping": true,
-          "fulfillment_status": "fulfilled"
-        },
-        {
-          "id": 5678901234,
-          "requires_shipping": false,
-          "fulfillment_status": null,
-          "tip": {
-            "payment_method": "shopify_payments",
-            "payment_gateway": "shopify_payments"
+{% capture query %}
+  query {
+    order(id: {{ order.admin_graphql_api_id | json }}) {
+      id
+      fulfillmentOrders(
+        first: 10
+        query: "status:open OR status:in_progress"
+      ) {
+        edges {
+          node {
+            id
+            assignedLocation {
+              location {
+                id
+              }
+            }
+            lineItems(first: 30) {
+              edges {
+                node {
+                  id
+                  remainingQuantity
+                  lineItem {
+                    requiresShipping
+                    product {
+                      tags
+                    }
+                  }
+                }
+              }
+            }
           }
         }
-      ]
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "order": {
+          "id": "gid://shopify/Order/1234567890",
+          "fulfillmentOrders": {
+            "edges": [
+              {
+                "node": {
+                  "id": "gid://shopify/FulfillmentOrder/1234567890",
+                  "assignedLocation": {
+                    "location": {
+                      "id": "gid://shopify/Location/1234567890"
+                    }
+                  },
+                  "lineItems": {
+                    "edges": [
+                      {
+                        "node": {
+                          "id": "gid://shopify/FulfillmentOrderLineItem/1234567890",
+                          "remainingQuantity": 1,
+                          "lineItem": {
+                            "requiresShipping": false
+                          }
+                        }
+                      },
+                      {
+                        "node": {
+                          "id": "gid://shopify/FulfillmentOrderLineItem/2345678901",
+                          "remainingQuantity": 2,
+                          "lineItem": {
+                            "requiresShipping": false,
+                            "product": {
+                              "tags": [
+                                {{ options.ignore_products_with_this_tag | json }}
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "node": {
+                  "id": "gid://shopify/FulfillmentOrder/3456789012",
+                  "assignedLocation": {
+                    "location": {
+                      "id": "gid://shopify/Location/3456789012"
+                    }
+                  },
+                  "lineItems": {
+                    "edges": [
+                      {
+                        "node": {
+                          "id": "gid://shopify/FulfillmentOrderLineItem/3456789012",
+                          "remainingQuantity": 0,
+                          "lineItem": {
+                            "requiresShipping": true
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
     }
   {% endcapture %}
 
-  {% assign order = order_json | parse_json %}
+  {% assign result = result_json | parse_json %}
 {% endif %}
 
-{% assign unfulfilled_line_items = array %}
-{% for line_item in order.line_items %}
-  {% if line_item.tip %}
-    {% comment %}
-      Tips can't be fulfilled!
-    {% endcomment %}
+{% assign order = result.data.order %}
+{% assign fulfillment_orders = order.fulfillmentOrders.edges | map: "node" %}
 
-    {% continue %}
-  {% endif %}
+{% if fulfillment_orders == blank %}
+  {% log "There are no open fulfillment orders to fulfill on this order." %}
+  {% break %}
+{% endif %}
 
-  {% if options.ignore_products_with_this_tag != blank %}
-    {% assign line_item_product_tags = line_item.product.tags | split: ", " %}
-    {% if line_item_product_tags contains options.ignore_products_with_this_tag %}
-      {% continue %}
+{% comment %}
+  NOTE: fulfillments can only be created for one location at a time, so need to group fulfillment orders by location
+{% endcomment %}
+
+{% assign fulfillment_orders_by_location = hash %}
+{% assign has_unfulfilled_shippable_items = nil %}
+
+{% for fulfillment_order in fulfillment_orders %}
+  {% assign fulfillment_order_data = hash %}
+  {% assign fulfillment_order_data["fulfillment_order_id"] = fulfillment_order.id %}
+
+  {% assign fulfillment_order_line_items = fulfillment_order.lineItems.edges | map: "node" %}
+
+  {% for fulfillment_order_line_item in fulfillment_order_line_items %}
+    {% if options.ignore_products_with_this_tag != blank %}
+      {% if fulfillment_order_line_item.lineItem.product.tags contains options.ignore_products_with_this_tag %}
+        {% continue %}
+      {% endif %}
     {% endif %}
-  {% endif %}
 
-  {% if line_item.fulfillment_status != "fulfilled" %}
-    {% assign unfulfilled_line_items[unfulfilled_line_items.size] = line_item %}
+    {% if fulfillment_order_line_item.remainingQuantity > 0 %}
+      {% if fulfillment_order_line_item.lineItem.requiresShipping %}
+        {% assign has_unfulfilled_shippable_items = true %}
+
+      {% else %}
+        {% assign fulfillment_order_data["unfulfilled_line_items"]
+          = fulfillment_order_data["unfulfilled_line_items"]
+          | default: array
+          | push: fulfillment_order_line_item
+        %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+
+  {% if fulfillment_order_data.unfulfilled_line_items != blank %}
+    {% assign fulfillment_orders_by_location[fulfillment_order.assignedLocation.location.id]
+      = fulfillment_orders_by_location[fulfillment_order.assignedLocation.location.id]
+      | default: array
+      | push: fulfillment_order_data
+    %}
   {% endif %}
 {% endfor %}
 
-{% assign unfulfilled_line_items_that_require_shipping = unfulfilled_line_items | where: "requires_shipping", true %}
-{% assign unfulfilled_line_items_that_do_not_require_shipping = unfulfilled_line_items | where: "requires_shipping", false %}
-
-{% if options.wait_until_any_other_shippable_items_are_fulfilled__boolean == false or unfulfilled_line_items_that_require_shipping == empty %}
-  {% for line_item in unfulfilled_line_items_that_do_not_require_shipping %}
-    {% assign fulfillment_line_item = hash %}
-    {% assign fulfillment_line_item["id"] = line_item.id %}
-    {% assign line_items_to_fulfill[line_items_to_fulfill.size] = fulfillment_line_item %}
-  {% endfor %}
+{% if options.wait_until_any_other_shippable_items_are_fulfilled__boolean and has_unfulfilled_shippable_items %}
+  {% log "Unfulfilled shippable items exist on this order and the 'Wait until any other shippable items are fulfilled' option is checked; no auto fulfillments will be made in this task run." %}
+  {% break %}
 {% endif %}
 
-{% if line_items_to_fulfill != blank %}
+{% for keyval in fulfillment_orders_by_location %}
   {% action "shopify" %}
-    [
-      "post",
-      "/admin/orders/{{ order.id }}/fulfillments.json",
-      {
-        "fulfillment": {
-          "location_id": {{ shop.primary_location_id | json }},
-          "notify_customer": false,
-          "status": "success",
-          "line_items": {{ line_items_to_fulfill | json }}
+    mutation {
+      fulfillmentCreateV2(
+        fulfillment: {
+          lineItemsByFulfillmentOrder: [
+            {% for fulfillment_order_data in keyval[1] %}
+              {
+                fulfillmentOrderId: {{ fulfillment_order_data.fulfillment_order_id | json }}
+                fulfillmentOrderLineItems: [
+                  {% for unfulfilled_line_item in fulfillment_order_data.unfulfilled_line_items %}
+                    {
+                      id: {{ unfulfilled_line_item.id | json }}
+                      quantity: {{ unfulfilled_line_item.remainingQuantity }}
+                    }
+                  {% endfor %}
+                ]
+              }
+            {% endfor %}
+          ]
+          notifyCustomer: false
+        }
+      ) {
+        fulfillment {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
         }
       }
-    ]
+    }
   {% endaction %}
-{% endif %}
+{% endfor %}

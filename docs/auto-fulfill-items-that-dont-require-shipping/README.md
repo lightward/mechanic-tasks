@@ -2,7 +2,7 @@
 
 Tags: Fulfillment, Orders
 
-Useful for digital products, memberships, or anything else that needs to be fulfilled instantly. This task watches for paid orders, and auto-fulfills all line items that don't require shipping. Optionally, choose to wait until other shippable items are fulfilled, if any.
+Useful for digital products, memberships, or anything else that needs to be fulfilled instantly. This task watches for paid orders, and auto-fulfills all line items that don't require shipping.
 
 * View in the task library: [usemechanic.com/task/auto-fulfill-items-that-dont-require-shipping](https://usemechanic.com/task/auto-fulfill-items-that-dont-require-shipping)
 * Task JSON, for direct import: [task.json](../../tasks/auto-fulfill-items-that-dont-require-shipping.json)
@@ -33,9 +33,9 @@ shopify/orders/paid
 
 ## Documentation
 
-Useful for digital products, memberships, or anything else that needs to be fulfilled instantly. This task watches for paid orders, and auto-fulfills all line items that don't require shipping. Optionally, choose to wait until other shippable items are fulfilled, if any.
+Useful for digital products, memberships, or anything else that needs to be fulfilled instantly. This task watches for paid orders, and auto-fulfills all line items that don't require shipping.
 
-This task watches for paid orders, and auto-fulfills all line items that don't require shipping. Optionally, choose to wait until other shippable items are fulfilled, if any.
+Optionally, choose to ignore products with a specific tag, and wait until other shippable items are fulfilled, if any.
 
 ## Installing this task
 
