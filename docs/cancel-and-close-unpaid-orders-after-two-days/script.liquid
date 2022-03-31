@@ -81,7 +81,7 @@
               refundLineItems {
                 lineItem {
                   id
-                  fulfillableQuantity
+                  refundableQuantity
                   quantity
                   restockable
                 }
@@ -124,7 +124,7 @@
                       {
                         "lineItem": {
                           "id": "gid://shopify/LineItem/1234567890",
-                          "fulfillableQuantity": 5,
+                          "refundableQuantity": 5,
                           "restockable": true
                         },
                         "location": {
@@ -221,7 +221,7 @@
                   lineItemId: {{ line_item.id | json }}
                   {% if options.restock_line_items__boolean and line_item.restockable %}
                     locationId: {{ refund_line_item.location.id | json }}
-                    quantity: {{ line_item.fulfillableQuantity | default: line_item.quantity | json }}
+                    quantity: {{ line_item.refundableQuantity | default: line_item.quantity | json }}
                     restockType: CANCEL
                   {% else %}
                     quantity: 0
