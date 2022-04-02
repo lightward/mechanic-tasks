@@ -113,8 +113,8 @@
               ... on DiscountCustomerAll {
                 allCustomers
               }
-              ... on DiscountCustomerSavedSearches {
-                savedSearches {
+              ... on DiscountCustomerSegments {
+                segments {
                   id
                 }
               }
@@ -263,9 +263,9 @@
                 }
               {% elsif discountNode.customerSelection.__typename == "DiscountCustomerAll" %}
                 all: {{ discountNode.customerSelection.allCustomers | json }}
-              {% elsif discountNode.customerSelection.__typename == "DiscountCustomerSavedSearches" %}
-                customerSavedSearches: {
-                  add: {{ discountNode.customerSelection.savedSearches | map: "id" | json }}
+              {% elsif discountNode.customerSelection.__typename == "DiscountCustomerSegments" %}
+                customerSegments: {
+                  add: {{ discountNode.customerSelection.segments | map: "id" | json }}
                 }
               {% endif %}
             }
