@@ -52,6 +52,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-recurring draft orders](./auto-recurring-draft-orders)
 * [Auto-remove a customer tag x days after it's added](./auto-remove-a-customer-tag-x-days-after-its-added)
 * [Auto-remove a product tag x days after it's added](./auto-remove-a-product-tag-x-days-after-its-added)
+* [Auto-sort collections by inventory levels](./auto-sort-collections-by-inventory-levels)
 * [Auto-sort collections by product properties](./auto-sort-collections-by-product-properties)
 * [Auto-tag a customer's first order](./auto-tag-a-customers-first-order)
 * [Auto-tag cancelled orders](./auto-tag-cancelled-orders)
