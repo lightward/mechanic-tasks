@@ -1,0 +1,331 @@
+{% assign allowed_base_sort_orders = "MANUAL,BEST_SELLING,ALPHA_ASC,ALPHA_DESC,PRICE_DESC,PRICE_ASC,CREATED_DESC,CREATED" | split: "," %}
+
+{% unless allowed_base_sort_orders contains options.base_sort_order__required %}
+  {% error %}
+    {{ allowed_base_sort_orders | join: ", " | prepend: "Base sort order must be one of: " | json }}
+  {% enderror %}
+{% endunless %}
+
+{% log %}
+  {{ options.base_sort_order__required | prepend: "Base sort order for this task run: " | json }}
+{% endlog %}
+
+{% assign product_sort_order = options.base_sort_order__required %}
+{% assign reverse_sort = nil %}
+
+{% case product_sort_order %}
+  {% when "ALPHA_ASC" %}
+    {% assign product_sort_order = "TITLE" %}
+
+  {% when "ALPHA_DESC" %}
+    {% assign product_sort_order = "TITLE" %}
+    {% assign reverse_sort = true %}
+
+  {% when "CREATED_DESC" %}
+    {% assign product_sort_order = "CREATED" %}
+    {% assign reverse_sort = true %}
+
+  {% when "PRICE_ASC" %}
+    {% assign product_sort_order = "PRICE" %}
+
+  {% when "PRICE_DESC" %}
+    {% assign product_sort_order = "PRICE" %}
+    {% assign reverse_sort = true %}
+{% endcase %}
+
+{% assign collection_handles_or_ids_to_include = options.collection_handles_or_ids_to_include__array %}
+{% assign collection_handles_or_ids_to_exclude = options.collection_handles_or_ids_to_exclude__array %}
+{% assign force_manual_sorting_on_collections = options.force_manual_sorting_on_collections__boolean %}
+{% assign use_sellable_online_quantity = options.use_sellable_online_quantity_instead_of_total_inventory__boolean %}
+
+{% assign collections = shop.collections %}
+
+{% if event.preview %}
+  {% capture collections_json %}
+    [
+      {
+        "id": {{ collection_handles_or_ids_to_include.first | default: "1234567890" | json }},
+        "admin_graphql_api_id": "gid://shopify/Collection/1234567890"
+      }
+    ]
+  {% endcapture %}
+
+  {% assign collections = collections_json | parse_json %}
+{% endif %}
+
+{% for collection in collections %}
+  {% assign collection_id_string = "" | append: collection.id %}
+
+  {% if collection_handles_or_ids_to_include != blank  %}
+    {% unless collection_handles_or_ids_to_include contains collection_id_string
+      or collection_handles_or_ids_to_include contains collection.handle%}
+      {% continue %}
+    {% endunless %}
+
+  {% elsif collection_handles_or_ids_to_exclude != blank  %}
+    {% if collection_handles_or_ids_to_exclude contains collection_id_string
+      or collection_handles_or_ids_to_exclude contains collection.handle %}
+      {% continue %}
+    {% endif %}
+  {% endif %}
+
+  {% if collection.sort_order != "manual" %}
+    {% if force_manual_sorting_on_collections or event.preview %}
+      {% action "shopify" %}
+        mutation {
+          collectionUpdate(
+            input: {
+              id: {{ collection.admin_graphql_api_id | json }}
+              sortOrder: MANUAL
+            }
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+
+    {% else %}
+      {% log
+        message: "Collection is not configured for manual sorting; skipping.",
+        collection_title: collection.title,
+        collection_handle: collection.handle,
+        collection_id: collection.id
+      %}
+
+      {% continue %}
+    {% endif %}
+  {% endif %}
+
+  {% assign all_product_ids_current_sort = array %}
+  {% assign cursor = nil %}
+
+  {% for n in (0..100) %}
+    {% capture query %}
+      query {
+        collection(id: {{ collection.admin_graphql_api_id | json }}) {
+          products(
+            sortKey: COLLECTION_DEFAULT
+            first: 250
+            after: {{ cursor | json }}
+          ) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              id
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% assign product_ids_batch = result.data.collection.products.nodes | map: "id" %}
+    {% assign all_product_ids_current_sort = all_product_ids_current_sort | concat: product_ids_batch %}
+
+    {% if result.data.collection.products.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.collection.products.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% assign in_stock_products_and_quantities = array %}
+  {% assign out_of_stock_products = array %}
+  {% assign untracked_products = array %}
+
+  {% assign cursor = nil %}
+
+  {% for n in (0..100) %}
+    {% capture query %}
+      query {
+        collection(id: {{ collection.admin_graphql_api_id | json }}) {
+          products(
+            sortKey: {{ product_sort_order }}
+            reverse: {{ reverse_sort | json }}
+            first: 250
+            after: {{ cursor | json }}
+          ) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              id
+              tracksInventory
+              totalInventory
+              {% if use_sellable_online_quantity %}
+                variants(first: 100) {
+                  nodes {
+                    sellableOnlineQuantity
+                  }
+                }
+              {% endif %}
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "collection": {
+              "products": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/Product/1234567890",
+                    "tracksInventory": true,
+                    "totalInventory": 1
+                  },
+                  {
+                    "id": "gid://shopify/Product/2345678901",
+                    "tracksInventory": true,
+                    "totalInventory": 0
+                  },
+                  {
+                    "id": "gid://shopify/Product/3456789012",
+                    "tracksInventory": false,
+                    "totalInventory": null
+                  },
+                  {
+                    "id": "gid://shopify/Product/4567890123",
+                    "tracksInventory": true,
+                    "totalInventory": 2,
+                    "variants": {
+                      "nodes": [
+                        {
+                          "sellableOnlineQuantity": 1
+                        },
+                        {
+                          "sellableOnlineQuantity": 0
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% comment %}
+      NOTE: first sort products into 3 groups
+      - untracked (to preserve base collection sort, and push to top, i.e. unlimited stock)
+      - in stock (to be sorted by quantity descending)
+      - out of stock (to preserve base collection sort, and append to bottom)
+    {% endcomment %}
+
+    {% for product in result.data.collection.products.nodes %}
+      {% unless product.tracksInventory %}
+        {% assign untracked_products = untracked_products | push: product.id %}
+        {% continue %}
+      {% endunless %}
+
+      {% assign product_and_quantity = hash %}
+      {% assign product_and_quantity["id"] = product.id %}
+
+      {% if use_sellable_online_quantity %}
+        {% assign sellable_online_quantity
+          = product.variants.nodes
+          | map: "sellableOnlineQuantity"
+          | sum
+        %}
+
+        {% if sellable_online_quantity > 0 %}
+          {% assign product_and_quantity["quantity"] = sellable_online_quantity %}
+          {% assign in_stock_products_and_quantities = in_stock_products_and_quantities | push: product_and_quantity %}
+
+        {% else %}
+          {% assign out_of_stock_products = out_of_stock_products | push: product.id %}
+        {% endif %}
+
+      {% elsif product.totalInventory > 0 %}
+        {% assign product_and_quantity["quantity"] = product.totalInventory %}
+        {% assign in_stock_products_and_quantities = in_stock_products_and_quantities | push: product_and_quantity %}
+
+      {% else %}
+        {% assign out_of_stock_products = out_of_stock_products | push: product.id %}
+      {% endif %}
+    {% endfor %}
+
+    {% if result.data.collection.products.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.collection.products.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% comment %}
+    NOTE: reverse before and after sort by quantity to preserve base collection sort since Liquid sorts numbers ascending
+  {% endcomment %}
+
+  {% assign sorted_in_stock_products
+    = in_stock_products_and_quantities
+    | reverse
+    | sort: "quantity"
+    | reverse
+    | map: "id"
+  %}
+
+  {% log
+    collection_title: collection.title,
+    all_product_ids_current_sort: all_product_ids_current_sort,
+    untracked_products: untracked_products,
+    sorted_in_stock_products: sorted_in_stock_products,
+    out_of_stock_products: out_of_stock_products
+  %}
+
+  {% assign all_product_ids_new_sort
+    = untracked_products
+    | concat: sorted_in_stock_products
+    | concat: out_of_stock_products
+  %}
+
+  {% assign moves = array %}
+
+  {% for product_id in all_product_ids_new_sort %}
+    {% if all_product_ids_current_sort[forloop.index0] != product_id %}
+      {% assign move = hash %}
+      {% assign move["id"] = product_id %}
+      {% assign move["newPosition"] = "" | append: forloop.index0 %}
+      {% assign moves = moves | push: move %}
+    {% endif %}
+  {% endfor %}
+
+  {% assign move_groups = moves | in_groups_of: 250, fill_with: false %}
+
+  {% for move_group in move_groups %}
+    {% action "shopify" %}
+      mutation {
+        collectionReorderProducts(
+          id: {{ collection.admin_graphql_api_id | json }}
+          moves: {{ move_group | graphql_arguments }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+
+  {% else %}
+    {% log
+      message: "No position moves necessary for this collection, everything is already in its appropriate sort order.",
+      collection: collection.title
+    %}
+  {% endfor %}
+{% endfor %}
