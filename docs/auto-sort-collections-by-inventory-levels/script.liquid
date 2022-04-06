@@ -141,14 +141,14 @@
 
   {% assign cursor = nil %}
 
-  {% for n in (0..100) %}
+  {% for n in (0..3000) %}
     {% capture query %}
       query {
         collection(id: {{ collection.admin_graphql_api_id | json }}) {
           products(
             sortKey: {{ product_sort_order }}
             reverse: {{ reverse_sort | json }}
-            first: 250
+            first: 9
             after: {{ cursor | json }}
           ) {
             pageInfo {
