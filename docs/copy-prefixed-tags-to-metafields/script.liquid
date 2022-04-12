@@ -1,0 +1,279 @@
+{% assign object_type = options.shopify_object_type__required | strip %}
+{% assign metafield_namespace = options.metafield_namespace__required | strip %}
+{% assign metafield_key = options.metafield_key__required | strip %}
+{% assign metafield_type = options.metafield_type__required | strip %}
+{% assign tag_prefix = options.tag_prefix__required %}
+
+{% assign allowed_object_types = "customer,order,product" | split: "," %}
+{% assign allowed_metafield_types = 'boolean,date,date_time,number_decimal,number_integer,single_line_text_field' | split: "," %}
+
+{% unless allowed_object_types contains object_type %}
+  {% error %}
+    {{ allowed_object_types | join: ", " | prepend: "Object type must be one of: " | json }}
+  {% enderror %}
+{% endunless %}
+
+{% assign object_type_plural = object_type | append: "s" %}
+
+{% unless allowed_metafield_types contains metafield_type %}
+  {% error %}
+    {{ allowed_metafield_types | join: ", " | prepend: "Metafield type must be one of: " | json }}
+  {% enderror %}
+{% endunless %}
+
+{% assign objects = array %}
+
+{% if event.topic == "mechanic/user/trigger" %}
+  {% assign cursor = nil %}
+
+  {% for n in (0..1000) %}
+    {% capture query %}
+      query {
+        {{ object_type_plural }}(
+          first: 250
+          after: {{ cursor | json }}
+          reverse: true
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            tags
+            metafield(
+              namespace: {{ metafield_namespace | json }}
+              key: {{ metafield_key | json }}
+            ) {
+              type
+              value
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            {{ object_type_plural | json }}: {
+              "nodes": [
+                {
+                  "id": "gid://shopify/{{ object_type | capitalize }}/1234567890",
+                  "tags": {{ tag_prefix | append: "1" | json }}
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign objects = objects | concat: result.data[object_type_plural].nodes %}
+
+    {% if result.data[object_type_plural].pageInfo.hasNextPage %}
+      {% assign cursor = result.data[object_type_plural].pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% assign metafields = array %}
+
+  {% for object in objects %}
+    {% for object_tag in object.tags %}
+      {% if object_tag contains tag_prefix %}
+        {% assign object_tag_value = object_tag | remove: tag_prefix %}
+        {% assign object_tag_verify = object_tag_value | prepend: tag_prefix %}
+
+        {% if object_tag_value == blank or object_tag_verify != object_tag %}
+          {% log
+            message: "Tag prefix found without a value or not located at the front of the tag; skipping.",
+            object: object,
+            tag: object_tag,
+            tag_prefix: tag_prefix
+          %}
+          {% continue %}
+        {% endif %}
+
+        {% comment %}
+          -- validation for various metafield types
+        {% endcomment %}
+
+        {% case metafield_type %}
+          {% when "boolean" %}
+            {% assign lowercased_object_tag_value = object_tag_value | downcase %}
+
+            {% if lowercased_object_tag_value == "true"
+              or lowercased_object_tag_value == "yes"
+              or lowercased_object_tag_value == "1"
+            %}
+              {% assign object_tag_value = "true" %}
+
+            {% elsif lowercased_object_tag_value == "false"
+              or lowercased_object_tag_value == "no"
+              or lowercased_object_tag_value == "0"
+            %}
+              {% assign object_tag_value = "false" %}
+
+            {% else %}
+              {% log
+                message: "Non-boolean tag value found; it must be one of: 'true', 'false', 'yes', 'no', '1', or '0'; skipping.",
+                tag: object_tag,
+                tag_prefix: tag_prefix,
+                tag_value: object_tag_value,
+                object: object
+              %}
+              {% continue %}
+            {% endif %}
+
+          {% when "date" %}
+            {% if event.preview %}
+              {% assign object_tag_value = "2020-01-01" %}
+            {% endif %}
+
+            {% assign object_tag_value_check
+              = object_tag_value
+              | parse_date: "%Y-%m-%d"
+              | date: "%Y-%m-%d"
+            %}
+
+            {% if object_tag_value_check != object_tag_value %}
+              {% log
+                message: "Tag value must be a valid date in ISO-8601 format with delimiters: 'YYYY-MM-DD'; skipping.",
+                tag: object_tag,
+                tag_prefix: tag_prefix,
+                tag_value: object_tag_value,
+                object: object
+              %}
+              {% continue %}
+            {% endif %}
+
+          {% when "date_time" %}
+            {% if event.preview %}
+              {% assign object_tag_value = "2020-01-01T12:00:00" %}
+            {% endif %}
+
+            {% assign object_tag_value_check
+              = object_tag_value
+              | parse_date: "%Y-%m-%dT%H:%M:%S"
+              | date: "%Y-%m-%dT%H:%M:%S"
+            %}
+
+            {% if object_tag_value_check != object_tag_value %}
+              {% log
+                message: "Tag value must be a valid datetime in ISO-8601 format with delimiters: 'YYYY-MM-DDTHH:MM::SS'; skipping.",
+                tag: object_tag,
+                tag_prefix: tag_prefix,
+                tag_value: object_tag_value,
+                object: object
+              %}
+              {% continue %}
+            {% endif %}
+
+          {% when "number_decimal" %}
+            {% comment %}
+              -- use regex to make sure value is an integer or decimal, then convert to float for saving in metafield
+            {% endcomment %}
+
+            {% assign object_tag_value_check
+              = object_tag_value
+              | match: "^(\d+\.?\d*|\.\d+)$"
+              | append: ""
+            %}
+
+            {% if object_tag_value_check != object_tag_value %}
+              {% log
+                message: "Tag value must be a decimal; skipping.",
+                tag: object_tag,
+                tag_prefix: tag_prefix,
+                tag_value: object_tag_value,
+                object: object
+              %}
+              {% continue %}
+            {% endif %}
+
+            {% assign object_tag_value
+              = object_tag_value
+              | times: 1.0
+              | append: ""
+            %}
+
+          {% when "number_integer" %}
+            {% assign object_tag_value_check
+              = object_tag_value
+              | times: 1
+              | round: 0
+              | append: ""
+            %}
+
+            {% if object_tag_value_check != object_tag_value %}
+              {% log
+                message: "Tag value must be an integer; skipping.",
+                tag: object_tag,
+                tag_prefix: tag_prefix,
+                tag_value: object_tag_value,
+                object: object
+              %}
+              {% continue %}
+            {% endif %}
+        {% endcase %}
+
+        {% if object.metafield.value != object_tag_value %}
+          {% capture metafield %}
+            {
+              ownerId: {{ object.id | json }}
+              namespace: {{ metafield_namespace | json }}
+              key: {{ metafield_key | json }}
+              type: {{ metafield_type | json }}
+              value: {{ object_tag_value | json }}
+            }
+
+          {% endcapture %}
+
+          {% assign metafields = metafields | push: metafield %}
+        {% endif %}
+
+        {% break %}
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+
+  {% assign groups_of_metafields = metafields | in_groups_of: 25, fill_with: false %}
+
+  {% for group_of_metafields in groups_of_metafields %}
+    {% action "shopify" %}
+      mutation {
+        metafieldsSet(
+          metafields: [
+            {{ group_of_metafields | join: newline }}
+          ]
+        ) {
+          metafields {
+            id
+            namespace
+            key
+            type
+            value
+            owner {
+              ... on {{ object_type | capitalize }} {
+                id
+                tags
+              }
+            }
+          }
+          userErrors {
+            code
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endfor %}
+{% endif %}
