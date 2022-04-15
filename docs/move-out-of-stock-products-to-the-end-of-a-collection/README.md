@@ -1,6 +1,6 @@
 # Move out-of-stock products to the end of a collection
 
-Tags: Collections, Sort
+Tags: Collections, Out of Stock, Sort
 
 This task re-sorts your collections, beginning with the sort order of your choice (alphabetically, best selling first, etc), and then moving all out-of-stock products to the very end of the collection.
 
@@ -12,7 +12,7 @@ This task re-sorts your collections, beginning with the sort order of your choic
 
 ```json
 {
-  "base_sort_order__required": "ALPHA_DESC",
+  "base_sort_order__required": "ALPHA_ASC",
   "collection_titles_or_ids_to_include__array": null,
   "collection_titles_or_ids_to_exclude__array": null,
   "force_manual_sorting_on_collections__boolean": false,
@@ -27,8 +27,11 @@ This task re-sorts your collections, beginning with the sort order of your choic
 
 ```liquid
 mechanic/user/trigger
-{% if options.run_hourly__boolean %}mechanic/scheduler/hourly{% endif %}
-{% if options.run_daily__boolean %}mechanic/scheduler/daily{% endif %}
+{% if options.run_hourly__boolean %}
+  mechanic/scheduler/hourly
+{% elsif options.run_daily__boolean %}
+  mechanic/scheduler/daily
+{% endif %}
 ```
 
 [Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
@@ -39,9 +42,9 @@ This task re-sorts your collections, beginning with the sort order of your choic
 
 Run this task manually to re-sort your collections on demand. Optionally, configure this task to run hourly or nightly as well.
 
-By default, this task will run against **ALL** of your collections. Alternatively, you may configure this task to only _include_ certain collections using each collection's title, or its ID. [Learn how to find the collection IDs.](https://learn.mechanic.dev/techniques/finding-a-resource-id)
+By default, this task will run against **ALL** of your collections. Alternatively, you may configure this task to only _include_ certain collections using each collection's handle, or its ID. [Learn how to find the collection IDs.](https://learn.mechanic.dev/techniques/finding-a-resource-id)
 
-Conversely, you may configure this task to _exclude_ certain collections using each collection's title, or its ID, in which case it will run against all collections except the ones in this list. [Note: if there are any collections entered into the inclusion list, then the exclusion list will be ignored.]
+Conversely, you may configure this task to _exclude_ certain collections using each collection's handle, or its ID, in which case it will run against all collections except the ones in this list. [Note: if there are any collections entered into the inclusion list, then the exclusion list will be ignored.]
 
 The combination of inclusion and exclusion options _can_ allow multiple copies of this task to run (to use different base sorting for instance), provided they are configured properly.
 
