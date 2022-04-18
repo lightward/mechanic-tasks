@@ -33,37 +33,37 @@
     {% assign reverse_sort = true %}
 {% endcase %}
 
-{% assign collection_titles_or_ids_to_include = options.collection_titles_or_ids_to_include__array %}
-{% assign collection_titles_or_ids_to_exclude = options.collection_titles_or_ids_to_exclude__array %}
+{% assign collection_handles_or_ids_to_include = options.collection_handles_or_ids_to_include__array %}
+{% assign collection_handles_or_ids_to_exclude = options.collection_handles_or_ids_to_exclude__array %}
 {% assign force_manual_sorting_on_collections = options.force_manual_sorting_on_collections__boolean %}
 
+{% assign collections = shop.collections %}
+
 {% if event.preview %}
-  {% capture shop_json %}
-    {
-      "collections": [
-        {
-          "id": {{ collection_titles_or_ids_to_include.first | default: "1234567890" | json }},
-          "admin_graphql_api_id": "gid://shopify/Collection/1234567890"
-        }
-      ]
-    }
+  {% capture collections_json %}
+    [
+      {
+        "id": {{ collection_handles_or_ids_to_include.first | default: "1234567890" | json }},
+        "admin_graphql_api_id": "gid://shopify/Collection/1234567890"
+      }
+    ]
   {% endcapture %}
 
-  {% assign shop = shop_json | parse_json %}
+  {% assign collections = collections_json | parse_json %}
 {% endif %}
 
-{% for collection in shop.collections %}
+{% for collection in collections %}
   {% assign collection_id_string = "" | append: collection.id %}
 
-  {% if collection_titles_or_ids_to_include != blank  %}
-    {% unless collection_titles_or_ids_to_include contains collection_id_string
-      or collection_titles_or_ids_to_include contains collection.title %}
+  {% if collection_handles_or_ids_to_include != blank  %}
+    {% unless collection_handles_or_ids_to_include contains collection_id_string
+      or collection_handles_or_ids_to_include contains collection.handle %}
       {% continue %}
     {% endunless %}
 
-  {% elsif collection_titles_or_ids_to_exclude != blank  %}
-    {% if collection_titles_or_ids_to_exclude contains collection_id_string
-      or collection_titles_or_ids_to_exclude contains collection.title %}
+  {% elsif collection_handles_or_ids_to_exclude != blank  %}
+    {% if collection_handles_or_ids_to_exclude contains collection_id_string
+      or collection_handles_or_ids_to_exclude contains collection.handle %}
       {% continue %}
     {% endif %}
   {% endif %}
@@ -109,12 +109,10 @@
           ) {
             pageInfo {
               hasNextPage
+              endCursor
             }
-            edges {
-              cursor
-              node {
-                id
-              }
+            nodes {
+              id
             }
           }
         }
@@ -123,12 +121,11 @@
 
     {% assign result = query | shopify %}
 
-    {% for product_edge in result.data.collection.products.edges %}
-      {% assign all_product_ids_current_sort[all_product_ids_current_sort.size] = product_edge.node.id %}
-    {% endfor %}
+    {% assign product_ids_batch = result.data.collection.products.nodes | map: "id" %}
+    {% assign all_product_ids_current_sort = all_product_ids_current_sort | concat: product_ids_batch %}
 
     {% if result.data.collection.products.pageInfo.hasNextPage %}
-      {% assign cursor = result.data.collection.products.edges.last.cursor %}
+      {% assign cursor = result.data.collection.products.pageInfo.endCursor %}
     {% else %}
       {% break %}
     {% endif %}
@@ -138,25 +135,28 @@
   {% assign out_of_stock_product_ids = array %}
   {% assign cursor = nil %}
 
-  {% for n in (0..100) %}
+  {% for n in (0..3000) %}
     {% capture query %}
       query {
         collection(id: {{ collection.admin_graphql_api_id | json }}) {
           products(
             sortKey: {{ product_sort_order }}
             reverse: {{ reverse_sort | json }}
-            first: 250
+            first: 9
             after: {{ cursor | json }}
           ) {
             pageInfo {
               hasNextPage
+              endCursor
             }
-            edges {
-              cursor
-              node {
-                id
-                tracksInventory
-                totalInventory
+            nodes {
+              id
+              tracksInventory
+              variants(first: 100) {
+                nodes {
+                  inventoryPolicy
+                  inventoryQuantity
+                }
               }
             }
           }
@@ -172,33 +172,49 @@
           "data": {
             "collection": {
               "products": {
-                "edges": [
+                "nodes": [
                   {
-                    "node": {
-                      "id": "gid://shopify/Product/1234567890",
-                      "tracksInventory": true,
-                      "totalInventory": 1
+                    "id": "gid://shopify/Product/1234567890",
+                    "tracksInventory": true,
+                    "variants": {
+                      "nodes": [
+                        {
+                          "inventoryPolicy": "DENY",
+                          "inventoryQuantity": 0
+                        }
+                      ]
                     }
                   },
                   {
-                    "node": {
-                      "id": "gid://shopify/Product/2345678901",
-                      "tracksInventory": true,
-                      "totalInventory": 0
+                    "id": "gid://shopify/Product/2345678901",
+                    "tracksInventory": true,
+                    "variants": {
+                      "nodes": [
+                        {
+                          "inventoryPolicy": "CONTINUE",
+                          "inventoryQuantity": 0
+                        }
+                      ]
                     }
                   },
                   {
-                    "node": {
-                      "id": "gid://shopify/Product/3456789012",
-                      "tracksInventory": false,
-                      "totalInventory": null
-                    }
+                    "id": "gid://shopify/Product/3456789012",
+                    "tracksInventory": false
                   },
                   {
-                    "node": {
-                      "id": "gid://shopify/Product/4567890123",
-                      "tracksInventory": true,
-                      "totalInventory": 2
+                    "id": "gid://shopify/Product/4567890123",
+                    "tracksInventory": true,
+                    "variants": {
+                      "nodes": [
+                        {
+                          "inventoryPolicy": "DENY",
+                          "inventoryQuantity": 0
+                        },
+                        {
+                          "inventoryPolicy": "CONTINUE",
+                          "inventoryQuantity": 0
+                        }
+                      ]
                     }
                   }
                 ]
@@ -211,16 +227,30 @@
       {% assign result = result_json | parse_json %}
     {% endif %}
 
-    {% for product_edge in result.data.collection.products.edges %}
-      {% if product_edge.node.tracksInventory and product_edge.node.totalInventory <= 0 %}
-        {% assign out_of_stock_product_ids[out_of_stock_product_ids.size] = product_edge.node.id %}
+    {% for product in result.data.collection.products.nodes %}
+      {% assign has_in_stock_variant = nil %}
+
+      {% unless product.tracksInventory %}
+        {% assign has_in_stock_variant = true %}
+
       {% else %}
-        {% assign in_stock_product_ids[in_stock_product_ids.size] = product_edge.node.id %}
+        {% for variant in product.variants.nodes %}
+          {% if variant.inventoryPolicy == "CONTINUE" or variant.inventoryQuantity > 0 %}
+            {% assign has_in_stock_variant = true %}
+            {% break %}
+          {% endif %}
+        {% endfor %}
+      {% endunless %}
+
+      {% if has_in_stock_variant %}
+        {% assign in_stock_product_ids[in_stock_product_ids.size] = product.id %}
+      {% else %}
+        {% assign out_of_stock_product_ids[out_of_stock_product_ids.size] = product.id %}
       {% endif %}
     {% endfor %}
 
     {% if result.data.collection.products.pageInfo.hasNextPage %}
-      {% assign cursor = result.data.collection.products.edges.last.cursor %}
+      {% assign cursor = result.data.collection.products.pageInfo.endCursor %}
     {% else %}
       {% break %}
     {% endif %}
