@@ -25,7 +25,9 @@
       "customer": {
         "admin_graphql_api_id": "gid://shopify/Customer/1234567890",
         "tags": "",
-        "accepts_marketing": true
+        "email_marketing_consent": {
+          "state": "subscribed"
+        }
       }
     }
   {% endcapture %}
@@ -70,7 +72,7 @@
 {% endif %}
 
 {% if options.only_send_to_customers_who_have_accepted_marketing__boolean %}
-  {% if order.customer.accepts_marketing != true %}
+  {% if order.customer.email_marketing_consent.state != "subscribed" %}
     {% log "This customer does not accept marketing." %}
     {% assign send_email = false %}
   {% endif %}
