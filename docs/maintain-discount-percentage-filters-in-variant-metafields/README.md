@@ -2,7 +2,7 @@
 
 Tags: Discounts, Metafields, Online Store 2.0, Price, Variants
 
-This task checks to see if a product's variants have been discounted (by having a price set below the compare at price), and for each variant that meets one ore more configured discount percentage thresholds, it will save the matched filters in a variant metafield for use with Online Store 2.0.
+This task checks to see if a product's variants have been discounted (by having a price set below the compare at price), and for each variant that meets one ore more configured discount percentage thresholds, it will save the matched filters in a variant metafield for use with Online Store 2.0 filtering.
 
 * View in the task library: [usemechanic.com/task/maintain-discount-percentage-filters-in-variant-metafields](https://usemechanic.com/task/maintain-discount-percentage-filters-in-variant-metafields)
 * Task JSON, for direct import: [task.json](../../tasks/maintain-discount-percentage-filters-in-variant-metafields.json)
@@ -12,8 +12,7 @@ This task checks to see if a product's variants have been discounted (by having 
 
 ```json
 {
-  "metafield_namespace__required": null,
-  "metafield_key__required": null,
+  "metafield_namespace_and_key__required": "my_fields.aa",
   "discount_filters_and_percentage_thresholds__keyval_number_required": null
 }
 ```
@@ -31,7 +30,7 @@ mechanic/user/trigger
 
 ## Documentation
 
-This task checks to see if a product's variants have been discounted (by having a price set below the compare at price), and for each variant that meets one ore more configured discount percentage thresholds, it will save the matched filters in a variant metafield for use with Online Store 2.0.
+This task checks to see if a product's variants have been discounted (by having a price set below the compare at price), and for each variant that meets one ore more configured discount percentage thresholds, it will save the matched filters in a variant metafield for use with Online Store 2.0 filtering.
 
 Variants that are not discounted or do not meet any of the configured thresholds will have their metafield deleted if it exists.
 

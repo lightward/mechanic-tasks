@@ -1,6 +1,15 @@
-{% assign metafield_namespace = options.metafield_namespace__required %}
-{% assign metafield_key = options.metafield_key__required %}
+{% assign metafield_namespace_and_key = options.metafield_namespace_and_key__required | match: "(?<namespace>[\w-]{3,})\.(?<key>[\w-]{3,})" %}
 {% assign discount_filters_and_percentage_thresholds = options.discount_filters_and_percentage_thresholds__keyval_number_required %}
+
+{% assign metafield_namespace = metafield_namespace_and_key.named_captures.namespace %}
+{% assign metafield_key = metafield_namespace_and_key.named_captures.key %}
+
+{% if metafield_namespace == blank or metafield_key == blank %}
+  {% error %}
+    "The metafield key and namespace must each be at least 3 characters long and separated only by a '.'.\n\nValid characters are a-z, A-Z, 0-9, underscores, and dashes."
+  {% enderror %}
+  {% break %}
+{% endif %}
 
 {% assign variants = array %}
 
