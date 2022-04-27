@@ -12,7 +12,7 @@ This task checks to see if a product's variants have been discounted (by having 
 
 ```json
 {
-  "metafield_namespace_and_key__required": "my_fields.aa",
+  "metafield_namespace_and_key__required": null,
   "discount_filters_and_percentage_thresholds__keyval_number_required": null
 }
 ```

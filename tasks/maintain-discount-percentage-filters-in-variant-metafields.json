@@ -1,7 +1,7 @@
 {
   "name": "Maintain discount percentage filters in variant metafields",
   "options": {
-    "metafield_namespace_and_key__required": "my_fields.aa",
+    "metafield_namespace_and_key__required": null,
     "discount_filters_and_percentage_thresholds__keyval_number_required": null
   },
   "subscriptions": [
