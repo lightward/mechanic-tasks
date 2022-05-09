@@ -3,10 +3,14 @@
     {
       "admin_graphql_api_id": "gid://shopify/Order/12345",
       "shipping_address": {
-        "first_name": "Foo"
+        "first_name": "Foo",
+        "latitude": 1,
+        "longitude": 2
       },
       "billing_address": {
-        "first_name": "Bar"
+        "first_name": "Bar",
+        "latitude": 3,
+        "longitude": 4
       }
     }
   {% endcapture %}
@@ -14,7 +18,16 @@
   {% assign order = order_json | parse_json %}
 {% endif %}
 
-{% if order.shipping_address != blank and order.billing_address != blank and order.shipping_address != order.billing_address %}
+{% comment %}
+  Shopify sometimes populates coordinates on one address, but not the other. So, we compare
+  addresses *without* those attributes.
+{% endcomment %}
+{% assign shipping_address_without_coords = order.shipping_address | except: "latitude", "longitude" %}
+{% assign billing_address_without_coords = order.billing_address | except: "latitude", "longitude" %}
+
+{% log shipping_address: shipping_address_without_coords, billing_address: billing_address_without_coords %}
+
+{% if shipping_address_without_coords != blank and billing_address_without_coords != blank and shipping_address_without_coords != billing_address_without_coords %}
   {% action "shopify" %}
     mutation {
       tagsAdd(

@@ -3,16 +3,17 @@
   "options": {
     "order_tag_to_add__required": null
   },
+  "script": "{% if event.preview %}\n  {% capture order_json %}\n    {\n      \"admin_graphql_api_id\": \"gid://shopify/Order/12345\",\n      \"shipping_address\": {\n        \"first_name\": \"Foo\",\n        \"latitude\": 1,\n        \"longitude\": 2\n      },\n      \"billing_address\": {\n        \"first_name\": \"Bar\",\n        \"latitude\": 3,\n        \"longitude\": 4\n      }\n    }\n  {% endcapture %}\n\n  {% assign order = order_json | parse_json %}\n{% endif %}\n\n{% comment %}\n  Shopify sometimes populates coordinates on one address, but not the other. So, we compare\n  addresses *without* those attributes.\n{% endcomment %}\n{% assign shipping_address_without_coords = order.shipping_address | except: \"latitude\", \"longitude\" %}\n{% assign billing_address_without_coords = order.billing_address | except: \"latitude\", \"longitude\" %}\n\n{% log shipping_address: shipping_address_without_coords, billing_address: billing_address_without_coords %}\n\n{% if shipping_address_without_coords != blank and billing_address_without_coords != blank and shipping_address_without_coords != billing_address_without_coords %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ order.admin_graphql_api_id | json }}\n        tags: {{ options.order_tag_to_add__required | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}",
   "subscriptions": [
     "shopify/orders/create"
   ],
-  "subscriptions_template": "shopify/orders/create",
-  "script": "{% if event.preview %}\n  {% capture order_json %}\n    {\n      \"admin_graphql_api_id\": \"gid://shopify/Order/12345\",\n      \"shipping_address\": {\n        \"first_name\": \"Foo\"\n      },\n      \"billing_address\": {\n        \"first_name\": \"Bar\"\n      }\n    }\n  {% endcapture %}\n\n  {% assign order = order_json | parse_json %}\n{% endif %}\n\n{% if order.shipping_address != blank and order.billing_address != blank and order.shipping_address != order.billing_address %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ order.admin_graphql_api_id | json }}\n        tags: {{ options.order_tag_to_add__required | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}",
-  "docs": "Useful for flagging orders for manual follow-up, for stores that see fraudulent activity in which billing and shipping address are not the same.\n\nThis task auto-tags orders, as they're created, if their billing and shipping addresses do not match. It ignores orders that do not have a billing address, or that do not have a shipping address.",
-  "halt_action_run_sequence_on_error": false,
   "online_store_javascript": null,
   "order_status_javascript": null,
+  "docs": "Useful for flagging orders for manual follow-up, for stores that see fraudulent activity in which billing and shipping address are not the same.\n\nThis task auto-tags orders, as they're created, if their billing and shipping addresses do not match. It ignores orders that do not have a billing address, or that do not have a shipping address.",
+  "subscriptions_template": "shopify/orders/create",
   "perform_action_runs_in_sequence": false,
+  "halt_action_run_sequence_on_error": false,
+  "preview_event_definitions": [],
   "tags": [
     "Address",
     "Auto-Tag",
