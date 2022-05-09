@@ -14,13 +14,13 @@
           edges {
             cursor
             node {
-              {% if options.ignore_line_items_not_fulfilled_manually__boolean %}
-                fulfillmentService {
-                  id
-                }
-              {% endif %}
               variant {
                 inventoryQuantity
+                {% if options.ignore_line_items_not_fulfilled_manually__boolean %}
+                  fulfillmentService {
+                    id
+                  }
+                {% endif %}
               }
             }
           }
@@ -46,11 +46,11 @@
                 {
                   "cursor": "eyJsYXN0X2lkIjo0MDc4NTI5NjQyNTMxLCJsYXN0X3ZhbHVlIjo0MDc4NTI5NjQyNTMxfQ==",
                   "node": {
-                    "fulfillmentService": {
-                      "id": "gid://shopify/FulfillmentService/manual"
-                    },
                     "variant": {
-                      "inventoryQuantity": 2
+                      "inventoryQuantity": 2,
+                      "fulfillmentService": {
+                        "id": "gid://shopify/FulfillmentService/manual"
+                      }
                     }
                   }
                 }
@@ -110,13 +110,13 @@
                   edges {
                     cursor
                     node {
-                    {% if options.ignore_line_items_not_fulfilled_manually__boolean %}
-                      fulfillmentService {
-                        id
-                      }
-                    {% endif %}
                       variant {
                         inventoryQuantity
+                        {% if options.ignore_line_items_not_fulfilled_manually__boolean %}
+                          fulfillmentService {
+                            id
+                          }
+                        {% endif %}
                       }
                     }
                   }
@@ -147,11 +147,11 @@
                           {
                             "cursor": "eyJsYXN0X2lkIjo0MDc4NTI5NjQyNTMxLCJsYXN0X3ZhbHVlIjo0MDc4NTI5NjQyNTMxfQ==",
                             "node": {
-                              "fulfillmentService": {
-                                "id": "gid://shopify/FulfillmentService/manual"
-                              },
                               "variant": {
-                                "inventoryQuantity": 1
+                                "inventoryQuantity": 1,
+                                "fulfillmentService": {
+                                  "id": "gid://shopify/FulfillmentService/manual"
+                                }
                               }
                             }
                           }
@@ -159,36 +159,6 @@
                       }
                     }
                   }
-
-                  {% comment %}
-                  // Commenting this out to keep the task preview clean. Bring
-                  // this back if you want to test multi-order pages.
-                  ,
-                  {
-                    "cursor": "eyJsYXN0X2lkIjo0MDc4NTU0OTA2NjU5LCJsYXN0X3ZhbHVlIjo0MDc4NTU0OTA2NjU5fQ==",
-                    "node": {
-                      "id": "gid://shopify/Order/1835154407459",
-                      "lineItems": {
-                        "pageInfo": {
-                          "hasNextPage": false
-                        },
-                        "edges": [
-                          {
-                            "cursor": "eyJsYXN0X2lkIjo0MDc4NTU0OTA2NjU5LCJsYXN0X3ZhbHVlIjo0MDc4NTU0OTA2NjU5fQ==",
-                            "node": {
-                              "fulfillmentService": {
-                                "id": "gid://shopify/FulfillmentService/manual"
-                              },
-                              "variant": {
-                                "inventoryQuantity": 1
-                              }
-                            }
-                          }
-                        ]
-                      }
-                    }
-                  }
-                  {% endcomment %}
                 ]
               }
             }
@@ -232,13 +202,13 @@
               edges {
                 cursor
                 node {
-                  {% if options.ignore_line_items_not_fulfilled_manually__boolean %}
-                    fulfillmentService {
-                      id
-                    }
-                  {% endif %}
                   variant {
                     inventoryQuantity
+                    {% if options.ignore_line_items_not_fulfilled_manually__boolean %}
+                      fulfillmentService {
+                        id
+                      }
+                    {% endif %}
                   }
                 }
               }
@@ -267,7 +237,7 @@
 
   {% for lineItem_edge in order_node.lineItems.edges %}
     {% if options.ignore_line_items_not_fulfilled_manually__boolean %}
-      {% if lineItem_edge.node.fulfillmentService.id != "gid://shopify/FulfillmentService/manual" %}
+      {% if lineItem_edge.node.variant.fulfillmentService.id != "gid://shopify/FulfillmentService/manual" %}
         {% continue %}
       {% endif  %}
     {% endif %}
