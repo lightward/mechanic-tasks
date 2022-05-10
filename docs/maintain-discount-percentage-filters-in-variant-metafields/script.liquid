@@ -1,0 +1,237 @@
+{% assign metafield_namespace_and_key = options.metafield_namespace_and_key__required | match: "(?<namespace>[\w-]{3,})\.(?<key>[\w-]{3,})" %}
+{% assign discount_filters_and_percentage_thresholds = options.discount_filters_and_percentage_thresholds__keyval_number_required %}
+
+{% assign metafield_namespace = metafield_namespace_and_key.named_captures.namespace %}
+{% assign metafield_key = metafield_namespace_and_key.named_captures.key %}
+
+{% if metafield_namespace == blank or metafield_key == blank %}
+  {% error %}
+    "The metafield key and namespace must each be at least 3 characters long and separated only by a '.'.\n\nValid characters are a-z, A-Z, 0-9, underscores, and dashes."
+  {% enderror %}
+  {% break %}
+{% endif %}
+
+{% assign variants = array %}
+
+{% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% assign cursor = nil %}
+
+  {% for n in (1..200) %}
+    {% capture query %}
+      query {
+        productVariants(
+          first: 250
+          after: {{ cursor | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            displayName
+            price
+            compareAtPrice
+            metafield(
+              namespace: {{ metafield_namespace | json }}
+              key: {{ metafield_key | json }}
+            ) {
+              id
+              value
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% assign variants
+      = result.data.productVariants.nodes
+      | default: array
+      | concat: variants
+    %}
+
+    {% if result.data.productVariants.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.productVariants.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+{% elsif event.topic == "shopify/products/update" %}
+  {% capture query %}
+    query {
+      product(id: {{ product.admin_graphql_api_id | json }}) {
+        variants(first: 100) {
+          nodes {
+            id
+            displayName
+            price
+            compareAtPrice
+            metafield(
+              namespace: {{ metafield_namespace | json }}
+              key: {{ metafield_key | json }}
+            ) {
+              id
+              value
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% assign variants = result.data.product.variants.nodes %}
+{% endif %}
+
+{% if event.preview %}
+  {% capture variants_json %}
+    [
+      {
+        "id": "gid://shopify/ProductVariant/1234567890",
+        "price": "0.00",
+        "compareAtPrice": "1.00"
+      }
+    ]
+  {% endcapture %}
+
+  {% assign variants = variants_json | parse_json %}
+{% endif %}
+
+{% assign metafields_to_set = array %}
+{% assign metafields_to_delete = array %}
+{% assign variant_logs = array %}
+
+{% for variant in variants %}
+  {% assign variant_log = hash %}
+  {% assign variant_log["variant"] = variant %}
+
+  {% assign price = variant.price | times: 1.0 %}
+  {% assign compare_at_price = variant.compareAtPrice | times: 1.0 %}
+
+  {% comment %}
+    Note: converting to floats above will handle cases where compareAtPrice is empty or "0.00", as it will become 0.0 in either case
+  {% endcomment %}
+
+  {% if compare_at_price <= price %}
+    {% if variant.metafield != blank %}
+      {% assign metafields_to_delete = metafields_to_delete | push: variant.metafield %}
+    {% endif %}
+
+    {% assign variant_log["message"] = "Variant is not discounted; skipping." %}
+    {% assign variant_logs = variant_logs | push: variant_log %}
+
+    {% continue %}
+  {% endif %}
+
+  {% assign discount_percentage
+    = price
+    | times: -100
+    | divided_by: compare_at_price
+    | plus: 100
+  %}
+
+  {% assign discount_filters_should_have = array %}
+
+  {% for keyval in discount_filters_and_percentage_thresholds %}
+    {% assign discount_filter = keyval.first %}
+    {% assign percentage_threshold = keyval.last %}
+
+    {% if discount_percentage >= percentage_threshold %}
+      {% assign discount_filters_should_have = discount_filters_should_have | push: discount_filter %}
+    {% endif %}
+  {% endfor %}
+
+  {% assign variant_log["discount_percentage"] = discount_percentage %}
+  {% assign variant_log["discount_filters_should_have"] = discount_filters_should_have %}
+
+  {% if discount_filters_should_have == blank %}
+    {% if variant.metafield != blank %}
+      {% assign metafields_to_delete = metafields_to_delete | push: variant.metafield %}
+    {% endif %}
+
+    {% assign variant_log["message"] = "Variant is discounted, but it does not meet any of the configured percentage thresholds; skipping." %}
+    {% assign variant_logs = variant_logs | push: variant_log %}
+
+    {% continue %}
+  {% endif %}
+
+  {% assign discount_filters_should_have_json = discount_filters_should_have | json %}
+
+  {% if variant.metafield.value == discount_filters_should_have_json %}
+    {% continue %}
+  {% endif %}
+
+  {% assign variant_log["message"] = "Variant is discounted and metafield does not match the discount filters it should have; updating." %}
+  {% assign variant_logs = variant_logs | push: variant_log %}
+
+  {% capture metafield_to_set %}
+    {
+      ownerId: {{ variant.id | json }}
+      namespace: {{ metafield_namespace | json }}
+      key: {{ metafield_key | json }}
+      value: {{ discount_filters_should_have_json | json }}
+      type: "list.single_line_text_field"
+    }
+  {% endcapture %}
+
+  {% assign metafields_to_set = metafields_to_set | push: metafield_to_set %}
+{% endfor %}
+
+{% log variant_logs %}
+
+{% if metafields_to_set != blank %}
+  {% assign groups_of_metafields_to_set = metafields_to_set | in_groups_of: 25, fill_with: false %}
+
+  {% for group_of_metafields_to_set in groups_of_metafields_to_set %}
+    {% action "shopify" %}
+      mutation {
+        metafieldsSet(
+          metafields: [
+            {{ group_of_metafields_to_set | join: newline }}
+          ]
+        ) {
+          metafields {
+            id
+            namespace
+            key
+            type
+            value
+            owner {
+              ... on ProductVariant {
+                id
+                displayName
+              }
+            }
+          }
+          userErrors {
+            code
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endfor %}
+{% endif %}
+
+{% for metafield_to_delete in metafields_to_delete %}
+  {% action "shopify" %}
+    mutation {
+      metafieldDelete(
+        input: {
+          id: {{ metafield_to_delete.id | json }}
+        }
+      ) {
+        deletedId
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endfor %}
