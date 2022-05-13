@@ -1,4 +1,4 @@
-# Create a product inventory feed
+# Create a product inventory CSV feed
 
 Tags: Feeds, Inventory, Products
 
@@ -34,7 +34,7 @@ This task, paired with the linked instructions, creates a feed of product invent
 
 This task creates a regularly-updated feed, available at yourstore.com/pages/feed. Follow these required instructions to configure your store:
 
-[Tutorial: Creating scheduled feeds with Mechanic](https://help.usemechanic.com/tutorials/creating-scheduled-feeds)
+[Tutorial: Creating scheduled CSV feeds](https://learn.mechanic.dev/resources/tutorials/creating-scheduled-csv-feeds)
 
 Note: This task fetches up to 30 variants per product.
 
