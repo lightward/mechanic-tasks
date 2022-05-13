@@ -160,7 +160,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Copy prefixed tags to metafields](./copy-prefixed-tags-to-metafields)
 * [Copy product metafields to each product's tags](./copy-product-metafields-to-each-products-tags)
 * [Create a draft order from the cart](./create-a-draft-order-from-the-cart)
-* [Create a product inventory feed](./create-a-product-inventory-feed)
+* [Create a product inventory CSV feed](./create-a-product-inventory-feed)
 * [Credit customers for sample orders](./credit-customers-for-sample-orders)
 * [Delete all products](./delete-all-products)
 * [Delete cancelled orders after 48 hours](./delete-cancelled-orders-after-48-hours)
