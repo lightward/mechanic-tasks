@@ -4,7 +4,7 @@ Tags: Email, Invite, Orders, Retention
 
 Automatically prompt customers to activate their customer accounts, after placing an order in your store, by triggering a customizable Shopify-powered email. Useful if your online store unlocks special offers, functionality, or content after making a purchase. Optionally, only send invitations if the customer has ordered a product with a specific tag.
 
-* View in the task library: [usemechanic.com/task/auto-invite-customers-after-an-order](https://usemechanic.com/task/auto-invite-customers-after-an-order)
+* View in the task library: [tasks.mechanic.dev/auto-invite-customers-after-an-order](https://tasks.mechanic.dev/auto-invite-customers-after-an-order)
 * Task JSON, for direct import: [task.json](../../tasks/auto-invite-customers-after-an-order.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -20,7 +20,7 @@ Automatically prompt customers to activate their customer accounts, after placin
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -28,7 +28,7 @@ Automatically prompt customers to activate their customer accounts, after placin
 shopify/orders/create
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -38,7 +38,7 @@ This task works by asking Shopify to send along an invitation email, using the s
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-invite-customers-after-an-order), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-invite-customers-after-an-order.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-invite-customers-after-an-order), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-invite-customers-after-an-order.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

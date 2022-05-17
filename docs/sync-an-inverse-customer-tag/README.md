@@ -4,7 +4,7 @@ Tags: Auto-Tag, Customers, Sync
 
 Shopify's customer group filters allow you to filter by the tags the customer contains – but not the tags a customer does not contain. Use this task to sync an "inverse" tag to all customers who do not have a particular tag, allowing you to filter customers in Shopify by that inverse tag.
 
-* View in the task library: [usemechanic.com/task/sync-an-inverse-customer-tag](https://usemechanic.com/task/sync-an-inverse-customer-tag)
+* View in the task library: [tasks.mechanic.dev/sync-an-inverse-customer-tag](https://tasks.mechanic.dev/sync-an-inverse-customer-tag)
 * Task JSON, for direct import: [task.json](../../tasks/sync-an-inverse-customer-tag.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -17,7 +17,7 @@ Shopify's customer group filters allow you to filter by the tags the customer co
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -28,7 +28,7 @@ mechanic/user/trigger
 mechanic/shopify/bulk_operation
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -40,7 +40,7 @@ Run this task manually to scan all of the customers in your store. Otherwise, th
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/sync-an-inverse-customer-tag), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/sync-an-inverse-customer-tag.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/sync-an-inverse-customer-tag), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/sync-an-inverse-customer-tag.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

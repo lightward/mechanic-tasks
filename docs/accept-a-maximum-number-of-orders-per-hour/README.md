@@ -4,7 +4,7 @@ Tags: Max Orders, Orders
 
 This task works by monitoring the number of orders created per hour, and clearing the inventory for all in-stock items when the hourly order limit is reached. Optionally, this task can restore inventory to its original levels at minute zero of the next hour, or on demand.
 
-* View in the task library: [usemechanic.com/task/accept-a-maximum-number-of-orders-per-hour](https://usemechanic.com/task/accept-a-maximum-number-of-orders-per-hour)
+* View in the task library: [tasks.mechanic.dev/accept-a-maximum-number-of-orders-per-hour](https://tasks.mechanic.dev/accept-a-maximum-number-of-orders-per-hour)
 * Task JSON, for direct import: [task.json](../../tasks/accept-a-maximum-number-of-orders-per-hour.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -19,7 +19,7 @@ This task works by monitoring the number of orders created per hour, and clearin
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -35,7 +35,7 @@ shopify/orders/create
 {% endif %}
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -49,7 +49,7 @@ Optionally, this task can restore inventory to its original levels at midnight t
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/accept-a-maximum-number-of-orders-per-hour), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/accept-a-maximum-number-of-orders-per-hour.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/accept-a-maximum-number-of-orders-per-hour), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/accept-a-maximum-number-of-orders-per-hour.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

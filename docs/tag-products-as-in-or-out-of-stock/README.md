@@ -4,7 +4,7 @@ Tags: Auto-Tag, In stock, Inventory, Out of Stock, Products
 
 This task scans your products, in bulk, and tags them according to whether or not they're in stock. Optionally, configure this task to monitor products for live auto-tagging.
 
-* View in the task library: [usemechanic.com/task/tag-products-as-in-or-out-of-stock](https://usemechanic.com/task/tag-products-as-in-or-out-of-stock)
+* View in the task library: [tasks.mechanic.dev/tag-products-as-in-or-out-of-stock](https://tasks.mechanic.dev/tag-products-as-in-or-out-of-stock)
 * Task JSON, for direct import: [task.json](../../tasks/tag-products-as-in-or-out-of-stock.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -18,7 +18,7 @@ This task scans your products, in bulk, and tags them according to whether or no
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -32,7 +32,7 @@ mechanic/shopify/bulk_operation
 {% endif %}
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -42,7 +42,7 @@ For the purposes of this task, "in stock" means "having a total inventory of gre
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/tag-products-as-in-or-out-of-stock), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/tag-products-as-in-or-out-of-stock.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/tag-products-as-in-or-out-of-stock), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/tag-products-as-in-or-out-of-stock.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

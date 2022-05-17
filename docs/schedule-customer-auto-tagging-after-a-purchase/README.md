@@ -4,7 +4,7 @@ Tags: Auto-Tag, Customers, Orders, Schedule
 
 Selling scheduled events? Using this task, you can automatically tag customers after the event has been completed. Simply tag a product with "autotag Authorized May 15", for example, and Mechanic will tag purchasers of that product with "Authorized", on May 15th.
 
-* View in the task library: [usemechanic.com/task/schedule-customer-auto-tagging-after-a-purchase](https://usemechanic.com/task/schedule-customer-auto-tagging-after-a-purchase)
+* View in the task library: [tasks.mechanic.dev/schedule-customer-auto-tagging-after-a-purchase](https://tasks.mechanic.dev/schedule-customer-auto-tagging-after-a-purchase)
 * Task JSON, for direct import: [task.json](../../tasks/schedule-customer-auto-tagging-after-a-purchase.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -16,7 +16,7 @@ Selling scheduled events? Using this task, you can automatically tag customers a
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -25,7 +25,7 @@ shopify/orders/paid
 user/autotag/customer
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -41,7 +41,7 @@ Note: The customer tag to apply _must not_ contain any spaces!
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/schedule-customer-auto-tagging-after-a-purchase), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/schedule-customer-auto-tagging-after-a-purchase.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/schedule-customer-auto-tagging-after-a-purchase), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/schedule-customer-auto-tagging-after-a-purchase.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

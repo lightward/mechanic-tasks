@@ -4,7 +4,7 @@ Tags: Cancel, Orders, SKU
 
 Useful for enforcing order limits on the backend, use this task to ensure that too many of a certain product cannot be purchased. This task can be configured with multiple SKUs, too!
 
-* View in the task library: [usemechanic.com/task/auto-cancel-orders-with-too-many-of-a-certain-sku](https://usemechanic.com/task/auto-cancel-orders-with-too-many-of-a-certain-sku)
+* View in the task library: [tasks.mechanic.dev/auto-cancel-orders-with-too-many-of-a-certain-sku](https://tasks.mechanic.dev/auto-cancel-orders-with-too-many-of-a-certain-sku)
 * Task JSON, for direct import: [task.json](../../tasks/auto-cancel-orders-with-too-many-of-a-certain-sku.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -20,7 +20,7 @@ Useful for enforcing order limits on the backend, use this task to ensure that t
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -28,7 +28,7 @@ Useful for enforcing order limits on the backend, use this task to ensure that t
 shopify/orders/create
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -42,7 +42,7 @@ Notes:
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-cancel-orders-with-too-many-of-a-certain-sku), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-cancel-orders-with-too-many-of-a-certain-sku.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-cancel-orders-with-too-many-of-a-certain-sku), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-cancel-orders-with-too-many-of-a-certain-sku.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

@@ -4,7 +4,7 @@ Tags: External API, Fulfillment
 
 This task will watch for new order fulfillments, waiting a configurable number of days after each one. When the waiting period is over, if the fulfillment's status matches an item in the list, this task will send an event to Klaviyo, allowing you to use Klaviyo to contact the customer appropriately.
 
-* View in the task library: [usemechanic.com/task/send-an-event-to-klaviyo-when-a-fulfillment-is-delayed](https://usemechanic.com/task/send-an-event-to-klaviyo-when-a-fulfillment-is-delayed)
+* View in the task library: [tasks.mechanic.dev/send-an-event-to-klaviyo-when-a-fulfillment-is-delayed](https://tasks.mechanic.dev/send-an-event-to-klaviyo-when-a-fulfillment-is-delayed)
 * Task JSON, for direct import: [task.json](../../tasks/send-an-event-to-klaviyo-when-a-fulfillment-is-delayed.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -24,7 +24,7 @@ This task will watch for new order fulfillments, waiting a configurable number o
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -36,7 +36,7 @@ This task will watch for new order fulfillments, waiting a configurable number o
 {% endif %}
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -48,7 +48,7 @@ Enable "Test mode" to make available a "Run task" button - press this button to 
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/send-an-event-to-klaviyo-when-a-fulfillment-is-delayed), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/send-an-event-to-klaviyo-when-a-fulfillment-is-delayed.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/send-an-event-to-klaviyo-when-a-fulfillment-is-delayed), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/send-an-event-to-klaviyo-when-a-fulfillment-is-delayed.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

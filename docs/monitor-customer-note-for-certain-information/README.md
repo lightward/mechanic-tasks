@@ -4,7 +4,7 @@ Tags: Customer Notes, Customers, Watch
 
 Use this task to keep an eye on the contents of a customer's note. When the text you want to watch for is added (e.g. "Authorization number:", or "VAT Registration Number:", or anything else!), Mechanic will add the tag of your choice to the customer, and optionally send you a notification email.
 
-* View in the task library: [usemechanic.com/task/monitor-customer-note-for-certain-information](https://usemechanic.com/task/monitor-customer-note-for-certain-information)
+* View in the task library: [tasks.mechanic.dev/monitor-customer-note-for-certain-information](https://tasks.mechanic.dev/monitor-customer-note-for-certain-information)
 * Task JSON, for direct import: [task.json](../../tasks/monitor-customer-note-for-certain-information.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -19,7 +19,7 @@ Use this task to keep an eye on the contents of a customer's note. When the text
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -28,7 +28,7 @@ shopify/customers/create
 shopify/customers/update
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -38,7 +38,7 @@ Please note: Mechanic uses the absence of this task's tag to determine if any wo
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/monitor-customer-note-for-certain-information), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/monitor-customer-note-for-certain-information.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/monitor-customer-note-for-certain-information), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/monitor-customer-note-for-certain-information.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

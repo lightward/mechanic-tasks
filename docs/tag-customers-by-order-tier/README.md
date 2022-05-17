@@ -4,7 +4,7 @@ Tags: Customers, Loyalty, Retention, Tag
 
 Use this task to tag customers by tier, based on how many orders they've placed or by the sum of all their order totals (i.e. total spend). Optionally, configure a customers query, limiting the set of customers that are processed. You may also configure an order query, specifying for things like a rolling time period, or fulfillment status. This task is useful for rewarding customers who establish or maintain a specific spend level.
 
-* View in the task library: [usemechanic.com/task/tag-customers-by-order-tier](https://usemechanic.com/task/tag-customers-by-order-tier)
+* View in the task library: [tasks.mechanic.dev/tag-customers-by-order-tier](https://tasks.mechanic.dev/tag-customers-by-order-tier)
 * Task JSON, for direct import: [task.json](../../tasks/tag-customers-by-order-tier.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -26,7 +26,7 @@ Use this task to tag customers by tier, based on how many orders they've placed 
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -42,7 +42,7 @@ mechanic/user/trigger
 mechanic/shopify/bulk_operation
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -62,7 +62,7 @@ financial_status:paid created_at:>={{ "now" | date: "%s" | minus: 31536000 | dat
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/tag-customers-by-order-tier), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/tag-customers-by-order-tier.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/tag-customers-by-order-tier), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/tag-customers-by-order-tier.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

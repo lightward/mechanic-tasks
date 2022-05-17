@@ -4,7 +4,7 @@ Tags: Auto-Tag, Collections, Products
 
 If you prefer to categorize your products using manual collections, but you still need your tags to match up, use this task to monitor your manual collection and automatically tag the products it contains.
 
-* View in the task library: [usemechanic.com/task/auto-tag-products-in-a-manual-collection](https://usemechanic.com/task/auto-tag-products-in-a-manual-collection)
+* View in the task library: [tasks.mechanic.dev/auto-tag-products-in-a-manual-collection](https://tasks.mechanic.dev/auto-tag-products-in-a-manual-collection)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-products-in-a-manual-collection.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -17,7 +17,7 @@ If you prefer to categorize your products using manual collections, but you stil
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -26,7 +26,7 @@ mechanic/user/trigger
 shopify/collections/update
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -38,7 +38,7 @@ This task only supports manual collections, not automated collections. ([Learn a
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-products-in-a-manual-collection), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-products-in-a-manual-collection.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-products-in-a-manual-collection), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-products-in-a-manual-collection.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

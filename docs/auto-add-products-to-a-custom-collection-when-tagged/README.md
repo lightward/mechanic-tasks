@@ -4,7 +4,7 @@ Tags: Collections, Products, Watch
 
 Just as it says. Useful for collections that can't be configured for automatic products, but still should have some products pulled in automatically.
 
-* View in the task library: [usemechanic.com/task/auto-add-products-to-a-custom-collection-when-tagged](https://usemechanic.com/task/auto-add-products-to-a-custom-collection-when-tagged)
+* View in the task library: [tasks.mechanic.dev/auto-add-products-to-a-custom-collection-when-tagged](https://tasks.mechanic.dev/auto-add-products-to-a-custom-collection-when-tagged)
 * Task JSON, for direct import: [task.json](../../tasks/auto-add-products-to-a-custom-collection-when-tagged.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -16,7 +16,7 @@ Just as it says. Useful for collections that can't be configured for automatic p
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -25,7 +25,7 @@ shopify/products/create
 shopify/products/update
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -35,7 +35,7 @@ This task runs in response to products being tagged. Configure the "Product tags
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-add-products-to-a-custom-collection-when-tagged), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-add-products-to-a-custom-collection-when-tagged.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-add-products-to-a-custom-collection-when-tagged), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-add-products-to-a-custom-collection-when-tagged.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

@@ -4,7 +4,7 @@ Tags: Collections, Email, Products
 
 This task watches for newly-created collections, waits a configurable number of days, and then sends a staff email if no orders have been placed for products that are in the new collection.
 
-* View in the task library: [usemechanic.com/task/send-an-email-alert-if-a-new-collection-has-no-orders-after-x-days](https://usemechanic.com/task/send-an-email-alert-if-a-new-collection-has-no-orders-after-x-days)
+* View in the task library: [tasks.mechanic.dev/send-an-email-alert-if-a-new-collection-has-no-orders-after-x-days](https://tasks.mechanic.dev/send-an-email-alert-if-a-new-collection-has-no-orders-after-x-days)
 * Task JSON, for direct import: [task.json](../../tasks/send-an-email-alert-if-a-new-collection-has-no-orders-after-x-days.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -19,7 +19,7 @@ This task watches for newly-created collections, waits a configurable number of 
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -27,7 +27,7 @@ This task watches for newly-created collections, waits a configurable number of 
 shopify/collections/create+{{ options.days_to_wait_before_checking__number_required | default: 2 }}.days
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -35,7 +35,7 @@ This task watches for newly-created collections, waits a configurable number of 
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/send-an-email-alert-if-a-new-collection-has-no-orders-after-x-days), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/send-an-email-alert-if-a-new-collection-has-no-orders-after-x-days.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/send-an-email-alert-if-a-new-collection-has-no-orders-after-x-days), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/send-an-email-alert-if-a-new-collection-has-no-orders-after-x-days.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

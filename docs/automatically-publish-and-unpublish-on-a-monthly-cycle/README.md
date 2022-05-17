@@ -4,7 +4,7 @@ Tags: Products, Publish, Unpublish
 
 Use this task to make a single product or page available for a limited window of time, on a monthly basis. Redirect your visitors to a specific page when that resource is unavailable.
 
-* View in the task library: [usemechanic.com/task/automatically-publish-and-unpublish-on-a-monthly-cycle](https://usemechanic.com/task/automatically-publish-and-unpublish-on-a-monthly-cycle)
+* View in the task library: [tasks.mechanic.dev/automatically-publish-and-unpublish-on-a-monthly-cycle](https://tasks.mechanic.dev/automatically-publish-and-unpublish-on-a-monthly-cycle)
 * Task JSON, for direct import: [task.json](../../tasks/automatically-publish-and-unpublish-on-a-monthly-cycle.json)
 * Preview task code:
   * [script.liquid](./script.liquid)
@@ -22,7 +22,7 @@ Use this task to make a single product or page available for a limited window of
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -31,7 +31,7 @@ mechanic/user/trigger
 mechanic/scheduler/daily
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -43,7 +43,7 @@ This task will run automatically, at midnight in your store's local timezone. Ru
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/automatically-publish-and-unpublish-on-a-monthly-cycle), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/automatically-publish-and-unpublish-on-a-monthly-cycle.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/automatically-publish-and-unpublish-on-a-monthly-cycle), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/automatically-publish-and-unpublish-on-a-monthly-cycle.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

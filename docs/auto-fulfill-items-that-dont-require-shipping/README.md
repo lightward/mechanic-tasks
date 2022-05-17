@@ -4,7 +4,7 @@ Tags: Fulfillment, Orders
 
 Useful for digital products, memberships, or anything else that needs to be fulfilled instantly. This task watches for paid orders, and auto-fulfills all line items that don't require shipping.
 
-* View in the task library: [usemechanic.com/task/auto-fulfill-items-that-dont-require-shipping](https://usemechanic.com/task/auto-fulfill-items-that-dont-require-shipping)
+* View in the task library: [tasks.mechanic.dev/auto-fulfill-items-that-dont-require-shipping](https://tasks.mechanic.dev/auto-fulfill-items-that-dont-require-shipping)
 * Task JSON, for direct import: [task.json](../../tasks/auto-fulfill-items-that-dont-require-shipping.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -17,7 +17,7 @@ Useful for digital products, memberships, or anything else that needs to be fulf
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -29,7 +29,7 @@ shopify/orders/paid
 {% endif %}
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -39,7 +39,7 @@ Optionally, choose to ignore products with a specific tag, and wait until other 
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-fulfill-items-that-dont-require-shipping), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-fulfill-items-that-dont-require-shipping.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-fulfill-items-that-dont-require-shipping), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-fulfill-items-that-dont-require-shipping.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

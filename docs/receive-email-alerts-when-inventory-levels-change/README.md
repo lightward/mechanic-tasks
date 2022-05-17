@@ -4,7 +4,7 @@ Tags: Alert, Email, Inventory
 
 Use this task to receive immediate email notifications whenever inventory/stock levels are adjusted, whether manually or as a result of a transfer or customer order.
 
-* View in the task library: [usemechanic.com/task/receive-email-alerts-when-inventory-levels-change](https://usemechanic.com/task/receive-email-alerts-when-inventory-levels-change)
+* View in the task library: [tasks.mechanic.dev/receive-email-alerts-when-inventory-levels-change](https://tasks.mechanic.dev/receive-email-alerts-when-inventory-levels-change)
 * Task JSON, for direct import: [task.json](../../tasks/receive-email-alerts-when-inventory-levels-change.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -18,7 +18,7 @@ Use this task to receive immediate email notifications whenever inventory/stock 
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -27,7 +27,7 @@ shopify/inventory_levels/update
 shopify/inventory_levels/connect
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -37,7 +37,7 @@ Please note: Mechanic will start sending emails the _second_ time inventory is a
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/receive-email-alerts-when-inventory-levels-change), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/receive-email-alerts-when-inventory-levels-change.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/receive-email-alerts-when-inventory-levels-change), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/receive-email-alerts-when-inventory-levels-change.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

@@ -4,7 +4,7 @@ Tags: Auto-Tag, Orders, Out of Stock
 
 This task watches for newly-created orders, and checks each line item for that variant's total inventory quantity. If any are found with an inventory level of 0 or less, the task will add the tag of your choice to the order – and, optionally, will add a tag to the customer and to each product related to an out-of-stock line item.
 
-* View in the task library: [usemechanic.com/task/auto-tag-orders-that-contain-an-out-of-stock-item](https://usemechanic.com/task/auto-tag-orders-that-contain-an-out-of-stock-item)
+* View in the task library: [tasks.mechanic.dev/auto-tag-orders-that-contain-an-out-of-stock-item](https://tasks.mechanic.dev/auto-tag-orders-that-contain-an-out-of-stock-item)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-orders-that-contain-an-out-of-stock-item.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -18,7 +18,7 @@ This task watches for newly-created orders, and checks each line item for that v
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -26,7 +26,7 @@ This task watches for newly-created orders, and checks each line item for that v
 shopify/orders/create
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -34,7 +34,7 @@ This task watches for newly-created orders, and checks each line item for that v
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-orders-that-contain-an-out-of-stock-item), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-orders-that-contain-an-out-of-stock-item.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-orders-that-contain-an-out-of-stock-item), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-orders-that-contain-an-out-of-stock-item.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

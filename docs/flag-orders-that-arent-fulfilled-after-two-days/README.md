@@ -4,7 +4,7 @@ Tags: Alert, Fulfillment, Orders
 
 It's critical to stay on top of any orders that aren't properly fulfilled – and your customers care, too! Use this task to auto-tag orders, to email yourself a reminder, and optionally to send customers a little reassurance message, if an order hasn't been fulfilled a configurable number of days after payment.
 
-* View in the task library: [usemechanic.com/task/flag-orders-that-arent-fulfilled-after-two-days](https://usemechanic.com/task/flag-orders-that-arent-fulfilled-after-two-days)
+* View in the task library: [tasks.mechanic.dev/flag-orders-that-arent-fulfilled-after-two-days](https://tasks.mechanic.dev/flag-orders-that-arent-fulfilled-after-two-days)
 * Task JSON, for direct import: [task.json](../../tasks/flag-orders-that-arent-fulfilled-after-two-days.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -22,7 +22,7 @@ It's critical to stay on top of any orders that aren't properly fulfilled – an
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -30,7 +30,7 @@ It's critical to stay on top of any orders that aren't properly fulfilled – an
 shopify/orders/paid+{{ options.days_to_wait_before_followup__number_required }}.days
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -44,7 +44,7 @@ This task won't tag or send emails if the order is partially fulfilled, if the o
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/flag-orders-that-arent-fulfilled-after-two-days), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/flag-orders-that-arent-fulfilled-after-two-days.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/flag-orders-that-arent-fulfilled-after-two-days), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/flag-orders-that-arent-fulfilled-after-two-days.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

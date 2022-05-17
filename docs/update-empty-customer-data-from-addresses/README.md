@@ -4,7 +4,7 @@ Tags: Address, Customers
 
 Running when a customer is updated, this task will fill empty customer names and/or phones on accounts by pulling the relevant data from any customer addresses on file. Optionally, the task may be run in manual mode to scan and update all customers.
 
-* View in the task library: [usemechanic.com/task/update-empty-customer-data-from-addresses](https://usemechanic.com/task/update-empty-customer-data-from-addresses)
+* View in the task library: [tasks.mechanic.dev/update-empty-customer-data-from-addresses](https://tasks.mechanic.dev/update-empty-customer-data-from-addresses)
 * Task JSON, for direct import: [task.json](../../tasks/update-empty-customer-data-from-addresses.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -18,7 +18,7 @@ Running when a customer is updated, this task will fill empty customer names and
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -31,7 +31,7 @@ Running when a customer is updated, this task will fill empty customer names and
 {% endif %}
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -43,7 +43,7 @@ __Note:__ To avoid conflicts with this task running on customer updates (the def
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/update-empty-customer-data-from-addresses), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/update-empty-customer-data-from-addresses.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/update-empty-customer-data-from-addresses), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/update-empty-customer-data-from-addresses.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

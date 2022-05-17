@@ -4,7 +4,7 @@ Tags: (not tagged!)
 
 This task prepends an HTML message to the beginning of the product description, for each product that goes out of stock, and then restores the original product description when the product is back in stock. Optionally, you may choose to append the HTML message to the end of the product description, instead of prepending it to the beginning.
 
-* View in the task library: [usemechanic.com/task/update-product-description-when-out-of-stock](https://usemechanic.com/task/update-product-description-when-out-of-stock)
+* View in the task library: [tasks.mechanic.dev/update-product-description-when-out-of-stock](https://tasks.mechanic.dev/update-product-description-when-out-of-stock)
 * Task JSON, for direct import: [task.json](../../tasks/update-product-description-when-out-of-stock.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -18,7 +18,7 @@ This task prepends an HTML message to the beginning of the product description, 
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -27,7 +27,7 @@ shopify/inventory_levels/update
 mechanic/user/trigger
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -37,7 +37,7 @@ The task runs when inventory levels change, or may be run manually on demand. Ma
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/update-product-description-when-out-of-stock), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/update-product-description-when-out-of-stock.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/update-product-description-when-out-of-stock), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/update-product-description-when-out-of-stock.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

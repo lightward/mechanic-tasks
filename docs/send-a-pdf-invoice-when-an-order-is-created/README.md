@@ -4,7 +4,7 @@ Tags: Email, Invoice, Orders, PDF
 
 Automatically generate an invoice PDF, to be emailed to the address on file for the order, if the order has not yet been paid. Useful for working with billing departments, or with anyone else who needs an order summary auto-emailed. :)
 
-* View in the task library: [usemechanic.com/task/send-a-pdf-invoice-when-an-order-is-created](https://usemechanic.com/task/send-a-pdf-invoice-when-an-order-is-created)
+* View in the task library: [tasks.mechanic.dev/send-a-pdf-invoice-when-an-order-is-created](https://tasks.mechanic.dev/send-a-pdf-invoice-when-an-order-is-created)
 * Task JSON, for direct import: [task.json](../../tasks/send-a-pdf-invoice-when-an-order-is-created.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -20,7 +20,7 @@ Automatically generate an invoice PDF, to be emailed to the address on file for 
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -28,7 +28,7 @@ Automatically generate an invoice PDF, to be emailed to the address on file for 
 shopify/orders/create{% if options.days_to_wait_before_emailing__number %}+{{ options.days_to_wait_before_emailing__number }}.days{% endif %}
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -40,7 +40,7 @@ No email will be sent if the order does not have an email on file, or if the ord
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/send-a-pdf-invoice-when-an-order-is-created), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/send-a-pdf-invoice-when-an-order-is-created.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/send-a-pdf-invoice-when-an-order-is-created), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/send-a-pdf-invoice-when-an-order-is-created.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

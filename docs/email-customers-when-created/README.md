@@ -4,7 +4,7 @@ Tags: Customers, Email
 
 Use this task to send a quick welcome email to customers, when they sign up or are otherwise created in your shop. Optionally, filter by customer tag to only send welcome emails to certain customers.
 
-* View in the task library: [usemechanic.com/task/email-customers-when-created](https://usemechanic.com/task/email-customers-when-created)
+* View in the task library: [tasks.mechanic.dev/email-customers-when-created](https://tasks.mechanic.dev/email-customers-when-created)
 * Task JSON, for direct import: [task.json](../../tasks/email-customers-when-created.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -18,7 +18,7 @@ Use this task to send a quick welcome email to customers, when they sign up or a
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -26,7 +26,7 @@ Use this task to send a quick welcome email to customers, when they sign up or a
 shopify/customers/create
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -36,7 +36,7 @@ This task will send out your email to any customer when their account is created
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/email-customers-when-created), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-customers-when-created.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/email-customers-when-created), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-customers-when-created.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

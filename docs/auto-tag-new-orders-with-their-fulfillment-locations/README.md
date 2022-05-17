@@ -4,7 +4,7 @@ Tags: Auto-Tag, Fulfillment, Location, Orders
 
 Monitoring for brand-new orders, this task tags each order with the fulfillment locations that Shopify automatically assigns at the moment of order creation. (Note: It's not currently possible to adjust tags when assigned fulfillment locations change.)
 
-* View in the task library: [usemechanic.com/task/auto-tag-new-orders-with-their-fulfillment-locations](https://usemechanic.com/task/auto-tag-new-orders-with-their-fulfillment-locations)
+* View in the task library: [tasks.mechanic.dev/auto-tag-new-orders-with-their-fulfillment-locations](https://tasks.mechanic.dev/auto-tag-new-orders-with-their-fulfillment-locations)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-new-orders-with-their-fulfillment-locations.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -14,7 +14,7 @@ Monitoring for brand-new orders, this task tags each order with the fulfillment 
 shopify/orders/create
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -24,7 +24,7 @@ Important: This task requires Shopify API version 2020-01 or later.
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-new-orders-with-their-fulfillment-locations), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-new-orders-with-their-fulfillment-locations.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-new-orders-with-their-fulfillment-locations), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-new-orders-with-their-fulfillment-locations.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

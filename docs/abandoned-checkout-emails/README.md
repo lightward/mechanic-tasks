@@ -4,7 +4,7 @@ Tags: Abandoned Checkout, Email, Retention
 
 Roll your own abandoned checkout emails with this task – or, modify it to perform any other actions that your business needs when a checkout is let go. :) Out of the box, this task sends customers a recovery link, with an emails subject and message that you can easily customize.
 
-* View in the task library: [usemechanic.com/task/abandoned-checkout-emails](https://usemechanic.com/task/abandoned-checkout-emails)
+* View in the task library: [tasks.mechanic.dev/abandoned-checkout-emails](https://tasks.mechanic.dev/abandoned-checkout-emails)
 * Task JSON, for direct import: [task.json](../../tasks/abandoned-checkout-emails.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -18,7 +18,7 @@ Roll your own abandoned checkout emails with this task – or, modify it to perf
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -29,7 +29,7 @@ shopify/checkouts/update
 shopify/orders/create
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -43,7 +43,7 @@ Please note! While the full checkout details are stored, it'll require some cust
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/abandoned-checkout-emails), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/abandoned-checkout-emails.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/abandoned-checkout-emails), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/abandoned-checkout-emails.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

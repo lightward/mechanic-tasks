@@ -4,7 +4,7 @@ Tags: Cancel, Fulfillment, Orders, Refunds
 
 This task monitors for new refunds. When a new refund changes an order's status to fully refunded, this task will cancel all fulfillments for that order. This task supports running manually, to cancel all fulfillments for refunded orders, across your store's order history.
 
-* View in the task library: [usemechanic.com/task/cancel-fulfillments-when-an-order-is-fully-refunded](https://usemechanic.com/task/cancel-fulfillments-when-an-order-is-fully-refunded)
+* View in the task library: [tasks.mechanic.dev/cancel-fulfillments-when-an-order-is-fully-refunded](https://tasks.mechanic.dev/cancel-fulfillments-when-an-order-is-fully-refunded)
 * Task JSON, for direct import: [task.json](../../tasks/cancel-fulfillments-when-an-order-is-fully-refunded.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -18,7 +18,7 @@ This task monitors for new refunds. When a new refund changes an order's status 
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -27,7 +27,7 @@ mechanic/user/trigger
 shopify/refunds/create
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -41,7 +41,7 @@ Configure this task to choose which fulfillment statuses Mechanic will look for.
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/cancel-fulfillments-when-an-order-is-fully-refunded), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/cancel-fulfillments-when-an-order-is-fully-refunded.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/cancel-fulfillments-when-an-order-is-fully-refunded), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/cancel-fulfillments-when-an-order-is-fully-refunded.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

@@ -4,7 +4,7 @@ Tags: Alert, Email, Fulfillment
 
 Using Fulfillment By Amazon for your business? Stay on top of your customer experience by getting notified whenever FBA is unable to fulfill your order.
 
-* View in the task library: [usemechanic.com/task/get-email-alerts-for-fba-failures](https://usemechanic.com/task/get-email-alerts-for-fba-failures)
+* View in the task library: [tasks.mechanic.dev/get-email-alerts-for-fba-failures](https://tasks.mechanic.dev/get-email-alerts-for-fba-failures)
 * Task JSON, for direct import: [task.json](../../tasks/get-email-alerts-for-fba-failures.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -18,7 +18,7 @@ Using Fulfillment By Amazon for your business? Stay on top of your customer expe
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -27,7 +27,7 @@ shopify/fulfillments/create
 shopify/fulfillments/update
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -35,7 +35,7 @@ Using Fulfillment By Amazon for your business? Stay on top of your customer expe
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/get-email-alerts-for-fba-failures), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/get-email-alerts-for-fba-failures.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/get-email-alerts-for-fba-failures), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/get-email-alerts-for-fba-failures.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

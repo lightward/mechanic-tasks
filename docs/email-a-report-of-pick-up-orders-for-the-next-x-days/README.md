@@ -4,7 +4,7 @@ Tags: Email, Orders, Pick-up
 
 Using Zapiet to track store pickups? This task filters for orders that are tagged by Zapiet for pickup, and emails you a report of how many orders are scheduled for each of the next few days. Useful for scanning the week ahead, and blacking out dates that are at capacity.
 
-* View in the task library: [usemechanic.com/task/email-a-report-of-pick-up-orders-for-the-next-x-days](https://usemechanic.com/task/email-a-report-of-pick-up-orders-for-the-next-x-days)
+* View in the task library: [tasks.mechanic.dev/email-a-report-of-pick-up-orders-for-the-next-x-days](https://tasks.mechanic.dev/email-a-report-of-pick-up-orders-for-the-next-x-days)
 * Task JSON, for direct import: [task.json](../../tasks/email-a-report-of-pick-up-orders-for-the-next-x-days.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -20,7 +20,7 @@ Using Zapiet to track store pickups? This task filters for orders that are tagge
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -29,7 +29,7 @@ mechanic/user/trigger
 mechanic/scheduler/daily
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -37,7 +37,7 @@ Using Zapiet to track store pickups? This task filters for orders that are tagge
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/email-a-report-of-pick-up-orders-for-the-next-x-days), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-a-report-of-pick-up-orders-for-the-next-x-days.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/email-a-report-of-pick-up-orders-for-the-next-x-days), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-a-report-of-pick-up-orders-for-the-next-x-days.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

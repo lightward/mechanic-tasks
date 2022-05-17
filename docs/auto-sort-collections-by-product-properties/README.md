@@ -4,7 +4,7 @@ Tags: Collections, Products, Sort
 
 This task re-sorts your collections by any product property that you choose. A property lookup can be something simple, like "published_at", or more complicated: use multiple property lookups, like "metafields", "store", and "priority", to sort collections by product metafield values.
 
-* View in the task library: [usemechanic.com/task/auto-sort-collections-by-product-properties](https://usemechanic.com/task/auto-sort-collections-by-product-properties)
+* View in the task library: [tasks.mechanic.dev/auto-sort-collections-by-product-properties](https://tasks.mechanic.dev/auto-sort-collections-by-product-properties)
 * Task JSON, for direct import: [task.json](../../tasks/auto-sort-collections-by-product-properties.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -22,7 +22,7 @@ This task re-sorts your collections by any product property that you choose. A p
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -32,7 +32,7 @@ mechanic/user/trigger
 {% if options.run_daily__boolean %}mechanic/scheduler/daily{% endif %}
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -50,7 +50,7 @@ The collections used with this task must be configured for manual sorting. [Lear
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-sort-collections-by-product-properties), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-sort-collections-by-product-properties.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-sort-collections-by-product-properties), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-sort-collections-by-product-properties.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

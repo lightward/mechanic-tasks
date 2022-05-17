@@ -4,7 +4,7 @@ Tags: Auto-Tag, Cart Attributes, Orders
 
 Use this task to automatically categorize orders based on the cart attributes configured before checkout. Useful if you allow customers to supply extra information about their order, or if your cart has some hidden coding that adds cart attributes programatically.
 
-* View in the task library: [usemechanic.com/task/auto-tag-orders-based-on-cart-attributes](https://usemechanic.com/task/auto-tag-orders-based-on-cart-attributes)
+* View in the task library: [tasks.mechanic.dev/auto-tag-orders-based-on-cart-attributes](https://tasks.mechanic.dev/auto-tag-orders-based-on-cart-attributes)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-orders-based-on-cart-attributes.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -17,7 +17,7 @@ Use this task to automatically categorize orders based on the cart attributes co
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -25,7 +25,7 @@ Use this task to automatically categorize orders based on the cart attributes co
 shopify/orders/create
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -37,7 +37,7 @@ Configure the "Cart attribute values and order tags to add" option with an attri
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-orders-based-on-cart-attributes), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-orders-based-on-cart-attributes.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-orders-based-on-cart-attributes), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-orders-based-on-cart-attributes.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

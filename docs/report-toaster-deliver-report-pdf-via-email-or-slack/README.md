@@ -4,7 +4,7 @@ Tags: Email, PDF, Report, Report Toaster, Slack
 
 This task demonstrates how a report can be requested from Report Toaster as a PDF. Once delivered, it is emailed to one or more recipients and/or sent to a Slack channel.
 
-* View in the task library: [usemechanic.com/task/report-toaster-deliver-report-pdf-via-email-or-slack](https://usemechanic.com/task/report-toaster-deliver-report-pdf-via-email-or-slack)
+* View in the task library: [tasks.mechanic.dev/report-toaster-deliver-report-pdf-via-email-or-slack](https://tasks.mechanic.dev/report-toaster-deliver-report-pdf-via-email-or-slack)
 * Task JSON, for direct import: [task.json](../../tasks/report-toaster-deliver-report-pdf-via-email-or-slack.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -20,7 +20,7 @@ This task demonstrates how a report can be requested from Report Toaster as a PD
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -32,7 +32,7 @@ mechanic/user/trigger
 report_toaster/reports/create
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -48,7 +48,7 @@ The task can be run manually, or optionally, set to run as a daily report by che
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/report-toaster-deliver-report-pdf-via-email-or-slack), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/report-toaster-deliver-report-pdf-via-email-or-slack.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/report-toaster-deliver-report-pdf-via-email-or-slack), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/report-toaster-deliver-report-pdf-via-email-or-slack.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

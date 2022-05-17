@@ -4,7 +4,7 @@ Tags: Auto-Tag, Customers
 
 This task monitors customer accounts, and applies the tag of your choice to customers that have an enabled account, with a registered email address and active password. It untags customers whose accounts are disabled. This task can be run manually to tag/untag all existing customers.
 
-* View in the task library: [usemechanic.com/task/auto-tag-customers-with-who-have-accounts](https://usemechanic.com/task/auto-tag-customers-with-who-have-accounts)
+* View in the task library: [tasks.mechanic.dev/auto-tag-customers-with-who-have-accounts](https://tasks.mechanic.dev/auto-tag-customers-with-who-have-accounts)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-customers-with-who-have-accounts.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -17,7 +17,7 @@ This task monitors customer accounts, and applies the tag of your choice to cust
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -27,7 +27,7 @@ shopify/customers/update
 mechanic/user/trigger
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -41,7 +41,7 @@ Use test mode to have this task return information about what actions it would n
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-customers-with-who-have-accounts), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-customers-with-who-have-accounts.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-customers-with-who-have-accounts), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-customers-with-who-have-accounts.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

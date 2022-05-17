@@ -4,7 +4,7 @@ Tags: Customers, IFTTT
 
 Send yourself a text message, or blink your lights, or do whatever you like! This task is an example, more than anything, of what you can do by connecting Mechanic and IFTTT. Follow our guide (in the task documentation) to learn how to set up text message alerts for customer signups, and then customize any and every part of this task to your liking.
 
-* View in the task library: [usemechanic.com/task/send-new-customer-signups-to-ifttt](https://usemechanic.com/task/send-new-customer-signups-to-ifttt)
+* View in the task library: [tasks.mechanic.dev/send-new-customer-signups-to-ifttt](https://tasks.mechanic.dev/send-new-customer-signups-to-ifttt)
 * Task JSON, for direct import: [task.json](../../tasks/send-new-customer-signups-to-ifttt.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -20,7 +20,7 @@ Send yourself a text message, or blink your lights, or do whatever you like! Thi
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -28,7 +28,7 @@ Send yourself a text message, or blink your lights, or do whatever you like! Thi
 shopify/customers/create
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -40,7 +40,7 @@ If you want to get started more directly, just fill in your IFTTT key, available
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/send-new-customer-signups-to-ifttt), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/send-new-customer-signups-to-ifttt.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/send-new-customer-signups-to-ifttt), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/send-new-customer-signups-to-ifttt.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

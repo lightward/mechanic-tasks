@@ -4,7 +4,7 @@ Tags: Orders, Payment
 
 This task runs immediately after an order is created, and captures an authorized transaction if one is present. Choose which risk levels to capture for, and optionally choose to filter by order tag. You may also choose to only capture funds for line items that do not require shipping.
 
-* View in the task library: [usemechanic.com/task/auto-capture-payments-when-an-order-is-created](https://usemechanic.com/task/auto-capture-payments-when-an-order-is-created)
+* View in the task library: [tasks.mechanic.dev/auto-capture-payments-when-an-order-is-created](https://tasks.mechanic.dev/auto-capture-payments-when-an-order-is-created)
 * Task JSON, for direct import: [task.json](../../tasks/auto-capture-payments-when-an-order-is-created.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -21,7 +21,7 @@ This task runs immediately after an order is created, and captures an authorized
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -31,7 +31,7 @@ This task runs immediately after an order is created, and captures an authorized
 shopify/orders/create{% if n != blank and n > 0 %}+{{ n }}.minutes{% endif %}
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -41,7 +41,7 @@ This task runs immediately after an order is created. If you are selectively cap
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-capture-payments-when-an-order-is-created), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-capture-payments-when-an-order-is-created.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-capture-payments-when-an-order-is-created), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-capture-payments-when-an-order-is-created.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

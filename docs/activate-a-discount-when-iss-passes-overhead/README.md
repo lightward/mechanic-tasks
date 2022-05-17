@@ -4,7 +4,7 @@ Tags: Discounts, Schedule
 
 You know what's worth celebrating? SPACE. Use this task to activate a discount code every time the International Space Station passes over your store (or some other location of your choice), powered by Mechanic webhooks, IFTTT, and NASA. 🚀
 
-* View in the task library: [usemechanic.com/task/activate-a-discount-when-iss-passes-overhead](https://usemechanic.com/task/activate-a-discount-when-iss-passes-overhead)
+* View in the task library: [tasks.mechanic.dev/activate-a-discount-when-iss-passes-overhead](https://tasks.mechanic.dev/activate-a-discount-when-iss-passes-overhead)
 * Task JSON, for direct import: [task.json](../../tasks/activate-a-discount-when-iss-passes-overhead.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -18,7 +18,7 @@ You know what's worth celebrating? SPACE. Use this task to activate a discount c
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -26,7 +26,7 @@ You know what's worth celebrating? SPACE. Use this task to activate a discount c
 user/space/iss
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -45,7 +45,7 @@ That's it! :) Every time the ISS arrives at your location, this task will activa
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/activate-a-discount-when-iss-passes-overhead), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/activate-a-discount-when-iss-passes-overhead.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/activate-a-discount-when-iss-passes-overhead), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/activate-a-discount-when-iss-passes-overhead.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

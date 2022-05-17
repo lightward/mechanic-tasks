@@ -4,7 +4,7 @@ Tags: Collections, Inventory
 
 Use this task to automatically switch collections over to an appropriate theme template, when every product in the collection has gone completely out of stock, and to switch them back when inventory arrives.
 
-* View in the task library: [usemechanic.com/task/manage-collection-templates-by-product-inventory](https://usemechanic.com/task/manage-collection-templates-by-product-inventory)
+* View in the task library: [tasks.mechanic.dev/manage-collection-templates-by-product-inventory](https://tasks.mechanic.dev/manage-collection-templates-by-product-inventory)
 * Task JSON, for direct import: [task.json](../../tasks/manage-collection-templates-by-product-inventory.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -20,7 +20,7 @@ Use this task to automatically switch collections over to an appropriate theme t
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -32,7 +32,7 @@ mechanic/user/trigger
 mechanic/shopify/bulk_operation
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -42,7 +42,7 @@ This task can be run manually (using the "Run task" button), or be configured to
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/manage-collection-templates-by-product-inventory), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/manage-collection-templates-by-product-inventory.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/manage-collection-templates-by-product-inventory), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/manage-collection-templates-by-product-inventory.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

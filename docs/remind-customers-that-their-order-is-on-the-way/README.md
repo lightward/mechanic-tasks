@@ -4,7 +4,7 @@ Tags: Email, Reminder, Shipping
 
 Do you ship custom items, or do you have a lengthy turnaround time on your orders? Use this task to automatically re-assure customers that their order is in the queue, to be shipped as soon as possible. By default, this task sends an email 10 days (or a number you configure) after the order is paid, as long as the order remains fully paid, unfulfilled, and un-cancelled. Optionally, configure tags to add to the order and/or customer, to be added when the email is sent, and choose whether to only send reminders on weekdays.
 
-* View in the task library: [usemechanic.com/task/remind-customers-that-their-order-is-on-the-way](https://usemechanic.com/task/remind-customers-that-their-order-is-on-the-way)
+* View in the task library: [tasks.mechanic.dev/remind-customers-that-their-order-is-on-the-way](https://tasks.mechanic.dev/remind-customers-that-their-order-is-on-the-way)
 * Task JSON, for direct import: [task.json](../../tasks/remind-customers-that-their-order-is-on-the-way.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -21,7 +21,7 @@ Do you ship custom items, or do you have a lengthy turnaround time on your order
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -30,7 +30,7 @@ shopify/orders/paid
 user/order/customer_reminder
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -42,7 +42,7 @@ Note: When the "Only send reminders on weekdays" option is chosen, any emails th
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/remind-customers-that-their-order-is-on-the-way), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/remind-customers-that-their-order-is-on-the-way.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/remind-customers-that-their-order-is-on-the-way), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/remind-customers-that-their-order-is-on-the-way.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

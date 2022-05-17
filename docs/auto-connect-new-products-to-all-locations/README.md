@@ -4,7 +4,7 @@ Tags: Inventory, Multi-Location, Products
 
 Using Shopify's multi-locations feature, and importing products in bulk? Use this task to automatically connect each new product to every location for your store.
 
-* View in the task library: [usemechanic.com/task/auto-connect-new-products-to-all-locations](https://usemechanic.com/task/auto-connect-new-products-to-all-locations)
+* View in the task library: [tasks.mechanic.dev/auto-connect-new-products-to-all-locations](https://tasks.mechanic.dev/auto-connect-new-products-to-all-locations)
 * Task JSON, for direct import: [task.json](../../tasks/auto-connect-new-products-to-all-locations.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -17,7 +17,7 @@ Using Shopify's multi-locations feature, and importing products in bulk? Use thi
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -25,7 +25,7 @@ Using Shopify's multi-locations feature, and importing products in bulk? Use thi
 shopify/products/create
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -33,7 +33,7 @@ Using Shopify's multi-locations feature, and importing products in bulk? Use thi
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-connect-new-products-to-all-locations), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-connect-new-products-to-all-locations.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-connect-new-products-to-all-locations), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-connect-new-products-to-all-locations.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

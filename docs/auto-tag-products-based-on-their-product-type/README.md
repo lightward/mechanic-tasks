@@ -4,7 +4,7 @@ Tags: Auto-Tag, Products
 
 This task monitors new and updated products, applying the tag(s) of your choice to them based on their individual product type. Run this task manually to tag all of your products at once.
 
-* View in the task library: [usemechanic.com/task/auto-tag-products-based-on-their-product-type](https://usemechanic.com/task/auto-tag-products-based-on-their-product-type)
+* View in the task library: [tasks.mechanic.dev/auto-tag-products-based-on-their-product-type](https://tasks.mechanic.dev/auto-tag-products-based-on-their-product-type)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-products-based-on-their-product-type.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -17,7 +17,7 @@ This task monitors new and updated products, applying the tag(s) of your choice 
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -27,7 +27,7 @@ shopify/products/update
 mechanic/user/trigger
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -37,7 +37,7 @@ Configure the "Product types and tags" option with product types on the left, an
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-products-based-on-their-product-type), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-products-based-on-their-product-type.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-products-based-on-their-product-type), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-products-based-on-their-product-type.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

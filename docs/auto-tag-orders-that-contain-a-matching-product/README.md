@@ -4,7 +4,7 @@ Tags: Auto-Tag, Orders, Products
 
 This task watches for incoming orders, and tags them if they contain a product that matches by title or by product tags. Additionally, edited orders will have tags added or removed in line with product additions or removals. Run this task manually to scan your store's order history, tagging older orders that qualify, and untagging those that have been edited and no longer do.
 
-* View in the task library: [usemechanic.com/task/auto-tag-orders-that-contain-a-matching-product](https://usemechanic.com/task/auto-tag-orders-that-contain-a-matching-product)
+* View in the task library: [tasks.mechanic.dev/auto-tag-orders-that-contain-a-matching-product](https://tasks.mechanic.dev/auto-tag-orders-that-contain-a-matching-product)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-orders-that-contain-a-matching-product.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -18,7 +18,7 @@ This task watches for incoming orders, and tags them if they contain a product t
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -29,7 +29,7 @@ mechanic/user/trigger
 mechanic/shopify/bulk_operation
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -39,7 +39,7 @@ Note: If more than one required product tag is specified, this task will look fo
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-orders-that-contain-a-matching-product), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-orders-that-contain-a-matching-product.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-orders-that-contain-a-matching-product), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-orders-that-contain-a-matching-product.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

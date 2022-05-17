@@ -4,7 +4,7 @@ Tags: Customers, Reminder, Schedule, Unpaid
 
 This task wait for a configurable number of days (or hours!) after an order placed, and – if the order is still unpaid – emails the customer, and optionally adds a tag to the order. This task only sends one email – it does not send repeating reminders.
 
-* View in the task library: [usemechanic.com/task/remind-customers-after-x-days-about-unpaid-orders](https://usemechanic.com/task/remind-customers-after-x-days-about-unpaid-orders)
+* View in the task library: [tasks.mechanic.dev/remind-customers-after-x-days-about-unpaid-orders](https://tasks.mechanic.dev/remind-customers-after-x-days-about-unpaid-orders)
 * Task JSON, for direct import: [task.json](../../tasks/remind-customers-after-x-days-about-unpaid-orders.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -20,7 +20,7 @@ This task wait for a configurable number of days (or hours!) after an order plac
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -28,7 +28,7 @@ This task wait for a configurable number of days (or hours!) after an order plac
 shopify/orders/create+{{ options.number_of_days_to_wait__number_required | default: 7 }}.{% if options.use_hours_instead_of_days__boolean %}hours{% else %}days{% endif %}
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -36,7 +36,7 @@ This task wait for a configurable number of days (or hours!) after an order plac
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/remind-customers-after-x-days-about-unpaid-orders), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/remind-customers-after-x-days-about-unpaid-orders.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/remind-customers-after-x-days-about-unpaid-orders), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/remind-customers-after-x-days-about-unpaid-orders.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

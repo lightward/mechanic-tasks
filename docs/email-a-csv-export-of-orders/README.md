@@ -4,7 +4,7 @@ Tags: CSV, Email, Export, Orders
 
 Use this task to generate and email a CSV of orders, including one row per line item. Filter with a search query or by tags, and auto-tag orders as they're exported. Run the export on demand, and/or nightly. This task is also useful as a template for further development.
 
-* View in the task library: [usemechanic.com/task/email-a-csv-export-of-orders](https://usemechanic.com/task/email-a-csv-export-of-orders)
+* View in the task library: [tasks.mechanic.dev/email-a-csv-export-of-orders](https://tasks.mechanic.dev/email-a-csv-export-of-orders)
 * Task JSON, for direct import: [task.json](../../tasks/email-a-csv-export-of-orders.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -23,7 +23,7 @@ Use this task to generate and email a CSV of orders, including one row per line 
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -32,7 +32,7 @@ mechanic/user/trigger
 {% if options.run_export_nightly__boolean %}mechanic/scheduler/daily{% endif %}
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -40,7 +40,7 @@ Use this task to generate and email a CSV of orders, including one row per line 
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/email-a-csv-export-of-orders), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-a-csv-export-of-orders.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/email-a-csv-export-of-orders), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-a-csv-export-of-orders.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

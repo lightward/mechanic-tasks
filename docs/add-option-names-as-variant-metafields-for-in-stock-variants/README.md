@@ -4,7 +4,7 @@ Tags: In stock, Metafields, Online Store 2.0, Variants
 
 This task populates variant metafields with your desired variant options for use by Online Store 2.0 filtering, taking into account whether or not a variant has inventory available for sale online. It runs when inventory levels are updated, and may also be run manually to scan all variants in your shop.
 
-* View in the task library: [usemechanic.com/task/add-option-names-as-variant-metafields-for-in-stock-variants](https://usemechanic.com/task/add-option-names-as-variant-metafields-for-in-stock-variants)
+* View in the task library: [tasks.mechanic.dev/add-option-names-as-variant-metafields-for-in-stock-variants](https://tasks.mechanic.dev/add-option-names-as-variant-metafields-for-in-stock-variants)
 * Task JSON, for direct import: [task.json](../../tasks/add-option-names-as-variant-metafields-for-in-stock-variants.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -17,7 +17,7 @@ This task populates variant metafields with your desired variant options for use
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -27,7 +27,7 @@ mechanic/user/trigger
 mechanic/shopify/bulk_operation
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -39,7 +39,7 @@ __Important:__ To use OS 2.0 collection and search filtering, you must configure
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/add-option-names-as-variant-metafields-for-in-stock-variants), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/add-option-names-as-variant-metafields-for-in-stock-variants.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/add-option-names-as-variant-metafields-for-in-stock-variants), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/add-option-names-as-variant-metafields-for-in-stock-variants.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

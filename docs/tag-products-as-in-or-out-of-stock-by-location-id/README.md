@@ -4,7 +4,7 @@ Tags: Auto-Tag, In stock, Location, Multi-Location, Out of Stock
 
 Use this task to easily keep an eye on which products are in stock, or out of stock, as established by individual locations. Configure tag prefixes and suffixes to arrive at product tags resembling "location-123456890-instock" or "oos-123456890". Configure this task to run hourly or daily, to keep these tags in sync.
 
-* View in the task library: [usemechanic.com/task/tag-products-as-in-or-out-of-stock-by-location-id](https://usemechanic.com/task/tag-products-as-in-or-out-of-stock-by-location-id)
+* View in the task library: [tasks.mechanic.dev/tag-products-as-in-or-out-of-stock-by-location-id](https://tasks.mechanic.dev/tag-products-as-in-or-out-of-stock-by-location-id)
 * Task JSON, for direct import: [task.json](../../tasks/tag-products-as-in-or-out-of-stock-by-location-id.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -21,7 +21,7 @@ Use this task to easily keep an eye on which products are in stock, or out of st
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -36,7 +36,7 @@ mechanic/shopify/bulk_operation
 {% endif %}
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -44,7 +44,7 @@ Use this task to easily keep an eye on which products are in stock, or out of st
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/tag-products-as-in-or-out-of-stock-by-location-id), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/tag-products-as-in-or-out-of-stock-by-location-id.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/tag-products-as-in-or-out-of-stock-by-location-id), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/tag-products-as-in-or-out-of-stock-by-location-id.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

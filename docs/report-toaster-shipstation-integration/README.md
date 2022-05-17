@@ -4,7 +4,7 @@ Tags: Costs, External API, Integration, Report Toaster, Shipping
 
 This task integrates Report Toaster and ShipStation. On order fulfillment, Mechanic calls the ShipStation API to retrieve the shipping cost, and this cost is sent to Report Toaster.
 
-* View in the task library: [usemechanic.com/task/report-toaster-shipstation-integration](https://usemechanic.com/task/report-toaster-shipstation-integration)
+* View in the task library: [tasks.mechanic.dev/report-toaster-shipstation-integration](https://tasks.mechanic.dev/report-toaster-shipstation-integration)
 * Task JSON, for direct import: [task.json](../../tasks/report-toaster-shipstation-integration.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -17,7 +17,7 @@ This task integrates Report Toaster and ShipStation. On order fulfillment, Mecha
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -27,7 +27,7 @@ mechanic/actions/perform
 mechanic/user/text
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -47,7 +47,7 @@ See the [Mechanic documentation for Report Toaster](https://learn.mechanic.dev/p
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/report-toaster-shipstation-integration), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/report-toaster-shipstation-integration.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/report-toaster-shipstation-integration), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/report-toaster-shipstation-integration.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

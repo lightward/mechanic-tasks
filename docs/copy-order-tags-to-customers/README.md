@@ -4,7 +4,7 @@ Tags: Auto-Tag, Customers
 
 Run this task to scan all of your customers and their order histories in bulk, copying order and/or product tags to the relevant customer. Optionally, configure a specific set of tags to look for, when scanning. Optionally, choose to remove those tags if a qualifying source can't be found - useful for adding customer tags that expire after ordering!
 
-* View in the task library: [usemechanic.com/task/copy-order-tags-to-customers](https://usemechanic.com/task/copy-order-tags-to-customers)
+* View in the task library: [tasks.mechanic.dev/copy-order-tags-to-customers](https://tasks.mechanic.dev/copy-order-tags-to-customers)
 * Task JSON, for direct import: [task.json](../../tasks/copy-order-tags-to-customers.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -22,7 +22,7 @@ Run this task to scan all of your customers and their order histories in bulk, c
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -35,7 +35,7 @@ mechanic/user/trigger
 mechanic/shopify/bulk_operation
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -56,7 +56,7 @@ Note: the 31536000 value is a quantity of seconds; 31536000 is the number of sec
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/copy-order-tags-to-customers), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/copy-order-tags-to-customers.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/copy-order-tags-to-customers), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/copy-order-tags-to-customers.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

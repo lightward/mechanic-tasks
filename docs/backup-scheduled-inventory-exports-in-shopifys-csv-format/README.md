@@ -4,7 +4,7 @@ Tags: Backups, CSV, Export, FTP
 
 On a configurable schedule, this task generates a Shopify-friendly CSV of your inventory, and uploads it to the SFTP destination of your choice, and/or sends it via email. This is a convenient way to keep regular backups of your entire product inventory: simply import a CSV to restore your inventory to that point in time. ([Learn more about CSV imports and exports of Shopify inventory.](https://help.shopify.com/en/manual/locations/changing-quantities/exporting-or-importing-inventory))
 
-* View in the task library: [usemechanic.com/task/backup-scheduled-inventory-exports-in-shopifys-csv-format](https://usemechanic.com/task/backup-scheduled-inventory-exports-in-shopifys-csv-format)
+* View in the task library: [tasks.mechanic.dev/backup-scheduled-inventory-exports-in-shopifys-csv-format](https://tasks.mechanic.dev/backup-scheduled-inventory-exports-in-shopifys-csv-format)
 * Task JSON, for direct import: [task.json](../../tasks/backup-scheduled-inventory-exports-in-shopifys-csv-format.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -22,7 +22,7 @@ On a configurable schedule, this task generates a Shopify-friendly CSV of your i
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -36,7 +36,7 @@ mechanic/user/trigger
 mechanic/shopify/bulk_operation
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -46,7 +46,7 @@ To only export certain products, set the "Only export products matching this que
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/backup-scheduled-inventory-exports-in-shopifys-csv-format), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/backup-scheduled-inventory-exports-in-shopifys-csv-format.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/backup-scheduled-inventory-exports-in-shopifys-csv-format), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/backup-scheduled-inventory-exports-in-shopifys-csv-format.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

@@ -4,7 +4,7 @@ Tags: Auto-Tag, Order Attributes, Web Browser
 
 This task monitors incoming orders, and tags them with information about the customer's web browser.
 
-* View in the task library: [usemechanic.com/task/auto-tag-new-online-orders-by-web-browser](https://usemechanic.com/task/auto-tag-new-online-orders-by-web-browser)
+* View in the task library: [tasks.mechanic.dev/auto-tag-new-online-orders-by-web-browser](https://tasks.mechanic.dev/auto-tag-new-online-orders-by-web-browser)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-new-online-orders-by-web-browser.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -16,7 +16,7 @@ This task monitors incoming orders, and tags them with information about the cus
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -25,7 +25,7 @@ shopify/orders/create
 mechanic/user/trigger
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -37,7 +37,7 @@ Run this task manually to scan your existing orders, and tag them as appropriate
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-new-online-orders-by-web-browser), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-new-online-orders-by-web-browser.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-new-online-orders-by-web-browser), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-new-online-orders-by-web-browser.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

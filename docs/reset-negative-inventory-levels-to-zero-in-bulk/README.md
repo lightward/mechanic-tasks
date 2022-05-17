@@ -4,7 +4,7 @@ Tags: Bulk, Inventory
 
 Super simple. Scans all inventory levels in your store, on demand, and brings the negative ones back up to zero. Optionally, configure this task to run nightly.
 
-* View in the task library: [usemechanic.com/task/reset-negative-inventory-levels-to-zero-in-bulk](https://usemechanic.com/task/reset-negative-inventory-levels-to-zero-in-bulk)
+* View in the task library: [tasks.mechanic.dev/reset-negative-inventory-levels-to-zero-in-bulk](https://tasks.mechanic.dev/reset-negative-inventory-levels-to-zero-in-bulk)
 * Task JSON, for direct import: [task.json](../../tasks/reset-negative-inventory-levels-to-zero-in-bulk.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -16,7 +16,7 @@ Super simple. Scans all inventory levels in your store, on demand, and brings th
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -30,7 +30,7 @@ mechanic/user/trigger
 mechanic/shopify/bulk_operation
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -38,7 +38,7 @@ Super simple. Scans all inventory levels in your store, on demand, and brings th
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/reset-negative-inventory-levels-to-zero-in-bulk), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/reset-negative-inventory-levels-to-zero-in-bulk.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/reset-negative-inventory-levels-to-zero-in-bulk), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/reset-negative-inventory-levels-to-zero-in-bulk.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

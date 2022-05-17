@@ -4,7 +4,7 @@ Tags: Email, Loyalty, Retention
 
 Follow up with your customers – keep those relationships alive, and improve your returning customer rate, by emailing your customers after a few months of no order activity. By default, this task sends an email after 6 months of no order activity, and another 6 months after that.
 
-* View in the task library: [usemechanic.com/task/email-your-customers-after-a-quiet-period-of-no-orders](https://usemechanic.com/task/email-your-customers-after-a-quiet-period-of-no-orders)
+* View in the task library: [tasks.mechanic.dev/email-your-customers-after-a-quiet-period-of-no-orders](https://tasks.mechanic.dev/email-your-customers-after-a-quiet-period-of-no-orders)
 * Task JSON, for direct import: [task.json](../../tasks/email-your-customers-after-a-quiet-period-of-no-orders.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -17,7 +17,7 @@ Follow up with your customers – keep those relationships alive, and improve yo
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -26,7 +26,7 @@ shopify/orders/create+6.months
 shopify/orders/create+12.months
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -38,7 +38,7 @@ By default, this task will wait for 6 months of no order activity, and will then
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/email-your-customers-after-a-quiet-period-of-no-orders), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-your-customers-after-a-quiet-period-of-no-orders.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/email-your-customers-after-a-quiet-period-of-no-orders), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-your-customers-after-a-quiet-period-of-no-orders.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

@@ -4,7 +4,7 @@ Tags: Delete, Draft Orders, Schedule
 
 Keep your draft order list tidy - use this task to automatically delete orders that are older than a configurable number of days.
 
-* View in the task library: [usemechanic.com/task/delete-draft-orders-older-than-30-days](https://usemechanic.com/task/delete-draft-orders-older-than-30-days)
+* View in the task library: [tasks.mechanic.dev/delete-draft-orders-older-than-30-days](https://tasks.mechanic.dev/delete-draft-orders-older-than-30-days)
 * Task JSON, for direct import: [task.json](../../tasks/delete-draft-orders-older-than-30-days.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -18,7 +18,7 @@ Keep your draft order list tidy - use this task to automatically delete orders t
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -27,7 +27,7 @@ mechanic/user/trigger
 {% if options.run_daily__boolean %}mechanic/scheduler/daily{% endif %}
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -35,7 +35,7 @@ Keep your draft order list tidy - use this task to automatically delete orders t
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/delete-draft-orders-older-than-30-days), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/delete-draft-orders-older-than-30-days.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/delete-draft-orders-older-than-30-days), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/delete-draft-orders-older-than-30-days.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

@@ -4,7 +4,7 @@ Tags: Address, Email, Shipping, Vendor
 
 Keep customers happy by making sure your vendors have up-to-date shipping information. This keeps your vendors happy, too!
 
-* View in the task library: [usemechanic.com/task/email-vendors-when-an-order-shipping-address-changes](https://usemechanic.com/task/email-vendors-when-an-order-shipping-address-changes)
+* View in the task library: [tasks.mechanic.dev/email-vendors-when-an-order-shipping-address-changes](https://tasks.mechanic.dev/email-vendors-when-an-order-shipping-address-changes)
 * Task JSON, for direct import: [task.json](../../tasks/email-vendors-when-an-order-shipping-address-changes.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -21,7 +21,7 @@ Keep customers happy by making sure your vendors have up-to-date shipping inform
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -29,7 +29,7 @@ Keep customers happy by making sure your vendors have up-to-date shipping inform
 shopify/orders/updated
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -51,7 +51,7 @@ This task will start sending emails for orders that are created after the task w
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/email-vendors-when-an-order-shipping-address-changes), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-vendors-when-an-order-shipping-address-changes.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/email-vendors-when-an-order-shipping-address-changes), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-vendors-when-an-order-shipping-address-changes.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

@@ -4,7 +4,7 @@ Tags: Max Orders, Orders
 
 This task works by setting your inventory to zero when the order limit is reached. (Specifically, this means setting inventory levels to 0 for all items that have a greater-than-zero inventory level.) When the limit is reached, your inventory will be dropped to zero. If your store is configured to stop selling out-of-stock products, your customers will be prevented from making additional purchases.
 
-* View in the task library: [usemechanic.com/task/accept-a-maximum-number-of-orders-per-day](https://usemechanic.com/task/accept-a-maximum-number-of-orders-per-day)
+* View in the task library: [tasks.mechanic.dev/accept-a-maximum-number-of-orders-per-day](https://tasks.mechanic.dev/accept-a-maximum-number-of-orders-per-day)
 * Task JSON, for direct import: [task.json](../../tasks/accept-a-maximum-number-of-orders-per-day.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -20,7 +20,7 @@ This task works by setting your inventory to zero when the order limit is reache
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -36,7 +36,7 @@ shopify/orders/create
 {% endif %}
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -53,7 +53,7 @@ And, this task can restore inventory to its original levels at midnight the next
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/accept-a-maximum-number-of-orders-per-day), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/accept-a-maximum-number-of-orders-per-day.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/accept-a-maximum-number-of-orders-per-day), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/accept-a-maximum-number-of-orders-per-day.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

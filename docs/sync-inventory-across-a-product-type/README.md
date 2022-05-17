@@ -4,7 +4,7 @@ Tags: Inventory, Products, Sync
 
 Useful for custom orders, this task lets you offer multiple product and variant listings for what is ultimately the same stock. A purchase for a single product leads to the inventory for all other listings, of the same product type, being lowered by the amount ordered.
 
-* View in the task library: [usemechanic.com/task/sync-inventory-across-a-product-type](https://usemechanic.com/task/sync-inventory-across-a-product-type)
+* View in the task library: [tasks.mechanic.dev/sync-inventory-across-a-product-type](https://tasks.mechanic.dev/sync-inventory-across-a-product-type)
 * Task JSON, for direct import: [task.json](../../tasks/sync-inventory-across-a-product-type.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -16,7 +16,7 @@ Useful for custom orders, this task lets you offer multiple product and variant 
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -25,7 +25,7 @@ mechanic/user/trigger
 mechanic/scheduler/10min
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -45,7 +45,7 @@ Useful for custom orders, this task lets you offer multiple product and variant 
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/sync-inventory-across-a-product-type), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/sync-inventory-across-a-product-type.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/sync-inventory-across-a-product-type), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/sync-inventory-across-a-product-type.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

@@ -4,7 +4,7 @@ Tags: Email, Orders, Tag, Watch
 
 This task monitors order tags, and sends out an email that you configure whenever a certain tag is added. Supports email templates, and sending to custom recipients.
 
-* View in the task library: [usemechanic.com/task/trigger-order-emails-with-a-tag](https://usemechanic.com/task/trigger-order-emails-with-a-tag)
+* View in the task library: [tasks.mechanic.dev/trigger-order-emails-with-a-tag](https://tasks.mechanic.dev/trigger-order-emails-with-a-tag)
 * Task JSON, for direct import: [task.json](../../tasks/trigger-order-emails-with-a-tag.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -19,7 +19,7 @@ This task monitors order tags, and sends out an email that you configure wheneve
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -27,7 +27,7 @@ This task monitors order tags, and sends out an email that you configure wheneve
 shopify/orders/updated
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -47,7 +47,7 @@ To re-use your store's confirmation email template, or to use any other email te
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/trigger-order-emails-with-a-tag), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/trigger-order-emails-with-a-tag.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/trigger-order-emails-with-a-tag), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/trigger-order-emails-with-a-tag.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

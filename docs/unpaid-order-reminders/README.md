@@ -4,7 +4,7 @@ Tags: Email, Orders, Unpaid
 
 This task sends recurring unpaid order reminders to customers, emailing them on a configurable schedule, until the order is no longer "pending" or until the order is cancelled.
 
-* View in the task library: [usemechanic.com/task/unpaid-order-reminders](https://usemechanic.com/task/unpaid-order-reminders)
+* View in the task library: [tasks.mechanic.dev/unpaid-order-reminders](https://tasks.mechanic.dev/unpaid-order-reminders)
 * Task JSON, for direct import: [task.json](../../tasks/unpaid-order-reminders.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -25,7 +25,7 @@ This task sends recurring unpaid order reminders to customers, emailing them on 
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -33,7 +33,7 @@ This task sends recurring unpaid order reminders to customers, emailing them on 
 mechanic/scheduler/hourly
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -49,7 +49,7 @@ Use test mode to have this task report what emails it _would_ send, if test mode
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/unpaid-order-reminders), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/unpaid-order-reminders.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/unpaid-order-reminders), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/unpaid-order-reminders.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

@@ -4,7 +4,7 @@ Tags: Customers, Email, Tag, Watch
 
 Automatically send out an email to your customers when a tag is added to their account. Useful for sending approval emails, welcome emails if the customer was created with a certain tag, or any other emails related to an update to the customer's status. The most common use of this task is to send out emails to customers when their accounts are approved, but you can use this task to email customers any kind of alert you like, triggered by a simple tag. For example, some themes include an email subscription form that creates a customer record, pre-tagged with "email subscribe", or something to that effect.
 
-* View in the task library: [usemechanic.com/task/email-customers-when-tagged](https://usemechanic.com/task/email-customers-when-tagged)
+* View in the task library: [tasks.mechanic.dev/email-customers-when-tagged](https://tasks.mechanic.dev/email-customers-when-tagged)
 * Task JSON, for direct import: [task.json](../../tasks/email-customers-when-tagged.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -20,7 +20,7 @@ Automatically send out an email to your customers when a tag is added to their a
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -30,7 +30,7 @@ shopify/customers/update
 mechanic/user/trigger
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -42,7 +42,7 @@ Enable the "Autotag customers after emailing" option to have Mechanic add "YOURT
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/email-customers-when-tagged), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-customers-when-tagged.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/email-customers-when-tagged), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-customers-when-tagged.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

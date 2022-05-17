@@ -4,7 +4,7 @@ Tags: Cancel, Fulfillment, Tag, Watch
 
 Useful when you discover that an order shouldn't have been fulfilled at all. :) After choosing an order tag in this task's configuration, add that tag to any order to have its fulfillments all cancelled, and the tag removed.
 
-* View in the task library: [usemechanic.com/task/auto-cancel-fulfillments-when-an-order-is-tagged](https://usemechanic.com/task/auto-cancel-fulfillments-when-an-order-is-tagged)
+* View in the task library: [tasks.mechanic.dev/auto-cancel-fulfillments-when-an-order-is-tagged](https://tasks.mechanic.dev/auto-cancel-fulfillments-when-an-order-is-tagged)
 * Task JSON, for direct import: [task.json](../../tasks/auto-cancel-fulfillments-when-an-order-is-tagged.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -16,7 +16,7 @@ Useful when you discover that an order shouldn't have been fulfilled at all. :) 
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -25,7 +25,7 @@ shopify/orders/updated
 user/orders/cancel_fulfillment
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -41,7 +41,7 @@ Notes:
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-cancel-fulfillments-when-an-order-is-tagged), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-cancel-fulfillments-when-an-order-is-tagged.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-cancel-fulfillments-when-an-order-is-tagged), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-cancel-fulfillments-when-an-order-is-tagged.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

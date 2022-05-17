@@ -4,7 +4,7 @@ Tags: Demonstration, Integration, Shopify Flow
 
 This task demonstrates how to use the four Mechanic Shopify Flow triggers: General, Customer, Product, and Order.
 
-* View in the task library: [usemechanic.com/task/demonstration-shopify-flow-integration](https://usemechanic.com/task/demonstration-shopify-flow-integration)
+* View in the task library: [tasks.mechanic.dev/demonstration-shopify-flow-integration](https://tasks.mechanic.dev/demonstration-shopify-flow-integration)
 * Task JSON, for direct import: [task.json](../../tasks/demonstration-shopify-flow-integration.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -19,7 +19,7 @@ This task demonstrates how to use the four Mechanic Shopify Flow triggers: Gener
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -32,7 +32,7 @@ user/flow/product
 user/flow/general
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -44,7 +44,7 @@ We demonstrate subscribing to an event topic fired by a Shopify Flow action. You
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/demonstration-shopify-flow-integration), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/demonstration-shopify-flow-integration.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/demonstration-shopify-flow-integration), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/demonstration-shopify-flow-integration.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

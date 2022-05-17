@@ -4,7 +4,7 @@ Tags: Inventory, Products, Sync
 
 Useful for selling, say, a limited print with different framing options, this task makes sure that a product's inventory levels, for each variant and location, are all kept in sync.
 
-* View in the task library: [usemechanic.com/task/keep-inventory-levels-in-sync-within-products](https://usemechanic.com/task/keep-inventory-levels-in-sync-within-products)
+* View in the task library: [tasks.mechanic.dev/keep-inventory-levels-in-sync-within-products](https://tasks.mechanic.dev/keep-inventory-levels-in-sync-within-products)
 * Task JSON, for direct import: [task.json](../../tasks/keep-inventory-levels-in-sync-within-products.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -17,7 +17,7 @@ Useful for selling, say, a limited print with different framing options, this ta
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -25,7 +25,7 @@ Useful for selling, say, a limited print with different framing options, this ta
 shopify/inventory_levels/update
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -41,7 +41,7 @@ Changes to multiple inventory items for a single product, within the span of 60 
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/keep-inventory-levels-in-sync-within-products), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/keep-inventory-levels-in-sync-within-products.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/keep-inventory-levels-in-sync-within-products), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/keep-inventory-levels-in-sync-within-products.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

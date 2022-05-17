@@ -4,7 +4,7 @@ Tags: Auto-Tag, Customers, Products
 
 When orders come in, use this task to copy product tags from the order to the customer on file. Useful for automatically segmenting your customers based on attributes of their purchases. To keep things tidy, optionally configure this task to only look for a certain set of tags. This task supports running manually, to scan and tag all customers based on their order history, or a subset of customers by using a query filter.
 
-* View in the task library: [usemechanic.com/task/tag-customers-with-product-tags-from-their-order](https://usemechanic.com/task/tag-customers-with-product-tags-from-their-order)
+* View in the task library: [tasks.mechanic.dev/tag-customers-with-product-tags-from-their-order](https://tasks.mechanic.dev/tag-customers-with-product-tags-from-their-order)
 * Task JSON, for direct import: [task.json](../../tasks/tag-customers-with-product-tags-from-their-order.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -17,7 +17,7 @@ When orders come in, use this task to copy product tags from the order to the cu
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -27,7 +27,7 @@ mechanic/user/trigger
 mechanic/shopify/bulk_operation
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -43,7 +43,7 @@ orders_count:>1
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/tag-customers-with-product-tags-from-their-order), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/tag-customers-with-product-tags-from-their-order.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/tag-customers-with-product-tags-from-their-order), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/tag-customers-with-product-tags-from-their-order.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

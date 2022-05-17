@@ -4,7 +4,7 @@ Tags: Auto-Tag, Products, Publish
 
 This task manages tagging for products, according to whether or not they're published for the sales channel of your choice. Choose a tag to use when the product is published, and/or a tag for when the product is unpublished.
 
-* View in the task library: [usemechanic.com/task/auto-tag-products-based-on-their-publishing-status](https://usemechanic.com/task/auto-tag-products-based-on-their-publishing-status)
+* View in the task library: [tasks.mechanic.dev/auto-tag-products-based-on-their-publishing-status](https://tasks.mechanic.dev/auto-tag-products-based-on-their-publishing-status)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-products-based-on-their-publishing-status.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -21,7 +21,7 @@ This task manages tagging for products, according to whether or not they're publ
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -37,7 +37,7 @@ mechanic/user/trigger
 {% endif %}
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -47,7 +47,7 @@ Run this task manually to scan and update your entire product catalog, on demand
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-products-based-on-their-publishing-status), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-products-based-on-their-publishing-status.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-products-based-on-their-publishing-status), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-products-based-on-their-publishing-status.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

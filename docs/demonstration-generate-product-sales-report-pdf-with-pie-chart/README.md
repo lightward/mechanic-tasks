@@ -4,7 +4,7 @@ Tags: Demonstration, PDF, Report
 
 This task demonstrates how a product sales report can be generated as PDF and emailed to one or more recipients. It also shows how charts can be embedded in the PDF report using a 3rd party library like [ChartJS](https://www.chartjs.org/).
 
-* View in the task library: [usemechanic.com/task/demonstration-generate-product-sales-report-pdf-with-pie-chart](https://usemechanic.com/task/demonstration-generate-product-sales-report-pdf-with-pie-chart)
+* View in the task library: [tasks.mechanic.dev/demonstration-generate-product-sales-report-pdf-with-pie-chart](https://tasks.mechanic.dev/demonstration-generate-product-sales-report-pdf-with-pie-chart)
 * Task JSON, for direct import: [task.json](../../tasks/demonstration-generate-product-sales-report-pdf-with-pie-chart.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -25,7 +25,7 @@ This task demonstrates how a product sales report can be generated as PDF and em
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -37,7 +37,7 @@ mechanic/user/trigger
 mechanic/shopify/bulk_operation
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -60,7 +60,7 @@ Note: For shops with a high frequency of orders and/or a very large product cata
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/demonstration-generate-product-sales-report-pdf-with-pie-chart), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/demonstration-generate-product-sales-report-pdf-with-pie-chart.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/demonstration-generate-product-sales-report-pdf-with-pie-chart), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/demonstration-generate-product-sales-report-pdf-with-pie-chart.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

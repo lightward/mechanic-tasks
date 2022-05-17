@@ -4,7 +4,7 @@ Tags: Schedule, Untag
 
 Use this this task to monitor for the addition of a new customer tag, and to schedule the customer to be untagged some number of days later. Useful for granting temporary access to discounts, or other resources.
 
-* View in the task library: [usemechanic.com/task/auto-remove-a-customer-tag-x-days-after-its-added](https://usemechanic.com/task/auto-remove-a-customer-tag-x-days-after-its-added)
+* View in the task library: [tasks.mechanic.dev/auto-remove-a-customer-tag-x-days-after-its-added](https://tasks.mechanic.dev/auto-remove-a-customer-tag-x-days-after-its-added)
 * Task JSON, for direct import: [task.json](../../tasks/auto-remove-a-customer-tag-x-days-after-its-added.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -17,7 +17,7 @@ Use this this task to monitor for the addition of a new customer tag, and to sch
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -26,7 +26,7 @@ shopify/customers/update
 user/task/untag_customer
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -40,7 +40,7 @@ Important note: To _prevent_ the task from untagging the customer later, manuall
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-remove-a-customer-tag-x-days-after-its-added), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-remove-a-customer-tag-x-days-after-its-added.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-remove-a-customer-tag-x-days-after-its-added), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-remove-a-customer-tag-x-days-after-its-added.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

@@ -4,7 +4,7 @@ Tags: SKU
 
 Save time by letting this task keep your variant SKUs up to date, generating them based on your product handle, and the initials of each variant option. Optionally, choose to have the task skip updating variants that already have SKUs. Useful for large catalogs, or for anyone who has a consistent SKU format.
 
-* View in the task library: [usemechanic.com/task/auto-generate-skus](https://usemechanic.com/task/auto-generate-skus)
+* View in the task library: [tasks.mechanic.dev/auto-generate-skus](https://tasks.mechanic.dev/auto-generate-skus)
 * Task JSON, for direct import: [task.json](../../tasks/auto-generate-skus.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -17,7 +17,7 @@ Save time by letting this task keep your variant SKUs up to date, generating the
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -26,7 +26,7 @@ shopify/products/create
 shopify/products/update
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -53,7 +53,7 @@ To update your product handle, so as to control the first portion of generated S
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-generate-skus), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-generate-skus.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-generate-skus), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-generate-skus.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

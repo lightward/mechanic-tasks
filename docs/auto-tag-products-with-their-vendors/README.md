@@ -4,7 +4,7 @@ Tags: Auto-Tag, Products, Vendor
 
 Use this task to copy each product's vendor to the product's tag. Optionally, you can apply a prefix to all vendor tags (e.g. "vendor-"). Run this task manually to scan every product in your store. Otherwise, this task will run for specific products, whenever a product is created or updated.
 
-* View in the task library: [usemechanic.com/task/auto-tag-products-with-their-vendors](https://usemechanic.com/task/auto-tag-products-with-their-vendors)
+* View in the task library: [tasks.mechanic.dev/auto-tag-products-with-their-vendors](https://tasks.mechanic.dev/auto-tag-products-with-their-vendors)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-products-with-their-vendors.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -16,7 +16,7 @@ Use this task to copy each product's vendor to the product's tag. Optionally, yo
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -26,7 +26,7 @@ shopify/products/update
 mechanic/user/trigger
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -36,7 +36,7 @@ __Note__: When using the vendor tag prefix option, any tags on a product that co
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-products-with-their-vendors), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-products-with-their-vendors.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-products-with-their-vendors), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-products-with-their-vendors.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

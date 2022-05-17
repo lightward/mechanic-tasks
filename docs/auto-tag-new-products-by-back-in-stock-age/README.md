@@ -4,7 +4,7 @@ Tags: Auto-Tag, Metafields, Products, Watch
 
 This task monitors changes to inventory level, records the time at which a product's total inventory passes your configured threshold, and then maintains a set of tags indicating how recently the product returned to "back in stock" status.
 
-* View in the task library: [usemechanic.com/task/auto-tag-new-products-by-back-in-stock-age](https://usemechanic.com/task/auto-tag-new-products-by-back-in-stock-age)
+* View in the task library: [tasks.mechanic.dev/auto-tag-new-products-by-back-in-stock-age](https://tasks.mechanic.dev/auto-tag-new-products-by-back-in-stock-age)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-new-products-by-back-in-stock-age.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -23,7 +23,7 @@ This task monitors changes to inventory level, records the time at which a produ
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -37,7 +37,7 @@ mechanic/shopify/bulk_operation
 {% if options.run_hourly__boolean %}mechanic/scheduler/hourly{% endif %}
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -53,7 +53,7 @@ Configure "Product tags and maximum age in days" with product tags on the left, 
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-new-products-by-back-in-stock-age), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-new-products-by-back-in-stock-age.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-new-products-by-back-in-stock-age), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-new-products-by-back-in-stock-age.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

@@ -4,7 +4,7 @@ Tags: Alert, Customers, Email
 
 Use customer tags to assign staff email addresses to specific customers. When a new order arrives from a customer who has an assignment tag, this task will email the related staff member.
 
-* View in the task library: [usemechanic.com/task/email-someone-specific-based-on-a-new-orders-customer-tags](https://usemechanic.com/task/email-someone-specific-based-on-a-new-orders-customer-tags)
+* View in the task library: [tasks.mechanic.dev/email-someone-specific-based-on-a-new-orders-customer-tags](https://tasks.mechanic.dev/email-someone-specific-based-on-a-new-orders-customer-tags)
 * Task JSON, for direct import: [task.json](../../tasks/email-someone-specific-based-on-a-new-orders-customer-tags.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -18,7 +18,7 @@ Use customer tags to assign staff email addresses to specific customers. When a 
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -26,7 +26,7 @@ Use customer tags to assign staff email addresses to specific customers. When a 
 shopify/orders/create
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -36,7 +36,7 @@ Fill in the "Customer tags and assigned email recipients" option with customer t
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/email-someone-specific-based-on-a-new-orders-customer-tags), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-someone-specific-based-on-a-new-orders-customer-tags.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/email-someone-specific-based-on-a-new-orders-customer-tags), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-someone-specific-based-on-a-new-orders-customer-tags.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

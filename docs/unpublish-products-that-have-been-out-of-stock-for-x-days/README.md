@@ -4,7 +4,7 @@ Tags: Inventory, Products, Unpublish
 
 This task monitors for inventory changes, and records the time when a product's inventory falls to 0 or less. Then, on an hourly basis, the task will unpublish any products with a recorded out-of-stock time of at least x days ago.
 
-* View in the task library: [usemechanic.com/task/unpublish-products-that-have-been-out-of-stock-for-x-days](https://usemechanic.com/task/unpublish-products-that-have-been-out-of-stock-for-x-days)
+* View in the task library: [tasks.mechanic.dev/unpublish-products-that-have-been-out-of-stock-for-x-days](https://tasks.mechanic.dev/unpublish-products-that-have-been-out-of-stock-for-x-days)
 * Task JSON, for direct import: [task.json](../../tasks/unpublish-products-that-have-been-out-of-stock-for-x-days.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -21,7 +21,7 @@ This task monitors for inventory changes, and records the time when a product's 
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -30,7 +30,7 @@ shopify/inventory_levels/update
 mechanic/scheduler/hourly
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -46,7 +46,7 @@ Notes:
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/unpublish-products-that-have-been-out-of-stock-for-x-days), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/unpublish-products-that-have-been-out-of-stock-for-x-days.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/unpublish-products-that-have-been-out-of-stock-for-x-days), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/unpublish-products-that-have-been-out-of-stock-for-x-days.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

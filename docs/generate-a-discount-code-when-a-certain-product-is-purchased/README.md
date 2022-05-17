@@ -4,7 +4,7 @@ Tags: Discounts, Marketing, Products, Retention
 
 This task watches for newly-paid orders, and if the configured product is purchased, sends the customer a discount code that's just for them. Optionally, configure the discounts to only apply to a certain collection of products, and to only last for a certain number of days.
 
-* View in the task library: [usemechanic.com/task/generate-a-discount-code-when-a-certain-product-is-purchased](https://usemechanic.com/task/generate-a-discount-code-when-a-certain-product-is-purchased)
+* View in the task library: [tasks.mechanic.dev/generate-a-discount-code-when-a-certain-product-is-purchased](https://tasks.mechanic.dev/generate-a-discount-code-when-a-certain-product-is-purchased)
 * Task JSON, for direct import: [task.json](../../tasks/generate-a-discount-code-when-a-certain-product-is-purchased.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -25,7 +25,7 @@ This task watches for newly-paid orders, and if the configured product is purcha
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -33,7 +33,7 @@ This task watches for newly-paid orders, and if the configured product is purcha
 shopify/orders/paid
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -55,7 +55,7 @@ This task watches for newly-paid orders, and if the configured product is purcha
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/generate-a-discount-code-when-a-certain-product-is-purchased), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/generate-a-discount-code-when-a-certain-product-is-purchased.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/generate-a-discount-code-when-a-certain-product-is-purchased), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/generate-a-discount-code-when-a-certain-product-is-purchased.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

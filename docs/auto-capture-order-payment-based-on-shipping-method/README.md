@@ -4,7 +4,7 @@ Tags: Payment, Shipping
 
 This task auto-captures payment if the customer has selected a certain shipping method. Useful for expedited order fulfillments.
 
-* View in the task library: [usemechanic.com/task/auto-capture-order-payment-based-on-shipping-method](https://usemechanic.com/task/auto-capture-order-payment-based-on-shipping-method)
+* View in the task library: [tasks.mechanic.dev/auto-capture-order-payment-based-on-shipping-method](https://tasks.mechanic.dev/auto-capture-order-payment-based-on-shipping-method)
 * Task JSON, for direct import: [task.json](../../tasks/auto-capture-order-payment-based-on-shipping-method.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -16,7 +16,7 @@ This task auto-captures payment if the customer has selected a certain shipping 
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -24,7 +24,7 @@ This task auto-captures payment if the customer has selected a certain shipping 
 shopify/orders/create
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -36,7 +36,7 @@ For expected results, be sure to enable "Manually capture payment for orders" in
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-capture-order-payment-based-on-shipping-method), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-capture-order-payment-based-on-shipping-method.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-capture-order-payment-based-on-shipping-method), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-capture-order-payment-based-on-shipping-method.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

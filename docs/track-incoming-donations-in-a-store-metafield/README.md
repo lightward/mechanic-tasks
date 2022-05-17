@@ -4,7 +4,7 @@ Tags: Metafields, Products
 
 This task watches for orders for a certain donation product, and tallies up the total donation amount in a store metafield, allowing you to display this value in your online storefront.
 
-* View in the task library: [usemechanic.com/task/track-incoming-donations-in-a-store-metafield](https://usemechanic.com/task/track-incoming-donations-in-a-store-metafield)
+* View in the task library: [tasks.mechanic.dev/track-incoming-donations-in-a-store-metafield](https://tasks.mechanic.dev/track-incoming-donations-in-a-store-metafield)
 * Task JSON, for direct import: [task.json](../../tasks/track-incoming-donations-in-a-store-metafield.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -19,7 +19,7 @@ This task watches for orders for a certain donation product, and tallies up the 
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -32,7 +32,7 @@ shopify/orders/create
 shopify/orders/paid
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -42,7 +42,7 @@ This task runs automatically, whenever an order is paid. To fully recalculate th
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/track-incoming-donations-in-a-store-metafield), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/track-incoming-donations-in-a-store-metafield.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/track-incoming-donations-in-a-store-metafield), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/track-incoming-donations-in-a-store-metafield.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

@@ -4,7 +4,7 @@ Tags: Membership, Products, Tag, Time-Limited
 
 Use this task to automatically tag customers when they purchase specific a membership product, and then untag them after a certain amount of time has passed! (Optionally, this task can also automatically untag the customer if/when their membership order is cancelled.)
 
-* View in the task library: [usemechanic.com/task/manage-tagging-for-a-time-limited-membership-product](https://usemechanic.com/task/manage-tagging-for-a-time-limited-membership-product)
+* View in the task library: [tasks.mechanic.dev/manage-tagging-for-a-time-limited-membership-product](https://tasks.mechanic.dev/manage-tagging-for-a-time-limited-membership-product)
 * Task JSON, for direct import: [task.json](../../tasks/manage-tagging-for-a-time-limited-membership-product.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -19,7 +19,7 @@ Use this task to automatically tag customers when they purchase specific a membe
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -31,7 +31,7 @@ shopify/orders/paid
 user/memberships/expire
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -39,7 +39,7 @@ Use this task to automatically tag customers when they purchase specific a membe
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/manage-tagging-for-a-time-limited-membership-product), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/manage-tagging-for-a-time-limited-membership-product.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/manage-tagging-for-a-time-limited-membership-product), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/manage-tagging-for-a-time-limited-membership-product.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

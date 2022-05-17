@@ -4,7 +4,7 @@ Tags: Email, Orders, Products, Vendor
 
 Use this task to notify vendors when items of theirs have been purchased, by providing this task with a list of vendor names, and the related email addresses.
 
-* View in the task library: [usemechanic.com/task/email-vendors-when-their-products-are-ordered](https://usemechanic.com/task/email-vendors-when-their-products-are-ordered)
+* View in the task library: [tasks.mechanic.dev/email-vendors-when-their-products-are-ordered](https://tasks.mechanic.dev/email-vendors-when-their-products-are-ordered)
 * Task JSON, for direct import: [task.json](../../tasks/email-vendors-when-their-products-are-ordered.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -20,7 +20,7 @@ Use this task to notify vendors when items of theirs have been purchased, by pro
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -29,7 +29,7 @@ shopify/orders/create
 user/orders/send_vendor_email
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -41,7 +41,7 @@ Customize the email subject and body to taste. Use the default email body as a r
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/email-vendors-when-their-products-are-ordered), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-vendors-when-their-products-are-ordered.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/email-vendors-when-their-products-are-ordered), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-vendors-when-their-products-are-ordered.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

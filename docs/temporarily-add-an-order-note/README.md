@@ -4,7 +4,7 @@ Tags: Order Note
 
 This task looks up orders by their order number, adds the note of your choice to the order record, and removes that same note 12 hours later. A bespoke task for a very specific merchant need, we publish this task as an example of getting creative with Mechanic. :)
 
-* View in the task library: [usemechanic.com/task/temporarily-add-an-order-note](https://usemechanic.com/task/temporarily-add-an-order-note)
+* View in the task library: [tasks.mechanic.dev/temporarily-add-an-order-note](https://tasks.mechanic.dev/temporarily-add-an-order-note)
 * Task JSON, for direct import: [task.json](../../tasks/temporarily-add-an-order-note.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -17,7 +17,7 @@ This task looks up orders by their order number, adds the note of your choice to
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -26,7 +26,7 @@ mechanic/user/text
 user/orders/remove_note
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -38,7 +38,7 @@ Mechanic will preserve any existing notes on file for these orders, appending th
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/temporarily-add-an-order-note), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/temporarily-add-an-order-note.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/temporarily-add-an-order-note), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/temporarily-add-an-order-note.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

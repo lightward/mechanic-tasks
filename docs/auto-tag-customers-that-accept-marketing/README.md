@@ -4,7 +4,7 @@ Tags: Auto-Tag, Customers, Marketing
 
 Use this task to auto-tag customers whose marketing preferences have been updated, adding a tag for those that do accept marketing and removing it from customers who do not. Optionally, choose whether to limit tags to customers who have single or confirmed opt-in levels. Run this task manually to scan all customers at once.
 
-* View in the task library: [usemechanic.com/task/auto-tag-customers-that-accept-marketing](https://usemechanic.com/task/auto-tag-customers-that-accept-marketing)
+* View in the task library: [tasks.mechanic.dev/auto-tag-customers-that-accept-marketing](https://tasks.mechanic.dev/auto-tag-customers-that-accept-marketing)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-customers-that-accept-marketing.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -18,7 +18,7 @@ Use this task to auto-tag customers whose marketing preferences have been update
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -28,7 +28,7 @@ mechanic/user/trigger
 mechanic/shopify/bulk_operation
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -40,7 +40,7 @@ Note: Running this task manually will sync that tag for **ALL** customers that a
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-customers-that-accept-marketing), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-customers-that-accept-marketing.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-customers-that-accept-marketing), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-customers-that-accept-marketing.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

@@ -4,7 +4,7 @@ Tags: Auto-Tag, Orders, Risk
 
 This task applies the tag of your choice to incoming orders, based on the risk level determined for the order. Run this task manually to tag all orders in your store's records, according to their respective risk levels. Combine this task with an email task, to email customers when their order is flagged.
 
-* View in the task library: [usemechanic.com/task/auto-tag-orders-by-their-risk-level](https://usemechanic.com/task/auto-tag-orders-by-their-risk-level)
+* View in the task library: [tasks.mechanic.dev/auto-tag-orders-by-their-risk-level](https://tasks.mechanic.dev/auto-tag-orders-by-their-risk-level)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-orders-by-their-risk-level.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -20,7 +20,7 @@ This task applies the tag of your choice to incoming orders, based on the risk l
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -29,7 +29,7 @@ shopify/orders/updated
 mechanic/user/trigger
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -45,7 +45,7 @@ Feel free to remove a tag from this task's options, if you don't need it. :)
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-orders-by-their-risk-level), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-orders-by-their-risk-level.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-orders-by-their-risk-level), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-orders-by-their-risk-level.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 
