@@ -72,7 +72,7 @@
       {% comment %}
         Remember, Flow only accepts numeric IDs - not full global ID strings.
       {% endcomment %}
-      "order_id": {{ order.legacyResourceId | json }},
+      "order_id": {{ order.legacyResourceId }},
 
       {% comment %}
         This flag value is intended to be used in Flow conditions; see the task docs for more details.
