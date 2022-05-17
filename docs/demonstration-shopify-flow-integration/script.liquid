@@ -18,7 +18,7 @@
   {% if customer_id %}
     {% action "flow" %}
       {
-        "customer_id": {{ customer_id | json }},
+        "customer_id": {{ customer_id }},
 
         "user_number":  55,
         "user_string":  "Love!"
@@ -33,7 +33,7 @@
 
     {% action "flow" %}
       {
-        "order_id": {{ order_id | json }},
+        "order_id": {{ order_id }},
 
         "user_number":  55,
         "user_string":  "Love!"
@@ -48,7 +48,7 @@
 
     {% action "flow" %}
       {
-        "product_id": {{ product_id | json }},
+        "product_id": {{ product_id }},
 
         "user_number":  55,
         "user_string":  "Love!"
