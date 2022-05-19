@@ -4,7 +4,7 @@ Tags: Comments, Customer Notes, Orders, Sync, Timeline
 
 This task scans all orders (optionally filtering by the query of your choice), and copies any new timeline comments to the customer's note. Useful for getting a snapshot of order activity when looking at the customer's record. Runs manually, hourly, and/or daily.
 
-* View in the task library: [usemechanic.com/task/sync-order-timeline-comments-to-the-customer-note](https://usemechanic.com/task/sync-order-timeline-comments-to-the-customer-note)
+* View in the task library: [tasks.mechanic.dev/sync-order-timeline-comments-to-the-customer-note](https://tasks.mechanic.dev/sync-order-timeline-comments-to-the-customer-note)
 * Task JSON, for direct import: [task.json](../../tasks/sync-order-timeline-comments-to-the-customer-note.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -24,7 +24,7 @@ This task scans all orders (optionally filtering by the query of your choice), a
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -35,7 +35,7 @@ mechanic/user/trigger
 mechanic/shopify/bulk_operation
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -53,7 +53,7 @@ Notes:
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/sync-order-timeline-comments-to-the-customer-note), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/sync-order-timeline-comments-to-the-customer-note.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/sync-order-timeline-comments-to-the-customer-note), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/sync-order-timeline-comments-to-the-customer-note.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

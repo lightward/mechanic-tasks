@@ -4,7 +4,7 @@ Tags: Auto-Tag, Products
 
 Out of the box, this task scans the last week's worth of paid orders, and auto-tags products that meet the sales threshold of your choice, removing the tag from products that no longer qualify. This scan can be run on demand (with the "Run task" button), and will otherwise run nightly.
 
-* View in the task library: [usemechanic.com/task/auto-tag-products-that-meet-a-sales-threshold](https://usemechanic.com/task/auto-tag-products-that-meet-a-sales-threshold)
+* View in the task library: [tasks.mechanic.dev/auto-tag-products-that-meet-a-sales-threshold](https://tasks.mechanic.dev/auto-tag-products-that-meet-a-sales-threshold)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-products-that-meet-a-sales-threshold.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -21,7 +21,7 @@ Out of the box, this task scans the last week's worth of paid orders, and auto-t
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -31,7 +31,7 @@ mechanic/scheduler/daily
 mechanic/shopify/bulk_operation
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -53,7 +53,7 @@ For the interested, see the very end of the "Task result" portion of each task r
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-products-that-meet-a-sales-threshold), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-products-that-meet-a-sales-threshold.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-products-that-meet-a-sales-threshold), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-products-that-meet-a-sales-threshold.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

@@ -4,7 +4,7 @@ Tags: Customers, Email, Loyalty, Reminder
 
 Useful for customers who need recurring reminders to reorder. Optionally filtering by a customer tag, this task monitors the most recent order for each customer, and sends them reminders every x days since that order.
 
-* View in the task library: [usemechanic.com/task/send-your-customers-reorder-reminders](https://usemechanic.com/task/send-your-customers-reorder-reminders)
+* View in the task library: [tasks.mechanic.dev/send-your-customers-reorder-reminders](https://tasks.mechanic.dev/send-your-customers-reorder-reminders)
 * Task JSON, for direct import: [task.json](../../tasks/send-your-customers-reorder-reminders.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -20,7 +20,7 @@ Useful for customers who need recurring reminders to reorder. Optionally filteri
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -33,7 +33,7 @@ mechanic/scheduler/daily
 mechanic/shopify/bulk_operation
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -47,7 +47,7 @@ To test this task, enable test mode, and save. You'll find a new "Run task" butt
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/send-your-customers-reorder-reminders), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/send-your-customers-reorder-reminders.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/send-your-customers-reorder-reminders), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/send-your-customers-reorder-reminders.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

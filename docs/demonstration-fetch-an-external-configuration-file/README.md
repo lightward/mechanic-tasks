@@ -4,7 +4,7 @@ Tags: Demonstration, External API
 
 This task script demonstrates using the "http" action to retrieve external data, using a GET request. It also demonstrates saving the retrieved data to the Mechanic cache, where it can be used for future task runs.
 
-* View in the task library: [usemechanic.com/task/demonstration-fetch-an-external-configuration-file](https://usemechanic.com/task/demonstration-fetch-an-external-configuration-file)
+* View in the task library: [tasks.mechanic.dev/demonstration-fetch-an-external-configuration-file](https://tasks.mechanic.dev/demonstration-fetch-an-external-configuration-file)
 * Task JSON, for direct import: [task.json](../../tasks/demonstration-fetch-an-external-configuration-file.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -16,7 +16,7 @@ This task script demonstrates using the "http" action to retrieve external data,
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -25,7 +25,7 @@ mechanic/user/trigger
 mechanic/actions/perform
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -35,7 +35,7 @@ Learn more about this technique: [Can I load data from external sources?](https:
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/demonstration-fetch-an-external-configuration-file), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/demonstration-fetch-an-external-configuration-file.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/demonstration-fetch-an-external-configuration-file), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/demonstration-fetch-an-external-configuration-file.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

@@ -4,7 +4,7 @@ Tags: Customers, Tag, Tax
 
 This task monitors customer tags, applying tax-exempt status when a certain tag is detected, and removing it (and the tag) after a certain amount of time. Useful when you need to regularly re-approve customers for tax exemption.
 
-* View in the task library: [usemechanic.com/task/temporarily-enable-tax-exempt-status-when-a-customer-is-tagged](https://usemechanic.com/task/temporarily-enable-tax-exempt-status-when-a-customer-is-tagged)
+* View in the task library: [tasks.mechanic.dev/temporarily-enable-tax-exempt-status-when-a-customer-is-tagged](https://tasks.mechanic.dev/temporarily-enable-tax-exempt-status-when-a-customer-is-tagged)
 * Task JSON, for direct import: [task.json](../../tasks/temporarily-enable-tax-exempt-status-when-a-customer-is-tagged.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -17,7 +17,7 @@ This task monitors customer tags, applying tax-exempt status when a certain tag 
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -26,7 +26,7 @@ shopify/customers/update
 user/customers/expire_tax_exempt
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -34,7 +34,7 @@ This task monitors customer tags, applying tax-exempt status when a certain tag 
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/temporarily-enable-tax-exempt-status-when-a-customer-is-tagged), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/temporarily-enable-tax-exempt-status-when-a-customer-is-tagged.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/temporarily-enable-tax-exempt-status-when-a-customer-is-tagged), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/temporarily-enable-tax-exempt-status-when-a-customer-is-tagged.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

@@ -4,7 +4,7 @@ Tags: Auto-Tag, Customers, Discounts
 
 Use this task to easily identify customers who used certain discount codes. This task runs automatically on incoming orders, and can be run manually to tag customers based on historical orders. Optionally, choose to remove tags, instead of adding them.
 
-* View in the task library: [usemechanic.com/task/auto-tag-customers-based-on-discount-codes-used](https://usemechanic.com/task/auto-tag-customers-based-on-discount-codes-used)
+* View in the task library: [tasks.mechanic.dev/auto-tag-customers-based-on-discount-codes-used](https://tasks.mechanic.dev/auto-tag-customers-based-on-discount-codes-used)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-customers-based-on-discount-codes-used.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -18,7 +18,7 @@ Use this task to easily identify customers who used certain discount codes. This
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -27,7 +27,7 @@ shopify/orders/create
 mechanic/user/trigger
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -37,7 +37,7 @@ This task runs automatically on incoming orders. Run this task manually to scan 
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-customers-based-on-discount-codes-used), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-customers-based-on-discount-codes-used.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-customers-based-on-discount-codes-used), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-customers-based-on-discount-codes-used.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

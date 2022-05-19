@@ -4,7 +4,7 @@ Tags: Products, SMS
 
 This task is a demonstration of sending text messages via Nexmo. In this task, we monitor for newly-created products, and we send a text message about the product to a phone number stored in that product's metafield.
 
-* View in the task library: [usemechanic.com/task/send-an-sms-via-nexmo-when-a-product-is-created](https://usemechanic.com/task/send-an-sms-via-nexmo-when-a-product-is-created)
+* View in the task library: [tasks.mechanic.dev/send-an-sms-via-nexmo-when-a-product-is-created](https://tasks.mechanic.dev/send-an-sms-via-nexmo-when-a-product-is-created)
 * Task JSON, for direct import: [task.json](../../tasks/send-an-sms-via-nexmo-when-a-product-is-created.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -24,7 +24,7 @@ This task is a demonstration of sending text messages via Nexmo. In this task, w
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -32,7 +32,7 @@ This task is a demonstration of sending text messages via Nexmo. In this task, w
 shopify/products/create{% if options.minutes_to_wait_before_sending__number != blank %}+{{ options.minutes_to_wait_before_sending__number }}.minutes{% endif %}
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -48,7 +48,7 @@ Notes:
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/send-an-sms-via-nexmo-when-a-product-is-created), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/send-an-sms-via-nexmo-when-a-product-is-created.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/send-an-sms-via-nexmo-when-a-product-is-created), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/send-an-sms-via-nexmo-when-a-product-is-created.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

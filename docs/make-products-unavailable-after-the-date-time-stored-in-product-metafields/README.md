@@ -4,7 +4,7 @@ Tags: Metafields, Products, Unpublish
 
 Use this task to automatically set product inventory to 0, and the product's inventory policy to deny out-of-stock purchases, after a date/time that you specify in a product metafield.
 
-* View in the task library: [usemechanic.com/task/make-products-unavailable-after-the-date-time-stored-in-product-metafields](https://usemechanic.com/task/make-products-unavailable-after-the-date-time-stored-in-product-metafields)
+* View in the task library: [tasks.mechanic.dev/make-products-unavailable-after-the-date-time-stored-in-product-metafields](https://tasks.mechanic.dev/make-products-unavailable-after-the-date-time-stored-in-product-metafields)
 * Task JSON, for direct import: [task.json](../../tasks/make-products-unavailable-after-the-date-time-stored-in-product-metafields.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -20,7 +20,7 @@ Use this task to automatically set product inventory to 0, and the product's inv
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -36,7 +36,7 @@ mechanic/user/trigger
 mechanic/shopify/bulk_operation
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -50,7 +50,7 @@ __Note:__ If you choose to use the date only type for the metafield, then the ta
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/make-products-unavailable-after-the-date-time-stored-in-product-metafields), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/make-products-unavailable-after-the-date-time-stored-in-product-metafields.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/make-products-unavailable-after-the-date-time-stored-in-product-metafields), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/make-products-unavailable-after-the-date-time-stored-in-product-metafields.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

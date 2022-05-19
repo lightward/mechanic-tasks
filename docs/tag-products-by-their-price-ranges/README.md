@@ -4,7 +4,7 @@ Tags: Auto-Tag, Price, Products
 
 Some themes (like Mogo!) support browsing products by price range. Under the hood, this functionality is powered by tags that look like "rprice-1-100". This task watches for new and updated products, making sure that the product range tags stay in sync with prices available for each product. And, if you run the task manually, it'll update the tags for all products in your shop.
 
-* View in the task library: [usemechanic.com/task/tag-products-by-their-price-ranges](https://usemechanic.com/task/tag-products-by-their-price-ranges)
+* View in the task library: [tasks.mechanic.dev/tag-products-by-their-price-ranges](https://tasks.mechanic.dev/tag-products-by-their-price-ranges)
 * Task JSON, for direct import: [task.json](../../tasks/tag-products-by-their-price-ranges.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -21,7 +21,7 @@ Some themes (like Mogo!) support browsing products by price range. Under the hoo
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -31,7 +31,7 @@ shopify/products/create
 shopify/products/update
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -43,7 +43,7 @@ Out of the box, this task will run on product create and update. You can also us
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/tag-products-by-their-price-ranges), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/tag-products-by-their-price-ranges.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/tag-products-by-their-price-ranges), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/tag-products-by-their-price-ranges.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

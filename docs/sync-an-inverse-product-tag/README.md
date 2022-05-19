@@ -4,7 +4,7 @@ Tags: (not tagged!)
 
 Shopify's product collection filters allow you to filter by the tags the product contains – but not the tags a product does not contain. Use this task to sync an "inverse" tag to all products who do not have a particular tag, allowing you to create collections in Shopify that use the inverse tag.
 
-* View in the task library: [usemechanic.com/task/sync-an-inverse-product-tag](https://usemechanic.com/task/sync-an-inverse-product-tag)
+* View in the task library: [tasks.mechanic.dev/sync-an-inverse-product-tag](https://tasks.mechanic.dev/sync-an-inverse-product-tag)
 * Task JSON, for direct import: [task.json](../../tasks/sync-an-inverse-product-tag.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -17,7 +17,7 @@ Shopify's product collection filters allow you to filter by the tags the product
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -28,7 +28,7 @@ mechanic/user/trigger
 mechanic/shopify/bulk_operation
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -40,7 +40,7 @@ Run this task manually to scan all of the products in your store. Otherwise, thi
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/sync-an-inverse-product-tag), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/sync-an-inverse-product-tag.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/sync-an-inverse-product-tag), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/sync-an-inverse-product-tag.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

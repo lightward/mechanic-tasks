@@ -4,7 +4,7 @@ Tags: Demonstration, Order Editing, Orders
 
 This task demonstrates Shopify's ability to edit orders through the admin API. It's intended to be a starting place for developing more specific functionality. Out of the box, this task automatically adds a product to orders that (optionally) meet an order minimum.
 
-* View in the task library: [usemechanic.com/task/demonstration-order-editing](https://usemechanic.com/task/demonstration-order-editing)
+* View in the task library: [tasks.mechanic.dev/demonstration-order-editing](https://tasks.mechanic.dev/demonstration-order-editing)
 * Task JSON, for direct import: [task.json](../../tasks/demonstration-order-editing.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -20,7 +20,7 @@ This task demonstrates Shopify's ability to edit orders through the admin API. I
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -29,7 +29,7 @@ shopify/orders/create
 mechanic/actions/perform
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -39,7 +39,7 @@ Configure this task using a variant ID. (To learn how to find this, see [How do 
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/demonstration-order-editing), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/demonstration-order-editing.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/demonstration-order-editing), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/demonstration-order-editing.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

@@ -4,7 +4,7 @@ Tags: Email, Orders, Products
 
 This task allows you to send an email to someone when a certain variant is purchased. Requires the variant ID.
 
-* View in the task library: [usemechanic.com/task/email-when-variant-purchased](https://usemechanic.com/task/email-when-variant-purchased)
+* View in the task library: [tasks.mechanic.dev/email-when-variant-purchased](https://tasks.mechanic.dev/email-when-variant-purchased)
 * Task JSON, for direct import: [task.json](../../tasks/email-when-variant-purchased.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -20,7 +20,7 @@ This task allows you to send an email to someone when a certain variant is purch
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -28,7 +28,7 @@ This task allows you to send an email to someone when a certain variant is purch
 shopify/orders/paid
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -39,7 +39,7 @@ https://help.shopify.com/en/themes/customization/products/variants/find-variant-
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/email-when-variant-purchased), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-when-variant-purchased.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/email-when-variant-purchased), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-when-variant-purchased.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

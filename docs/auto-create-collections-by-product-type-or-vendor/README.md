@@ -4,7 +4,7 @@ Tags: Collections, Products, Publish, Vendor
 
 When products are created, this task will auto-create smart collections by product type and/or vendor, if such collections don't already exist. Additionally, configuring one or more __exact__ sales channel names will enable publishing of any _newly created_ collections by this task to those sales channels.
 
-* View in the task library: [usemechanic.com/task/auto-create-collections-by-product-type-or-vendor](https://usemechanic.com/task/auto-create-collections-by-product-type-or-vendor)
+* View in the task library: [tasks.mechanic.dev/auto-create-collections-by-product-type-or-vendor](https://tasks.mechanic.dev/auto-create-collections-by-product-type-or-vendor)
 * Task JSON, for direct import: [task.json](../../tasks/auto-create-collections-by-product-type-or-vendor.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -18,7 +18,7 @@ When products are created, this task will auto-create smart collections by produ
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -30,7 +30,7 @@ mechanic/user/trigger
 {% endif %}
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -43,7 +43,7 @@ The task may also be run manually to gather _all_ of the product types and vendo
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-create-collections-by-product-type-or-vendor), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-create-collections-by-product-type-or-vendor.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-create-collections-by-product-type-or-vendor), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-create-collections-by-product-type-or-vendor.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

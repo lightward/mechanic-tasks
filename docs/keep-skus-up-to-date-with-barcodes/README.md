@@ -4,7 +4,7 @@ Tags: Barcodes, SKU
 
 Included as a good example of keeping one attribute synced up with another, this task copies new barcode values over to the variant SKU, whenever a barcode is found and the SKU is out of date.
 
-* View in the task library: [usemechanic.com/task/keep-skus-up-to-date-with-barcodes](https://usemechanic.com/task/keep-skus-up-to-date-with-barcodes)
+* View in the task library: [tasks.mechanic.dev/keep-skus-up-to-date-with-barcodes](https://tasks.mechanic.dev/keep-skus-up-to-date-with-barcodes)
 * Task JSON, for direct import: [task.json](../../tasks/keep-skus-up-to-date-with-barcodes.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -15,7 +15,7 @@ shopify/products/create
 shopify/products/update
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -25,7 +25,7 @@ This task watches for new and updated products, copying variant barcodes over to
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/keep-skus-up-to-date-with-barcodes), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/keep-skus-up-to-date-with-barcodes.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/keep-skus-up-to-date-with-barcodes), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/keep-skus-up-to-date-with-barcodes.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

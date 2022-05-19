@@ -4,7 +4,7 @@ Tags: Inventory, Low Stock
 
 Use this task to automatically maintain minimum inventory levels. Optionally, filter by variant or product ID, or by variant option, or by product type, choosing whether to blacklist or whitelist your filter selections.
 
-* View in the task library: [usemechanic.com/task/reset-inventory-levels-when-they-get-too-low](https://usemechanic.com/task/reset-inventory-levels-when-they-get-too-low)
+* View in the task library: [tasks.mechanic.dev/reset-inventory-levels-when-they-get-too-low](https://tasks.mechanic.dev/reset-inventory-levels-when-they-get-too-low)
 * Task JSON, for direct import: [task.json](../../tasks/reset-inventory-levels-when-they-get-too-low.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -23,7 +23,7 @@ Use this task to automatically maintain minimum inventory levels. Optionally, fi
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -31,7 +31,7 @@ Use this task to automatically maintain minimum inventory levels. Optionally, fi
 shopify/inventory_levels/update
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -47,7 +47,7 @@ Additional filters may be configured, using either whitelist mode to _only_ perf
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/reset-inventory-levels-when-they-get-too-low), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/reset-inventory-levels-when-they-get-too-low.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/reset-inventory-levels-when-they-get-too-low), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/reset-inventory-levels-when-they-get-too-low.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

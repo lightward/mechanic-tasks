@@ -4,7 +4,7 @@ Tags: Images, Products, Tag
 
 Running manually or on a schedule, this task scans all products in your store, and adds a tag to any products that have no images. Optionally, choose to have this task remove that tag from any products that are found to have an image.
 
-* View in the task library: [usemechanic.com/task/tag-products-with-no-images](https://usemechanic.com/task/tag-products-with-no-images)
+* View in the task library: [tasks.mechanic.dev/tag-products-with-no-images](https://tasks.mechanic.dev/tag-products-with-no-images)
 * Task JSON, for direct import: [task.json](../../tasks/tag-products-with-no-images.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -20,7 +20,7 @@ Running manually or on a schedule, this task scans all products in your store, a
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -38,7 +38,7 @@ mechanic/user/trigger
 mechanic/shopify/bulk_operation
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -46,7 +46,7 @@ Running manually or on a schedule, this task scans all products in your store, a
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/tag-products-with-no-images), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/tag-products-with-no-images.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/tag-products-with-no-images), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/tag-products-with-no-images.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

@@ -4,7 +4,7 @@ Tags: Customers, Draft Orders, Email, Invoice
 
 Use this task to send a follow-up email, 24 hours after you send out an email invoice for a draft order. Optionally, set this task to continue sending follow-up messages, every day after that.
 
-* View in the task library: [usemechanic.com/task/send-follow-up-emails-after-sending-a-draft-order-invoice](https://usemechanic.com/task/send-follow-up-emails-after-sending-a-draft-order-invoice)
+* View in the task library: [tasks.mechanic.dev/send-follow-up-emails-after-sending-a-draft-order-invoice](https://tasks.mechanic.dev/send-follow-up-emails-after-sending-a-draft-order-invoice)
 * Task JSON, for direct import: [task.json](../../tasks/send-follow-up-emails-after-sending-a-draft-order-invoice.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -18,7 +18,7 @@ Use this task to send a follow-up email, 24 hours after you send out an email in
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -27,7 +27,7 @@ user/draft_orders/followup+24.hours
 shopify/draft_orders/update
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -39,7 +39,7 @@ Please note: Because Shopify does not share information about the invoice you se
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/send-follow-up-emails-after-sending-a-draft-order-invoice), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/send-follow-up-emails-after-sending-a-draft-order-invoice.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/send-follow-up-emails-after-sending-a-draft-order-invoice), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/send-follow-up-emails-after-sending-a-draft-order-invoice.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

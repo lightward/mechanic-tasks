@@ -4,7 +4,7 @@ Tags: Auto-Tag, Financial Status, Orders
 
 This task watches new and updated orders, and updates their tags according to their financial status.
 
-* View in the task library: [usemechanic.com/task/auto-tag-orders-by-financial-status](https://usemechanic.com/task/auto-tag-orders-by-financial-status)
+* View in the task library: [tasks.mechanic.dev/auto-tag-orders-by-financial-status](https://tasks.mechanic.dev/auto-tag-orders-by-financial-status)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-orders-by-financial-status.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -25,7 +25,7 @@ This task watches new and updated orders, and updates their tags according to th
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -33,7 +33,7 @@ This task watches new and updated orders, and updates their tags according to th
 shopify/orders/updated
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -41,7 +41,7 @@ This task watches new and updated orders, and updates their tags according to th
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-orders-by-financial-status), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-orders-by-financial-status.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-orders-by-financial-status), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-orders-by-financial-status.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

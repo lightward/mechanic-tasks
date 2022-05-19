@@ -4,7 +4,7 @@ Tags: Demonstration, Files, PDF
 
 This task demonstrates how one might use the Files action to generate a file, using the fileCreate GraphQL mutation to transfer the resulting file to Shopify for storage.
 
-* View in the task library: [usemechanic.com/task/demonstration-generate-a-file-and-upload-to-shopify](https://usemechanic.com/task/demonstration-generate-a-file-and-upload-to-shopify)
+* View in the task library: [tasks.mechanic.dev/demonstration-generate-a-file-and-upload-to-shopify](https://tasks.mechanic.dev/demonstration-generate-a-file-and-upload-to-shopify)
 * Task JSON, for direct import: [task.json](../../tasks/demonstration-generate-a-file-and-upload-to-shopify.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -15,7 +15,7 @@ mechanic/user/trigger
 mechanic/actions/perform
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -23,7 +23,7 @@ This task demonstrates how one might use the Files action to generate a file, us
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/demonstration-generate-a-file-and-upload-to-shopify), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/demonstration-generate-a-file-and-upload-to-shopify.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/demonstration-generate-a-file-and-upload-to-shopify), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/demonstration-generate-a-file-and-upload-to-shopify.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

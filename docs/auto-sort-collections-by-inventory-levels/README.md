@@ -4,7 +4,7 @@ Tags: Collections, Inventory, Sort
 
 This task re-sorts your collections, beginning with the sort order of your choice (alphabetically, best selling first, etc), and then by total inventory in descending order. Products whose inventory is not tracked (i.e. limitless inventory) will be moved to the top and out-of-stock products (inventory <= 0) will be moved to the bottom. Optionally, choose to sort by the sellable online quantity (i.e. locations enabled for online order fulfillment) instead of the total inventory for a product across all locations.
 
-* View in the task library: [usemechanic.com/task/auto-sort-collections-by-inventory-levels](https://usemechanic.com/task/auto-sort-collections-by-inventory-levels)
+* View in the task library: [tasks.mechanic.dev/auto-sort-collections-by-inventory-levels](https://tasks.mechanic.dev/auto-sort-collections-by-inventory-levels)
 * Task JSON, for direct import: [task.json](../../tasks/auto-sort-collections-by-inventory-levels.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -22,7 +22,7 @@ This task re-sorts your collections, beginning with the sort order of your choic
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -35,7 +35,7 @@ mechanic/user/trigger
 {% endif %}
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -66,7 +66,7 @@ You may use any of these options for the base sort order:
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-sort-collections-by-inventory-levels), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-sort-collections-by-inventory-levels.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-sort-collections-by-inventory-levels), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-sort-collections-by-inventory-levels.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

@@ -4,7 +4,7 @@ Tags: Email, Orders, Tag, Vendor, Watch
 
 Use this task to automatically keep vendors up to date as an order evolves. Configure this task with a list of known vendor names and their email addresses, and this task will email them whenever it notices the tag of your choice on the order.
 
-* View in the task library: [usemechanic.com/task/email-vendors-when-an-order-is-tagged](https://usemechanic.com/task/email-vendors-when-an-order-is-tagged)
+* View in the task library: [tasks.mechanic.dev/email-vendors-when-an-order-is-tagged](https://tasks.mechanic.dev/email-vendors-when-an-order-is-tagged)
 * Task JSON, for direct import: [task.json](../../tasks/email-vendors-when-an-order-is-tagged.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -23,7 +23,7 @@ Use this task to automatically keep vendors up to date as an order evolves. Conf
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -31,7 +31,7 @@ Use this task to automatically keep vendors up to date as an order evolves. Conf
 shopify/orders/updated
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -45,7 +45,7 @@ Important note: Because Shopify doesn't let apps know _what_ has changed about a
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/email-vendors-when-an-order-is-tagged), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-vendors-when-an-order-is-tagged.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/email-vendors-when-an-order-is-tagged), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-vendors-when-an-order-is-tagged.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

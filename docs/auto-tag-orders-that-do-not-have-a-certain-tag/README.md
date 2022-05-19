@@ -4,7 +4,7 @@ Tags: Auto-Tag, Orders, Tag
 
 This task monitors for new and updated orders, adding a tag if a certain other tag is found missing. If and when the order does receive that certain other tag, the task's tag will be removed.
 
-* View in the task library: [usemechanic.com/task/auto-tag-orders-that-do-not-have-a-certain-tag](https://usemechanic.com/task/auto-tag-orders-that-do-not-have-a-certain-tag)
+* View in the task library: [tasks.mechanic.dev/auto-tag-orders-that-do-not-have-a-certain-tag](https://tasks.mechanic.dev/auto-tag-orders-that-do-not-have-a-certain-tag)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-orders-that-do-not-have-a-certain-tag.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -17,7 +17,7 @@ This task monitors for new and updated orders, adding a tag if a certain other t
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -25,7 +25,7 @@ This task monitors for new and updated orders, adding a tag if a certain other t
 shopify/orders/updated
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -33,7 +33,7 @@ This task monitors for new and updated orders, adding a tag if a certain other t
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-orders-that-do-not-have-a-certain-tag), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-orders-that-do-not-have-a-certain-tag.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-orders-that-do-not-have-a-certain-tag), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-orders-that-do-not-have-a-certain-tag.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

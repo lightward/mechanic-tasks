@@ -4,7 +4,7 @@ Tags: Auto-Tag, Customers, Loyalty
 
 Use this task to auto-tag customers when their historical purchase total falls within a certain range. For example, by configuring this task to evaluate purchase thresholds by number of orders, and by setting the minimum to "1" and the maximum to "12", this task will auto-tag customers who've made at least 1 purchase, and will *remove* the tag when the 13th purchase is made.
 
-* View in the task library: [usemechanic.com/task/auto-tag-customers-within-a-purchase-range](https://usemechanic.com/task/auto-tag-customers-within-a-purchase-range)
+* View in the task library: [tasks.mechanic.dev/auto-tag-customers-within-a-purchase-range](https://tasks.mechanic.dev/auto-tag-customers-within-a-purchase-range)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-customers-within-a-purchase-range.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -23,7 +23,7 @@ Use this task to auto-tag customers when their historical purchase total falls w
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -37,7 +37,7 @@ Use this task to auto-tag customers when their historical purchase total falls w
 shopify/orders/cancelled
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -49,7 +49,7 @@ This task will run whenever a new order is created (or paid, if you choose to on
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-customers-within-a-purchase-range), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-customers-within-a-purchase-range.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-customers-within-a-purchase-range), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-customers-within-a-purchase-range.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

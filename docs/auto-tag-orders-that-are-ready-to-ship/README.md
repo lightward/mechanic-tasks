@@ -4,7 +4,7 @@ Tags: Auto-Tag, Orders, Shipping
 
 Use this task to tag orders, as they are created, if every single line item is related to a variant that's in stock. Optionally, choose to tag qualifying unfulfilled orders whenever an inventory level is updated.
 
-* View in the task library: [usemechanic.com/task/auto-tag-orders-that-are-ready-to-ship](https://usemechanic.com/task/auto-tag-orders-that-are-ready-to-ship)
+* View in the task library: [tasks.mechanic.dev/auto-tag-orders-that-are-ready-to-ship](https://tasks.mechanic.dev/auto-tag-orders-that-are-ready-to-ship)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-orders-that-are-ready-to-ship.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -21,7 +21,7 @@ Use this task to tag orders, as they are created, if every single line item is r
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -40,7 +40,7 @@ mechanic/user/trigger
 {% endif %}
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -54,7 +54,7 @@ Enable "Scan unfulfilled orders when inventory is updated" to tag qualifying ord
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-orders-that-are-ready-to-ship), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-orders-that-are-ready-to-ship.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-orders-that-are-ready-to-ship), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-orders-that-are-ready-to-ship.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

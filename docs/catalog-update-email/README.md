@@ -4,7 +4,7 @@ Tags: Alert, Email, Products
 
 Get an email alert whenever a product is created, updated, or deleted. This makes it easy to keep tabs on updates to your catalog – useful if you need a precise audit trail.
 
-* View in the task library: [usemechanic.com/task/catalog-update-email](https://usemechanic.com/task/catalog-update-email)
+* View in the task library: [tasks.mechanic.dev/catalog-update-email](https://tasks.mechanic.dev/catalog-update-email)
 * Task JSON, for direct import: [task.json](../../tasks/catalog-update-email.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -16,7 +16,7 @@ Get an email alert whenever a product is created, updated, or deleted. This make
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -26,7 +26,7 @@ shopify/products/delete
 shopify/products/update
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -34,7 +34,7 @@ Get an email alert whenever a product is created, updated, or deleted. This make
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/catalog-update-email), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/catalog-update-email.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/catalog-update-email), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/catalog-update-email.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

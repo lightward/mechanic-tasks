@@ -4,7 +4,7 @@ Tags: Cancel, Orders, Risk
 
 This task immediately cancels orders as soon as Shopify (or another risk-analysis app) determines it to be high risk. Optionally, this task can also auto-tag the order, email the customer, and attempt to void or refund payment.
 
-* View in the task library: [usemechanic.com/task/automatically-cancel-high-risk-orders](https://usemechanic.com/task/automatically-cancel-high-risk-orders)
+* View in the task library: [tasks.mechanic.dev/automatically-cancel-high-risk-orders](https://tasks.mechanic.dev/automatically-cancel-high-risk-orders)
 * Task JSON, for direct import: [task.json](../../tasks/automatically-cancel-high-risk-orders.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -20,7 +20,7 @@ This task immediately cancels orders as soon as Shopify (or another risk-analysi
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -28,7 +28,7 @@ This task immediately cancels orders as soon as Shopify (or another risk-analysi
 shopify/orders/updated
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -44,7 +44,7 @@ Valid cancellation reasons:
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/automatically-cancel-high-risk-orders), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/automatically-cancel-high-risk-orders.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/automatically-cancel-high-risk-orders), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/automatically-cancel-high-risk-orders.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

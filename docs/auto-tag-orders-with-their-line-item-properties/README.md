@@ -4,7 +4,7 @@ Tags: Auto-Tag, Line Item Properties, Orders
 
 Use this task to tag incoming orders with all of the line item properties found on the order. Optionally, configure a list of property names to be included, or a list of property names to be excluded. This task can also be run manually to scan and tag historical orders.
 
-* View in the task library: [usemechanic.com/task/auto-tag-orders-with-their-line-item-properties](https://usemechanic.com/task/auto-tag-orders-with-their-line-item-properties)
+* View in the task library: [tasks.mechanic.dev/auto-tag-orders-with-their-line-item-properties](https://tasks.mechanic.dev/auto-tag-orders-with-their-line-item-properties)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-orders-with-their-line-item-properties.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -18,7 +18,7 @@ Use this task to tag incoming orders with all of the line item properties found 
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -27,7 +27,7 @@ shopify/orders/create
 mechanic/user/trigger
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -42,7 +42,7 @@ Notes:
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-orders-with-their-line-item-properties), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-orders-with-their-line-item-properties.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-orders-with-their-line-item-properties), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-orders-with-their-line-item-properties.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

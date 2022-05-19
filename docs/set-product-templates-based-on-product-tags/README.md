@@ -4,7 +4,7 @@ Tags: Products, Tag
 
 Use this task to automatically select a specific product template for each of your products, based on how each product is tagged. Useful for a set-it-and-forget-it setup. :)
 
-* View in the task library: [usemechanic.com/task/set-product-templates-based-on-product-tags](https://usemechanic.com/task/set-product-templates-based-on-product-tags)
+* View in the task library: [tasks.mechanic.dev/set-product-templates-based-on-product-tags](https://tasks.mechanic.dev/set-product-templates-based-on-product-tags)
 * Task JSON, for direct import: [task.json](../../tasks/set-product-templates-based-on-product-tags.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -16,7 +16,7 @@ Use this task to automatically select a specific product template for each of yo
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -26,7 +26,7 @@ shopify/products/create
 shopify/products/update
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -40,7 +40,7 @@ To apply this task to your entire catalog, use the "Run task" button. Otherwise,
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/set-product-templates-based-on-product-tags), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/set-product-templates-based-on-product-tags.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/set-product-templates-based-on-product-tags), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/set-product-templates-based-on-product-tags.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

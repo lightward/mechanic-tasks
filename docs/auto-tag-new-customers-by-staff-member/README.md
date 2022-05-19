@@ -4,7 +4,7 @@ Tags: (not tagged!)
 
 Use this task to easily keep track of who's responsible for manually creating new customers.
 
-* View in the task library: [usemechanic.com/task/auto-tag-new-customers-by-staff-member](https://usemechanic.com/task/auto-tag-new-customers-by-staff-member)
+* View in the task library: [tasks.mechanic.dev/auto-tag-new-customers-by-staff-member](https://tasks.mechanic.dev/auto-tag-new-customers-by-staff-member)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-new-customers-by-staff-member.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -19,7 +19,7 @@ Use this task to easily keep track of who's responsible for manually creating ne
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -27,7 +27,7 @@ Use this task to easily keep track of who's responsible for manually creating ne
 shopify/customers/create
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -37,7 +37,7 @@ To use this task, fill in the "Staff names and tags" option with staff names on 
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-new-customers-by-staff-member), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-new-customers-by-staff-member.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-new-customers-by-staff-member), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-new-customers-by-staff-member.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

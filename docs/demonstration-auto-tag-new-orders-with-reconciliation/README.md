@@ -4,7 +4,7 @@ Tags: Demonstration, Orders, Tag
 
 This task illustrates Shopify's recommendation of implementing reconciliation, in the case of missing Shopify events. This implementation handles the rare case that Shopify fails to deliver a webhook (orders/create, in this example), by scanning for unprocessed orders every 15 minutes.
 
-* View in the task library: [usemechanic.com/task/demonstration-auto-tag-new-orders-with-reconciliation](https://usemechanic.com/task/demonstration-auto-tag-new-orders-with-reconciliation)
+* View in the task library: [tasks.mechanic.dev/demonstration-auto-tag-new-orders-with-reconciliation](https://tasks.mechanic.dev/demonstration-auto-tag-new-orders-with-reconciliation)
 * Task JSON, for direct import: [task.json](../../tasks/demonstration-auto-tag-new-orders-with-reconciliation.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -18,7 +18,7 @@ This task illustrates Shopify's recommendation of implementing reconciliation, i
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -36,7 +36,7 @@ This task illustrates Shopify's recommendation of implementing reconciliation, i
 {% endif %}
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -46,7 +46,7 @@ To learn more about this kind of scenario, see https://learn.mechanic.dev/core/s
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/demonstration-auto-tag-new-orders-with-reconciliation), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/demonstration-auto-tag-new-orders-with-reconciliation.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/demonstration-auto-tag-new-orders-with-reconciliation), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/demonstration-auto-tag-new-orders-with-reconciliation.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

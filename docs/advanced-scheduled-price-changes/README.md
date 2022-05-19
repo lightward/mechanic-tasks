@@ -6,7 +6,7 @@ Tags: Advanced, Discounts, Price, Products, Sale, Schedule
 
 This advanced task allows you to schedule price change events for your store, useful for seasonal and flash sales. To use this task, configure a price change event using the task options, save the task and run it manually, and then enter a keyword of **schedule** in the dialog that appears. An email summary with the price change event ID will be sent upon successful scheduling.
 
-* View in the task library: [usemechanic.com/task/advanced-scheduled-price-changes](https://usemechanic.com/task/advanced-scheduled-price-changes)
+* View in the task library: [tasks.mechanic.dev/advanced-scheduled-price-changes](https://tasks.mechanic.dev/advanced-scheduled-price-changes)
 * Task JSON, for direct import: [task.json](../../tasks/advanced-scheduled-price-changes.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -26,7 +26,7 @@ This advanced task allows you to schedule price change events for your store, us
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -37,7 +37,7 @@ user/price_changes/end
 user/price_changes/reset
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -87,7 +87,7 @@ This advanced task allows you to schedule price change events for your store, us
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/advanced-scheduled-price-changes), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/advanced-scheduled-price-changes.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/advanced-scheduled-price-changes), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/advanced-scheduled-price-changes.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

@@ -4,7 +4,7 @@ Tags: Fulfillment, Orders, Schedule
 
 This task automatically fulfills orders on a weekly schedule, fulfilling orders with certain tags on certain days, at certain times, from certain locations.
 
-* View in the task library: [usemechanic.com/task/auto-fulfill-orders-on-a-weekly-schedule](https://usemechanic.com/task/auto-fulfill-orders-on-a-weekly-schedule)
+* View in the task library: [tasks.mechanic.dev/auto-fulfill-orders-on-a-weekly-schedule](https://tasks.mechanic.dev/auto-fulfill-orders-on-a-weekly-schedule)
 * Task JSON, for direct import: [task.json](../../tasks/auto-fulfill-orders-on-a-weekly-schedule.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -26,7 +26,7 @@ This task automatically fulfills orders on a weekly schedule, fulfilling orders 
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -42,7 +42,7 @@ This task automatically fulfills orders on a weekly schedule, fulfilling orders 
 mechanic/user/trigger
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -60,7 +60,7 @@ For all task options, values are case-sensitive.
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-fulfill-orders-on-a-weekly-schedule), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-fulfill-orders-on-a-weekly-schedule.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-fulfill-orders-on-a-weekly-schedule), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-fulfill-orders-on-a-weekly-schedule.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

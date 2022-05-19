@@ -4,7 +4,7 @@ Tags: Banner, Schedule, Storefront
 
 Use this task to publish a banner, to be displayed across your online storefront. This task comes with some pre-configured HTML and CSS – customize to taste. :)
 
-* View in the task library: [usemechanic.com/task/schedule-a-storefront-banner](https://usemechanic.com/task/schedule-a-storefront-banner)
+* View in the task library: [tasks.mechanic.dev/schedule-a-storefront-banner](https://tasks.mechanic.dev/schedule-a-storefront-banner)
 * Task JSON, for direct import: [task.json](../../tasks/schedule-a-storefront-banner.json)
 * Preview task code: [online_store_javascript.js.liquid](./online_store_javascript.js.liquid)
 
@@ -19,7 +19,7 @@ Use this task to publish a banner, to be displayed across your online storefront
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Documentation
 
@@ -33,7 +33,7 @@ Please note: the Mechanic support crew can't help out with banner design.
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/schedule-a-storefront-banner), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/schedule-a-storefront-banner.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/schedule-a-storefront-banner), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/schedule-a-storefront-banner.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

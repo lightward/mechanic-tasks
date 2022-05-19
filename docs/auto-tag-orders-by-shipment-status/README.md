@@ -4,7 +4,7 @@ Tags: Auto-Tag, Shipping
 
 Easily segment your orders by shipment status. Tagging your orders as "Delivered", or "Out for delivery", or "Attempted delivery", or any other status, allows you to stay on top of your order flow. And, adding these tags makes it easier to wire up additional automation, keeping the connection live between your customers and their orders.
 
-* View in the task library: [usemechanic.com/task/auto-tag-orders-by-shipment-status](https://usemechanic.com/task/auto-tag-orders-by-shipment-status)
+* View in the task library: [tasks.mechanic.dev/auto-tag-orders-by-shipment-status](https://tasks.mechanic.dev/auto-tag-orders-by-shipment-status)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-orders-by-shipment-status.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -34,7 +34,7 @@ Easily segment your orders by shipment status. Tagging your orders as "Delivered
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -45,7 +45,7 @@ mechanic/user/trigger
 mechanic/shopify/bulk_operation
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -63,7 +63,7 @@ financial_status:paid
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-orders-by-shipment-status), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-orders-by-shipment-status.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-orders-by-shipment-status), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-orders-by-shipment-status.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

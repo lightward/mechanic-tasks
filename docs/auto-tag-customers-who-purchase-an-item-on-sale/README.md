@@ -4,7 +4,7 @@ Tags: Auto-Tag, Customers, Products
 
 When a customer orders an item on sale (technically, when the order contains a product variant that includes a "compare at" price), this task automatically adds a tag to their account. Useful for keeping track of customers who take advantage of sale pricing!
 
-* View in the task library: [usemechanic.com/task/auto-tag-customers-who-purchase-an-item-on-sale](https://usemechanic.com/task/auto-tag-customers-who-purchase-an-item-on-sale)
+* View in the task library: [tasks.mechanic.dev/auto-tag-customers-who-purchase-an-item-on-sale](https://tasks.mechanic.dev/auto-tag-customers-who-purchase-an-item-on-sale)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-customers-who-purchase-an-item-on-sale.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -16,7 +16,7 @@ When a customer orders an item on sale (technically, when the order contains a p
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -25,7 +25,7 @@ shopify/orders/create
 mechanic/user/trigger
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -39,7 +39,7 @@ Run this task manually to have Mechanic scan your entire customer base, and each
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-customers-who-purchase-an-item-on-sale), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-customers-who-purchase-an-item-on-sale.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-customers-who-purchase-an-item-on-sale), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-customers-who-purchase-an-item-on-sale.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

@@ -4,7 +4,7 @@ Tags: Auto-Tag, Compare at, Products
 
 This task will keep your sale tags in sync, without any manual work. Configure the task with a tag to apply (and optionally a tag for products that aren't on sale), and Mechanic will take care of applying and removing tags as appropriate. If you're using Shopify discounts, this can allow you to use automatic sale collections – based on these tags – to control eligibility for your discounts.
 
-* View in the task library: [usemechanic.com/task/auto-tag-products-that-have-a-compare-at-price](https://usemechanic.com/task/auto-tag-products-that-have-a-compare-at-price)
+* View in the task library: [tasks.mechanic.dev/auto-tag-products-that-have-a-compare-at-price](https://tasks.mechanic.dev/auto-tag-products-that-have-a-compare-at-price)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-products-that-have-a-compare-at-price.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -18,7 +18,7 @@ This task will keep your sale tags in sync, without any manual work. Configure t
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -28,7 +28,7 @@ shopify/products/update
 mechanic/user/trigger
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -40,7 +40,7 @@ Run this task manually to update your entire product catalog at once.
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-products-that-have-a-compare-at-price), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-products-that-have-a-compare-at-price.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-products-that-have-a-compare-at-price), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-products-that-have-a-compare-at-price.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

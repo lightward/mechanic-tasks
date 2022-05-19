@@ -4,7 +4,7 @@ Tags: Auto-Tag, Products, Publish
 
 This task formats the publish date of each product (according to the format you choose), adds a prefix (also of your choosing), and applies it to each product. Run this task manually to scan your entire product catalog at once, or wait for the task to run automatically when products are created or updated.
 
-* View in the task library: [usemechanic.com/task/auto-tag-products-by-their-publish-date](https://usemechanic.com/task/auto-tag-products-by-their-publish-date)
+* View in the task library: [tasks.mechanic.dev/auto-tag-products-by-their-publish-date](https://tasks.mechanic.dev/auto-tag-products-by-their-publish-date)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-products-by-their-publish-date.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -17,7 +17,7 @@ This task formats the publish date of each product (according to the format you 
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -27,7 +27,7 @@ shopify/products/create
 shopify/products/update
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -37,7 +37,7 @@ Use [strfti.me](http://www.strfti.me) to build a date format that suits you. Use
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-products-by-their-publish-date), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-products-by-their-publish-date.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-products-by-their-publish-date), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-products-by-their-publish-date.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

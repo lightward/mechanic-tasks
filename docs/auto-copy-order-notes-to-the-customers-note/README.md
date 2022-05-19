@@ -4,7 +4,7 @@ Tags: Customer Notes, Order Note, Sync
 
 This task appends order notes to the related customer's note, whenever the order note changes.
 
-* View in the task library: [usemechanic.com/task/auto-copy-order-notes-to-the-customers-note](https://usemechanic.com/task/auto-copy-order-notes-to-the-customers-note)
+* View in the task library: [tasks.mechanic.dev/auto-copy-order-notes-to-the-customers-note](https://tasks.mechanic.dev/auto-copy-order-notes-to-the-customers-note)
 * Task JSON, for direct import: [task.json](../../tasks/auto-copy-order-notes-to-the-customers-note.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -16,7 +16,7 @@ This task appends order notes to the related customer's note, whenever the order
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -24,7 +24,7 @@ This task appends order notes to the related customer's note, whenever the order
 shopify/orders/updated
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -32,7 +32,7 @@ This task appends order notes to the related customer's note, whenever the order
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-copy-order-notes-to-the-customers-note), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-copy-order-notes-to-the-customers-note.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-copy-order-notes-to-the-customers-note), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-copy-order-notes-to-the-customers-note.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

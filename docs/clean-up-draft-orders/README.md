@@ -4,7 +4,7 @@ Tags: Draft Orders, Orders
 
 Use this task to quickly delete draft orders from your account, optionally filtering by status, or by draft order age. Useful for keeping things tidy. :)
 
-* View in the task library: [usemechanic.com/task/clean-up-draft-orders](https://usemechanic.com/task/clean-up-draft-orders)
+* View in the task library: [tasks.mechanic.dev/clean-up-draft-orders](https://tasks.mechanic.dev/clean-up-draft-orders)
 * Task JSON, for direct import: [task.json](../../tasks/clean-up-draft-orders.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -20,7 +20,7 @@ Use this task to quickly delete draft orders from your account, optionally filte
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -31,7 +31,7 @@ mechanic/user/trigger
 {% endif %}
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -39,7 +39,7 @@ Use this task to quickly delete draft orders from your account, optionally filte
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/clean-up-draft-orders), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/clean-up-draft-orders.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/clean-up-draft-orders), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/clean-up-draft-orders.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

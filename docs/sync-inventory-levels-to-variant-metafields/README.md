@@ -4,7 +4,7 @@ Tags: Inventory, Metafields, Products, Sync, Variants
 
 Use this task to easily make your inventory levels available in your online storefront theme. This task monitors for changes to inventory, and copies inventory availability figures to metafields on the related variant.
 
-* View in the task library: [usemechanic.com/task/sync-inventory-levels-to-variant-metafields](https://usemechanic.com/task/sync-inventory-levels-to-variant-metafields)
+* View in the task library: [tasks.mechanic.dev/sync-inventory-levels-to-variant-metafields](https://tasks.mechanic.dev/sync-inventory-levels-to-variant-metafields)
 * Task JSON, for direct import: [task.json](../../tasks/sync-inventory-levels-to-variant-metafields.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -17,7 +17,7 @@ Use this task to easily make your inventory levels available in your online stor
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -28,7 +28,7 @@ mechanic/user/trigger
 mechanic/shopify/bulk_operation
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -42,7 +42,7 @@ Populate the left-hand side of the "Location IDs and metafield keys" option with
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/sync-inventory-levels-to-variant-metafields), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/sync-inventory-levels-to-variant-metafields.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/sync-inventory-levels-to-variant-metafields), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/sync-inventory-levels-to-variant-metafields.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

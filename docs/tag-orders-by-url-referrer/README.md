@@ -4,7 +4,7 @@ Tags: Auto-Tag, Orders, Referral
 
 Have your traffic sources refer customers using ?ref=referral-code-here URLs (using the query parameter of your choice), then use this task to automatically tag each customer's order according to the referral value they arrived with. Optionally, tag the customer as well.
 
-* View in the task library: [usemechanic.com/task/tag-orders-by-url-referrer](https://usemechanic.com/task/tag-orders-by-url-referrer)
+* View in the task library: [tasks.mechanic.dev/tag-orders-by-url-referrer](https://tasks.mechanic.dev/tag-orders-by-url-referrer)
 * Task JSON, for direct import: [task.json](../../tasks/tag-orders-by-url-referrer.json)
 * Preview task code:
   * [script.liquid](./script.liquid)
@@ -21,7 +21,7 @@ Have your traffic sources refer customers using ?ref=referral-code-here URLs (us
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -29,7 +29,7 @@ Have your traffic sources refer customers using ?ref=referral-code-here URLs (us
 shopify/orders/create
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -39,7 +39,7 @@ This task adds JavaScript to your storefront, which adds referral parameters (us
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/tag-orders-by-url-referrer), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/tag-orders-by-url-referrer.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/tag-orders-by-url-referrer), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/tag-orders-by-url-referrer.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

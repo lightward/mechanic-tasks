@@ -4,7 +4,7 @@ Tags: Customers, Judge.me, Reviews
 
 Using Judge.me for reviews? Use this task to keep a counter for each customer's reviews, stored as a metafield on the customer record. And, auto-tag customers as they reach different levels of review counts - useful for granting discounts or special access to repeat reviewers.
 
-* View in the task library: [usemechanic.com/task/record-judge-me-customer-review-counts](https://usemechanic.com/task/record-judge-me-customer-review-counts)
+* View in the task library: [tasks.mechanic.dev/record-judge-me-customer-review-counts](https://tasks.mechanic.dev/record-judge-me-customer-review-counts)
 * Task JSON, for direct import: [task.json](../../tasks/record-judge-me-customer-review-counts.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -18,7 +18,7 @@ Using Judge.me for reviews? Use this task to keep a counter for each customer's 
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -26,7 +26,7 @@ Using Judge.me for reviews? Use this task to keep a counter for each customer's 
 judgeme/review/created
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -41,7 +41,7 @@ Notes:
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/record-judge-me-customer-review-counts), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/record-judge-me-customer-review-counts.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/record-judge-me-customer-review-counts), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/record-judge-me-customer-review-counts.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

@@ -4,7 +4,7 @@ Tags: Customers, Orders
 
 Offer free samples to your customers at a nominal fee, and offer them that value back as a discount on a future order. This task generates a discount code, good for the amount of the sample order, and emails it to the customer.
 
-* View in the task library: [usemechanic.com/task/credit-customers-for-sample-orders](https://usemechanic.com/task/credit-customers-for-sample-orders)
+* View in the task library: [tasks.mechanic.dev/credit-customers-for-sample-orders](https://tasks.mechanic.dev/credit-customers-for-sample-orders)
 * Task JSON, for direct import: [task.json](../../tasks/credit-customers-for-sample-orders.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -20,7 +20,7 @@ Offer free samples to your customers at a nominal fee, and offer them that value
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -28,7 +28,7 @@ Offer free samples to your customers at a nominal fee, and offer them that value
 shopify/orders/paid{% if options.number_of_hours_to_wait__number != blank %}+{{ options.number_of_hours_to_wait__number }}.hours{% endif %}
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -38,7 +38,7 @@ This task will watch for newly paid orders, having a total that matches the numb
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/credit-customers-for-sample-orders), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/credit-customers-for-sample-orders.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/credit-customers-for-sample-orders), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/credit-customers-for-sample-orders.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

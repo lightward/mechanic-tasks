@@ -4,7 +4,7 @@ Tags: Customers, Refunds, Untag
 
 Use this task to automatically remove a certain customer tag whenever a particular product is refunded, for that customer.
 
-* View in the task library: [usemechanic.com/task/auto-untag-customers-when-a-certain-product-is-refunded](https://usemechanic.com/task/auto-untag-customers-when-a-certain-product-is-refunded)
+* View in the task library: [tasks.mechanic.dev/auto-untag-customers-when-a-certain-product-is-refunded](https://tasks.mechanic.dev/auto-untag-customers-when-a-certain-product-is-refunded)
 * Task JSON, for direct import: [task.json](../../tasks/auto-untag-customers-when-a-certain-product-is-refunded.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -17,7 +17,7 @@ Use this task to automatically remove a certain customer tag whenever a particul
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -25,7 +25,7 @@ Use this task to automatically remove a certain customer tag whenever a particul
 shopify/refunds/create
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -35,7 +35,7 @@ This task is configured with one or more product IDs ([learn how to find a produ
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-untag-customers-when-a-certain-product-is-refunded), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-untag-customers-when-a-certain-product-is-refunded.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-untag-customers-when-a-certain-product-is-refunded), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-untag-customers-when-a-certain-product-is-refunded.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

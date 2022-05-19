@@ -4,7 +4,7 @@ Tags: Collections, Featured, Products
 
 This task features products on a schedule, optionally publishing/unpublishing as they're featured/unfeatured. Use this task to make available exclusive products on the hourly/daily/etc, or simply to showcase a rotating selection of your best products.
 
-* View in the task library: [usemechanic.com/task/rotate-products-through-a-featured-collection](https://usemechanic.com/task/rotate-products-through-a-featured-collection)
+* View in the task library: [tasks.mechanic.dev/rotate-products-through-a-featured-collection](https://tasks.mechanic.dev/rotate-products-through-a-featured-collection)
 * Task JSON, for direct import: [task.json](../../tasks/rotate-products-through-a-featured-collection.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -24,7 +24,7 @@ This task features products on a schedule, optionally publishing/unpublishing as
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -34,7 +34,7 @@ mechanic/user/trigger
 {% if options.run_daily_at_midnight__boolean %}mechanic/scheduler/daily{% endif %}
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -58,7 +58,7 @@ For example, a product located at example.myshopify.com/admin/products/123456789
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/rotate-products-through-a-featured-collection), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/rotate-products-through-a-featured-collection.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/rotate-products-through-a-featured-collection), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/rotate-products-through-a-featured-collection.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

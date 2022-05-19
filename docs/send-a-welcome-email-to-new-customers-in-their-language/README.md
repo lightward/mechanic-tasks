@@ -4,7 +4,7 @@ Tags: Customers, Email, Localization, Retention
 
 This task demonstrates how to send emails that respect the customer's language preference, by matching their locale to a pre-written email translation.
 
-* View in the task library: [usemechanic.com/task/send-a-welcome-email-to-new-customers-in-their-language](https://usemechanic.com/task/send-a-welcome-email-to-new-customers-in-their-language)
+* View in the task library: [tasks.mechanic.dev/send-a-welcome-email-to-new-customers-in-their-language](https://tasks.mechanic.dev/send-a-welcome-email-to-new-customers-in-their-language)
 * Task JSON, for direct import: [task.json](../../tasks/send-a-welcome-email-to-new-customers-in-their-language.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -24,7 +24,7 @@ This task demonstrates how to send emails that respect the customer's language p
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -32,7 +32,7 @@ This task demonstrates how to send emails that respect the customer's language p
 shopify/customers/create
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -42,7 +42,7 @@ For more on the techniques in this task, see [Sending multilingual emails](https
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/send-a-welcome-email-to-new-customers-in-their-language), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/send-a-welcome-email-to-new-customers-in-their-language.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/send-a-welcome-email-to-new-customers-in-their-language), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/send-a-welcome-email-to-new-customers-in-their-language.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

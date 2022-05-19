@@ -4,7 +4,7 @@ Tags: Customers, Email, Orders, Shipping, Tracking
 
 Use this task with services that add tracking numbers to fulfillments after fulfillments are created, to ensure that customers are notified when their tracking number is available.
 
-* View in the task library: [usemechanic.com/task/email-the-customer-when-tracking-numbers-are-added-to-their-order](https://usemechanic.com/task/email-the-customer-when-tracking-numbers-are-added-to-their-order)
+* View in the task library: [tasks.mechanic.dev/email-the-customer-when-tracking-numbers-are-added-to-their-order](https://tasks.mechanic.dev/email-the-customer-when-tracking-numbers-are-added-to-their-order)
 * Task JSON, for direct import: [task.json](../../tasks/email-the-customer-when-tracking-numbers-are-added-to-their-order.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -17,7 +17,7 @@ Use this task with services that add tracking numbers to fulfillments after fulf
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -26,7 +26,7 @@ shopify/fulfillments/create
 shopify/fulfillments/update
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -40,7 +40,7 @@ Use "TRACKING_NUMBERS" in your email body to insert a list of tracking numbers f
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/email-the-customer-when-tracking-numbers-are-added-to-their-order), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-the-customer-when-tracking-numbers-are-added-to-their-order.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/email-the-customer-when-tracking-numbers-are-added-to-their-order), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-the-customer-when-tracking-numbers-are-added-to-their-order.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

@@ -4,7 +4,7 @@ Tags: Costs, External API, Integration, Report Toaster, Shipping
 
 Email [Pirate Ship](https://www.pirateship.com/) exports to Mechanic and add those shipping costs to orders with Report Toaster.
 
-* View in the task library: [usemechanic.com/task/report-toaster-pirateship-integration](https://usemechanic.com/task/report-toaster-pirateship-integration)
+* View in the task library: [tasks.mechanic.dev/report-toaster-pirateship-integration](https://tasks.mechanic.dev/report-toaster-pirateship-integration)
 * Task JSON, for direct import: [task.json](../../tasks/report-toaster-pirateship-integration.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -19,7 +19,7 @@ Email [Pirate Ship](https://www.pirateship.com/) exports to Mechanic and add tho
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -27,7 +27,7 @@ Email [Pirate Ship](https://www.pirateship.com/) exports to Mechanic and add tho
 mechanic/emails/received
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -45,7 +45,7 @@ Each attachment will be parsed and sent to Report Toaster.
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/report-toaster-pirateship-integration), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/report-toaster-pirateship-integration.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/report-toaster-pirateship-integration), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/report-toaster-pirateship-integration.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

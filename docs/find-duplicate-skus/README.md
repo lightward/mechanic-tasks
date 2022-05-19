@@ -4,7 +4,7 @@ Tags: Products, SKU
 
 This task scans your entire product list, looking for duplicate SKUs using exact matching, and returning the list of duplicate SKUs (and the associated product variant IDs) if any are found.
 
-* View in the task library: [usemechanic.com/task/find-duplicate-skus](https://usemechanic.com/task/find-duplicate-skus)
+* View in the task library: [tasks.mechanic.dev/find-duplicate-skus](https://tasks.mechanic.dev/find-duplicate-skus)
 * Task JSON, for direct import: [task.json](../../tasks/find-duplicate-skus.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -16,7 +16,7 @@ This task scans your entire product list, looking for duplicate SKUs using exact
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -24,7 +24,7 @@ This task scans your entire product list, looking for duplicate SKUs using exact
 mechanic/user/trigger
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -38,7 +38,7 @@ This report will only scan a store's first 125,000 product variants.
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/find-duplicate-skus), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/find-duplicate-skus.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/find-duplicate-skus), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/find-duplicate-skus.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

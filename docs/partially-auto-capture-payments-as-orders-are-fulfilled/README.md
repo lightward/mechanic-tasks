@@ -4,7 +4,7 @@ Tags: Fulfillment, Orders, Payment
 
 Running when an order is updated, this task captures payment in proportion to the order value that has been fulfilled. For example, for an order with a subtotal of $10 and a total of $15 with shipping/taxes/discounts, this task will capture $7.50 when $5 of the order's value has been fulfilled.
 
-* View in the task library: [usemechanic.com/task/partially-auto-capture-payments-as-orders-are-fulfilled](https://usemechanic.com/task/partially-auto-capture-payments-as-orders-are-fulfilled)
+* View in the task library: [tasks.mechanic.dev/partially-auto-capture-payments-as-orders-are-fulfilled](https://tasks.mechanic.dev/partially-auto-capture-payments-as-orders-are-fulfilled)
 * Task JSON, for direct import: [task.json](../../tasks/partially-auto-capture-payments-as-orders-are-fulfilled.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -14,7 +14,7 @@ Running when an order is updated, this task captures payment in proportion to th
 shopify/orders/updated
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -22,7 +22,7 @@ Running when an order is updated, this task captures payment in proportion to th
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/partially-auto-capture-payments-as-orders-are-fulfilled), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/partially-auto-capture-payments-as-orders-are-fulfilled.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/partially-auto-capture-payments-as-orders-are-fulfilled), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/partially-auto-capture-payments-as-orders-are-fulfilled.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

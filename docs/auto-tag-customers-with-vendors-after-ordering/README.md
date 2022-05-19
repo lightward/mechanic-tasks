@@ -4,7 +4,7 @@ Tags: Auto-Tag, Customers, Vendor
 
 This task tags customers with the name of each vendor in their order, as soon as the order is created. Useful for keeping track of which vendors a customer is interested in. :)
 
-* View in the task library: [usemechanic.com/task/auto-tag-customers-with-vendors-after-ordering](https://usemechanic.com/task/auto-tag-customers-with-vendors-after-ordering)
+* View in the task library: [tasks.mechanic.dev/auto-tag-customers-with-vendors-after-ordering](https://tasks.mechanic.dev/auto-tag-customers-with-vendors-after-ordering)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-customers-with-vendors-after-ordering.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -16,7 +16,7 @@ mechanic/user/trigger
 mechanic/shopify/bulk_operation
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -30,7 +30,7 @@ To ensure that Mechanic can access your complete history, [make sure "Read all o
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-customers-with-vendors-after-ordering), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-customers-with-vendors-after-ordering.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-customers-with-vendors-after-ordering), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-customers-with-vendors-after-ordering.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

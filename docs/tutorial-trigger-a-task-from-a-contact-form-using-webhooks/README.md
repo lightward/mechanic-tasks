@@ -4,7 +4,7 @@ Tags: Tutorial
 
 This is the companion task for the [Triggering tasks from a contact form](https://learn.mechanic.dev/resources/tutorials/triggering-tasks-from-a-contact-form) tutorial.
 
-* View in the task library: [usemechanic.com/task/tutorial-trigger-a-task-from-a-contact-form-using-webhooks](https://usemechanic.com/task/tutorial-trigger-a-task-from-a-contact-form-using-webhooks)
+* View in the task library: [tasks.mechanic.dev/tutorial-trigger-a-task-from-a-contact-form-using-webhooks](https://tasks.mechanic.dev/tutorial-trigger-a-task-from-a-contact-form-using-webhooks)
 * Task JSON, for direct import: [task.json](../../tasks/tutorial-trigger-a-task-from-a-contact-form-using-webhooks.json)
 * Preview task code:
   * [script.liquid](./script.liquid)
@@ -22,7 +22,7 @@ This is the companion task for the [Triggering tasks from a contact form](https:
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -30,7 +30,7 @@ This is the companion task for the [Triggering tasks from a contact form](https:
 user/webhook/form
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -44,7 +44,7 @@ https://learn.mechanic.dev/resources/tutorials/triggering-tasks-from-a-contact-f
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/tutorial-trigger-a-task-from-a-contact-form-using-webhooks), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/tutorial-trigger-a-task-from-a-contact-form-using-webhooks.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/tutorial-trigger-a-task-from-a-contact-form-using-webhooks), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/tutorial-trigger-a-task-from-a-contact-form-using-webhooks.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

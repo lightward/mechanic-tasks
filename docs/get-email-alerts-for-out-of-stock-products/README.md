@@ -4,7 +4,7 @@ Tags: Alert, Email, Out of Stock
 
 Use this task to keep you and your team updated when products go out of stock - and, optionally, when they go back in stock. Filter with a simple product search to only track products you care about. Choose a custom stock threshold to get a heads up before the stock level reaches zero.
 
-* View in the task library: [usemechanic.com/task/get-email-alerts-for-out-of-stock-products](https://usemechanic.com/task/get-email-alerts-for-out-of-stock-products)
+* View in the task library: [tasks.mechanic.dev/get-email-alerts-for-out-of-stock-products](https://tasks.mechanic.dev/get-email-alerts-for-out-of-stock-products)
 * Task JSON, for direct import: [task.json](../../tasks/get-email-alerts-for-out-of-stock-products.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -20,7 +20,7 @@ Use this task to keep you and your team updated when products go out of stock - 
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -29,7 +29,7 @@ shopify/inventory_levels/update
 mechanic/user/trigger
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -41,7 +41,7 @@ Run this task manually to scan all products up front. While this task normally r
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/get-email-alerts-for-out-of-stock-products), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/get-email-alerts-for-out-of-stock-products.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/get-email-alerts-for-out-of-stock-products), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/get-email-alerts-for-out-of-stock-products.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

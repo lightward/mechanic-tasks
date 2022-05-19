@@ -4,7 +4,7 @@ Tags: Customers, Email, Orders, Payment
 
 Quickly send a thank-you email (or any other sort of follow-up email) to your customers, as soon as their order is paid. (Optionally, require one or more order tags to be present, in order for the email to be sent.) And it's super easy to add a delay – set the task to subscribe "shopify/orders/paid+2.days" or "shopify/orders/paid+1.week" instead to create a thoughtful just-checking-back-in-with-you message. :)
 
-* View in the task library: [usemechanic.com/task/email-customer-when-order-paid](https://usemechanic.com/task/email-customer-when-order-paid)
+* View in the task library: [tasks.mechanic.dev/email-customer-when-order-paid](https://tasks.mechanic.dev/email-customer-when-order-paid)
 * Task JSON, for direct import: [task.json](../../tasks/email-customer-when-order-paid.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -18,7 +18,7 @@ Quickly send a thank-you email (or any other sort of follow-up email) to your cu
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -26,7 +26,7 @@ Quickly send a thank-you email (or any other sort of follow-up email) to your cu
 shopify/orders/paid
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -34,7 +34,7 @@ Quickly send a thank-you email (or any other sort of follow-up email) to your cu
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/email-customer-when-order-paid), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-customer-when-order-paid.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/email-customer-when-order-paid), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-customer-when-order-paid.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

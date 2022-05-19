@@ -4,7 +4,7 @@ Tags: Bulk, Metafields, Products
 
 Use this task to delete all of your product or product variant metafields, optionally filtering by namespace or by namespace and key. This task will then delete all metafields found. This task comes with a test mode – use this first to make sure you're deleting the right things.
 
-* View in the task library: [usemechanic.com/task/delete-product-or-product-variant-metafields-in-bulk](https://usemechanic.com/task/delete-product-or-product-variant-metafields-in-bulk)
+* View in the task library: [tasks.mechanic.dev/delete-product-or-product-variant-metafields-in-bulk](https://tasks.mechanic.dev/delete-product-or-product-variant-metafields-in-bulk)
 * Task JSON, for direct import: [task.json](../../tasks/delete-product-or-product-variant-metafields-in-bulk.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -20,7 +20,7 @@ Use this task to delete all of your product or product variant metafields, optio
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -29,7 +29,7 @@ mechanic/user/trigger
 mechanic/shopify/bulk_operation
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -39,7 +39,7 @@ With no configuration, this task will delete all product or product variant meta
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/delete-product-or-product-variant-metafields-in-bulk), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/delete-product-or-product-variant-metafields-in-bulk.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/delete-product-or-product-variant-metafields-in-bulk), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/delete-product-or-product-variant-metafields-in-bulk.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

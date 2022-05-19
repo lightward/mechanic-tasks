@@ -4,7 +4,7 @@ Tags: Cancel, Discounts, Orders
 
 This task watches for cancellations of orders that have either a single-use discount code, or a discount code that can only be used once per customer. When such an order is found, this task creates a new copy of the discount exclusively for the related customer, using a new discount code, and emails it to the customer.
 
-* View in the task library: [usemechanic.com/task/reissue-single-use-discount-codes-after-order-cancellation](https://usemechanic.com/task/reissue-single-use-discount-codes-after-order-cancellation)
+* View in the task library: [tasks.mechanic.dev/reissue-single-use-discount-codes-after-order-cancellation](https://tasks.mechanic.dev/reissue-single-use-discount-codes-after-order-cancellation)
 * Task JSON, for direct import: [task.json](../../tasks/reissue-single-use-discount-codes-after-order-cancellation.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -19,7 +19,7 @@ This task watches for cancellations of orders that have either a single-use disc
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -27,7 +27,7 @@ This task watches for cancellations of orders that have either a single-use disc
 shopify/orders/cancelled
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -37,7 +37,7 @@ This task only supports basic discounts, having up to 250 products or collection
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/reissue-single-use-discount-codes-after-order-cancellation), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/reissue-single-use-discount-codes-after-order-cancellation.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/reissue-single-use-discount-codes-after-order-cancellation), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/reissue-single-use-discount-codes-after-order-cancellation.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

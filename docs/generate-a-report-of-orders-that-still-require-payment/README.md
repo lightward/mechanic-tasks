@@ -4,7 +4,7 @@ Tags: CSV, Report, Unpaid
 
 This task generates a CSV spreadsheet, listing orders that are unpaid, partially paid, or pending payment. The resulting report is emailed to the recipient of your choice. Optionally, choose to have this report  generated hourly, or daily.
 
-* View in the task library: [usemechanic.com/task/generate-a-report-of-orders-that-still-require-payment](https://usemechanic.com/task/generate-a-report-of-orders-that-still-require-payment)
+* View in the task library: [tasks.mechanic.dev/generate-a-report-of-orders-that-still-require-payment](https://tasks.mechanic.dev/generate-a-report-of-orders-that-still-require-payment)
 * Task JSON, for direct import: [task.json](../../tasks/generate-a-report-of-orders-that-still-require-payment.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -22,7 +22,7 @@ This task generates a CSV spreadsheet, listing orders that are unpaid, partially
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -36,7 +36,7 @@ mechanic/user/trigger
 {% endif %}
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -44,7 +44,7 @@ This task generates a CSV spreadsheet, listing orders that are unpaid, partially
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/generate-a-report-of-orders-that-still-require-payment), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/generate-a-report-of-orders-that-still-require-payment.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/generate-a-report-of-orders-that-still-require-payment), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/generate-a-report-of-orders-that-still-require-payment.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

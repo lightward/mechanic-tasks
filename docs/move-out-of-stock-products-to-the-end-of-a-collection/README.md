@@ -4,7 +4,7 @@ Tags: Collections, Out of Stock, Sort
 
 This task re-sorts your collections, beginning with the sort order of your choice (alphabetically, best selling first, etc), and then moving all out-of-stock products to the very end of the collection.
 
-* View in the task library: [usemechanic.com/task/move-out-of-stock-products-to-the-end-of-a-collection](https://usemechanic.com/task/move-out-of-stock-products-to-the-end-of-a-collection)
+* View in the task library: [tasks.mechanic.dev/move-out-of-stock-products-to-the-end-of-a-collection](https://tasks.mechanic.dev/move-out-of-stock-products-to-the-end-of-a-collection)
 * Task JSON, for direct import: [task.json](../../tasks/move-out-of-stock-products-to-the-end-of-a-collection.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -21,7 +21,7 @@ This task re-sorts your collections, beginning with the sort order of your choic
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -34,7 +34,7 @@ mechanic/user/trigger
 {% endif %}
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -65,7 +65,7 @@ __Note__: To function correctly, the "Perform action runs in sequence" option sh
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/move-out-of-stock-products-to-the-end-of-a-collection), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/move-out-of-stock-products-to-the-end-of-a-collection.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/move-out-of-stock-products-to-the-end-of-a-collection), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/move-out-of-stock-products-to-the-end-of-a-collection.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

@@ -4,7 +4,7 @@ Tags: Alert, Delivery, Email, Shipping
 
 Use this task to send a staff email, the moment Shopify registers a successful delivery.
 
-* View in the task library: [usemechanic.com/task/send-a-staff-notification-email-for-each-delivery](https://usemechanic.com/task/send-a-staff-notification-email-for-each-delivery)
+* View in the task library: [tasks.mechanic.dev/send-a-staff-notification-email-for-each-delivery](https://tasks.mechanic.dev/send-a-staff-notification-email-for-each-delivery)
 * Task JSON, for direct import: [task.json](../../tasks/send-a-staff-notification-email-for-each-delivery.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -18,7 +18,7 @@ Use this task to send a staff email, the moment Shopify registers a successful d
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -26,7 +26,7 @@ Use this task to send a staff email, the moment Shopify registers a successful d
 shopify/fulfillment_events/create
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -34,7 +34,7 @@ Use this task to send a staff email, the moment Shopify registers a successful d
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/send-a-staff-notification-email-for-each-delivery), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/send-a-staff-notification-email-for-each-delivery.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/send-a-staff-notification-email-for-each-delivery), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/send-a-staff-notification-email-for-each-delivery.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

@@ -4,7 +4,7 @@ Tags: Alert, Email, Fulfillment
 
 Get an alert email sent to you when your tracking service reports a fulfillment failure. This email contains a link to the order details, so you can jump in and resolve the issue for the customer without losing any time.
 
-* View in the task library: [usemechanic.com/task/fulfillment-failure-email](https://usemechanic.com/task/fulfillment-failure-email)
+* View in the task library: [tasks.mechanic.dev/fulfillment-failure-email](https://tasks.mechanic.dev/fulfillment-failure-email)
 * Task JSON, for direct import: [task.json](../../tasks/fulfillment-failure-email.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -16,7 +16,7 @@ Get an alert email sent to you when your tracking service reports a fulfillment 
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -24,7 +24,7 @@ Get an alert email sent to you when your tracking service reports a fulfillment 
 shopify/fulfillment_events/create
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -32,7 +32,7 @@ Get an alert email sent to you when your tracking service reports a fulfillment 
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/fulfillment-failure-email), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/fulfillment-failure-email.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/fulfillment-failure-email), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/fulfillment-failure-email.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

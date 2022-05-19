@@ -4,7 +4,7 @@ Tags: Auto-Tag, Orders
 
 This task auto-tags today's new orders, as they're processed, and auto-untags them when the date changes. Optionally, choose to untag outside of a rolling 24-hour window, instead of untagging yesterday's orders at midnight.
 
-* View in the task library: [usemechanic.com/task/maintain-a-tag-for-orders-processed-today](https://usemechanic.com/task/maintain-a-tag-for-orders-processed-today)
+* View in the task library: [tasks.mechanic.dev/maintain-a-tag-for-orders-processed-today](https://tasks.mechanic.dev/maintain-a-tag-for-orders-processed-today)
 * Task JSON, for direct import: [task.json](../../tasks/maintain-a-tag-for-orders-processed-today.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -17,7 +17,7 @@ This task auto-tags today's new orders, as they're processed, and auto-untags th
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -31,7 +31,7 @@ shopify/orders/create
 {% endif %}
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -41,7 +41,7 @@ This task auto-tags today's new orders, as they're processed, and auto-untags th
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/maintain-a-tag-for-orders-processed-today), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/maintain-a-tag-for-orders-processed-today.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/maintain-a-tag-for-orders-processed-today), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/maintain-a-tag-for-orders-processed-today.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

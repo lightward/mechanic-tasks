@@ -4,7 +4,7 @@ Tags: Fulfillment, Shipping, Tracking
 
 This task runs immediately after each new fulfillment is created, and adds a prefix to its tracking number, if a tracking number is present.
 
-* View in the task library: [usemechanic.com/task/auto-prefix-tracking-numbers-for-each-new-fulfillment](https://usemechanic.com/task/auto-prefix-tracking-numbers-for-each-new-fulfillment)
+* View in the task library: [tasks.mechanic.dev/auto-prefix-tracking-numbers-for-each-new-fulfillment](https://tasks.mechanic.dev/auto-prefix-tracking-numbers-for-each-new-fulfillment)
 * Task JSON, for direct import: [task.json](../../tasks/auto-prefix-tracking-numbers-for-each-new-fulfillment.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -17,7 +17,7 @@ This task runs immediately after each new fulfillment is created, and adds a pre
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -25,7 +25,7 @@ This task runs immediately after each new fulfillment is created, and adds a pre
 shopify/fulfillments/create
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -33,7 +33,7 @@ This task runs immediately after each new fulfillment is created, and adds a pre
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-prefix-tracking-numbers-for-each-new-fulfillment), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-prefix-tracking-numbers-for-each-new-fulfillment.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-prefix-tracking-numbers-for-each-new-fulfillment), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-prefix-tracking-numbers-for-each-new-fulfillment.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

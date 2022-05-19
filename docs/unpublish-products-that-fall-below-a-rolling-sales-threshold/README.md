@@ -4,7 +4,7 @@ Tags: Products, Unpublish
 
 This task scans the last x days of orders, and unpublishes any products that haven't met your specified sales threshold during that time period, from whichever sales channel you select. By default, this task adds up the line item subtotals for each product (quantity times price), but it can also count by total quantity sold. This task only looks at products that were published before the time period being examined.
 
-* View in the task library: [usemechanic.com/task/unpublish-products-that-fall-below-a-rolling-sales-threshold](https://usemechanic.com/task/unpublish-products-that-fall-below-a-rolling-sales-threshold)
+* View in the task library: [tasks.mechanic.dev/unpublish-products-that-fall-below-a-rolling-sales-threshold](https://tasks.mechanic.dev/unpublish-products-that-fall-below-a-rolling-sales-threshold)
 * Task JSON, for direct import: [task.json](../../tasks/unpublish-products-that-fall-below-a-rolling-sales-threshold.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -21,7 +21,7 @@ This task scans the last x days of orders, and unpublishes any products that hav
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -34,7 +34,7 @@ mechanic/user/trigger
 mechanic/shopify/bulk_operation
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -46,7 +46,7 @@ Use test mode to ensure that this task does what you expect, before running it f
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/unpublish-products-that-fall-below-a-rolling-sales-threshold), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/unpublish-products-that-fall-below-a-rolling-sales-threshold.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/unpublish-products-that-fall-below-a-rolling-sales-threshold), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/unpublish-products-that-fall-below-a-rolling-sales-threshold.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

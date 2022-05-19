@@ -4,7 +4,7 @@ Tags: Inventory, Products, Sync
 
 Use this task to sell a single product in different pack sizes, keeping inventory levels synchronized appropriately, storing the "master" inventory level in a product tag (e.g. "inventory:50").
 
-* View in the task library: [usemechanic.com/task/sync-variant-inventory-within-a-product-by-pack-size](https://usemechanic.com/task/sync-variant-inventory-within-a-product-by-pack-size)
+* View in the task library: [tasks.mechanic.dev/sync-variant-inventory-within-a-product-by-pack-size](https://tasks.mechanic.dev/sync-variant-inventory-within-a-product-by-pack-size)
 * Task JSON, for direct import: [task.json](../../tasks/sync-variant-inventory-within-a-product-by-pack-size.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -20,7 +20,7 @@ Use this task to sell a single product in different pack sizes, keeping inventor
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -30,7 +30,7 @@ shopify/products/create
 shopify/products/update
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -44,7 +44,7 @@ This task will skip any products that do not have an inventory tag, and will ski
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/sync-variant-inventory-within-a-product-by-pack-size), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/sync-variant-inventory-within-a-product-by-pack-size.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/sync-variant-inventory-within-a-product-by-pack-size), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/sync-variant-inventory-within-a-product-by-pack-size.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

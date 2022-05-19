@@ -4,7 +4,7 @@ Tags: Alert, Delivery, Email, Shipping
 
 Useful for Canadian stores with limited shipping zones, this task inspects [the FSA (the first three characters of the postal code)](https://en.wikipedia.org/wiki/Postal_codes_in_Canada#Forward_sortation_areas) for each order's shipping address. If an FSA is found that's not on a preconfigured list, this task sends an email to the recipients of your choice.
 
-* View in the task library: [usemechanic.com/task/send-an-email-alert-when-an-incoming-canadian-order-has-an-unsupported-fsa](https://usemechanic.com/task/send-an-email-alert-when-an-incoming-canadian-order-has-an-unsupported-fsa)
+* View in the task library: [tasks.mechanic.dev/send-an-email-alert-when-an-incoming-canadian-order-has-an-unsupported-fsa](https://tasks.mechanic.dev/send-an-email-alert-when-an-incoming-canadian-order-has-an-unsupported-fsa)
 * Task JSON, for direct import: [task.json](../../tasks/send-an-email-alert-when-an-incoming-canadian-order-has-an-unsupported-fsa.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -21,7 +21,7 @@ Useful for Canadian stores with limited shipping zones, this task inspects [the 
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -29,7 +29,7 @@ Useful for Canadian stores with limited shipping zones, this task inspects [the 
 shopify/orders/create
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -43,7 +43,7 @@ It also displays the available FSA list in json format to more easily catch if t
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/send-an-email-alert-when-an-incoming-canadian-order-has-an-unsupported-fsa), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/send-an-email-alert-when-an-incoming-canadian-order-has-an-unsupported-fsa.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/send-an-email-alert-when-an-incoming-canadian-order-has-an-unsupported-fsa), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/send-an-email-alert-when-an-incoming-canadian-order-has-an-unsupported-fsa.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

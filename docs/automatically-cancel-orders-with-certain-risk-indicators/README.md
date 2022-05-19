@@ -4,7 +4,7 @@ Tags: Cancel, Orders, Risk
 
 This task auto-cancels incoming orders when it finds all of a certain set of risk indicator messages. Risk messages must match exactly, so double-check your configuration!
 
-* View in the task library: [usemechanic.com/task/automatically-cancel-orders-with-certain-risk-indicators](https://usemechanic.com/task/automatically-cancel-orders-with-certain-risk-indicators)
+* View in the task library: [tasks.mechanic.dev/automatically-cancel-orders-with-certain-risk-indicators](https://tasks.mechanic.dev/automatically-cancel-orders-with-certain-risk-indicators)
 * Task JSON, for direct import: [task.json](../../tasks/automatically-cancel-orders-with-certain-risk-indicators.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -21,7 +21,7 @@ This task auto-cancels incoming orders when it finds all of a certain set of ris
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -29,7 +29,7 @@ This task auto-cancels incoming orders when it finds all of a certain set of ris
 shopify/orders/updated
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -37,7 +37,7 @@ This task auto-cancels incoming orders when it finds all of a certain set of ris
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/automatically-cancel-orders-with-certain-risk-indicators), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/automatically-cancel-orders-with-certain-risk-indicators.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/automatically-cancel-orders-with-certain-risk-indicators), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/automatically-cancel-orders-with-certain-risk-indicators.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

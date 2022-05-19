@@ -4,7 +4,7 @@ Tags: Bundle, Inventory, Products, SKU, Sync
 
 Use this task to automatically sync inventory for a simple product bundle – no theme modifications required. When configured with unique SKUs for the bundle and its components, and with quantities needed from each component for each bundle unit, this task keeps the bundle inventory set to the greatest possible value, given the quantities of its components. It also appropriately subtracts from component inventory whenever the bundle is ordered, and appropriately raises component inventory when a bundle order is refunded.
 
-* View in the task library: [usemechanic.com/task/maintain-inventory-for-a-product-bundle](https://usemechanic.com/task/maintain-inventory-for-a-product-bundle)
+* View in the task library: [tasks.mechanic.dev/maintain-inventory-for-a-product-bundle](https://tasks.mechanic.dev/maintain-inventory-for-a-product-bundle)
 * Task JSON, for direct import: [task.json](../../tasks/maintain-inventory-for-a-product-bundle.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -22,7 +22,7 @@ Use this task to automatically sync inventory for a simple product bundle – no
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -33,7 +33,7 @@ shopify/inventory_levels/update
 mechanic/user/trigger
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -59,7 +59,7 @@ Notes:
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/maintain-inventory-for-a-product-bundle), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/maintain-inventory-for-a-product-bundle.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/maintain-inventory-for-a-product-bundle), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/maintain-inventory-for-a-product-bundle.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

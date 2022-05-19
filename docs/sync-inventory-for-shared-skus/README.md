@@ -4,7 +4,7 @@ Tags: Inventory, SKU, Sync
 
 This task monitors all variants having a SKU that you configure, and ensures that changes to inventory quantity are reflected across all variants sharing that SKU.
 
-* View in the task library: [usemechanic.com/task/sync-inventory-for-shared-skus](https://usemechanic.com/task/sync-inventory-for-shared-skus)
+* View in the task library: [tasks.mechanic.dev/sync-inventory-for-shared-skus](https://tasks.mechanic.dev/sync-inventory-for-shared-skus)
 * Task JSON, for direct import: [task.json](../../tasks/sync-inventory-for-shared-skus.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -16,7 +16,7 @@ This task monitors all variants having a SKU that you configure, and ensures tha
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -25,7 +25,7 @@ mechanic/user/trigger
 mechanic/scheduler/10min
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -39,7 +39,7 @@ YouTube: [How this task was made](https://youtu.be/CoWvIdibz9Y)
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/sync-inventory-for-shared-skus), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/sync-inventory-for-shared-skus.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/sync-inventory-for-shared-skus), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/sync-inventory-for-shared-skus.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

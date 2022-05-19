@@ -4,7 +4,7 @@ Tags: Auto-Tag, Bulk, Inventory, Products, Transfer
 
 Keep track of which products in your shop have incoming inventory with this task! Running when inventory levels are updated, this task will tag the product with the tag of your choice if _any_ of that product's variants at _any_ of your locations has an incoming transfer. Conversely, the tag will be removed when there are no pending transfers.
 
-* View in the task library: [usemechanic.com/task/auto-tag-products-with-incoming-inventory](https://usemechanic.com/task/auto-tag-products-with-incoming-inventory)
+* View in the task library: [tasks.mechanic.dev/auto-tag-products-with-incoming-inventory](https://tasks.mechanic.dev/auto-tag-products-with-incoming-inventory)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-products-with-incoming-inventory.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -17,7 +17,7 @@ Keep track of which products in your shop have incoming inventory with this task
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -30,7 +30,7 @@ mechanic/user/trigger
 mechanic/shopify/bulk_operation
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -44,7 +44,7 @@ Notes:
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-tag-products-with-incoming-inventory), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-products-with-incoming-inventory.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-products-with-incoming-inventory), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-products-with-incoming-inventory.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

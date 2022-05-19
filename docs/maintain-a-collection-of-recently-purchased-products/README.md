@@ -4,7 +4,7 @@ Tags: Collections, Products
 
 This task watches for newly-paid orders (or newly-fulfilled orders, if you choose), and adds or moves the purchased products to the top of the collection of your choice. Optionally, ignore products that are sold out. Useful for "trending products" functionality. :)
 
-* View in the task library: [usemechanic.com/task/maintain-a-collection-of-recently-purchased-products](https://usemechanic.com/task/maintain-a-collection-of-recently-purchased-products)
+* View in the task library: [tasks.mechanic.dev/maintain-a-collection-of-recently-purchased-products](https://tasks.mechanic.dev/maintain-a-collection-of-recently-purchased-products)
 * Task JSON, for direct import: [task.json](../../tasks/maintain-a-collection-of-recently-purchased-products.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -19,7 +19,7 @@ This task watches for newly-paid orders (or newly-fulfilled orders, if you choos
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -31,7 +31,7 @@ This task watches for newly-paid orders (or newly-fulfilled orders, if you choos
 {% endif %}
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -45,7 +45,7 @@ Provide this task with ID of a manual collection, which you've configured to be 
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/maintain-a-collection-of-recently-purchased-products), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/maintain-a-collection-of-recently-purchased-products.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/maintain-a-collection-of-recently-purchased-products), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/maintain-a-collection-of-recently-purchased-products.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

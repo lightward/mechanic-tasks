@@ -4,7 +4,7 @@ Tags: Orders, Payment, Tag, Watch
 
 Use this task to immediately bump orders, from certain customers, to "paid". Useful if you have a standing payment arrangement for certain customers. Optionally, auto-remove this tag from customers after auto-paying their order. Useful for using customer tags as one-time triggers for auto-payment.
 
-* View in the task library: [usemechanic.com/task/auto-pay-orders-from-customers-with-a-certain-tag](https://usemechanic.com/task/auto-pay-orders-from-customers-with-a-certain-tag)
+* View in the task library: [tasks.mechanic.dev/auto-pay-orders-from-customers-with-a-certain-tag](https://tasks.mechanic.dev/auto-pay-orders-from-customers-with-a-certain-tag)
 * Task JSON, for direct import: [task.json](../../tasks/auto-pay-orders-from-customers-with-a-certain-tag.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -17,7 +17,7 @@ Use this task to immediately bump orders, from certain customers, to "paid". Use
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -26,7 +26,7 @@ shopify/orders/create
 mechanic/user/trigger
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -38,7 +38,7 @@ Enable the "Remove tag from customer after processing their order" option to hav
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-pay-orders-from-customers-with-a-certain-tag), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-pay-orders-from-customers-with-a-certain-tag.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-pay-orders-from-customers-with-a-certain-tag), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-pay-orders-from-customers-with-a-certain-tag.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

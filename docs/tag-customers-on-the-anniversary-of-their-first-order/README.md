@@ -4,7 +4,7 @@ Tags: Customers, Tag
 
 Running daily, or manually, this task scans all customers and tags them if their __first__ order was a year or more ago. Alternatively, you may choose to tag customers if their account was created at least a year ago.
 
-* View in the task library: [usemechanic.com/task/tag-customers-on-the-anniversary-of-their-first-order](https://usemechanic.com/task/tag-customers-on-the-anniversary-of-their-first-order)
+* View in the task library: [tasks.mechanic.dev/tag-customers-on-the-anniversary-of-their-first-order](https://tasks.mechanic.dev/tag-customers-on-the-anniversary-of-their-first-order)
 * Task JSON, for direct import: [task.json](../../tasks/tag-customers-on-the-anniversary-of-their-first-order.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -19,7 +19,7 @@ Running daily, or manually, this task scans all customers and tags them if their
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -29,7 +29,7 @@ mechanic/scheduler/daily
 mechanic/shopify/bulk_operation
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -42,7 +42,7 @@ Optionally, you may choose whether to wait a certain amount of days before taggi
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/tag-customers-on-the-anniversary-of-their-first-order), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/tag-customers-on-the-anniversary-of-their-first-order.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/tag-customers-on-the-anniversary-of-their-first-order), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/tag-customers-on-the-anniversary-of-their-first-order.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

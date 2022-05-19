@@ -4,7 +4,7 @@ Tags: Delete, Metafields, Schedule
 
 Do you sell tickets to recurring events? Do you use a new product variant for each one? Use this task to regularly scan your catalog for product variants that have a date metafield, and to delete variants when their date has passed.
 
-* View in the task library: [usemechanic.com/task/delete-variants-having-a-metafield-date-that-has-passed](https://usemechanic.com/task/delete-variants-having-a-metafield-date-that-has-passed)
+* View in the task library: [tasks.mechanic.dev/delete-variants-having-a-metafield-date-that-has-passed](https://tasks.mechanic.dev/delete-variants-having-a-metafield-date-that-has-passed)
 * Task JSON, for direct import: [task.json](../../tasks/delete-variants-having-a-metafield-date-that-has-passed.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -17,7 +17,7 @@ Do you sell tickets to recurring events? Do you use a new product variant for ea
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -26,7 +26,7 @@ mechanic/user/trigger
 mechanic/scheduler/daily
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -36,7 +36,7 @@ Run this task manually to immediately scan your product catalog for outdated var
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/delete-variants-having-a-metafield-date-that-has-passed), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/delete-variants-having-a-metafield-date-that-has-passed.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/delete-variants-having-a-metafield-date-that-has-passed), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/delete-variants-having-a-metafield-date-that-has-passed.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

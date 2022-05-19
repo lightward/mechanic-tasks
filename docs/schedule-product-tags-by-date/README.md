@@ -4,7 +4,7 @@ Tags: Auto-Tag, Products, Schedule
 
 Use this task to schedule adding and/or removing tags for specific products, with support for scheduling by date, or by date and hour.
 
-* View in the task library: [usemechanic.com/task/schedule-product-tags-by-date](https://usemechanic.com/task/schedule-product-tags-by-date)
+* View in the task library: [tasks.mechanic.dev/schedule-product-tags-by-date](https://tasks.mechanic.dev/schedule-product-tags-by-date)
 * Task JSON, for direct import: [task.json](../../tasks/schedule-product-tags-by-date.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -28,7 +28,7 @@ Use this task to schedule adding and/or removing tags for specific products, wit
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -44,7 +44,7 @@ Use this task to schedule adding and/or removing tags for specific products, wit
 mechanic/user/trigger
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -64,7 +64,7 @@ This task will run nightly, at midnight in your store's local timezone. If "Use 
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/schedule-product-tags-by-date), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/schedule-product-tags-by-date.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/schedule-product-tags-by-date), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/schedule-product-tags-by-date.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

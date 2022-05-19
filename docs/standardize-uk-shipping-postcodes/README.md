@@ -4,7 +4,7 @@ Tags: Shipping, UK
 
 This task watches for incoming orders for the United Kingdom, and reformats any address postcodes that are not in the standard formats "XX XXX", "XXX XXX", and "XXXX XXX".
 
-* View in the task library: [usemechanic.com/task/standardize-uk-shipping-postcodes](https://usemechanic.com/task/standardize-uk-shipping-postcodes)
+* View in the task library: [tasks.mechanic.dev/standardize-uk-shipping-postcodes](https://tasks.mechanic.dev/standardize-uk-shipping-postcodes)
 * Task JSON, for direct import: [task.json](../../tasks/standardize-uk-shipping-postcodes.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -18,7 +18,7 @@ This task watches for incoming orders for the United Kingdom, and reformats any 
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -27,7 +27,7 @@ shopify/orders/create
 mechanic/user/trigger
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -37,7 +37,7 @@ Run this task manually to scan _all_ orders in your store's records. Mechanic wi
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/standardize-uk-shipping-postcodes), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/standardize-uk-shipping-postcodes.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/standardize-uk-shipping-postcodes), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/standardize-uk-shipping-postcodes.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

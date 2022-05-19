@@ -4,7 +4,7 @@ Tags: Customers, Email, Tag
 
 This task prompts you for a list of email addresses and tags, one pair per line, in the format "customer@example.com:tag". The task adds each tag to its related customer. Developers: this task is an example of working in batches with GraphQL – useful when working with bulk data.
 
-* View in the task library: [usemechanic.com/task/tag-customers-in-bulk-by-email-address](https://usemechanic.com/task/tag-customers-in-bulk-by-email-address)
+* View in the task library: [tasks.mechanic.dev/tag-customers-in-bulk-by-email-address](https://tasks.mechanic.dev/tag-customers-in-bulk-by-email-address)
 * Task JSON, for direct import: [task.json](../../tasks/tag-customers-in-bulk-by-email-address.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -14,7 +14,7 @@ This task prompts you for a list of email addresses and tags, one pair per line,
 mechanic/user/text
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -24,7 +24,7 @@ Enter a list of email addresses and tags, one pair per line, in the format "cust
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/tag-customers-in-bulk-by-email-address), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/tag-customers-in-bulk-by-email-address.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/tag-customers-in-bulk-by-email-address), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/tag-customers-in-bulk-by-email-address.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

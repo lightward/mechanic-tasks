@@ -4,7 +4,7 @@ Tags: Fulfillment, Orders, Tag
 
 This task monitors order tags, and when a certain tag is added to an order, it auto-fulfills all unfulfilled items in the order. Optionally, you can choose to notify customers when their order is fulfilled by this task.
 
-* View in the task library: [usemechanic.com/task/auto-fulfill-orders-when-tagged](https://usemechanic.com/task/auto-fulfill-orders-when-tagged)
+* View in the task library: [tasks.mechanic.dev/auto-fulfill-orders-when-tagged](https://tasks.mechanic.dev/auto-fulfill-orders-when-tagged)
 * Task JSON, for direct import: [task.json](../../tasks/auto-fulfill-orders-when-tagged.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -18,7 +18,7 @@ This task monitors order tags, and when a certain tag is added to an order, it a
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -26,7 +26,7 @@ This task monitors order tags, and when a certain tag is added to an order, it a
 shopify/orders/updated
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -36,7 +36,7 @@ __Note__: If a qualifying order has open fulfillments assigned to multiple locat
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/auto-fulfill-orders-when-tagged), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-fulfill-orders-when-tagged.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-fulfill-orders-when-tagged), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-fulfill-orders-when-tagged.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

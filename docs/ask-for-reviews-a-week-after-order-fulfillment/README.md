@@ -4,7 +4,7 @@ Tags: Email, Fulfillment, Orders, Reviews
 
 Follow up with your customers automatically, and establish the purchase -> earn-reviews -> attract-customers cycle. This task comes prefilled with a friendly, customizable email that gives the customer direct links to their purchases on your website, where they can leave a review using your existing review system.
 
-* View in the task library: [usemechanic.com/task/ask-for-reviews-a-week-after-order-fulfillment](https://usemechanic.com/task/ask-for-reviews-a-week-after-order-fulfillment)
+* View in the task library: [tasks.mechanic.dev/ask-for-reviews-a-week-after-order-fulfillment](https://tasks.mechanic.dev/ask-for-reviews-a-week-after-order-fulfillment)
 * Task JSON, for direct import: [task.json](../../tasks/ask-for-reviews-a-week-after-order-fulfillment.json)
 * Preview task code: [script.liquid](./script.liquid)
 
@@ -22,7 +22,7 @@ Follow up with your customers automatically, and establish the purchase -> earn-
 }
 ```
 
-[Learn about task options in Mechanic](https://docs.usemechanic.com/article/471-task-options)
+[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
 
 ## Subscriptions
 
@@ -30,7 +30,7 @@ Follow up with your customers automatically, and establish the purchase -> earn-
 shopify/orders/fulfilled+{{ options.days_to_wait_before_emailing__number_required | default: 7 }}.days
 ```
 
-[Learn about event subscriptions in Mechanic](https://docs.usemechanic.com/article/408-subscriptions)
+[Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
@@ -38,7 +38,7 @@ Follow up with your customers automatically, and establish the purchase -> earn-
 
 ## Installing this task
 
-Find this task [in the library at usemechanic.com](https://usemechanic.com/task/ask-for-reviews-a-week-after-order-fulfillment), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/ask-for-reviews-a-week-after-order-fulfillment.json) – see [Importing and exporting tasks](https://docs.usemechanic.com/article/505-importing-and-exporting-tasks) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/ask-for-reviews-a-week-after-order-fulfillment), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/ask-for-reviews-a-week-after-order-fulfillment.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 
