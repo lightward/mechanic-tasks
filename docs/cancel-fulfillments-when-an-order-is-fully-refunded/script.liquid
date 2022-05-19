@@ -1,62 +1,147 @@
-{% assign fulfillment_statuses_to_cancel = "" %}
+{% assign fulfillment_statuses_to_cancel = array %}
 
 {% if options.cancel_pending_fulfillments__boolean %}
-  {% assign fulfillment_statuses_to_cancel = fulfillment_statuses_to_cancel | add_tag: "pending" %}
+  {% assign fulfillment_statuses_to_cancel = fulfillment_statuses_to_cancel | push: "PENDING" %}
 {% endif %}
 
 {% if options.cancel_open_fulfillments__boolean %}
-  {% assign fulfillment_statuses_to_cancel = fulfillment_statuses_to_cancel | add_tag: "open" %}
+  {% assign fulfillment_statuses_to_cancel = fulfillment_statuses_to_cancel | push: "OPEN" %}
 {% endif %}
 
 {% if options.cancel_successful_fulfillments__boolean %}
-  {% assign fulfillment_statuses_to_cancel = fulfillment_statuses_to_cancel | add_tag: "success" %}
+  {% assign fulfillment_statuses_to_cancel = fulfillment_statuses_to_cancel | push: "SUCCESS" %}
 {% endif %}
 
-{% assign fulfillment_statuses_to_cancel = fulfillment_statuses_to_cancel | split: ", " %}
+{% if fulfillment_statuses_to_cancel == blank %}
+  {% error "Please select at least one fulfillment status for cancellation" %}
 
-{% if fulfillment_statuses_to_cancel.size == 0 %}
-  {"log": "Please select at least one fulfillment status for cancellation."}
 {% elsif event.preview %}
-  {
-    "action": {
-      "type": "shopify",
-      "options": [
-        "post",
-        "/admin/orders/1234567890/fulfillments/1234567890/cancel.json",
-        {}
-      ]
+  {% action "shopify" %}
+    mutation {
+      fulfillmentCancel(id: "gid://shopify/Fulfillment/1234567890") {
+        fulfillment {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
     }
-  }
+  {% endaction %}
+
 {% elsif event.topic == "mechanic/user/trigger" %}
-  {% for order in shop.orders.any.refunded %}
-    {% for fulfillment in order.fulfillments %}
-      {% if fulfillment_statuses_to_cancel contains fulfillment.status %}
-        {
-          "action": {
-            "type": "shopify",
-            "options": [
-              "post",
-              "/admin/orders/{{ order.id }}/fulfillments/{{ fulfillment.id }}/cancel.json",
-              {}
-            ]
+  {% assign cursor = nil %}
+  {% assign orders = array %}
+
+  {% for n in (1..100) %}
+    {% capture query %}
+      query {
+        orders(
+          first: 250
+          after: {{ cursor | json }}
+          query: "financial_status:refunded"
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            name
+            fulfillments {
+              id
+              status
+            }
           }
         }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "orders": {
+              "nodes": [
+                {
+                  "id": "gid://shopify/Order/1234567890",
+                  "fulfillments": [
+                    {
+                      "id": "gid://shopify/Fulfillment/1234567890",
+                      "status": "PENDING"
+                    },
+                    {
+                      "id": "gid://shopify/Fulfillment/2345678901",
+                      "status": "OPEN"
+                    },
+                    {
+                      "id": "gid://shopify/Fulfillment/3456789012",
+                      "status": "SUCCESS"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign orders = orders | concat: result.data.orders.nodes %}
+
+    {% if result.data.orders.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.orders.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% for order in orders %}
+    {% for fulfillment in order.fulfillments %}
+      {% if fulfillment_statuses_to_cancel contains fulfillment.status %}
+        {% action "shopify" %}
+          mutation {
+            fulfillmentCancel(id: {{ fulfillment.id | json }}) {
+              fulfillment {
+                name
+                status
+              }
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
       {% endif %}
     {% endfor %}
   {% endfor %}
+
 {% elsif refund.order.financial_status == "refunded" %}
   {% for fulfillment in refund.order.fulfillments %}
-    {% if fulfillment_statuses_to_cancel contains fulfillment.status %}
-      {
-        "action": {
-          "type": "shopify",
-          "options": [
-            "post",
-            "/admin/orders/{{ refund.order.id }}/fulfillments/{{ fulfillment.id }}/cancel.json",
-            {}
-          ]
+    {% assign fulfillment_status = fulfillment.status | upcase %}
+
+    {% if fulfillment_statuses_to_cancel contains fulfillment_status %}
+      {% action "shopify" %}
+        mutation {
+          fulfillmentCancel(id: {{ fulfillment.admin_graphql_api_id | json }}) {
+            fulfillment {
+              name
+              status
+            }
+            userErrors {
+              field
+              message
+            }
+          }
         }
-      }
+      {% endaction %}
     {% endif %}
   {% endfor %}
 {% endif %}
