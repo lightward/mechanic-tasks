@@ -1,0 +1,31 @@
+{% if event.preview %}
+  {% assign order = hash %}
+  {% assign order["admin_graphql_api_id"] = "gid://shopify/Order/1234567890" %}
+  {% assign order["tags"] = options.order_tag_to_watch_for__required | append: ", " | append: options.order_tag_to_remove__required %}
+{% endif %}
+
+{% assign order_tags = order.tags | split: ", " %}
+{% assign tag_to_match = options.order_tag_to_watch_for__required %}
+{% assign tag_to_remove = options.order_tag_to_remove__required %}
+
+{% if options.ignore_tag_case__boolean %}
+  {% assign order_tags = order.tags | downcase | split: ", " %}
+  {% assign tag_to_match = options.order_tag_to_watch_for__required | downcase %}
+  {% assign tag_to_remove = options.order_tag_to_remove__required | downcase %}
+{% endif %}
+
+{% if order_tags contains tag_to_match and order_tags contains tag_to_remove %}
+  {% action "shopify" %}
+    mutation {
+      tagsRemove(
+        id: {{ order.admin_graphql_api_id | json }}
+        tags: {{ options.order_tag_to_remove__required | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}

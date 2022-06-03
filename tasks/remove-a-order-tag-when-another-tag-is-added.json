@@ -1,0 +1,24 @@
+{
+  "name": "Remove an order tag when another tag is added",
+  "options": {
+    "order_tag_to_watch_for__required": "apple",
+    "order_tag_to_remove__required": "butter",
+    "ignore_tag_case__boolean": true
+  },
+  "script": "{% if event.preview %}\n  {% assign order = hash %}\n  {% assign order[\"admin_graphql_api_id\"] = \"gid://shopify/Order/1234567890\" %}\n  {% assign order[\"tags\"] = options.order_tag_to_watch_for__required | append: \", \" | append: options.order_tag_to_remove__required %}\n{% endif %}\n\n{% assign order_tags = order.tags | split: \", \" %}\n{% assign tag_to_match = options.order_tag_to_watch_for__required %}\n{% assign tag_to_remove = options.order_tag_to_remove__required %}\n\n{% if options.ignore_tag_case__boolean %}\n  {% assign order_tags = order.tags | downcase | split: \", \" %}\n  {% assign tag_to_match = options.order_tag_to_watch_for__required | downcase %}\n  {% assign tag_to_remove = options.order_tag_to_remove__required | downcase %}\n{% endif %}\n\n{% if order_tags contains tag_to_match and order_tags contains tag_to_remove %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsRemove(\n        id: {{ order.admin_graphql_api_id | json }}\n        tags: {{ options.order_tag_to_remove__required | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}",
+  "subscriptions": [
+    "shopify/orders/updated"
+  ],
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "docs": "Does exactly as it says. :)",
+  "subscriptions_template": "shopify/orders/updated",
+  "perform_action_runs_in_sequence": false,
+  "halt_action_run_sequence_on_error": false,
+  "preview_event_definitions": [],
+  "tags": [
+    "Orders",
+    "Untag",
+    "Watch"
+  ]
+}
