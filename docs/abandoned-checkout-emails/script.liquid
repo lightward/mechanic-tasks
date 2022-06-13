@@ -72,7 +72,7 @@
   {% if cache[order_name_cache_key] and event.preview != true %}
     {% capture message %}Checkout converted as order {{ cache[order_name_cache_key] }} - not sending an email{% endcapture %}
     {% log message %}
-  {% elsif cache[checkout_cache_key] != blank or event.preview %}
+  {% elsif cache[checkout_cache_key].email != blank or event.preview %}
     {% assign checkout = cache[checkout_cache_key] %}
 
     {% action "email" %}
