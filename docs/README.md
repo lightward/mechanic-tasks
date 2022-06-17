@@ -11,6 +11,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Add fulfillment tracking when an order is tagged](./add-fulfillment-tracking-when-an-order-is-tagged)
 * [Add new customers to GetResponse](./add-new-customers-to-getresponse)
 * [Advanced: Scheduled Price Changes](./advanced-scheduled-price-changes)
+* [Advanced: Scheduled section publishing](./advanced-scheduled-section-publishing)
 * [Archive free orders on fulfillment](./archive-free-orders-on-fulfillment)
 * [Archive orders on delivery](./archive-orders-on-delivery)
 * [Archive orders when fulfilled](./archive-orders-when-fulfilled)

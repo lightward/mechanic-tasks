@@ -1,0 +1,133 @@
+{% assign datetime_to_publish = options.datetime_to_publish__required %}
+{% assign theme_id = options.theme_id__number_required %}
+{% assign template_names_and_section_ids_to_publish = options.template_names_and_section_ids_to_publish__keyval_multiline %}
+{% assign template_names_and_section_ids_to_unpublish = options.template_names_and_section_ids_to_unpublish__keyval_multiline %}
+
+{% assign template_names
+  = template_names_and_section_ids_to_publish
+  | keys
+  | default: array
+%}
+{% assign template_names
+  = template_names_and_section_ids_to_unpublish
+  | keys
+  | default: array
+  | concat: template_names
+  | uniq
+%}
+
+{% if template_names == blank %}
+  {% error "Configure at least one template name and section ID to publish or unpublish." %}
+  {% break %}
+{% endif %}
+
+{% if event.topic contains "mechanic/scheduler/" or event.topic == "mechanic/user/trigger" %}
+  {% if event.topic contains "mechanic/scheduler/" %}
+    {% assign datetime = "now" | date: "%Y-%m-%d %H:%M" %}
+
+    {% unless datetime_to_publish == datetime or event.preview %}
+      {% log
+        message: "Configured datetime to publish does not match run date; ending this task run.",
+        run_date: datetime,
+        datetime_to_publish: datetime_to_publish
+      %}
+      {% break %}
+    {% endunless %}
+  {% endif %}
+
+  {% for template_name in template_names %}
+    {% if template_name == blank %}
+      {% continue %}
+    {% endif %}
+
+    {% assign section_ids_to_publish = template_names_and_section_ids_to_publish[template_name] | split: newline %}
+    {% assign section_ids_to_unpublish = template_names_and_section_ids_to_unpublish[template_name] | split: newline %}
+
+    {% log
+      template_name: template_name,
+      section_ids_to_publish: section_ids_to_publish,
+      section_ids_to_unpublish: section_ids_to_unpublish
+    %}
+
+    {% capture template_path %}templates/{{ template_name }}.json{% endcapture %}
+
+    {% action %}
+      {
+        "type": "shopify",
+        "options": [
+          "get",
+          "/admin/themes/{{ theme_id }}/assets.json?asset[key]={{ template_path }}"
+        ],
+        "meta": {
+          "template_path": {{ template_path | json }},
+          "section_ids_to_publish": {{ section_ids_to_publish | json }},
+          "section_ids_to_unpublish": {{ section_ids_to_unpublish | json }}
+        }
+      }
+    {% endaction %}
+  {% endfor %}
+
+{% elsif event.topic == "mechanic/actions/perform" %}
+  {% comment %}
+    -- NOTE: Shopify will throw a 404 error on the GET if the asset is not accessible, halting that action, so no error checking is needed here
+  {% endcomment %}
+
+  {% assign template_path = action.meta.template_path %}
+  {% assign section_ids_to_publish = action.meta.section_ids_to_publish %}
+  {% assign section_ids_to_unpublish = action.meta.section_ids_to_unpublish %}
+
+  {% unless template_path or event.preview %}
+    {% comment %}
+      -- stop processing if a meta value is not present (i.e. theme asset update actions)
+    {% endcomment %}
+    {% break %}
+  {% endunless %}
+
+  {% assign asset = action.run.result.asset %}
+
+  {% if event.preview %}
+    {% assign asset = hash %}
+    {% assign asset["value"] = hash | json %}
+  {% endif %}
+
+  {% assign asset_value = asset.value | parse_json %}
+  {% assign section_names = asset_value.sections | keys %}
+
+  {% assign matched_sections_to_publish = array %}
+  {% assign matched_sections_to_unpublish = array %}
+
+  {% for section_name in section_names %}
+    {% if section_ids_to_publish contains section_name %}
+      {% assign matched_sections_to_publish = matched_sections_to_publish | push: section_name %}
+      {% assign asset_value["sections"][section_name]["disabled"] = false %}
+
+    {% elsif section_ids_to_unpublish contains section_name %}
+      {% assign matched_sections_to_unpublish = matched_sections_to_unpublish | push: section_name %}
+      {% assign asset_value["sections"][section_name]["disabled"] = true %}
+    {% endif %}
+  {% endfor %}
+
+  {% log
+    template_path: template_path,
+    matched_sections_to_publish: matched_sections_to_publish,
+    matched_sections_to_unpublish: matched_sections_to_unpublish
+  %}
+
+  {% unless matched_sections_to_publish != blank or matched_sections_to_unpublish != blank or event.preview %}
+    {% log "No matched sections to publish or unpublish; no update will be made." %}
+    {% break %}
+  {% endunless %}
+
+  {% action "shopify" %}
+    [
+      "put",
+      "/admin/themes/{{ theme_id }}/assets.json",
+      {
+        "asset": {
+          "key": {{ template_path | json }},
+          "value": {{ asset_value | json | json }}
+        }
+      }
+    ]
+  {% endaction %}
+{% endif %}
