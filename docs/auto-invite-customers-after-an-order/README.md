@@ -13,10 +13,11 @@ Automatically prompt customers to activate their customer accounts, after placin
 ```json
 {
   "only_invite_if_the_customer_has_not_yet_been_invited__boolean": false,
-  "only_invite_if_the_customer_has_this_tag": null,
-  "only_invite_if_the_order_contains_a_product_with_this_tag": null,
-  "invitation_email_subject__required": "Activate your account",
-  "invitation_email_custom_message__multiline": "Hi there,\n\nThanks for purchasing access! Activate your new account at {{ shop.name }}.\n\nThanks,\n{{ shop.name }}"
+  "only_invite_if_the_customer_has_this_tag": "",
+  "only_invite_if_the_order_contains_a_product_with_this_tag": "",
+  "custom_invitation_email_subject": "",
+  "custom_invitation_email_message__multiline": "",
+  "invitation_email_bcc__array": null
 }
 ```
 
