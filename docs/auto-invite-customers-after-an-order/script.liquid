@@ -3,9 +3,33 @@
   {{ options.only_invite_if_the_customer_has_not_yet_been_invited__boolean }}
   {{ options.only_invite_if_the_customer_has_this_tag }}
   {{ options.only_invite_if_the_order_contains_a_product_with_this_tag }}
-  {{ options.invitation_email_subject__required }}
-  {{ options.invitation_email_custom_message__multiline }}
+  {{ options.custom_invitation_email_subject }}
+  {{ options.custom_invitation_email_message__multiline }}
+  {{ options.invitation_email_bcc__array }}
 {% endcomment %}
+
+{% if event.preview %}
+  {% assign order = hash %}
+  {% assign order["customer"] = hash %}
+  {% assign order["customer"]["state"] = "disabled" %}
+
+  {% if options.only_invite_if_the_customer_has_this_tag != blank %}
+    {% assign order["customer"]["tags"] = options.only_invite_if_the_customer_has_this_tag %}
+  {% endif %}
+
+  {% if options.only_invite_if_the_order_contains_a_product_with_this_tag != blank %}
+    {% capture line_items_json %}
+      [
+        {
+          "product": {
+            "tags": {{ options.only_invite_if_the_order_contains_a_product_with_this_tag | json }}
+          }
+        }
+      ]
+    {% endcapture %}
+    {% assign order["line_items"] = line_items_json | parse_json %}
+  {% endif %}
+{% endif %}
 
 {% assign customer_qualifies = true %}
 {% if order.customer == nil or order.customer.state == "enabled" %}
@@ -36,26 +60,34 @@
 {% endif %}
 
 {% if order.customer == nil %}
-  {% capture message %}Order does not have a customer; skipping invitation"}{% endcapture %}
-  {"log": {{ message | json }}}
+  {% log message: "Order does not have a customer; skipping invitation" %}
 {% elsif customer_qualifies == false %}
-  {% capture message %}Customer state is {{ order.customer.state | json }} with tags {{ order.customer.tags | json }}; skipping invitation"}{% endcapture %}
-  {"log": {{ message | json }}}
+  {% log message: "Customer does not qualify for an invitation", customer_state: order.customer.state, customer_tags: order.customer.tags %}
 {% elsif order_qualifies == false and options.only_invite_if_the_order_contains_a_product_with_this_tag != blank %}
-  {% capture message %}No product found in the order with the tag {{ options.only_invite_if_the_order_contains_a_product_with_this_tag | json }}; skipping invitation"}{% endcapture %}
-  {"log": {{ message | json }}}
+  {% log message: "No qualifying product found", required_product_tag: options.only_invite_if_the_order_contains_a_product_with_this_tag %}
 {% endif %} 
 
-{% if event.preview or order_qualifies %}
+{% if order_qualifies %}
+  {% assign customer_invite = hash %}
+
+  {% if options.custom_invitation_email_subject != blank %}
+    {% assign customer_invite["subject"] = options.custom_invitation_email_subject %}
+  {% endif %}
+
+  {% if options.custom_invitation_email_message__multiline != blank %}
+    {% assign customer_invite["custom_message"] = options.custom_invitation_email_message__multiline %}
+  {% endif %}
+
+  {% if options.invitation_email_bcc__array != blank %}
+    {% assign customer_invite["bcc"] = options.invitation_email_bcc__array %}
+  {% endif %}
+
   {% action "shopify" %}
     [
       "post",
       "/admin/customers/{{ order.customer.id | json }}/send_invite.json",
       {
-        "customer_invite": {
-          "subject": {{ options.invitation_email_subject__required | json }},
-          "custom_message": {{ options.invitation_email_custom_message__multiline | json }}
-        }
+        "customer_invite": {{ customer_invite | json }}
       }
     ]
   {% endaction %}
