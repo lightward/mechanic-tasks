@@ -1,18 +1,19 @@
 {
-  "name": "Auto-tag a customer's first order",
-  "options": {
-    "order_tag_to_add__required": null
-  },
-  "subscriptions": [
-    "shopify/orders/create"
-  ],
-  "subscriptions_template": "shopify/orders/create",
-  "script": "{% if event.preview %}\n  {% capture order_json %}\n    {\n      \"admin_graphql_api_id\": \"gid://shopify/Order/12345\",\n      \"customer\": {\n        \"orders_count\": 1\n      }\n    }\n  {% endcapture %}\n\n  {% assign order = order_json | parse_json %}\n{% endif %}\n\n{% if order.customer.orders_count == 1 %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ order.admin_graphql_api_id | json }}\n        tags: {{ options.order_tag_to_add__required | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}",
   "docs": "Watches for incoming orders that are the very first order on file for the related customer, and adds the tag of your choice.",
   "halt_action_run_sequence_on_error": false,
+  "name": "Auto-tag a customer's first order",
   "online_store_javascript": null,
   "order_status_javascript": null,
   "perform_action_runs_in_sequence": false,
+  "script": "{% capture query %}\n  query {\n    customer(id: {{ order.customer.admin_graphql_api_id | json }}) {\n      numberOfOrders\n    }\n  }\n{% endcapture %}\n\n{% assign result = query | shopify %}\n\n{% if event.preview %}\n  {% capture result_json %}\n    {\n      \"data\": {\n        \"customer\": {\n          \"numberOfOrders\": \"1\"\n        }\n      }\n    }\n  {% endcapture %}\n\n  {% assign result = result_json | parse_json %}\n{% endif %}\n\n{% if result.data.customer.numberOfOrders == \"1\" %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ order.admin_graphql_api_id | json }}\n        tags: {{ options.order_tag_to_add__required | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% else %}\n  {% log numberOfOrders: result.data.customer.numberOfOrders %}\n{% endif %}",
+  "subscriptions_template": "shopify/orders/create",
+  "subscriptions": [
+    "shopify/orders/create"
+  ],
+  "preview_event_definitions": [],
+  "options": {
+    "order_tag_to_add__required": null
+  },
   "tags": [
     "Auto-Tag",
     "Customers",

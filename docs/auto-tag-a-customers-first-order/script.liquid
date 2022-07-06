@@ -1,17 +1,28 @@
+{% capture query %}
+  query {
+    customer(id: {{ order.customer.admin_graphql_api_id | json }}) {
+      numberOfOrders
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
 {% if event.preview %}
-  {% capture order_json %}
+  {% capture result_json %}
     {
-      "admin_graphql_api_id": "gid://shopify/Order/12345",
-      "customer": {
-        "orders_count": 1
+      "data": {
+        "customer": {
+          "numberOfOrders": "1"
+        }
       }
     }
   {% endcapture %}
 
-  {% assign order = order_json | parse_json %}
+  {% assign result = result_json | parse_json %}
 {% endif %}
 
-{% if order.customer.orders_count == 1 %}
+{% if result.data.customer.numberOfOrders == "1" %}
   {% action "shopify" %}
     mutation {
       tagsAdd(
@@ -25,4 +36,6 @@
       }
     }
   {% endaction %}
+{% else %}
+  {% log numberOfOrders: result.data.customer.numberOfOrders %}
 {% endif %}
