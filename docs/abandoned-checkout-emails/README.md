@@ -2,7 +2,7 @@
 
 Tags: Abandoned Checkout, Email, Retention
 
-Roll your own abandoned checkout emails with this task – or, modify it to perform any other actions that your business needs when a checkout is let go. :) Out of the box, this task sends customers a recovery link, with an emails subject and message that you can easily customize.
+This task monitors checkouts in your store, and kicks off an email a configurable number of hours after a checkout is created – if the checkout wasn't completed, and if the customer provided their email address.
 
 * View in the task library: [tasks.mechanic.dev/abandoned-checkout-emails](https://tasks.mechanic.dev/abandoned-checkout-emails)
 * Task JSON, for direct import: [task.json](../../tasks/abandoned-checkout-emails.json)
@@ -13,7 +13,10 @@ Roll your own abandoned checkout emails with this task – or, modify it to perf
 ```json
 {
   "email_subject__required": "Just one more step to finish your order!",
-  "email_body__required_multiline": "Hey there! You're almost done:\n\n<a href=\"ABANDONED_CHECKOUT_URL\">Finish your order today!</a>\n\nThanks,\n- The team at {{ shop.name }}",
+  "custom_message__multiline_required": "Hi, you added one or more items to your shopping cart and haven't completed your purchase. You can complete it now while it's still available.",
+  "action_button_text__required": "Complete your purchase",
+  "cart_items_header_text__required": "Items in your cart",
+  "primary_brand_color_as_hex_rgb": "#cb6015",
   "hours_to_wait_before_sending_email__number_required": 24
 }
 ```
@@ -33,13 +36,15 @@ shopify/orders/create
 
 ## Documentation
 
-Roll your own abandoned checkout emails with this task – or, modify it to perform any other actions that your business needs when a checkout is let go. :) Out of the box, this task sends customers a recovery link, with an emails subject and message that you can easily customize.
+This task monitors checkouts in your store, and kicks off an email a configurable number of hours after a checkout is created – if the checkout wasn't completed, and if the customer provided their email address.
 
-This task monitors checkouts in your store, and kicks off an email a day after a checkout is created – if the checkout wasn't completed, and if the customer provided their email address.
+This task uses the same basic formatting as the standard Shopify abandoned checkout notification template. You may override the action button background with your own brand color, provided it is entered as an RGB hex value (e.g. #abc123).
 
-To change the followup time from 1 day to something else, click the "Show Advanced" link, and tweak the subscriptions with the time interval that suits your business.
+You can configure the custom message to the customer, the action button text, and the item list header. And since the task will set an email header to the primary locale (language) of your shop, these may be set to your native shop language. Product and variant titles will automatically be output in the language they are listed in your shop.
 
-Please note! While the full checkout details are stored, it'll require some custom code to substitute in more details than the checkout recovery URL. Click the "Show Advanced" link in the task editor to dig into the task script, and feel free to message support if you have any questions.
+Even though they don't appear in the task preview, item images *will* appear in the sent emails.
+
+**Important**: When using this task, make sure that Shopify's abandoned checkout notifications are disabled to prevent sending duplicate emails to customers.
 
 ## Installing this task
 

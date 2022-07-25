@@ -1,3 +1,9 @@
+{% assign subject = options.email_subject__required %}
+{% assign custom_message = options.custom_message__multiline_required %}
+{% assign action_button_text = options.action_button_text__required %}
+{% assign cart_items_header_text = options.cart_items_header_text__required %}
+{% assign primary_brand_color = options.primary_brand_color_as_hex_rgb | default: "#1990c6" %}
+
 {% assign abandoned_event = "user/checkouts/abandoned" %}
 
 {% if event.topic == "shopify/checkouts/create" or event.topic == "shopify/checkouts/update" %}
@@ -29,7 +35,6 @@
         }
       }
     {% endaction %}
-
   {% endif %}
 
 {% elsif event.topic == "shopify/orders/create" %}
@@ -72,20 +77,260 @@
   {% if cache[order_name_cache_key] and event.preview != true %}
     {% capture message %}Checkout converted as order {{ cache[order_name_cache_key] }} - not sending an email{% endcapture %}
     {% log message %}
+
   {% elsif cache[checkout_cache_key].email != blank or event.preview %}
     {% assign checkout = cache[checkout_cache_key] %}
+
+    {% assign line_item_output = array %}
+
+    {% for line_item in checkout.line_items %}
+      {% assign product = shop.products[line_item.product_id] %}
+      {% assign variant = shop.variants[line_item.variant_id] %}
+      {% assign variant_image = product.images | where: "id", variant.image_id | first %}
+      {% assign image = variant_image | default: product.image %}
+
+      {%- capture line_item_html -%}
+        <tr class="order-list__item">
+          <td class="order-list__item__cell">
+            <table>
+              <td>
+                {% if image %}
+                  <img src="{{ image.src | img_url: 'compact_cropped' }}" align="left" width="60" height="60" class="order-list__product-image"/>
+                {% endif %}
+              </td>
+              <td class="order-list__product-description-cell">
+                <span class="order-list__item-title">{{ line_item.title }}&nbsp;&times;&nbsp;{{ line_item.quantity }}</span><br/>
+
+                {% if line_item.variant_title != 'Default Title' %}
+                  <span class="order-list__item-variant">{{ line_item.variant_title }}</span><br/>
+                {% endif %}
+              </td>
+            </table>
+          </td>
+        </tr>
+      {%- endcapture -%}
+
+      {% assign line_item_output = line_item_output | push: line_item_html %}
+    {% endfor %}
+
+    {%- capture body -%}
+      <!DOCTYPE html>
+      <html lang="{{ shop.primary_locale }}">
+        <head>
+        <title>{{ subject }}</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta name="viewport" content="width=device-width">
+        <style>
+          .body {
+            height: 100% !important;
+            width: 100% !important;
+          }
+          .body,
+          .button.main-action-cell,
+          .container,
+          .header.row,
+          .row,
+          .row.actions,
+          .row.content,
+          .row.section,
+          .order-list__item__cell > table {
+            border-spacing: 0;
+            border-collapse: collapse;
+          }
+          .actions__cell,
+          .button__cell,
+          .content__cell,
+          .header__cell,
+          .order-list__item__cell,
+          .order-list__product-description-cell,
+          .section__cell,
+          .shop-name__cell,
+          .empty-line {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+              'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+              sans-serif;
+          }
+          .order-list__item,
+          .order-list__product-description-cell,
+          .header.row,
+          .row,
+          .row.actions,
+          .row.content,
+          .row.section {
+            width: 100%;
+          }
+          .shop-name__text > a {
+            font-size: 30px;
+            color: #333;
+            text-decoration: none;
+          }
+          .header.row {
+            margin: 40px 0 20px;
+          }
+          .container {
+            width: 560px;
+            text-align: left;
+            margin: 0 auto;
+          }
+          .shop-name__text {
+            font-weight: 400;
+            font-size: 30px;
+            color: #333;
+            margin: 0;
+          }
+          .content__cell {
+            padding-bottom: 40px;
+            border: 0;
+          }
+          .row.actions {
+            margin-top: 20px;
+          }
+          .button.main-action-cell {
+            float: left;
+            margin-right: 15px;
+          }
+          .button__cell {
+            border-radius: 4px;
+            background: {{ primary_brand_color }};
+          }
+          .button__text {
+            font-size: 16px;
+            text-decoration: none;
+            display: block;
+            color: #fff;
+            padding: 20px 25px;
+          }
+          .section__cell {
+            padding: 40px 0;
+          }
+          .order-list__item__cell {
+            padding-bottom: 15px;
+          }
+          .order-list__product-image {
+            margin-right: 15px;
+            border-radius: 8px;
+            border: 1px solid #e5e5e5;
+          }
+          .order-list__item-title {
+            font-size: 16px;
+            font-weight: 600;
+            line-height: 1.4;
+            color: #555;
+          }
+          .order-list__item-variant {
+            font-size: 14px;
+            color: #999;
+          }
+          .spacer {
+            min-width: 600px;
+            height: 0;
+          }
+          .empty-line {
+            line-height: 0;
+          }
+          a, a:hover, a:active, a:visited {
+            color: {{ primary_brand_color }};
+          }
+        </style>
+        </head>
+        <body>
+          <table class="body">
+            <tr>
+              <td>
+                <table class="header row">
+                  <tr>
+                    <td class="header__cell">
+                      <center>
+                        <table class="container">
+                          <tr>
+                            <td>
+                              <table class="row">
+                                <tr>
+                                  <td class="shop-name__cell">
+                                    <h1 class="shop-name__text">
+                                      <a href="https://{{ shop.domain }}/">{{ shop.name }}</a>
+                                    </h1>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+                        </table>
+                      </center>
+                    </td>
+                  </tr>
+                </table>
+                <table class="row content">
+                  <tr>
+                    <td class="content__cell">
+                      <center>
+                        <table class="container">
+                          <tr>
+                            <td>
+                              <p>{{ custom_message | strip | newline_to_br }}</p>
+                              <table class="row actions">
+                                <tr>
+                                  <td class="empty-line">&nbsp;</td>
+                                </tr>
+                                <tr>
+                                  <td class="actions__cell">
+                                    <table class="button main-action-cell">
+                                      <tr>
+                                        <td class="button__cell"><a href="{{ checkout.abandoned_checkout_url }}" class="button__text">{{ action_button_text }}</a></td>
+                                      </tr>
+                                    </table>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+                        </table>
+                      </center>
+                    </td>
+                  </tr>
+                </table>
+                <table class="row section">
+                  <tr>
+                    <td class="section__cell">
+                      <center>
+                        <table class="container">
+                          <tr>
+                            <td>
+                              <h3>{{ cart_items_header_text }}</h3>
+                            </td>
+                          </tr>
+                        </table>
+                        <table class="container">
+                          <tr>
+                            <td>
+                              <table class="row">
+                                {{ line_item_output | join: newline }}
+                              </table>
+                            </td>
+                          </tr>
+                        </table>
+                      </center>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+      </html>
+    {%- endcapture -%}
 
     {% action "email" %}
       {
         "to": {{ checkout.email | json }},
-        "subject": {{ options.email_subject__required | json }},
-        "body": {{ options.email_body__required_multiline | replace: 'ABANDONED_CHECKOUT_URL', checkout.abandoned_checkout_url | strip | newline_to_br | json }},
+        "subject": {{ subject | json }},
+        "body": {{ body | json }},
         "reply_to": {{ shop.customer_email | json }},
         "from_display_name": {{ shop.name | json }}
       }
     {% endaction %}
+
   {% else %}
     {% log "Checkout did not convert to an order, but no email address was ever given - unable to send an email" %}
   {% endif %}
-
 {% endif %}
