@@ -1,0 +1,148 @@
+{% assign orders = array %}
+
+{% if event.topic == "shopify/orders/create" %}
+
+  {% capture query %}
+    query {
+      order(id: {{ order.admin_graphql_api_id | json }}) {
+        id
+        name
+        tags
+        lineItems(first: 100) {
+          edges {
+            node {
+              id
+              sellingPlan {
+                name
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% assign orders[0] = result.data.order %}
+
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% assign cursor = nil %}
+
+  {% for n in (1..2500) %}
+    {% capture query %}
+      query {
+        orders(
+          first: 4
+          after: {{ cursor | json }}
+          reverse: true
+        ) {
+          pageInfo {
+            hasNextPage
+          }
+          edges {
+            cursor
+            node {
+              id
+              name
+              tags
+              lineItems(first: 100) {
+                edges {
+                  node {
+                    id
+                    sellingPlan {
+                      name
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% assign orders_batch = result.data.orders.edges | map: "node" %}
+    {% assign orders = orders | concat: orders_batch %}
+
+    {% if result.data.orders.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.orders.edges.last.cursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+{% if event.preview %}
+  {% capture orders_json %}
+    [
+      {
+        "id": "gid://shopify/Order/1234567890",
+        "name": "#TEST",
+        "lineItems": {
+          "edges": [
+            {
+              "node": {
+                "sellingPlan": [
+                  {
+                    "name": "Subscription, Delivery every month"
+                  }
+                ]
+              }
+            },
+            {
+              "node": {
+                "sellingPlan": [
+                  {
+                    "name": "Subscription, Delivery every month"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  {% endcapture %}
+
+  {% assign orders = orders_json | parse_json %}
+{% endif %}
+
+{% for order in orders %}
+  {% assign order_qualifies = false %}
+
+  {% assign line_items = order.lineItems.edges | map: "node" %}
+
+  {% for line_item in line_items %}
+    {% if line_item.sellingPlan.name != blank %}
+      {% assign order_qualifies = true %}
+      {% log line_item.sellingPlan.name %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% if order_qualifies %}
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {{ order.id | json }}
+          tags: {{ options.tag_to_apply__required | json }}
+        ) {
+          node {
+            ... on Order {
+              id
+              name
+              tags
+            }
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}

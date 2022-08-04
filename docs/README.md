@@ -113,6 +113,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag orders that contain a matching product](./auto-tag-orders-that-contain-a-matching-product)
 * [Auto-tag orders that contain an out of stock item](./auto-tag-orders-that-contain-an-out-of-stock-item)
 * [Auto-tag orders that contain bundles](./auto-tag-orders-that-contain-bundles)
+* [Auto-tag orders that contain subscription products](./auto-tag-orders-that-contain-subscription-products)
 * [Auto-tag orders that do not have a certain tag](./auto-tag-orders-that-do-not-have-a-certain-tag)
 * [Auto-tag orders using product tags](./auto-tag-orders-using-product-tags)
 * [Auto-tag orders when another tag is added](./auto-tag-orders-when-another-tag-is-added)
