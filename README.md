@@ -17,5 +17,5 @@ To learn about contributing to this task repository, see [CONTRIBUTING.md](./CON
 ```sh
 npm install   # install dependencies
 npm run build # compile docs
-npm run test  # apply sanity checks
+npm test  # apply sanity checks
 ```
