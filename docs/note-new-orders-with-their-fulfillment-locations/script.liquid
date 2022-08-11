@@ -56,17 +56,17 @@
 {% assign note = "Fulfilled from: " | append: fulfillment_location_names %}
 
 {% action "shopify" %}
-    mutation {
-      orderUpdate(
-        input: {
-          id: {{ order.admin_graphql_api_id | json }}
-          note: {{ note | json }}
-        }
-      ) {
-        userErrors {
-          field
-          message
-        }
+  mutation {
+    orderUpdate(
+      input: {
+        id: {{ order.admin_graphql_api_id | json }}
+        note: {{ note | json }}
+      }
+    ) {
+      userErrors {
+        field
+        message
       }
     }
-  {% endaction %}
+  }
+{% endaction %}
