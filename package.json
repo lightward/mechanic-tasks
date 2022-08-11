@@ -1,18 +1,21 @@
 {
   "private": true,
-  "repository": "git@github.com:lightward/mechanic-tasks.git",
-  "author": "Isaac Bowen <isaac@lightward.com>",
   "license": "MIT",
+  "repository": "git@github.com:lightward/mechanic-tasks.git",
+  "homepage": "https://tasks.mechanic.dev/",
+  "engines": {
+    "node": "18.4.0",
+    "npm": "8.15.1"
+  },
   "dependencies": {
-    "ajv": "^7.2.1",
-    "dir-compare": "^2.3.0",
-    "glob": "^7.1.6"
+    "ajv": "8.11.0",
+    "dir-compare": "4.0.0",
+    "glob": "8.0.3",
+    "husky": "^8.0.1"
   },
   "scripts": {
     "test": "node ./lib/test.js",
-    "build": "node ./lib/build.js"
-  },
-  "engines": {
-    "node": ">=14.14.0"
+    "build": "node ./lib/build.js",
+    "prepare": "husky install"
   }
 }
