@@ -1,7 +1,7 @@
 {
+  "name": "Tag and segment customers by days since last order",
   "docs": "This task will run daily to query all customers in your shop who have placed an order, tagging each with whichever configured tag is paired with the closest \"days since last order\" threshold. This is great way to keep tabs on who is active in your store, and who you might need to reconnect with.\n\nOptionally, you can select \"Create customer segments by tag\" to have the task create new [customer segments](https://help.shopify.com/en/manual/customers/customer-segmentation/customer-segments) for each tag configured in this task.\n\nThe task comes preconfigured with a \"Burn\" tag set at 365 or more days since last order, a \"Churn\" tag set at 180 days or but less than 365 days since last order, an  \"At Risk\" tag set at 90 days or more but less than 180 days since last order, and an \"Active\" tag for anyone who has placed an order more recently than 90 days. Change these configuration values to whatever makes the most sense for your business.\n\nNote: the order in which you enter the tags and days since pairs does not matter; at run time, the task will first sort by the largest days since value, and then make tagging decisions accordingly.",
   "halt_action_run_sequence_on_error": false,
-  "name": "Tag and segment customers by days since last order",
   "online_store_javascript": null,
   "order_status_javascript": null,
   "perform_action_runs_in_sequence": false,
