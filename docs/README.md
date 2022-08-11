@@ -10,6 +10,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Add all products to a certain sales channel](./add-all-products-to-a-certain-sales-channel)
 * [Add fulfillment tracking when an order is tagged](./add-fulfillment-tracking-when-an-order-is-tagged)
 * [Add new customers to GetResponse](./add-new-customers-to-getresponse)
+* [Add note to new orders with their fulfillment locations](./note-new-orders-with-their-fulfillment-locations)
 * [Advanced: Scheduled Price Changes](./advanced-scheduled-price-changes)
 * [Advanced: Scheduled section publishing](./advanced-scheduled-section-publishing)
 * [Archive free orders on fulfillment](./archive-free-orders-on-fulfillment)
