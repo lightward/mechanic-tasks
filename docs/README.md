@@ -298,6 +298,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Sync inventory levels to variant metafields](./sync-inventory-levels-to-variant-metafields)
 * [Sync order timeline comments to the customer note](./sync-order-timeline-comments-to-the-customer-note)
 * [Sync variant inventory within a product by pack size](./sync-variant-inventory-within-a-product-by-pack-size)
+* [Tag and segment customers by days since last order](./tag-and-segment-customers-by-days-since-last-order)
 * [Tag customers by order tier](./tag-customers-by-order-tier)
 * [Tag customers in bulk by email address](./tag-customers-in-bulk-by-email-address)
 * [Tag customers on the anniversary of their first order](./tag-customers-on-the-anniversary-of-their-first-order)

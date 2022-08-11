@@ -1,0 +1,254 @@
+{% assign customer_tags_and_days_since_last_order = options.customer_tags_and_days_since_last_order__keyval_number_required %}
+{% assign create_customer_segments_by_tag = options.create_customer_segments_by_tag__boolean %}
+{% assign now_s = "now" | date: "%s" %}
+
+{% assign tag_rules = array %}
+
+{% for keyval in customer_tags_and_days_since_last_order %}
+  {% assign customer_tag = keyval[0] %}
+  {% assign days_since_last_order = keyval[1] %}
+
+  {% if customer_tag == blank or days_since_last_order == blank or days_since_last_order < 0 %}
+    {% continue %}
+  {% endif %}
+
+  {% assign tag_rule = hash %}
+  {% assign tag_rule["days"] = days_since_last_order %}
+  {% assign tag_rule["tag"] = customer_tag %}
+  {% assign tag_rule["threshold_s"]
+    = days_since_last_order
+    | times: -86400
+    | plus: now_s
+  %}
+  {% assign tag_rules = tag_rules | push: tag_rule %}
+{% endfor %}
+
+{% assign tag_rules = tag_rules | sort: "days" | reverse %}
+{% assign configured_tags = tag_rules | map: "tag" %}
+
+{% if tag_rules == blank %}
+  {% error "Please enter at least one customer tag and days since last order combo." %}
+{% endif %}
+
+{% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% capture bulk_operation_query %}
+    query {
+      customers(
+        query: "orders_count:>0"
+      ) {
+        edges {
+          node {
+            id
+            tags
+            lastOrder {
+              processedAt
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% log tag_rules: tag_rules %}
+
+  {% if event.preview %}
+    {% capture bulkOperation_objects_jsonl %}
+      {"id":"gid:\/\/shopify\/Customer\/1234567890","lastOrder":{"processedAt":{{ tag_rules[0].threshold_s | json }}}}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = bulkOperation_objects_jsonl | parse_jsonl %}
+  {% endif %}
+
+  {% assign customers = bulkOperation.objects %}
+
+  {% for customer in customers %}
+    {% assign tag_should_have = nil %}
+
+    {% assign customer_last_order_processed_at_s = customer.lastOrder.processedAt | date: "%s" | times: 1 %}
+
+    {% for tag_rule in tag_rules %}
+      {% if customer_last_order_processed_at_s <= tag_rule.threshold_s %}
+        {% assign tag_should_have = tag_rule.tag %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+
+    {% unless tag_should_have == blank or customer.tags contains tag_should_have %}
+      {% action "shopify" %}
+        mutation {
+          tagsAdd(
+            id: {{ customer.id | json }}
+            tags: {{ tag_should_have | json }}
+          ) {
+            node {
+              ... on Customer {
+                id
+                email
+                tags
+                lastOrder {
+                  name
+                  processedAt
+                }
+              }
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endunless %}
+
+    {% assign tags_to_remove = array %}
+
+    {% for customer_tag in customer.tags %}
+      {% if configured_tags contains customer_tag and tag_should_have != customer_tag %}
+        {% assign tags_to_remove = tags_to_remove | push: customer_tag %}
+      {% endif %}
+    {% endfor %}
+
+    {% if tags_to_remove != blank %}
+      {% action "shopify" %}
+        mutation {
+          tagsRemove(
+            id: {{ customer.id | json }}
+            tags: {{ tags_to_remove | json }}
+          ) {
+            node {
+              ... on Customer {
+                id
+                email
+                tags
+                lastOrder {
+                  name
+                  processedAt
+                }
+              }
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endif %}
+  {% endfor %}
+
+  {% if create_customer_segments_by_tag %}
+    {% assign cursor = nil %}
+    {% assign segments = array %}
+
+    {% for n in (1..100) %}
+      {% capture query %}
+        query {
+          segments(
+            first: 250
+            after: {{ cursor | json }}
+          ) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              id
+              name
+              query
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = query | shopify %}
+
+      {% if event.preview %}
+        {% capture result_json %}
+          {
+            "data": {
+              "segments": {
+                "nodes": []
+              }
+            }
+          }          
+        {% endcapture %}
+      
+        {% assign result = result_json | parse_json %}
+      {% endif %}
+
+      {% assign segments = segemnts | concat: result.data.segments.nodes %}
+      {% comment %}
+        
+      {% assign segments
+        = result.data.segments.nodes
+        | default: array
+        | concat: segments
+      %}
+      {% endcomment %}
+
+      {% if result.data.segments.pageInfo.hasNextPage %}
+        {% assign cursor = result.data.segments.pageInfo.endCursor %}
+      {% else %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+
+    {% for tag_rule in tag_rules %}
+      {%- capture segment_rule -%}
+        customer_tags CONTAINS '{{ tag_rule.tag }}'
+      {%- endcapture -%}
+
+      {% assign matched_segment
+        = segments
+        | where: "name", tag_rule.tag
+        | where: "query", segment_rule
+      %}
+
+      {% if matched_segment != blank %}
+        {% log
+          message: "This customer segment already exists.",
+          matched_segment: matched_segment
+        %}
+        {% continue %}
+      {% endif %}
+
+      {% action "shopify" %}
+        mutation {
+          segmentCreate(
+            name: {{ tag_rule.tag | json }}
+            query: {{ segment_rule | json }}
+          ) {
+            segment {
+              id
+              name
+              query
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endfor %}
+  {% endif %}
+{% endif %}
