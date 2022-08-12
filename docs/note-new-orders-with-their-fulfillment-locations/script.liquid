@@ -56,10 +56,10 @@
 
 {% assign fulfillment_location_names = result.data.order.fulfillmentOrders.edges | map: "node" | map: "assignedLocation" | map: "name" | join: ", " %}
 
-{%- capture note -%}{% if result.data.order.note != blank %}{{result.data.order.note}}
-
-{% endif %}Fulfilled from: {{fulfillment_location_names}}
-{%- endcapture -%}
+{% assign note = "Fulfilled from: " | append: fulfillment_location_names %}
+{% if result.data.order.note != blank %}
+  {% assign note = note | prepend: newline | prepend: newline | prepend: result.data.order.note %}
+{% endif %}
 
 {% action "shopify" %}
   mutation {
