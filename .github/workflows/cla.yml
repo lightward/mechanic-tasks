@@ -11,7 +11,7 @@ jobs:
       - name: "CLA Assistant"
         if: (github.event.comment.body == 'recheck' || github.event.comment.body == 'I have read the CLA Document and I hereby sign the CLA') || github.event_name == 'pull_request_target'
         # Beta Release
-        uses: contributor-assistant/github-action@v2.2.0
+        uses: contributor-assistant/github-action@v2.2.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PERSONAL_ACCESS_TOKEN : ${{ secrets.PERSONAL_ACCESS_TOKEN }}
@@ -19,7 +19,7 @@ jobs:
           path-to-signatures: 'signatures/version1/cla.json'
           path-to-document: 'https://github.com/lightward/mechanic-tasks/blob/master/CLA.md'
           branch: 'main'
-          allowlist: isaacbowen,renovate
+          allowlist: isaacbowen,renovate[bot]
           use-dco-flag: false #'Set this to true if you want to use a dco instead of a cla'
           create-file-commit-message: 'creating file for storing CLA signatures'
           signed-commit-message: '$contributorName has signed the CLA in #$pullRequestNo'
