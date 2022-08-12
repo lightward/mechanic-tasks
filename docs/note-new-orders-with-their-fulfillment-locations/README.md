@@ -20,8 +20,6 @@ shopify/orders/create
 
 Monitoring for brand-new orders, this task add a note to each order with the fulfillment locations that Shopify automatically assigns at the moment of order creation.
 
-Important: This task requires Shopify API version 2020-01 or later.
-
 ## Installing this task
 
 Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/note-new-orders-with-their-fulfillment-locations), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/note-new-orders-with-their-fulfillment-locations.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
