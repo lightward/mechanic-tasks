@@ -243,6 +243,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Reissue single-use discount codes after order cancellation](./reissue-single-use-discount-codes-after-order-cancellation)
 * [Remind customers after x days about unpaid orders](./remind-customers-after-x-days-about-unpaid-orders)
 * [Remind customers that their order is on the way](./remind-customers-that-their-order-is-on-the-way)
+* [Remove Tag from All Products](./remove-specified-tags-from-all-products)
 * [Remove a customer tag when another tag is added](./remove-a-customer-tag-when-another-tag-is-added)
 * [Remove an order tag when another tag is added](./remove-a-order-tag-when-another-tag-is-added)
 * [Report Toaster: Deliver report PDF via email or Slack](./report-toaster-deliver-report-pdf-via-email-or-slack)

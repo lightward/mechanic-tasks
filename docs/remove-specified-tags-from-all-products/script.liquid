@@ -1,0 +1,84 @@
+{% assign tags_list = options.tags_to_remove__required_string | split: "," %}
+{% assign tagged_product_ids = array %}
+{% assign tags_query = "" %}
+{% for tag in tags_list %}
+  {% assign stripped_tag = tag | strip %}
+  {% assign tags_query = tags_query | append: "(tag:" | append: stripped_tag | append: ")" %}
+  {% unless forloop.last %}
+    {% assign tags_query = tags_query | append: " OR " %}
+  {% endunless %}
+{% endfor %}
+
+{% for n in (0..100) %}
+  {% capture query %}
+    query {
+      products(
+        first: 250
+        after: {{ cursor | json }}
+        query: {{ tags_query | json }}
+      ) {
+        pageInfo {
+          hasNextPage
+        }
+        edges {
+          cursor
+          node {
+            id
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "products": {
+            "edges": [
+              {
+                "node": {
+                  "id": "gid://shopify/Product/1234567890"
+                }
+              },
+              {
+                "node": {
+                  "id": "gid://shopify/Product/9876543210"
+                }
+              }
+            ]
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign products_result = result.data.products.edges | map: "node" | map: "id" %}
+  {% assign tagged_product_ids = tagged_product_ids | concat: products_result %}
+
+  {% if result.data.products.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.products.edges.last.cursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% for tagged_product_id in tagged_product_ids %}
+  {% action "shopify" %}
+    mutation {
+      tagsRemove(
+        id: {{ tagged_product_id | json }}
+        tags: {{ tags_list | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endfor %}

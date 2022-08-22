@@ -1,0 +1,21 @@
+{
+  "docs": "Removes the specified tags from all of your products, effectively deleting that tag from your store. Add multiple tags in a comma separated list. For example: sale,out of stock,promotion.",
+  "halt_action_run_sequence_on_error": false,
+  "name": "Remove Tag from All Products",
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% assign tags_list = options.tags_to_remove__required_string | split: \",\" %}\n{% assign tagged_product_ids = array %}\n{% assign tags_query = \"\" %}\n{% for tag in tags_list %}\n  {% assign stripped_tag = tag | strip %}\n  {% assign tags_query = tags_query | append: \"(tag:\" | append: stripped_tag | append: \")\" %}\n  {% unless forloop.last %}\n    {% assign tags_query = tags_query | append: \" OR \" %}\n  {% endunless %}\n{% endfor %}\n\n{% for n in (0..100) %}\n  {% capture query %}\n    query {\n      products(\n        first: 250\n        after: {{ cursor | json }}\n        query: {{ tags_query | json }}\n      ) {\n        pageInfo {\n          hasNextPage\n        }\n        edges {\n          cursor\n          node {\n            id\n          }\n        }\n      }\n    }\n  {% endcapture %}\n\n  {% assign result = query | shopify %}\n\n  {% if event.preview %}\n    {% capture result_json %}\n      {\n        \"data\": {\n          \"products\": {\n            \"edges\": [\n              {\n                \"node\": {\n                  \"id\": \"gid://shopify/Product/1234567890\"\n                }\n              },\n              {\n                \"node\": {\n                  \"id\": \"gid://shopify/Product/9876543210\"\n                }\n              }\n            ]\n          }\n        }\n      }\n    {% endcapture %}\n\n    {% assign result = result_json | parse_json %}\n  {% endif %}\n\n  {% assign products_result = result.data.products.edges | map: \"node\" | map: \"id\" %}\n  {% assign tagged_product_ids = tagged_product_ids | concat: products_result %}\n\n  {% if result.data.products.pageInfo.hasNextPage %}\n    {% assign cursor = result.data.products.edges.last.cursor %}\n  {% else %}\n    {% break %}\n  {% endif %}\n{% endfor %}\n\n{% for tagged_product_id in tagged_product_ids %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsRemove(\n        id: {{ tagged_product_id | json }}\n        tags: {{ tags_list | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endfor %}",
+  "subscriptions_template": "mechanic/user/trigger",
+  "subscriptions": [
+    "mechanic/user/trigger"
+  ],
+  "preview_event_definitions": [],
+  "options": {
+    "tags_to_remove__required_string": ""
+  },
+  "tags": [
+    "Products",
+    "Tag"
+  ]
+}
