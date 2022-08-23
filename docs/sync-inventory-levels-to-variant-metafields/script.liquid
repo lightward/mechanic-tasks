@@ -160,8 +160,8 @@
           ownerId: {{ inventory_level.__parentId | json }}
           namespace: {{ metafield_namespace | json }}
           key: {{ metafield_key | json }}
+          type: "number_integer"
           value: {{ inventory_level.available | append: "" | json }}
-          type: "number_decimal"
         }
       {% endcapture %}
 
