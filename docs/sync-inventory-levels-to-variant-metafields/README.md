@@ -38,7 +38,9 @@ This task runs automatically, whenever an inventory level is adjusted or wheneve
 
 Run this task manually to backfill metafields for all variants that are stocked in the locations you've configured in this task.
 
-Populate the left-hand side of the "Location IDs and metafield keys" option with your location IDs. [Learn how to find location IDs here.](https://learn.mechanic.dev/techniques/finding-a-resource-id)
+"Location IDs and metafield keys" is a [keyval option](https://learn.mechanic.dev/core/tasks/options#flags), where the left-hand side (the _key_) should contain your location IDs, and the right-hand side (the _value_) should contain the "metafield key" that you want to associate with each location (e.g. "1234567890" <> "shop", "2345678901" <> "warehouse").
+ 
+[Learn how to find location IDs here.](https://learn.mechanic.dev/techniques/finding-a-resource-id)
 
 ## Installing this task
 
