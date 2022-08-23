@@ -1,13 +1,10 @@
-{% assign tags_list = options.tags_to_remove__required_string | split: "," %}
+{% assign tags_list = options.tags_to_remove__required_array %}
 {% assign tagged_product_ids = array %}
-{% assign tags_query = "" %}
-{% for tag in tags_list %}
-  {% assign stripped_tag = tag | strip %}
-  {% assign tags_query = tags_query | append: "(tag:" | append: stripped_tag | append: ")" %}
-  {% unless forloop.last %}
-    {% assign tags_query = tags_query | append: " OR " %}
-  {% endunless %}
-{% endfor %}
+{% assign tags_query = array %} 
+{% for tag in tags_list %} 
+  {% assign tags_query[tags_query.size] = tag | json | prepend: "tag:" %} 
+{% endfor %} 
+{% assign tags_query = tags_query | join: " OR " %}
 
 {% for n in (0..100) %}
   {% capture query %}

@@ -12,7 +12,9 @@ Removes the specified tags from all of your products, effectively deleting that 
 
 ```json
 {
-  "tags_to_remove__required_string": ""
+  "tags_to_remove__required_array": [
+    "example_tag"
+  ]
 }
 ```
 
