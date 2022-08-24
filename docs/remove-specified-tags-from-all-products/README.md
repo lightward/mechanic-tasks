@@ -1,4 +1,4 @@
-# Remove Tag from All Products
+# Remove tag from all products
 
 Tags: Products, Tag
 

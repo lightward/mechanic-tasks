@@ -71,6 +71,11 @@
         id: {{ tagged_product_id | json }}
         tags: {{ tags_list | json }}
       ) {
+        node {
+          ... on Product {
+            tags
+          }
+        }
         userErrors {
           field
           message
