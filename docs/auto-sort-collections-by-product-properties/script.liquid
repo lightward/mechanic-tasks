@@ -78,7 +78,19 @@
 
     {% assign value = product %}
     {% for lookup in options.product_property_lookups__array_required %}
-      {% assign value = value[lookup] %}
+      {% comment %}
+        Command methods can only be invoked via dot notation.
+      {% endcomment %}
+      {% case lookup %}
+        {% when "size" %}
+          {% assign value = value.size %}
+        {% when "first" %}
+          {% assign value = value.first %}
+        {% when "last" %}
+          {% assign value = value.last %}
+        {% else %}
+          {% assign value = value[lookup] %}
+      {% endcase %}
     {% endfor %}
 
     {% comment %}
