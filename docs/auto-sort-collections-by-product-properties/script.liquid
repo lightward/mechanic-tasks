@@ -94,9 +94,9 @@
     {% endfor %}
 
     {% comment %}
-      Make sure this is always a serializable/sortable object
+      Make sure this is always a serializable/sortable object, defaulting to nil in the case of an empty string so that SKU values which are *either* nil or an empty string always end up at the end of the list.
     {% endcomment %}
-    {% assign product_id_and_value["value"] = value | json | parse_json %}
+    {% assign product_id_and_value["value"] = value | json | parse_json | default: nil %}
 
     {% assign product_ids_and_values[product_ids_and_values.size] = product_id_and_value %}
   {% endfor %}
