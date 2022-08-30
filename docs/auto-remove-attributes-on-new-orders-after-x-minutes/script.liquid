@@ -1,0 +1,94 @@
+{% comment %}
+  -- sort this option to the top
+  {{ options.minutes_to_wait_before_removing_order_attributes__number_required }}
+{% endcomment %}
+
+{% assign attributes_to_remove = options.order_attributes_to_remove__array %}
+{% assign remove_all_attributes = options.remove_all_order_attributes__boolean %}
+
+{% unless remove_all_attributes or attributes_to_remove != blank %}
+  {% error "Please choose either the 'Remove all order attributes' option, or enter one or more order attributes to remove" %}
+  {% break %}
+{% endunless %}
+
+{% capture query %}
+  query {
+    order(id: {{ order.admin_graphql_api_id | json }}) {
+      id
+      customAttributes {
+        key
+        value
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "order": {
+          "id": "gid://shopify/Order/1234567890",
+          "customAttributes": [
+            {
+              "key": "preview",
+              "value": "keep_this_one"
+            },
+            {
+              "key": {{ attributes_to_remove.first | json }},
+              "value": "remove_this_one"
+            }
+          ]
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% assign order_attributes = result.data.order.customAttributes %}
+
+{% assign attributes_to_keep = array %}
+
+{% unless remove_all_attributes %}
+  {% for attribute in order_attributes %}
+    {% unless attributes_to_remove contains attribute.key %}
+      {% assign attributes_to_keep = attributes_to_keep | push: attribute %}
+    {% endunless %}
+  {% endfor %}
+{% endunless %}
+
+{% if attributes_to_keep == order_attributes %}
+  {% log
+    message: "No order attributes exist, or none matched the configured order attributes to remove",
+    attributes_to_remove: attributes_to_remove,
+    order_attributes: order_attributes
+  %}
+  {% break %}
+{% endif %}
+
+{% action "shopify" %}
+  mutation {
+    orderUpdate(
+      input: {
+        id: {{ order.admin_graphql_api_id | json }}
+        customAttributes: {{ attributes_to_keep | graphql_arguments }}
+    }) {
+      order {
+        id
+        name
+        customAttributes {
+          key
+          value
+        }
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+{% endaction %}
