@@ -13,7 +13,7 @@ jobs:
         node-version: '18.4.0'
         cache: 'npm'
     - name: Install npm
-      run: npm install -g npm@8.18.0
+      run: npm install -g npm@8.19.1
     - name: Install node packages
       run: npm ci
     - name: Run tests
