@@ -290,6 +290,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Send recurring reminders about unpaid orders](./unpaid-order-reminders)
 * [Send your customers reorder reminders](./send-your-customers-reorder-reminders)
 * [Set a default tracking number for new fulfillments](./set-a-default-tracking-number-for-new-fulfillments)
+* [Set product or variant metafields values in bulk](./set-product-or-variant-metafields-in-bulk)
 * [Set product templates based on product tags](./set-product-templates-based-on-product-tags)
 * [Standardize UK postcodes](./standardize-uk-shipping-postcodes)
 * [Sync an inverse customer tag](./sync-an-inverse-customer-tag)

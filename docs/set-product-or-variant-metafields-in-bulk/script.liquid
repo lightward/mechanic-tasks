@@ -1,0 +1,146 @@
+{% assign metafield_namespace_and_key = options.metafield_namespace_and_key__required | split: "." %}
+{% assign metafield_namespace = metafield_namespace_and_key[0] %}
+{% assign metafield_key = metafield_namespace_and_key[1] %}
+{% assign metafield_type = options.metafield_type__required %}
+{% assign metafield_default_value = options.metafield_default_value__required %}
+{% assign set_product_metafields = options.set_product_metafields__boolean %}
+{% assign set_variant_metafields = options.set_variant_metafields__boolean %}
+
+{% if set_product_metafields and set_variant_metafields %}
+  {% error "You can only choose one option to target, either product metafields or variant metafields, not both at the same time." %}
+{% endif %}
+
+{% unless set_product_metafields or set_variant_metafields %}
+  {% error "You must choose one option to target, either product metafields or variant metafields." %}
+{% endunless %}
+
+{% if set_product_metafields %}
+  {% assign object_type = "Product" %}
+{% elsif set_variant_metafields %}
+  {% assign object_type = "ProductVariant" %}
+{% endif %}
+
+{% if metafield_namespace == blank or metafield_key == blank %}
+  {% error "Metafield namespace and key should be entered together, separated only by a period (e.g. 'my_fields.color')." %}
+{% endif %}
+
+{% assign allowed_metafield_types = "boolean,color,date,date_time,number_decimal,number_integer,single_line_text_field,url" | split: "," %}
+
+{% unless allowed_metafield_types contains metafield_type %}
+  {% error %}
+    {{ allowed_metafield_types | join: ", " | prepend: "Metafield type must be one of: " | json }}
+  {% enderror %}
+{% endunless %}
+
+{% if event.topic == "mechanic/user/trigger" %}
+  {% capture bulk_operation_query %}
+      query {
+        {% if set_product_metafields %}
+          products {
+        {% elsif set_variant_metafields %}
+          productVariants {
+        {% endif %}
+          edges {
+            node {
+              __typename
+              id
+              metafield(
+                namespace: {{ metafield_namespace | json }}
+                key: {{ metafield_key | json }}
+              ) {
+                __typename
+                id
+                namespace
+                key
+                type
+                value
+              }
+            }
+          }
+        }
+      }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% assign objects = bulkOperation.objects | where: "__typename", object_type %}
+
+  {% if event.preview %}
+    {% assign objects = array %}
+    {% assign objects[0] = hash %}
+    {% assign objects[0]["id"] = "gid://shopify/{{ object_type }}/1234567890" %}
+  {% endif %}
+
+  {% assign metafields_to_set = array %}
+
+  {% for object in objects %}
+    {% if object.metafield != blank %}
+      {% log
+        message: "This object already has a value set for the configured metafield; skipping.",
+        object: object
+      %}
+      {% continue %}
+    {% endif %}
+
+    {% assign metafield_to_set = hash %}
+    {% assign metafield_to_set["ownerId"] = object.id %}
+    {% assign metafield_to_set["namespace"] = metafield_namespace %}
+    {% assign metafield_to_set["key"] = metafield_key %}
+    {% assign metafield_to_set["type"] = metafield_type %}
+    {% assign metafield_to_set["value"] = metafield_default_value %}
+
+    {% assign metafields_to_set = metafields_to_set | push: metafield_to_set %}
+  {% endfor %}
+
+  {% log
+    object_type: object_type,
+    objects_count: objects.size,
+    metafields_to_set_count: metafields_to_set.size
+  %}
+
+  {% assign groups_of_metafields_to_set = metafields_to_set | in_groups_of: 25, fill_with: false %}
+
+  {% for group_of_metafields_to_set in groups_of_metafields_to_set %}
+    {% action "shopify" %}
+      mutation {
+        metafieldsSet(
+          metafields: {{ group_of_metafields_to_set | graphql_arguments }}
+        ) {
+          metafields {
+            id
+            namespace
+            key
+            type
+            value
+            owner {
+              ... on {{ object_type }} {
+                id
+              }
+            }
+          }
+          userErrors {
+            code
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endfor %}
+{% endif %}
