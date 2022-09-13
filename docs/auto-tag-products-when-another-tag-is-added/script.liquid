@@ -1,80 +1,141 @@
-{% if event.preview %}
-  {% assign product = hash %}
-  {% assign product["admin_graphql_api_id"] = "gid://shopify/Product/1234567890" %}
-  {% assign product["tags"] = options.tags_to_watch_for_and_tags_to_add__keyval_required.first.first %}
-{% endif %}
+{% assign tags_to_watch_for_and_tags_to_add = options.tags_to_watch_for_and_tags_to_add__keyval_required %}
+{% assign remove_tags_to_add = options.remove_tags_to_add_when_the_corresponding_tag_to_watch_for_is_removed__boolean %}
 
-{% assign existing_tags = product.tags | split: ", " %}
-{% assign deserved_tags = array %}
+{% assign products = array %}
 
-{% assign tags_to_add = array %}
-{% assign tags_to_remove = array %}
+{% if event.topic == "shopify/products/update" %}
+  {% assign products[0] = hash %}
+  {% assign products[0]["id"] = product.admin_graphql_api_id %}
+  {% assign products[0]["tags"] = product.tags | split: ", " %}
 
-{% for keyval in options.tags_to_watch_for_and_tags_to_add__keyval_required %}
-  {% assign tag_to_watch_for = keyval[0] %}
-  {% unless existing_tags contains tag_to_watch_for %}
-    {% continue %}
-  {% endunless %}
-
-  {% assign tags = keyval[1] | replace: ", ", "," | split: "," %}
-  {% assign deserved_tags = deserved_tags | concat: tags %}
-
-  {% for tag in tags %}
-    {% unless existing_tags contains tag %}
-      {% assign tags_to_add[tags_to_add.size] = tag %}
-    {% endunless %}
-  {% endfor %}
-{% endfor %}
-
-{% if options.remove_tag_to_add_when_the_corresponding_tag_to_watch_for_is_removed__boolean %}
-  {% for keyval in options.tags_to_watch_for_and_tags_to_add__keyval_required %}
-    {% assign tag_to_watch_for = keyval[0] %}
-    {% if existing_tags contains tag_to_watch_for %}
-      {% continue %}
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% assign cursor = nil %}
+      
+  {% for n in (1..100) %}
+    {% capture query %}
+      query {
+        products(
+          first: 250
+          after: {{ cursor | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            tags
+          }
+        }
+      }
+    {% endcapture %}
+  
+    {% assign result = query | shopify %}
+  
+    {% assign products
+      = result.data.products.nodes
+      | default: array
+      | concat: products
+    %}
+  
+    {% if result.data.products.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.products.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
     {% endif %}
-
-    {% assign tags = keyval[1] | replace: ", ", "," | split: "," %}
-
-    {% for tag in tags %}
-      {% unless existing_tags contains tag %}
-        {% continue %}
-      {% endunless %}
-
-      {% if deserved_tags contains tag %}
-        {% continue %}
-      {% endif %}
-
-      {% assign tags_to_remove[tags_to_remove.size] = tag %}
-    {% endfor %}
   {% endfor %}
 {% endif %}
 
-{% if tags_to_add != empty or tags_to_remove != empty %}
-  {% action "shopify" %}
-    mutation {
-      {% if tags_to_add != empty %}
-        tagsAdd(
-          id: {{ product.admin_graphql_api_id | json }}
-          tags: {{ tags_to_add | json }}
-        ) {
-          userErrors {
-            field
-            message
-          }
-        }
+{% if event.preview %}
+  {% assign products[0] = hash %}
+  {% assign products[0]["id"] = "gid://shopify/Product/1234567890" %}
+  {% assign products[0]["tags"] = tags_to_watch_for_and_tags_to_add.first.first %}
+{% endif %}
+
+{% for product in products %}
+  {% assign deserved_tags = array %}
+  {% assign tags_to_add = array %}
+  {% assign tags_to_remove = array %}
+
+  {% for keyval in tags_to_watch_for_and_tags_to_add %}
+    {% assign tag_to_watch_for = keyval[0] %}
+
+    {% if product.tags contains tag_to_watch_for %}
+      {% assign tags = keyval[1] | replace: ", ", "," | split: "," %}
+      {% assign deserved_tags = deserved_tags | concat: tags %}
+
+      {% for tag in tags %}
+        {% unless product.tags contains tag %}
+          {% assign tags_to_add[tags_to_add.size] = tag %}
+        {% endunless %}
+      {% endfor %}
+    {% endif %}
+  {% endfor %}
+
+  {% if remove_tags_to_add %}
+    {% for keyval in tags_to_watch_for_and_tags_to_add %}
+      {% assign tag_to_watch_for = keyval[0] %}
+
+      {% if product.tags contains tag_to_watch_for %}
+        {% continue %}
       {% endif %}
 
-      {% if tags_to_remove != empty %}
-        tagsRemove(
-          id: {{ product.admin_graphql_api_id | json }}
-          tags: {{ tags_to_remove | json }}
-        ) {
-          userErrors {
-            field
-            message
+      {% assign tags = keyval[1] | replace: ", ", "," | split: "," %}
+
+      {% for tag in tags %}
+        {% unless product.tags contains tag %}
+          {% continue %}
+        {% endunless %}
+
+        {% if deserved_tags contains tag %}
+          {% continue %}
+        {% endif %}
+
+        {% assign tags_to_remove[tags_to_remove.size] = tag %}
+      {% endfor %}
+    {% endfor %}
+  {% endif %}
+
+  {% if tags_to_add != empty or tags_to_remove != empty %}
+    {% action "shopify" %}
+      mutation {
+        {% if tags_to_add != empty %}
+          tagsAdd(
+            id: {{ product.id | json }}
+            tags: {{ tags_to_add | json }}
+          ) {
+            node {
+              ... on Product {
+                id
+                title
+                tags_after_add: tags
+              }
+            }
+            userErrors {
+              field
+              message
+            }
           }
-        }
-      {% endif %}
-    }
-  {% endaction %}
-{% endif %}
+        {% endif %}
+        {% if tags_to_remove != empty %}
+          tagsRemove(
+            id: {{ product.id | json }}
+            tags: {{ tags_to_remove | json }}
+          ) {
+            node {
+              ... on Product {
+                id
+                title
+                tags_after_remove: tags
+              }
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        {% endif %}
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}

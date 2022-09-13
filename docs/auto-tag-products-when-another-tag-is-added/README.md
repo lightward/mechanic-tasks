@@ -1,8 +1,8 @@
 # Auto-tag products when another tag is added
 
-Tags: Auto-Tag, Products, Tag, Watch
+Tags: Auto-Tag, Bulk, Products, Tag, Watch
 
-Does exactly as it says. :)
+This task runs whenever a product is updated (which includes product creation), and it will add the configured "tags to add" to the product when the corresponding "tags to watch for" are present.
 
 * View in the task library: [tasks.mechanic.dev/auto-tag-products-when-another-tag-is-added](https://tasks.mechanic.dev/auto-tag-products-when-another-tag-is-added)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-products-when-another-tag-is-added.json)
@@ -13,7 +13,8 @@ Does exactly as it says. :)
 ```json
 {
   "tags_to_watch_for_and_tags_to_add__keyval_required": null,
-  "remove_tag_to_add_when_the_corresponding_tag_to_watch_for_is_removed__boolean": null
+  "remove_tag_to_add_when_the_corresponding_tag_to_watch_for_is_removed__boolean": false,
+  "manual_bulk_mode__boolean": false
 }
 ```
 
@@ -22,17 +23,24 @@ Does exactly as it says. :)
 ## Subscriptions
 
 ```liquid
-shopify/products/create
-shopify/products/update
+{% if options.manual_bulk_mode__boolean %}
+  mechanic/user/trigger
+{% else %}
+  shopify/products/update
+{% endif %}
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
-Does exactly as it says. :)
+This task runs whenever a product is updated (which includes product creation), and it will add the configured "tags to add" to the product when the corresponding "tags to watch for" are present.
 
-Configure this task with product tags to watch for on the left, and associated tags to add on the right. (Feel free to use a comma-delimited list on the right side, too.) This task will run whenever a product is created or updated, tagging as configured.
+Configure this task with product tags to watch for on the left, and associated tags to add on the right. (Feel free to use a comma-delimited list on the right side, too.) Optionally, you may choose to remove the "tags to add" whenever its paired "tag to watch for" is absent.
+
+This task also supports a manual bulk mode for scanning ALL products in the shop. Select the manual bulk mode option (and save the task) to switch to manual mode and display the "Run task" button.
+
+*Note*: Make sure to switch the manual bulk mode off when the full scan is complete if you want the task to resume responding to product update events.
 
 ## Installing this task
 
