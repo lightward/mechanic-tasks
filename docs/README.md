@@ -222,6 +222,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Maintain a collection of new products](./maintain-a-collection-of-new-products)
 * [Maintain a collection of recently purchased products](./maintain-a-collection-of-recently-purchased-products)
 * [Maintain a tag for orders processed today](./maintain-a-tag-for-orders-processed-today)
+* [Maintain collections by product metafield values](./maintain-collections-by-product-metafield-values)
 * [Maintain discount percentage filters in variant metafields](./maintain-discount-percentage-filters-in-variant-metafields)
 * [Maintain inventory for a product bundle](./maintain-inventory-for-a-product-bundle)
 * [Make products unavailable, after the date/time stored in product metafields](./make-products-unavailable-after-the-date-time-stored-in-product-metafields)
