@@ -36,11 +36,17 @@ shopify/products/update
 
 Use this task to sell a single product in different pack sizes, keeping inventory levels synchronized appropriately, storing the "master" inventory level in a product tag (e.g. "inventory:50").
 
-New orders for a pack-sized variant will result in the product's inventory tag being updated, and all pack-sized variants having their inventory levels re-synced. And, manually updating a product's inventory tag will automatically re-sync variant inventory levels as well.
+New orders for a pack-sized variant will result in the product's inventory tag being updated, and all pack-sized variants having their inventory levels re-synced. And, manually updating a product's inventory tag will automatically re-sync variant inventory levels as well. Note: this task will not increase inventory when orders are cancelled and restocked.
 
-The pack size for each variant can be determined by a numeric [product option](https://help.shopify.com/en/manual/products/variants) (e.g. "Pack size: 50"), or by [metafield](https://help.shopify.com/en/manual/products/metafields).
+The pack size for each variant can be determined by a numeric [product option](https://help.shopify.com/en/manual/products/variants), or by [metafield](https://help.shopify.com/en/manual/products/metafields):
+
+**Product option** - enter the product option name from your product page into the Variant pack size option name field. Mechanic will use the option values, which must be numeric, to determine the pack size (e.g. if your option is called "Pack size", enter that into the field).
+
+**Metafield** - you can specify the pack size on the variant metafield instead of using product options. Once you've added the metafields to your variant, enter the namespace and key in the task options fields. When an order is placed, Mechanic will use the variant's metafield to determine the pack size.
 
 This task will skip any products that do not have an inventory tag, and will skip any variants ordered that have no pack size information.
+
+Note: if you have existing inventory on your variants, this task will overwrite inventory values based on the inventory tag.
 
 ## Installing this task
 
