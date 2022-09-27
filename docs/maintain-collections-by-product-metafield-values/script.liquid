@@ -1,0 +1,165 @@
+{% assign metafield_namespace_and_key = options.metafield_namespace_and_key__required | split: "." %}
+{% assign metafield_namespace = metafield_namespace_and_key[0] %}
+{% assign metafield_key = metafield_namespace_and_key[1] %}
+{% assign metafield_values_and_collection_ids = options.metafield_values_and_collection_ids__keyval_number_required %}
+{% assign metafield_values = metafield_values_and_collection_ids | keys %}
+{% assign collection_ids = metafield_values_and_collection_ids | values %}
+
+{% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% assign search_query = nil %}
+
+  {% capture bulk_operation_query %}
+    query {
+      products {
+        edges {
+          node {
+            __typename
+            id
+            {% for collection_id in collection_ids %}
+              in_collection_{{ collection_id }}: inCollection(id: "gid://shopify/Collection/{{ collection_id }}")
+            {% endfor %}
+            metafields(namespace: {{ metafield_namespace | json }}) {
+              edges {
+                node {
+                  __typename
+                  id
+                  key
+                  type
+                  value
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture jsonl_string %}
+      {"__typename":"Product","id":"gid:\/\/shopify\/Product\/1234567890","in_collection_{{ collection_ids[0] }}":false}
+      {"__typename":"Metafield","key":{{ metafield_key | json }},"type":"single_line_text_field","value":{{ metafield_values[0] | json }},"__parentId":"gid:\/\/shopify\/Product\/1234567890"}
+      {"__typename":"Product","id":"gid:\/\/shopify\/Product\/2345678901","in_collection_{{ collection_ids[0] }}":false}
+      {"__typename":"Metafield","key":{{ metafield_key | json }},"type":"list.single_line_text_field","value":{{ metafield_values | json | json }},"__parentId":"gid:\/\/shopify\/Product\/2345678901"}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = jsonl_string | parse_jsonl %}
+  {% endif %}
+
+  {% assign bulk_products = bulkOperation.objects | where: "__typename", "Product" %}
+  {% assign bulk_metafields = bulkOperation.objects | where: "__typename", "Metafield" %}
+
+  {% assign collection_ids_and_product_ids_to_add = hash %}
+  {% assign collection_ids_and_product_ids_to_remove = hash %}
+
+  {% for product in bulk_products %}
+    {% assign product_metafields = bulk_metafields | where: "__parentId", product.id %}
+
+    {% for keyval in metafield_values_and_collection_ids %}
+      {% assign metafield_value_to_match = keyval[0] %}
+      {% assign collection_id = keyval[1] %}
+      {% assign collection_gid = "gid://shopify/Collection/" | append: collection_id %}
+      {% assign in_collection_alias = "in_collection_" | append: collection_id %}
+      {% assign product_in_collection = product[in_collection_alias] %}
+
+      {% assign product_should_be_in_collection = false %}
+
+      {% for product_metafield in product_metafields %}
+        {% if product_metafield.type == "list.single_line_text_field" %}
+          {% assign product_metafield_values = product_metafield.value | parse_json %}
+        {% elsif product_metafield.type == "single_line_text_field" %}
+          {% assign product_metafield_values = array | push: product_metafield.value %}
+        {% endif %}
+
+        {% for product_metafield_value in product_metafield_values %}
+          {% if product_metafield_value == metafield_value_to_match %}
+            {% assign product_should_be_in_collection = true %}
+            {% break %}
+          {% endif %}
+        {% endfor %}
+
+        {% if product_should_be_in_collection %}
+          {% break %}
+        {% endif %}
+      {% endfor %}
+
+      {% if product_should_be_in_collection %}
+        {% unless product_in_collection %}
+          {% assign collection_ids_and_product_ids_to_add[collection_gid]
+            = collection_ids_and_product_ids_to_add[collection_gid]
+            | default: array
+            | push: product.id
+          %}
+        {% endunless %}
+
+      {% elsif product_in_collection %}
+        {% assign collection_ids_and_product_ids_to_remove[collection_gid]
+          = collection_ids_and_product_ids_to_remove[collection_gid]
+          | default: array
+          | push: product.id
+        %}
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+
+  {% for collection_id in collection_ids %}
+    {% assign collection_gid = "gid://shopify/Collection/" | append: collection_id %}
+    {% assign product_ids_to_add = collection_ids_and_product_ids_to_add[collection_gid] | uniq %}
+    {% assign product_ids_to_remove = collection_ids_and_product_ids_to_remove[collection_gid] | uniq %}
+
+    {% if product_ids_to_add != blank %}
+      {% action "shopify" %}
+        mutation {
+          collectionAddProducts(
+            id: {{ collection_gid | json }}
+            productIds: {{ product_ids_to_add | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endif %}
+
+    {% if product_ids_to_remove != blank %}
+      {% action "shopify" %}
+        mutation {
+          collectionRemoveProducts(
+            id: {{ collection_gid | json }}
+            productIds: {{ product_ids_to_remove | json }}
+          ) {
+            job {
+              id
+              done
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
