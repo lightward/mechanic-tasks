@@ -1,0 +1,96 @@
+{% assign tag_to_apply = options.tag_to_apply__required %}
+
+{% assign products = array %}
+
+{% if event.topic == "shopify/products/update" %}
+  {% capture query %}
+    query {
+      product(id: {{ product.admin_graphql_api_id | json }}) {
+        id
+        descriptionHtml
+        tags
+      }
+    }  
+  {% endcapture %}
+  
+  {% assign result = query | shopify %}
+  {% assign products[0] = result.data.product %}
+
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% assign cursor = nil %} 
+  
+  {% for n in (1..200) %}
+    {% capture query %}
+      query {
+        products(
+          first: 250
+          after: {{ cursor | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            descriptionHtml
+            tags
+          }
+        }
+      }
+    {% endcapture %}
+  
+    {% assign result = query | shopify %}
+    
+    {% assign products
+      = result.data.products.nodes
+      | default: array
+      | concat: products
+    %}
+  
+    {% if result.data.products.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.products.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %} 
+{% endif %}
+
+{% if event.preview %}
+  {% assign products[0] = hash %}
+  {% assign products[0]["id"] = "gid://shopify/Product/1234567890" %}
+{% endif %}
+
+{% for product in products %}
+  {% if product.descriptionHtml == blank %}
+    {% unless product.tags contains tag_to_apply %}
+      {% action "shopify" %}
+        mutation {
+          tagsAdd(
+            id: {{ product.id | json }}
+            tags: {{ tag_to_apply | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}        
+    {% endunless %}
+
+  {% elsif product.tags contains tag_to_apply %}
+    {% action "shopify" %}
+      mutation {
+        tagsRemove(
+          id: {{ product.id | json }}
+          tags: {{ tag_to_apply | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}

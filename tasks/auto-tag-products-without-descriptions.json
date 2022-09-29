@@ -1,0 +1,22 @@
+{
+  "name": "Auto-tag products without descriptions",
+  "options": {
+    "tag_to_apply__required": null
+  },
+  "subscriptions": [
+    "shopify/products/update",
+    "mechanic/user/trigger"
+  ],
+  "subscriptions_template": "shopify/products/update\nmechanic/user/trigger",
+  "script": "{% assign tag_to_apply = options.tag_to_apply__required %}\n\n{% assign products = array %}\n\n{% if event.topic == \"shopify/products/update\" %}\n  {% capture query %}\n    query {\n      product(id: {{ product.admin_graphql_api_id | json }}) {\n        id\n        descriptionHtml\n        tags\n      }\n    }  \n  {% endcapture %}\n  \n  {% assign result = query | shopify %}\n  {% assign products[0] = result.data.product %}\n\n{% elsif event.topic == \"mechanic/user/trigger\" %}\n  {% assign cursor = nil %} \n  \n  {% for n in (1..200) %}\n    {% capture query %}\n      query {\n        products(\n          first: 250\n          after: {{ cursor | json }}\n        ) {\n          pageInfo {\n            hasNextPage\n            endCursor\n          }\n          nodes {\n            id\n            descriptionHtml\n            tags\n          }\n        }\n      }\n    {% endcapture %}\n  \n    {% assign result = query | shopify %}\n    \n    {% assign products\n      = result.data.products.nodes\n      | default: array\n      | concat: products\n    %}\n  \n    {% if result.data.products.pageInfo.hasNextPage %}\n      {% assign cursor = result.data.products.pageInfo.endCursor %}\n    {% else %}\n      {% break %}\n    {% endif %}\n  {% endfor %} \n{% endif %}\n\n{% if event.preview %}\n  {% assign products[0] = hash %}\n  {% assign products[0][\"id\"] = \"gid://shopify/Product/1234567890\" %}\n{% endif %}\n\n{% for product in products %}\n  {% if product.descriptionHtml == blank %}\n    {% unless product.tags contains tag_to_apply %}\n      {% action \"shopify\" %}\n        mutation {\n          tagsAdd(\n            id: {{ product.id | json }}\n            tags: {{ tag_to_apply | json }}\n          ) {\n            userErrors {\n              field\n              message\n            }\n          }\n        }\n      {% endaction %}        \n    {% endunless %}\n\n  {% elsif product.tags contains tag_to_apply %}\n    {% action \"shopify\" %}\n      mutation {\n        tagsRemove(\n          id: {{ product.id | json }}\n          tags: {{ tag_to_apply | json }}\n        ) {\n          userErrors {\n            field\n            message\n          }\n        }\n      }\n    {% endaction %}\n  {% endif %}\n{% endfor %} ",
+  "docs": "This task runs when products are updated, checking if they have a description, and tagging them if not. Once a description has been added, then the tag will be removed.\n\nYou may also run the task manually to scan your entire product catalog,",
+  "halt_action_run_sequence_on_error": false,
+  "online_store_javascript": null,
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "preview_event_definitions": [],
+  "tags": [
+    "Auto-Tag",
+    "Products"
+  ]
+}
