@@ -144,6 +144,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag products when their variants change](./auto-tag-products-when-their-skus-change)
 * [Auto-tag products with incoming inventory](./auto-tag-products-with-incoming-inventory)
 * [Auto-tag products with their vendors](./auto-tag-products-with-their-vendors)
+* [Auto-tag products without descriptions](./auto-tag-products-without-descriptions)
 * [Auto-untag customers when a certain product is refunded](./auto-untag-customers-when-a-certain-product-is-refunded)
 * [Auto-update inventory policy based on a "preorder" tag](./auto-update-inventory-policy-based-on-a-preorder-tag)
 * [Auto-verify customer email addresses](./auto-verify-customer-email-addresses)
