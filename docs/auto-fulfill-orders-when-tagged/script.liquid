@@ -7,12 +7,13 @@
         first: 20
         query: "status:open"
       ) {
-        edges {
-          node {
-            id
-            assignedLocation {
-              name
-            }
+        nodes {
+          id
+          assignedLocation {
+            name
+          }
+          deliveryMethod {
+            methodType
           }
         }
       }
@@ -30,13 +31,14 @@
           "id": "gid://shopify/Order/1234567890",
           "tags": {{ options.order_tag_to_watch_for__required | json }},
           "fulfillmentOrders": {
-            "edges": [
+            "nodes": [
               {
-                "node": {
-                  "id": "gid://shopify/FulfillmentOrder/1234567890",
-                  "assignedLocation": {
-                    "name": "ACME Warehouse"
-                  }
+                "id": "gid://shopify/FulfillmentOrder/1234567890",
+                "assignedLocation": {
+                  "name": "ACME Warehouse"
+                },
+                "deliveryMethod": {
+                  "methodType": "SHIPPING"
                 }
               }
             ]
@@ -50,7 +52,7 @@
 {% endif %}
 
 {% assign order = result.data.order %}
-{% assign fulfillment_orders = order.fulfillmentOrders.edges | map: "node" %}
+{% assign fulfillment_orders = order.fulfillmentOrders.nodes %}
 
 {% if fulfillment_orders != blank and order.tags contains options.order_tag_to_watch_for__required %}
   {% if options.ignore_if_this_order_tag_is_found != blank and order.tags contains options.ignore_if_this_order_tag_is_found %}
@@ -58,17 +60,26 @@
     {% break %}
   {% endif %}
 
-  {% assign fulfillment_order_ids_by_location = hash %}
+  {% comment %}
+    Note: fulfillments cannot be created with fulfillment orders at different locations or delivery types; so separate them out
+  {% endcomment %}
+
+  {% assign fulfillment_order_ids_by_location_and_type = hash %}
 
   {% for fulfillment_order in fulfillment_orders %}
-    {% assign fulfillment_order_ids_by_location[fulfillment_order.assignedLocation.name]
-      = fulfillment_order_ids_by_location[fulfillment_order.assignedLocation.name]
+    {% assign location_and_type
+      = fulfillment_order.assignedLocation.name
+      | append: "|"
+      | append: fulfillment_order.deliveryMethod.methodType
+    %}
+    {% assign fulfillment_order_ids_by_location_and_type[location_and_type]
+      = fulfillment_order_ids_by_location_and_type[location_and_type]
       | default: array
       | push: fulfillment_order.id
     %}
   {% endfor %}
 
-  {% for keyval in fulfillment_order_ids_by_location %}
+  {% for keyval in fulfillment_order_ids_by_location_and_type %}
     {% action "shopify" %}
       mutation {
         fulfillmentCreateV2(
