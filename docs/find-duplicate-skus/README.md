@@ -22,6 +22,7 @@ This task scans your entire product list, looking for duplicate SKUs using exact
 
 ```liquid
 mechanic/user/trigger
+mechanic/shopify/bulk_operation
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
@@ -31,8 +32,6 @@ mechanic/user/trigger
 This task scans your entire product list, looking for duplicate SKUs using exact matching, and returning the list of duplicate SKUs (and the associated product variant IDs) if any are found.
 
 Note: SKUs that are identical apart from being uppercase/lowercase, for example, do not count as exact matches, and would not be considered duplicates by this task.
-
-This report will only scan a store's first 125,000 product variants.
 
 "Exclude products that do not track inventory" will exclude any product whose inventory is not tracked in Shopify.
 
