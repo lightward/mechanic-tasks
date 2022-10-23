@@ -81,6 +81,7 @@
         products(
           first: 250
           after: {{ cursor | json }}
+          query: "inventory_total:<={{ options.out_of_stock_inventory_quantity__number_required }}"
         ) {
           pageInfo {
             hasNextPage
@@ -106,11 +107,6 @@
 
     {% for edge in result.data.products.edges %}
       {% assign product_node = edge.node %}
-
-      {% if product_node.totalInventory > options.out_of_stock_inventory_quantity__number_required %}
-        {% continue %}
-      {% endif %}
-
       {% assign mutations = array %}
       {% assign publication_names = array %}
 
