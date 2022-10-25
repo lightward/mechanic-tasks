@@ -2,7 +2,7 @@
 
 Tags: Bulk, Collections, Metafields, Products
 
-This task will scan your entire catalog to maintain products in collections based on metafield values. Configure the task with a metafield namespace and key (separated by a period, e.g. "custom.color"), and a list of metafield string values paried with collection IDs. If the value of a product's metafield matches any of the configured ones, then the product will be added to that collection. Conversely, products in a configured collection which do not match a metafield value will be removed.
+This task will scan your entire catalog to maintain products in collections based on metafield values. Configure the task with a metafield namespace and key (separated by a period, e.g. "custom.color"), and a list of metafield string values paired with collection IDs. If the value of a product's metafield matches any of the configured ones, then the product will be added to that collection. Conversely, products in a configured collection which do not match a metafield value will be removed.
 
 * View in the task library: [tasks.mechanic.dev/maintain-collections-by-product-metafield-values](https://tasks.mechanic.dev/maintain-collections-by-product-metafield-values)
 * Task JSON, for direct import: [task.json](../../tasks/maintain-collections-by-product-metafield-values.json)
@@ -31,9 +31,11 @@ mechanic/user/trigger
 
 ## Documentation
 
-This task will scan your entire catalog to maintain products in collections based on metafield values. Configure the task with a metafield namespace and key (separated by a period, e.g. "custom.color"), and a list of metafield string values paried with collection IDs. If the value of a product's metafield matches any of the configured ones, then the product will be added to that collection. Conversely, products in a configured collection which do not match a metafield value will be removed.
+This task will scan your entire catalog to maintain products in collections based on metafield values. Configure the task with a metafield namespace and key (separated by a period, e.g. "custom.color"), and a list of metafield string values paired with collection IDs. If the value of a product's metafield matches any of the configured ones, then the product will be added to that collection. Conversely, products in a configured collection which do not match a metafield value will be removed.
 
-**Note:** This task only checks the values of metafields that are of type *single_line_text_field* or *list.single_line_text_field*. For list type metafields, the product will qualify for collection membership if *any* of the list values matches a metafield value. More information on Shopify metafield types can be found [here](https://shopify.dev/apps/metafields/types#supported-types).
+**Important notes:**
+- This task only checks the values of metafields that are of type *single_line_text_field* or *list.single_line_text_field*. For list type metafields, the product will qualify for collection membership if *any* of the list values matches a metafield value. More information on Shopify metafield types can be found [here](https://shopify.dev/apps/metafields/types#supported-types).
+- Adding and removing products from collections are both handled in the background by Shopify jobs, after the Mechanic task run is complete. Expect a delay in final results in your shop for task runs involving very large additions or removals.
 
 ## Installing this task
 
