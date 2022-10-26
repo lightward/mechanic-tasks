@@ -127,39 +127,51 @@
     {% assign product_ids_to_remove = collection_ids_and_product_ids_to_remove[collection_gid] | uniq %}
 
     {% if product_ids_to_add != blank %}
-      {% action "shopify" %}
-        mutation {
-          collectionAddProducts(
-            id: {{ collection_gid | json }}
-            productIds: {{ product_ids_to_add | json }}
-          ) {
-            userErrors {
-              field
-              message
+      {% assign groups_of_product_ids_to_add = product_ids_to_add | in_groups_of: 250, fill_with: false %}
+
+      {% for group_of_product_ids_to_add in groups_of_product_ids_to_add %}
+        {% action "shopify" %}
+          mutation {
+            collectionAddProductsV2(
+              id: {{ collection_gid | json }}
+              productIds: {{ group_of_product_ids_to_add | json }}
+            ) {
+              job {
+                id
+                done
+              }
+              userErrors {
+                field
+                message
+              }
             }
           }
-        }
-      {% endaction %}
+        {% endaction %}
+      {% endfor %}
     {% endif %}
 
     {% if product_ids_to_remove != blank %}
-      {% action "shopify" %}
-        mutation {
-          collectionRemoveProducts(
-            id: {{ collection_gid | json }}
-            productIds: {{ product_ids_to_remove | json }}
-          ) {
-            job {
-              id
-              done
-            }
-            userErrors {
-              field
-              message
+      {% assign groups_of_product_ids_to_remove = product_ids_to_remove | in_groups_of: 250, fill_with: false %}
+
+      {% for group_of_product_ids_to_remove in groups_of_product_ids_to_remove %}
+        {% action "shopify" %}
+          mutation {
+            collectionRemoveProducts(
+              id: {{ collection_gid | json }}
+              productIds: {{ group_of_product_ids_to_remove | json }}
+            ) {
+              job {
+                id
+                done
+              }
+              userErrors {
+                field
+                message
+              }
             }
           }
-        }
-      {% endaction %}
+        {% endaction %}
+      {% endfor %}
     {% endif %}
   {% endfor %}
 {% endif %}
