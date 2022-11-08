@@ -1,35 +1,41 @@
-{% capture query %}
-  query {
-    inventoryLevel(id: {{ inventory_level.admin_graphql_api_id | json }}) {
-      item {
-        variant {
-          displayName
-          inventoryQuantity
-          legacyResourceId
-          product {
-            legacyResourceId
-          }
+{% comment %}
+  Run the task manually to get the list of your publications and their IDs
+{% endcomment %}
+
+{% if event.topic == "mechanic/user/trigger" or event.preview %}
+  {% capture query %}
+    query {
+      publications (first: 30 ) {
+        nodes {
+          name
+          id
         }
       }
-    }
-  }
-{% endcapture %}
+    } 
+  {% endcapture %}
 
-{% assign result = query | shopify %}
+  {% assign result = query | shopify %}
 
-{% if event.preview %}
-  {% capture result_json %}
-    {
-      "data": {
-        "inventoryLevel": {
-          "item": {
-            "variant": {
-              "displayName": "Short sleeve t-shirt - L / Red",
-              "inventoryQuantity": 0,
-              "legacyResourceId": "1234567890",
-              "product": {
-                "legacyResourceId": "1234567890"
-              }
+  {% action "echo" result %}
+{% endif %}
+
+{% if event.topic == "shopify/inventory_levels/update" or event.preview %}
+  {% capture query %}
+    query {
+      inventoryLevel(id: {{ inventory_level.admin_graphql_api_id | json }}) {
+        item {
+          variant {
+            displayName
+            inventoryQuantity
+            legacyResourceId
+            product {
+              legacyResourceId
+              {% if options.must_belong_to_collection_id -%}
+                inCollection(id: "gid://shopify/Collection/{{options.must_belong_to_collection_id}}")
+              {%- endif %}
+              {% if options.must_be_published_to_publication_id -%}
+                publishedOnPublication(publicationId: "gid://shopify/Publication/{{options.must_be_published_to_publication_id}}")
+              {%- endif %}
             }
           }
         }
@@ -37,24 +43,68 @@
     }
   {% endcapture %}
 
-  {% assign result = result_json | parse_json %}
-{% endif %}
+  {% assign result = query | shopify %}
 
-{% assign variantNode = result.data.inventoryLevel.item.variant %}
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "inventoryLevel": {
+            "item": {
+              "variant": {
+                "displayName": "Short sleeve t-shirt - L / Red",
+                "inventoryQuantity": 0,
+                "legacyResourceId": "1234567890",
+                "product": {
+                  "legacyResourceId": "1234567890"
+                  {% if options.must_belong_to_collection_id -%}
+                    , "inCollection" : "true"
+                  {%- endif %}
+                  {% if options.must_be_published_to_publication_id -%}
+                    , "publishedOnPublication": "true"
+                  {%- endif %}                
+                }
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
 
-{% if variantNode.inventoryQuantity == 0 %}
-  {% assign variant_admin_url = "https://" | append: shop.domain | append: "/admin/products/" | append: variantNode.product.legacyResourceId | append: "/variants/" | append: variantNode.legacyResourceId %}
+    {% assign result = result_json | parse_json %}
+    {% action "echo" result %}
+  {% endif %}
 
-  {% assign subject = options.email_subject__required     | replace: "VARIANT_TITLE", variantNode.displayName | replace: "VARIANT_ADMIN_URL", variant_admin_url %}
-  {% assign body = options.email_body__multiline_required | replace: "VARIANT_TITLE", variantNode.displayName | replace: "VARIANT_ADMIN_URL", variant_admin_url %}
+  {% assign product_qualifies = false %}
 
-  {% action "email" %}
-    {
-      "to": {{ options.email_recipient__email_required | json }},
-      "subject": {{ subject | json }},
-      "body": {{ body | strip | newline_to_br | json }},
-      "reply_to": {{ shop.customer_email | json }},
-      "from_display_name": {{ shop.name | json }}
-    }
-  {% endaction %}
+  {% assign variantNode = result.data.inventoryLevel.item.variant %}
+
+  {% if options.must_belong_to_collection_id != blank and options.must_be_published_to_publication_id != blank  %}
+    {% error "You can only filter by collection or publication, not both." %}
+  {% endif %}
+
+  {% if options.must_belong_to_collection_id == blank and options.must_be_published_to_publication_id == bank %}
+    {% assign product_qualifies = true %}
+  {% elsif options.must_belong_to_collection_id and variantNode.product.inCollection %}
+    {% assign product_qualifies = true %}
+  {% elsif options.must_be_published_to_publication_id and variantNode.product.publishedOnPublication %}
+    {% assign product_qualifies = true %}
+  {% endif %}
+  
+  {% if variantNode.inventoryQuantity == 0 and product_qualifies %}
+    {% assign variant_admin_url = "https://" | append: shop.domain | append: "/admin/products/" | append: variantNode.product.legacyResourceId | append: "/variants/" | append: variantNode.legacyResourceId %}
+
+    {% assign subject = options.email_subject__required     | replace: "VARIANT_TITLE", variantNode.displayName | replace: "VARIANT_ADMIN_URL", variant_admin_url %}
+    {% assign body = options.email_body__multiline_required | replace: "VARIANT_TITLE", variantNode.displayName | replace: "VARIANT_ADMIN_URL", variant_admin_url %}
+
+    {% action "email" %}
+      {
+        "to": {{ options.email_recipient__email_required | json }},
+        "subject": {{ subject | json }},
+        "body": {{ body | strip | newline_to_br | json }},
+        "reply_to": {{ shop.customer_email | json }},
+        "from_display_name": {{ shop.name | json }}
+      }
+    {% endaction %}
+  {% endif %}  
 {% endif %}
