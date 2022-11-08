@@ -8,7 +8,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Install node and npm
-      uses: lightward/setup-node-npm@v2
+      uses: lightward/setup-node-npm@v3
     - name: Install node packages
       run: npm ci
     - name: Run tests
