@@ -39,13 +39,15 @@
               address1: "123 State St"
               city: "Everyville"
               company: "Widgets Inc"
-              countryCodeV2: EE
+              countryCode: EE
               firstName: "Victor"
               lastName: "Juarez"
               provinceCode: "PK"
               zip: "54321"
             }
-            customerId: "gid://shopify/Customer/1234567890"
+            purchasingEntity: {
+              customerId: "gid://shopify/Customer/1234567890"
+            }
             email: "customer@example.com"
             lineItems: [
               {
@@ -232,7 +234,9 @@
                   }
                 {% endif %}
                 {% if draftOrder.customer %}
-                  customerId: {{ draftOrder.customer.id | json }}
+                  purchasingEntity: {
+                    customerId: {{ draftOrder.customer.id | json }}
+                  }
                 {% endif %}
                 {% if draftOrder.customAttributes != empty %}
                   customAttributes: [
