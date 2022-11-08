@@ -7,16 +7,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - name: Extract versions from package.json
+      id: versions
+      run: echo "npm=$(jq -r .engines.npm ./package.json)" >> $GITHUB_OUTPUT
     - name: Install node
       uses: actions/setup-node@v3
       with:
         node-version-file: 'package.json'
         cache: 'npm'
-    - name: Extract versions from package.json
-      id: versions
-      run: echo "version=$(jq -r .engines.npm ./package.json)" >> $GITHUB_OUTPUT
     - name: Install npm
-      run: npm install -g npm@${{steps.versions.outputs.version}}
+      run: npm install -g npm@${{steps.versions.outputs.npm}}
     - name: Install node packages
       run: npm ci
     - name: Run tests
