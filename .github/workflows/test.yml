@@ -7,17 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Extract versions from package.json
-      id: versions
-      run: |
-        echo "node=$(jq -r .engines.node ./package.json)" >> $GITHUB_OUTPUT
-        echo "npm=$(jq -r .engines.npm ./package.json)" >> $GITHUB_OUTPUT
-    - name: Install node
-      uses: actions/setup-node@v3
-      with:
-        node-version: '${{steps.versions.outputs.node}}'
-    - name: Install npm
-      run: npm install -g npm@${{steps.versions.outputs.npm}}
+    - name: Install node and npm
+      uses: lightward/setup-node-npm@v4
     - name: Install node packages
       run: npm ci
     - name: Run tests
