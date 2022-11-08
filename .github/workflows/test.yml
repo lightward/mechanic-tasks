@@ -10,10 +10,13 @@ jobs:
     - name: Install node
       uses: actions/setup-node@v3
       with:
-        node-version: '18.12.0'
+        node-version-file: 'package.json'
         cache: 'npm'
+    - name: Extract versions from package.json
+      id: versions
+      run: echo ::set-output name=version::$(jq -r .engines.npm ./package.json)
     - name: Install npm
-      run: npm install -g npm@8.19.3
+      run: npm install -g npm@${{steps.versions.outputs.version}}
     - name: Install node packages
       run: npm ci
     - name: Run tests
