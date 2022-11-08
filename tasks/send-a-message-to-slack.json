@@ -1,18 +1,18 @@
 {
+  "docs": "Purely for demonstration purposes, this task illustrates how one might set up a script to send Slack messages. As written, this task requires a Slack incoming webhook URL - [learn how to generate this](https://api.slack.com/incoming-webhooks#getting-started). Then, [learn more about sending to Slack with Mechanic](https://help.usemechanic.com/en/articles/3297438-can-i-send-messages-to-slack).",
+  "halt_action_run_sequence_on_error": false,
   "name": "Send a message to Slack",
+  "online_store_javascript": null,
   "options": {
     "slack_incoming_webhook_url__required": null
   },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% action \"http\" %}\n  {\n    \"method\": \"post\",\n    \"url\": {{ options.slack_incoming_webhook_url__required | json }},\n    \"body\": {\n      \"text\": \"hello, world!\"\n    }\n  }\n{% endaction %}",
   "subscriptions": [
     "mechanic/user/trigger"
   ],
   "subscriptions_template": "mechanic/user/trigger",
-  "script": "{% action \"http\" %}\n  {\n    \"method\": \"post\",\n    \"url\": {{ options.slack_incoming_webhook_url__required | json }},\n    \"body\": {\n      \"text\": \"hello, world!\"\n    }\n  }\n{% endaction %}",
-  "docs": "Purely for demonstration purposes, this task illustrates how one might set up a script to send Slack messages. As written, this task requires a Slack incoming webhook URL - [learn how to generate this](https://api.slack.com/incoming-webhooks#getting-started). Then, [learn more about sending to Slack with Mechanic](https://help.usemechanic.com/en/articles/3297438-can-i-send-messages-to-slack).",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Slack"
   ]

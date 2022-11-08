@@ -3,13 +3,11 @@
   "halt_action_run_sequence_on_error": false,
   "name": "Auto-tag orders created from drafts",
   "online_store_javascript": null,
+  "options": {
+    "tag_to_add__required": "from-draft"
+  },
   "order_status_javascript": null,
   "perform_action_runs_in_sequence": false,
-  "script": "{% assign order_qualifies = false %}\n\n{% if order.source_name == \"shopify_draft_order\" %}\n  {% assign order_qualifies = true %}\n{% elsif order.source_name == \"1830279\" %}\n  {% comment %}\n    1830279 is the ID of the \"Shopify Web\" app. If we're seeing it here, it means that\n    the order was created via the /admin area.\n  {% endcomment %}\n\n  {% capture query %}\n    query {\n      order(id: {{ order.admin_graphql_api_id | json }}) {\n        app {\n          name\n        }\n      }\n    }\n  {% endcapture %}\n\n  {% assign result = query | shopify %}\n\n  {% if event.preview %}\n    {% capture result_json %}\n      {\n        \"data\": {\n          \"order\": {\n            \"app\": {\n              \"name\": \"Draft Orders\"\n            }\n          }\n        }\n      }\n    {% endcapture %}\n\n    {% assign result = result_json | parse_json %}\n  {% endif %}\n\n  {% if result.data.order.app.name == \"Draft Orders\" %}\n    {% assign order_qualifies = true %}\n  {% else %}\n    {% log message: \"Order does not qualify\",\n        order_source_name: order.source_name,\n        order_app_name: result.data.order.app.name %}\n  {% endif %}\n{% else %}\n  {% log message: \"Order does not qualify\",\n      order_source_name: order.source_name %}\n{% endif %}\n\n{% if order_qualifies %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ order.admin_graphql_api_id | json }}\n        tags: {{ options.tag_to_add__required | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}",
-  "subscriptions_template": "shopify/orders/create",
-  "subscriptions": [
-    "shopify/orders/create"
-  ],
   "preview_event_definitions": [
     {
       "description": "An order with an app name of \"Draft Orders\"",
@@ -45,9 +43,11 @@
       }
     }
   ],
-  "options": {
-    "tag_to_add__required": "from-draft"
-  },
+  "script": "{% assign order_qualifies = false %}\n\n{% if order.source_name == \"shopify_draft_order\" %}\n  {% assign order_qualifies = true %}\n{% elsif order.source_name == \"1830279\" %}\n  {% comment %}\n    1830279 is the ID of the \"Shopify Web\" app. If we're seeing it here, it means that\n    the order was created via the /admin area.\n  {% endcomment %}\n\n  {% capture query %}\n    query {\n      order(id: {{ order.admin_graphql_api_id | json }}) {\n        app {\n          name\n        }\n      }\n    }\n  {% endcapture %}\n\n  {% assign result = query | shopify %}\n\n  {% if event.preview %}\n    {% capture result_json %}\n      {\n        \"data\": {\n          \"order\": {\n            \"app\": {\n              \"name\": \"Draft Orders\"\n            }\n          }\n        }\n      }\n    {% endcapture %}\n\n    {% assign result = result_json | parse_json %}\n  {% endif %}\n\n  {% if result.data.order.app.name == \"Draft Orders\" %}\n    {% assign order_qualifies = true %}\n  {% else %}\n    {% log message: \"Order does not qualify\",\n        order_source_name: order.source_name,\n        order_app_name: result.data.order.app.name %}\n  {% endif %}\n{% else %}\n  {% log message: \"Order does not qualify\",\n      order_source_name: order.source_name %}\n{% endif %}\n\n{% if order_qualifies %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ order.admin_graphql_api_id | json }}\n        tags: {{ options.tag_to_add__required | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}",
+  "subscriptions": [
+    "shopify/orders/create"
+  ],
+  "subscriptions_template": "shopify/orders/create",
   "tags": [
     "Auto-Tag",
     "Draft Orders",

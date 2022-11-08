@@ -1,16 +1,16 @@
 {
+  "docs": "Does what it says on the tin. :) Any order with a total price of 0.00 will be archived/closed, immediately upon order fulfillment.",
+  "halt_action_run_sequence_on_error": false,
   "name": "Archive free orders on fulfillment",
+  "online_store_javascript": null,
   "options": {},
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% if event.preview or order.total_price == \"0.00\" %}\n  {\n    \"action\": {\n      \"type\": \"shopify\",\n      \"options\": [\n        \"post\",\n        \"/admin/orders/{{ order.id }}/close.json\",\n        {}\n      ]\n    }\n  }\n{% endif %}",
   "subscriptions": [
     "shopify/orders/fulfilled"
   ],
   "subscriptions_template": "shopify/orders/fulfilled",
-  "script": "{% if event.preview or order.total_price == \"0.00\" %}\n  {\n    \"action\": {\n      \"type\": \"shopify\",\n      \"options\": [\n        \"post\",\n        \"/admin/orders/{{ order.id }}/close.json\",\n        {}\n      ]\n    }\n  }\n{% endif %}",
-  "docs": "Does what it says on the tin. :) Any order with a total price of 0.00 will be archived/closed, immediately upon order fulfillment.",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Archive",
     "Orders"

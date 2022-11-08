@@ -1,5 +1,8 @@
 {
+  "docs": "This task watches new and updated orders, and updates their tags according to their financial status.",
+  "halt_action_run_sequence_on_error": false,
   "name": "Auto-tag orders by financial status",
+  "online_store_javascript": null,
   "options": {
     "financial_statuses_and_tags__required_keyval": {
       "pending": "payment-pending",
@@ -12,16 +15,13 @@
     },
     "remove_outdated_financial_status_tags__boolean": true
   },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% if event.preview %}\n  {% assign order = hash %}\n  {% assign order[\"admin_graphql_api_id\"] = \"gid://shopify/Order/1234567890\" %}\n  {% assign order[\"financial_status\"] = options.financial_statuses_and_tags__required_keyval.first.first %}\n  {% assign order[\"tags\"] = \"\" %}\n{% endif %}\n\n{% assign order_tags = order.tags | split: \", \" %}\n{% assign tags_to_remove = array %}\n{% assign tag_to_add = nil %}\n{% assign valid_financial_statuses = \"pending authorized partially_paid paid partially_refunded refunded voided\" | split: \" \" %}\n\n{% for pair in options.financial_statuses_and_tags__required_keyval %}\n  {% assign financial_status = pair[0] %}\n  {% assign tag_for_financial_status = pair[1] %}\n\n  {% unless valid_financial_statuses contains financial_status %}\n    {% capture message -%}\n      The financial status {{ financial_status | json }} is not valid. Only these values are supported: {{ valid_financial_statuses | join: \", \" }}.\n    {%- endcapture %}\n    {% error message %}\n  {% endunless %}\n\n  {% if order.financial_status == financial_status %}\n    {% if order_tags contains tag_for_financial_status %}\n      {% log message: \"Order already has the right tag\", financial_status: financial_status, tag: tag_for_financial_status %}\n    {% elsif tag_for_financial_status != blank %}\n      {% assign tag_to_add = tag_for_financial_status %}\n    {% endif %}\n  {% elsif options.remove_outdated_financial_status_tags__boolean and order_tags contains tag_for_financial_status %}\n    {% assign tags_to_remove[tags_to_remove.size] = tag_for_financial_status %}\n  {% endif %}\n{% endfor %}\n\n{% if tag_to_add or tags_to_remove != empty %}\n  {% action \"shopify\" %}\n    mutation {\n      {% if tag_to_add != blank %}\n        tagsAdd(\n          id: {{ order.admin_graphql_api_id | json }}\n          tags: {{ tag_to_add | json }}\n        ) {\n          userErrors {\n            field\n            message\n          }\n        }\n      {% endif %}\n      \n      {% if tags_to_remove != empty %}\n        tagsRemove(\n          id: {{ order.admin_graphql_api_id | json }}\n          tags: {{ tags_to_remove | json }}\n        ) {\n          userErrors {\n            field\n            message\n          }\n        }\n      {% endif %}\n    }\n  {% endaction %}\n{% endif %}",
   "subscriptions": [
     "shopify/orders/updated"
   ],
   "subscriptions_template": "shopify/orders/updated",
-  "script": "{% if event.preview %}\n  {% assign order = hash %}\n  {% assign order[\"admin_graphql_api_id\"] = \"gid://shopify/Order/1234567890\" %}\n  {% assign order[\"financial_status\"] = options.financial_statuses_and_tags__required_keyval.first.first %}\n  {% assign order[\"tags\"] = \"\" %}\n{% endif %}\n\n{% assign order_tags = order.tags | split: \", \" %}\n{% assign tags_to_remove = array %}\n{% assign tag_to_add = nil %}\n{% assign valid_financial_statuses = \"pending authorized partially_paid paid partially_refunded refunded voided\" | split: \" \" %}\n\n{% for pair in options.financial_statuses_and_tags__required_keyval %}\n  {% assign financial_status = pair[0] %}\n  {% assign tag_for_financial_status = pair[1] %}\n\n  {% unless valid_financial_statuses contains financial_status %}\n    {% capture message -%}\n      The financial status {{ financial_status | json }} is not valid. Only these values are supported: {{ valid_financial_statuses | join: \", \" }}.\n    {%- endcapture %}\n    {% error message %}\n  {% endunless %}\n\n  {% if order.financial_status == financial_status %}\n    {% if order_tags contains tag_for_financial_status %}\n      {% log message: \"Order already has the right tag\", financial_status: financial_status, tag: tag_for_financial_status %}\n    {% elsif tag_for_financial_status != blank %}\n      {% assign tag_to_add = tag_for_financial_status %}\n    {% endif %}\n  {% elsif options.remove_outdated_financial_status_tags__boolean and order_tags contains tag_for_financial_status %}\n    {% assign tags_to_remove[tags_to_remove.size] = tag_for_financial_status %}\n  {% endif %}\n{% endfor %}\n\n{% if tag_to_add or tags_to_remove != empty %}\n  {% action \"shopify\" %}\n    mutation {\n      {% if tag_to_add != blank %}\n        tagsAdd(\n          id: {{ order.admin_graphql_api_id | json }}\n          tags: {{ tag_to_add | json }}\n        ) {\n          userErrors {\n            field\n            message\n          }\n        }\n      {% endif %}\n      \n      {% if tags_to_remove != empty %}\n        tagsRemove(\n          id: {{ order.admin_graphql_api_id | json }}\n          tags: {{ tags_to_remove | json }}\n        ) {\n          userErrors {\n            field\n            message\n          }\n        }\n      {% endif %}\n    }\n  {% endaction %}\n{% endif %}",
-  "docs": "This task watches new and updated orders, and updates their tags according to their financial status.",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Auto-Tag",
     "Financial Status",

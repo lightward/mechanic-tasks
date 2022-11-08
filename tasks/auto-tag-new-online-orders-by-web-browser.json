@@ -1,19 +1,19 @@
 {
+  "docs": "This task monitors incoming orders, and tags them with information about the customer's web browser.\n\nThis task will monitor incoming orders, and tag them if the browser name can be derived from the order information.\r\n\r\nRun this task manually to scan your existing orders, and tag them as appropriate.",
+  "halt_action_run_sequence_on_error": false,
   "name": "Auto-tag new online orders by web browser",
+  "online_store_javascript": null,
   "options": {
     "include_browser_version__boolean": false
   },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% assign orders = array %}\n{% if event.preview %}\n  {% assign orders[0] = '{\"admin_graphql_api_id\":\"gid://shopify/Order/1234567890\"}' | parse_json %}\n{% elsif event.topic contains \"shopify/orders/\" %}\n  {% assign orders[0] = order %}\n{% elsif event.topic == \"mechanic/user/trigger\" %}\n  {% assign orders = shop.orders.any %}\n{% endif %}\n\n{% for order in orders %}\n  {% assign user_agent = order.client_details.user_agent %}\n\n  {% if event.preview and user_agent == blank %}\n    {% assign user_agent = \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36\" %}\n  {% elsif user_agent == blank %}\n    {% continue %}\n  {% endif %}\n\n  {% assign browser = user_agent | browser %}\n  {% assign order_tags = order.tags | split: \", \" %}\n  {% assign tag_to_add = browser.name %}\n  {% if options.include_browser_version__boolean %}\n    {% assign tag_to_add = tag_to_add | append: \" \" | append: browser.version | strip %}\n  {% endif %}\n\n  {% unless order_tags contains tag_to_add %}\n    {% action \"shopify\" %}\n      mutation {\n        tagsAdd(\n          id: {{ order.admin_graphql_api_id | json }}\n          tags: {{ tag_to_add | json }}\n        ) {\n          userErrors {\n            field\n            message\n          }\n        }\n      }\n    {% endaction %}\n  {% endunless %}\n{% endfor %}",
   "subscriptions": [
     "shopify/orders/create",
     "mechanic/user/trigger"
   ],
   "subscriptions_template": "shopify/orders/create\nmechanic/user/trigger",
-  "script": "{% assign orders = array %}\n{% if event.preview %}\n  {% assign orders[0] = '{\"admin_graphql_api_id\":\"gid://shopify/Order/1234567890\"}' | parse_json %}\n{% elsif event.topic contains \"shopify/orders/\" %}\n  {% assign orders[0] = order %}\n{% elsif event.topic == \"mechanic/user/trigger\" %}\n  {% assign orders = shop.orders.any %}\n{% endif %}\n\n{% for order in orders %}\n  {% assign user_agent = order.client_details.user_agent %}\n\n  {% if event.preview and user_agent == blank %}\n    {% assign user_agent = \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36\" %}\n  {% elsif user_agent == blank %}\n    {% continue %}\n  {% endif %}\n\n  {% assign browser = user_agent | browser %}\n  {% assign order_tags = order.tags | split: \", \" %}\n  {% assign tag_to_add = browser.name %}\n  {% if options.include_browser_version__boolean %}\n    {% assign tag_to_add = tag_to_add | append: \" \" | append: browser.version | strip %}\n  {% endif %}\n\n  {% unless order_tags contains tag_to_add %}\n    {% action \"shopify\" %}\n      mutation {\n        tagsAdd(\n          id: {{ order.admin_graphql_api_id | json }}\n          tags: {{ tag_to_add | json }}\n        ) {\n          userErrors {\n            field\n            message\n          }\n        }\n      }\n    {% endaction %}\n  {% endunless %}\n{% endfor %}",
-  "docs": "This task monitors incoming orders, and tags them with information about the customer's web browser.\n\nThis task will monitor incoming orders, and tag them if the browser name can be derived from the order information.\r\n\r\nRun this task manually to scan your existing orders, and tag them as appropriate.",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Auto-Tag",
     "Order Attributes",

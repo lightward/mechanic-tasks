@@ -11,7 +11,8 @@
     "ajv": "8.11.0",
     "dir-compare": "4.0.0",
     "glob": "8.0.3",
-    "husky": "8.0.2"
+    "husky": "8.0.2",
+    "sort-json": "2.0.1"
   },
   "scripts": {
     "test": "node ./lib/test.js",

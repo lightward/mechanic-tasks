@@ -1,5 +1,8 @@
 {
+  "docs": "This task demonstrates how to send emails that respect the customer's language preference, by matching their locale to a pre-written email translation.\n\nFor more on the techniques in this task, see [Sending multilingual emails](https://docs.usemechanic.com/article/465-sending-multilingual-emails).",
+  "halt_action_run_sequence_on_error": false,
   "name": "Send a welcome email to new customers, in their language",
+  "online_store_javascript": null,
   "options": {
     "default_locale__required": "es",
     "email_subject_translations__keyval_required": {
@@ -11,16 +14,13 @@
       "en": "Hello {{ customer.first_name }},\n\nWe're glad you're here. :) Cheers!\n\n{{ shop.name }}"
     }
   },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% assign default_locale = options.default_locale__required %}\n\n{% if options.email_subject_translations__keyval_required[default_locale] == blank %}\n  {% error \"Please add an email subject for your default locale.\" %}\n{% elsif options.email_body_translations__keyval_multiline_required[default_locale] == blank %}\n  {% error \"Please add an email body for your default locale.\" %}\n{% endif %}\n\n{% capture query %}\n  query {\n    customer(id: {{ customer.admin_graphql_api_id | json }}) {\n      locale\n    }\n  }\n{% endcapture %}\n\n{% assign result = query | shopify %}\n\n{% if event.preview %}\n  {% capture result_json %}\n    {\n      \"data\": {\n        \"customer\": {\n          \"locale\": {{ options.email_subject_translations__keyval_required.first.first | json }}\n        }\n      }\n    }\n  {% endcapture %}\n\n  {% assign result = result_json | parse_json %}\n{% endif %}\n\n{% assign locale = result.data.customer.locale %}\n\n{% assign email_subject = options.email_subject_translations__keyval_required[locale] %}\n{% assign email_body = options.email_body_translations__keyval_multiline_required[locale] %}\n\n{% if email_subject == blank %}\n  {% log message: \"Couldn't find an email subject for this locale; falling back to the default\", locale: locale %}\n  {% assign email_subject = options.email_subject_translations__keyval_required[default_locale] %}\n{% endif %}\n\n{% if email_body == blank %}\n  {% log message: \"Couldn't find an email subject for this locale; falling back to the default\", locale: locale %}\n  {% assign email_body = options.email_body_translations__keyval_multiline_required[locale] %}\n{% endif %}\n\n{% action \"email\" %}\n  {\n    \"to\": {{ customer.email | json }},\n    \"subject\": {{ email_subject | json }},\n    \"body\": {{ email_body | newline_to_br | json }},\n    \"reply_to\": {{ shop.customer_email | json }},\n    \"from_display_name\": {{ shop.name | json }}\n  }\n{% endaction %}",
   "subscriptions": [
     "shopify/customers/create"
   ],
   "subscriptions_template": "shopify/customers/create",
-  "script": "{% assign default_locale = options.default_locale__required %}\n\n{% if options.email_subject_translations__keyval_required[default_locale] == blank %}\n  {% error \"Please add an email subject for your default locale.\" %}\n{% elsif options.email_body_translations__keyval_multiline_required[default_locale] == blank %}\n  {% error \"Please add an email body for your default locale.\" %}\n{% endif %}\n\n{% capture query %}\n  query {\n    customer(id: {{ customer.admin_graphql_api_id | json }}) {\n      locale\n    }\n  }\n{% endcapture %}\n\n{% assign result = query | shopify %}\n\n{% if event.preview %}\n  {% capture result_json %}\n    {\n      \"data\": {\n        \"customer\": {\n          \"locale\": {{ options.email_subject_translations__keyval_required.first.first | json }}\n        }\n      }\n    }\n  {% endcapture %}\n\n  {% assign result = result_json | parse_json %}\n{% endif %}\n\n{% assign locale = result.data.customer.locale %}\n\n{% assign email_subject = options.email_subject_translations__keyval_required[locale] %}\n{% assign email_body = options.email_body_translations__keyval_multiline_required[locale] %}\n\n{% if email_subject == blank %}\n  {% log message: \"Couldn't find an email subject for this locale; falling back to the default\", locale: locale %}\n  {% assign email_subject = options.email_subject_translations__keyval_required[default_locale] %}\n{% endif %}\n\n{% if email_body == blank %}\n  {% log message: \"Couldn't find an email subject for this locale; falling back to the default\", locale: locale %}\n  {% assign email_body = options.email_body_translations__keyval_multiline_required[locale] %}\n{% endif %}\n\n{% action \"email\" %}\n  {\n    \"to\": {{ customer.email | json }},\n    \"subject\": {{ email_subject | json }},\n    \"body\": {{ email_body | newline_to_br | json }},\n    \"reply_to\": {{ shop.customer_email | json }},\n    \"from_display_name\": {{ shop.name | json }}\n  }\n{% endaction %}",
-  "docs": "This task demonstrates how to send emails that respect the customer's language preference, by matching their locale to a pre-written email translation.\n\nFor more on the techniques in this task, see [Sending multilingual emails](https://docs.usemechanic.com/article/465-sending-multilingual-emails).",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Customers",
     "Email",

@@ -1,20 +1,20 @@
 {
+  "docs": "Use this task to send out account invitations to all the customers you already have on file, with the push of a button. Optionally, filter by customer tag.\n\nThis task sends the same Shopify-powered emails that are used when sending individual customer invitations ([see Shopify's documentation](https://help.shopify.com/en/manual/customers/customer-accounts#individual-invites)), and uses the same Shopify email template. A custom subject and message are not required, but will be included when specified.",
+  "halt_action_run_sequence_on_error": false,
   "name": "Send account invites to all customers in bulk",
+  "online_store_javascript": null,
   "options": {
     "only_invite_customers_with_this_tag": null,
     "custom_subject": null,
     "custom_message__multiline": null
   },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% assign customers = shop.customers %}\n\n{% if options.only_invite_customers_with_this_tag != blank %}\n  {% assign query = \"tag:\" | append: options.only_invite_customers_with_this_tag %}\n  {% assign customers = shop.customers.search[query] %}\n{% endif %}\n\n{% if event.preview %}\n  {% assign customers = array %}\n  {% assign customers[0] = hash %}\n  {% assign customers[0][\"id\"] = 12345 %}\n{% endif %}\n\n{% for customer in customers %}\n  {% if customer.state == \"enabled\" %}\n    {% continue %}\n  {% endif %}\n\n  {% action \"shopify\" %}\n    [\n      \"post\",\n      \"/admin/customers/{{ customer.id }}/send_invite.json\",\n      {\n        \"customer_invite\": {\n          \"subject\": {{ options.custom_subject | json }},\n          \"custom_message\": {{ options.custom_message__multiline | json }}\n        }\n      }\n    ]\n  {% endaction %}\n{% endfor %}",
   "subscriptions": [
     "mechanic/user/trigger"
   ],
   "subscriptions_template": "mechanic/user/trigger",
-  "script": "{% assign customers = shop.customers %}\n\n{% if options.only_invite_customers_with_this_tag != blank %}\n  {% assign query = \"tag:\" | append: options.only_invite_customers_with_this_tag %}\n  {% assign customers = shop.customers.search[query] %}\n{% endif %}\n\n{% if event.preview %}\n  {% assign customers = array %}\n  {% assign customers[0] = hash %}\n  {% assign customers[0][\"id\"] = 12345 %}\n{% endif %}\n\n{% for customer in customers %}\n  {% if customer.state == \"enabled\" %}\n    {% continue %}\n  {% endif %}\n\n  {% action \"shopify\" %}\n    [\n      \"post\",\n      \"/admin/customers/{{ customer.id }}/send_invite.json\",\n      {\n        \"customer_invite\": {\n          \"subject\": {{ options.custom_subject | json }},\n          \"custom_message\": {{ options.custom_message__multiline | json }}\n        }\n      }\n    ]\n  {% endaction %}\n{% endfor %}",
-  "docs": "Use this task to send out account invitations to all the customers you already have on file, with the push of a button. Optionally, filter by customer tag.\n\nThis task sends the same Shopify-powered emails that are used when sending individual customer invitations ([see Shopify's documentation](https://help.shopify.com/en/manual/customers/customer-accounts#individual-invites)), and uses the same Shopify email template. A custom subject and message are not required, but will be included when specified.",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Account",
     "Bulk",

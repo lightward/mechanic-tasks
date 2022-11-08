@@ -1,19 +1,19 @@
 {
+  "docs": "Use this task to publish a banner, to be displayed across your online storefront. This task comes with some pre-configured HTML and CSS – customize to taste. :)\n\nConfigure the starting and ending times as appropriate, remembering that all times in Mechanic are local to your store's timezone.\r\n\r\nAdjust (or replace!) the banner HTML and CSS to taste. Mechanic will place your code within a plain `<div>` wrapper. To control where your banner is inserted, use the \"Banner parent CSS selector\" option. Mechanic will insert your banner as the first child of whatever element is matched by that CSS selector.\r\n\r\nPlease note: the Mechanic support crew can't help out with banner design.",
+  "halt_action_run_sequence_on_error": false,
   "name": "Schedule a storefront banner",
+  "online_store_javascript": "var now = Date.now();\nvar startAt = {{ options.starting_date_and_time__required | date: \"%s\" | times: 1000 | json }};\nvar endAt = {{ options.ending_date_and_time__required | date: \"%s\" | times: 1000 | json }};\n\nif (document.getElementById('admin-bar-iframe')) {\n  if (startAt === 0) {\n    alert('Scheduled banner with Mechanic: starting time was not understood');\n  }\n  if (endAt === 0) {\n    alert('Scheduled banner with Mechanic: ending time was not understood');\n  }\n}\n\nif (startAt !== 0 && endAt !== 0 && startAt <= now && now <= endAt) {\n  var bannerContainer = document.createElement('div');\n  bannerContainer.innerHTML = {{ options.banner_html__required_multiline_code | json }};\n\n  var parentCssSelector = {{ options.banner_parent_css_selector__required | json }};\n  var parent = document.querySelector(parentCssSelector);\n\n  parent.insertBefore(bannerContainer, parent.firstChild);\n}",
   "options": {
     "starting_date_and_time__required": "May 1 2019 12:00am",
     "ending_date_and_time__required": "June 1 2019 12:00am",
     "banner_html__required_multiline_code": "<style>\n#banner_placeholder {\n    height: 50px;\n    width: 100%;\n}\n\n#banner {\n    position: absolute;\n    z-index: 1000;\n    top: 0;\n    left: 0;\n    right: 0;\n    background: rgba(0, 0, 0, 0.8);\n    color: #ddd;\n    padding: 10px;\n    font-size: 16px;\n}\n\n#banner a {\n    font-weight: bold;\n    text-decoration: underline;\n    color: #ddd;\n}\n\n#banner a:hover {\n    color: #fff;\n}\n</style>\n\n<div id=\"banner_placeholder\"></div>\n<div id=\"banner\">\n  It's time for a banner! <a href=\"/\">Keep shopping!</a>\n</div>",
     "banner_parent_css_selector__required": "body"
   },
-  "subscriptions": [],
-  "subscriptions_template": "",
-  "script": "",
-  "docs": "Use this task to publish a banner, to be displayed across your online storefront. This task comes with some pre-configured HTML and CSS – customize to taste. :)\n\nConfigure the starting and ending times as appropriate, remembering that all times in Mechanic are local to your store's timezone.\r\n\r\nAdjust (or replace!) the banner HTML and CSS to taste. Mechanic will place your code within a plain `<div>` wrapper. To control where your banner is inserted, use the \"Banner parent CSS selector\" option. Mechanic will insert your banner as the first child of whatever element is matched by that CSS selector.\r\n\r\nPlease note: the Mechanic support crew can't help out with banner design.",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": "var now = Date.now();\nvar startAt = {{ options.starting_date_and_time__required | date: \"%s\" | times: 1000 | json }};\nvar endAt = {{ options.ending_date_and_time__required | date: \"%s\" | times: 1000 | json }};\n\nif (document.getElementById('admin-bar-iframe')) {\n  if (startAt === 0) {\n    alert('Scheduled banner with Mechanic: starting time was not understood');\n  }\n  if (endAt === 0) {\n    alert('Scheduled banner with Mechanic: ending time was not understood');\n  }\n}\n\nif (startAt !== 0 && endAt !== 0 && startAt <= now && now <= endAt) {\n  var bannerContainer = document.createElement('div');\n  bannerContainer.innerHTML = {{ options.banner_html__required_multiline_code | json }};\n\n  var parentCssSelector = {{ options.banner_parent_css_selector__required | json }};\n  var parent = document.querySelector(parentCssSelector);\n\n  parent.insertBefore(bannerContainer, parent.firstChild);\n}",
   "order_status_javascript": null,
   "perform_action_runs_in_sequence": false,
+  "script": "",
+  "subscriptions": [],
+  "subscriptions_template": "",
   "tags": [
     "Banner",
     "Schedule",

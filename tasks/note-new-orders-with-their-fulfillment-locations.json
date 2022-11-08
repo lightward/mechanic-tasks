@@ -3,15 +3,15 @@
   "halt_action_run_sequence_on_error": false,
   "name": "Add note to new orders with their fulfillment locations",
   "online_store_javascript": null,
+  "options": {},
   "order_status_javascript": null,
   "perform_action_runs_in_sequence": false,
+  "preview_event_definitions": [],
   "script": "{% if event.preview %}\n  {% assign order = hash %}\n  {% assign order[\"admin_graphql_api_id\"] = \"gid://shopify/Order/1234567890\" %}\n{% endif %}\n\n{% capture query %}\n  query {\n    order(id: {{ order.admin_graphql_api_id | json }}) {\n      note\n      fulfillmentOrders(first: 250) {\n        edges {\n          node {\n            assignedLocation {\n              name\n            }\n          }\n        }\n      }\n    }\n  }\n{% endcapture %}\n\n{% assign result = query | shopify %}\n\n{% if event.preview %}\n  {% capture result_json %}\n    {\n      \"data\": {\n        \"order\": {\n          \"note\": \"An existing note\",\n          \"fulfillmentOrders\": {\n            \"edges\": [\n              {\n                \"node\": {\n                  \"assignedLocation\": {\n                    \"name\": \"Store #12345\"\n                  }\n                }\n              },\n              {\n                \"node\": {\n                  \"assignedLocation\": {\n                    \"name\": \"Store #67890\"\n                  }\n                }\n              }\n            ]\n          }\n        }\n      }\n    }\n  {% endcapture %}\n\n  {% assign result = result_json | parse_json %}\n{% endif %}\n\n{% assign fulfillment_location_names = result.data.order.fulfillmentOrders.edges | map: \"node\" | map: \"assignedLocation\" | map: \"name\" | join: \", \" %}\n\n{% assign note = \"Fulfilled from: \" | append: fulfillment_location_names %}\n{% if result.data.order.note != blank %}\n  {% assign note = note | prepend: newline | prepend: newline | prepend: result.data.order.note %}\n{% endif %}\n\n{% action \"shopify\" %}\n  mutation {\n    orderUpdate(\n      input: {\n        id: {{ order.admin_graphql_api_id | json }}\n        note: {{ note | json }}\n      }\n    ) {\n      userErrors {\n        field\n        message\n      }\n    }\n  }\n{% endaction %}",
-  "subscriptions_template": "shopify/orders/create",
   "subscriptions": [
     "shopify/orders/create"
   ],
-  "preview_event_definitions": [],
-  "options": {},
+  "subscriptions_template": "shopify/orders/create",
   "tags": [
     "Fulfillment",
     "Location",

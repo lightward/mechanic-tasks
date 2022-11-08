@@ -1,17 +1,17 @@
 {
+  "docs": "This task watches for newly-paid orders, and tags any that include a customer tip, using the tag of your choice. :)",
+  "halt_action_run_sequence_on_error": false,
   "name": "Auto-tag new orders that have tips",
+  "online_store_javascript": null,
   "options": {
     "tag_for_orders_that_have_a_tip__required": null
   },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% if event.preview %}\n  {% capture order_json %}\n    {\n      \"admin_graphql_api_id\": \"gid://shopify/Order/12345\",\n      \"tags\": \"\",\n      \"line_items\": [\n        {\n          \"id\": 2345678901,\n          \"requires_shipping\": false,\n          \"fulfillment_status\": null,\n          \"tip\": {\n            \"payment_method\": \"shopify_payments\",\n            \"payment_gateway\": \"shopify_payments\"\n          }\n        }\n      ]\n    }\n  {% endcapture %}\n\n  {% assign order = order_json | parse_json %}\n{% endif %}\n\n{% assign tip_line_items = order.line_items | where: \"tip\" %}\n\n{% if tip_line_items != empty %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ order.admin_graphql_api_id | json }}\n        tags: {{ options.tag_for_orders_that_have_a_tip__required | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}",
   "subscriptions": [
     "shopify/orders/paid"
   ],
   "subscriptions_template": "shopify/orders/paid",
-  "script": "{% if event.preview %}\n  {% capture order_json %}\n    {\n      \"admin_graphql_api_id\": \"gid://shopify/Order/12345\",\n      \"tags\": \"\",\n      \"line_items\": [\n        {\n          \"id\": 2345678901,\n          \"requires_shipping\": false,\n          \"fulfillment_status\": null,\n          \"tip\": {\n            \"payment_method\": \"shopify_payments\",\n            \"payment_gateway\": \"shopify_payments\"\n          }\n        }\n      ]\n    }\n  {% endcapture %}\n\n  {% assign order = order_json | parse_json %}\n{% endif %}\n\n{% assign tip_line_items = order.line_items | where: \"tip\" %}\n\n{% if tip_line_items != empty %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ order.admin_graphql_api_id | json }}\n        tags: {{ options.tag_for_orders_that_have_a_tip__required | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}",
-  "docs": "This task watches for newly-paid orders, and tags any that include a customer tip, using the tag of your choice. :)",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": []
 }

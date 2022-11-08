@@ -1,21 +1,21 @@
 {
+  "docs": "Send an email to the customer with specific information regarding a product they just purchased. Useful for digital products, or anytime you'd like to communicate something extra about a product you offer. (Note: this does not replace the Shopify order confirmation email!)",
+  "halt_action_run_sequence_on_error": false,
   "name": "Email customers after purchasing a certain product",
+  "online_store_javascript": null,
   "options": {
     "email_subject__required": null,
     "email_body__multiline_required": null,
     "product_sku__required": null,
     "days_to_wait_before_emailing__number": null
   },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% capture email_action %}\n  {\n    \"action\": {\n      \"type\": \"email\",\n      \"options\": {\n        \"to\": {{ order.email | json }},\n        \"subject\": {{ options.email_subject__required | json }},\n        \"body\": {{ options.email_body__multiline_required | strip | newline_to_br | json }},\n        \"reply_to\": {{ shop.customer_email | json }},\n        \"from_display_name\": {{ shop.name | json }}\n      }\n    }\n  }\n{% endcapture %}\n\n{% if event.preview %}\n  {{ email_action }}\n{% else %}\n  {% for line_item in order.line_items %}\n    {% if line_item.sku == options.product_sku__required %}\n      {{ email_action }}\n      {% break %}\n    {% endif %}\n  {% endfor %}\n{% endif %}",
   "subscriptions": [
     "shopify/orders/create"
   ],
   "subscriptions_template": "shopify/orders/create{% if options.days_to_wait_before_emailing__number != blank %}+{{ options.days_to_wait_before_emailing__number }}.days{% endif %}",
-  "script": "{% capture email_action %}\n  {\n    \"action\": {\n      \"type\": \"email\",\n      \"options\": {\n        \"to\": {{ order.email | json }},\n        \"subject\": {{ options.email_subject__required | json }},\n        \"body\": {{ options.email_body__multiline_required | strip | newline_to_br | json }},\n        \"reply_to\": {{ shop.customer_email | json }},\n        \"from_display_name\": {{ shop.name | json }}\n      }\n    }\n  }\n{% endcapture %}\n\n{% if event.preview %}\n  {{ email_action }}\n{% else %}\n  {% for line_item in order.line_items %}\n    {% if line_item.sku == options.product_sku__required %}\n      {{ email_action }}\n      {% break %}\n    {% endif %}\n  {% endfor %}\n{% endif %}",
-  "docs": "Send an email to the customer with specific information regarding a product they just purchased. Useful for digital products, or anytime you'd like to communicate something extra about a product you offer. (Note: this does not replace the Shopify order confirmation email!)",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Customers",
     "Email",

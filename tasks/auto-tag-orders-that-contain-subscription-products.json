@@ -3,18 +3,18 @@
   "halt_action_run_sequence_on_error": false,
   "name": "Auto-tag orders that contain subscription products",
   "online_store_javascript": null,
+  "options": {
+    "tag_to_apply__required": "subscription order"
+  },
   "order_status_javascript": null,
   "perform_action_runs_in_sequence": false,
+  "preview_event_definitions": [],
   "script": "{% assign orders = array %}\n\n{% if event.topic == \"shopify/orders/create\" %}\n\n  {% capture query %}\n    query {\n      order(id: {{ order.admin_graphql_api_id | json }}) {\n        id\n        name\n        tags\n        lineItems(first: 100) {\n          edges {\n            node {\n              id\n              sellingPlan {\n                name\n              }\n            }\n          }\n        }\n      }\n    }\n  {% endcapture %}\n\n  {% assign result = query | shopify %}\n\n  {% assign orders[0] = result.data.order %}\n\n{% elsif event.topic == \"mechanic/user/trigger\" %}\n  {% assign cursor = nil %}\n\n  {% for n in (1..2500) %}\n    {% capture query %}\n      query {\n        orders(\n          first: 4\n          after: {{ cursor | json }}\n          reverse: true\n        ) {\n          pageInfo {\n            hasNextPage\n          }\n          edges {\n            cursor\n            node {\n              id\n              name\n              tags\n              lineItems(first: 100) {\n                edges {\n                  node {\n                    id\n                    sellingPlan {\n                      name\n                    }\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    {% endcapture %}\n\n    {% assign result = query | shopify %}\n\n    {% assign orders_batch = result.data.orders.edges | map: \"node\" %}\n    {% assign orders = orders | concat: orders_batch %}\n\n    {% if result.data.orders.pageInfo.hasNextPage %}\n      {% assign cursor = result.data.orders.edges.last.cursor %}\n    {% else %}\n      {% break %}\n    {% endif %}\n  {% endfor %}\n{% endif %}\n\n{% if event.preview %}\n  {% capture orders_json %}\n    [\n      {\n        \"id\": \"gid://shopify/Order/1234567890\",\n        \"name\": \"#TEST\",\n        \"lineItems\": {\n          \"edges\": [\n            {\n              \"node\": {\n                \"sellingPlan\": [\n                  {\n                    \"name\": \"Subscription, Delivery every month\"\n                  }\n                ]\n              }\n            },\n            {\n              \"node\": {\n                \"sellingPlan\": [\n                  {\n                    \"name\": \"Subscription, Delivery every month\"\n                  }\n                ]\n              }\n            }\n          ]\n        }\n      }\n    ]\n  {% endcapture %}\n\n  {% assign orders = orders_json | parse_json %}\n{% endif %}\n\n{% for order in orders %}\n  {% assign order_qualifies = false %}\n\n  {% assign line_items = order.lineItems.edges | map: \"node\" %}\n\n  {% for line_item in line_items %}\n    {% if line_item.sellingPlan.name != blank %}\n      {% assign order_qualifies = true %}\n      {% log line_item.sellingPlan.name %}\n      {% break %}\n    {% endif %}\n  {% endfor %}\n\n  {% if order_qualifies %}\n    {% action \"shopify\" %}\n      mutation {\n        tagsAdd(\n          id: {{ order.id | json }}\n          tags: {{ options.tag_to_apply__required | json }}\n        ) {\n          node {\n            ... on Order {\n              id\n              name\n              tags\n            }\n          }\n          userErrors {\n            field\n            message\n          }\n        }\n      }\n    {% endaction %}\n  {% endif %}\n{% endfor %}",
-  "subscriptions_template": "shopify/orders/create\nmechanic/user/trigger",
   "subscriptions": [
     "shopify/orders/create",
     "mechanic/user/trigger"
   ],
-  "preview_event_definitions": [],
-  "options": {
-    "tag_to_apply__required": "subscription order"
-  },
+  "subscriptions_template": "shopify/orders/create\nmechanic/user/trigger",
   "tags": [
     "Auto-Tag",
     "Orders",

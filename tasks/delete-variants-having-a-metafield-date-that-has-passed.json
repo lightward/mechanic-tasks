@@ -1,20 +1,20 @@
 {
+  "docs": "Do you sell tickets to recurring events? Do you use a new product variant for each one? Use this task to regularly scan your catalog for product variants that have a date metafield, and to delete variants when their date has passed.\n\nRun this task manually to immediately scan your product catalog for outdated variants, and delete them. This task will also run nightly, at midnight in your store's timezone.",
+  "halt_action_run_sequence_on_error": false,
   "name": "Delete variants having a metafield date that has passed",
+  "online_store_javascript": null,
   "options": {
     "date_metafield_namespace__required": null,
     "date_metafield_key__required": null
   },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% if event.preview %}\n  {\n    \"action\": {\n      \"type\": \"shopify\",\n      \"options\": [\n        \"delete\",\n        [\"variant\", {{ variant.id | json }}]\n      ]\n    }\n  }\n{% else %}\n  {% assign today = \"now\" | date: \"%Y-%m-%d\" %}\n\n  {% for product in shop.products.published %}\n    {% if product.variants.size == 1 and product.variants[0].title == \"Default Title\" %}\n      {% continue %}\n    {% endif %}\n\n    {% for variant in product.variants %}\n      {% assign expiration_date = variant.metafields[options.date_metafield_namespace__required][options.date_metafield_key__required] %}\n      {% if expiration_date != blank and expiration_date < today %}\n        {\n          \"action\": {\n            \"type\": \"shopify\",\n            \"options\": [\n              \"delete\",\n              [\"variant\", {{ variant.id | json }}]\n            ]\n          }\n        }\n      {% endif %}\n    {% endfor %}\n  {% endfor %}\n{% endif %}",
   "subscriptions": [
     "mechanic/user/trigger",
     "mechanic/scheduler/daily"
   ],
   "subscriptions_template": "mechanic/user/trigger\nmechanic/scheduler/daily",
-  "script": "{% if event.preview %}\n  {\n    \"action\": {\n      \"type\": \"shopify\",\n      \"options\": [\n        \"delete\",\n        [\"variant\", {{ variant.id | json }}]\n      ]\n    }\n  }\n{% else %}\n  {% assign today = \"now\" | date: \"%Y-%m-%d\" %}\n\n  {% for product in shop.products.published %}\n    {% if product.variants.size == 1 and product.variants[0].title == \"Default Title\" %}\n      {% continue %}\n    {% endif %}\n\n    {% for variant in product.variants %}\n      {% assign expiration_date = variant.metafields[options.date_metafield_namespace__required][options.date_metafield_key__required] %}\n      {% if expiration_date != blank and expiration_date < today %}\n        {\n          \"action\": {\n            \"type\": \"shopify\",\n            \"options\": [\n              \"delete\",\n              [\"variant\", {{ variant.id | json }}]\n            ]\n          }\n        }\n      {% endif %}\n    {% endfor %}\n  {% endfor %}\n{% endif %}",
-  "docs": "Do you sell tickets to recurring events? Do you use a new product variant for each one? Use this task to regularly scan your catalog for product variants that have a date metafield, and to delete variants when their date has passed.\n\nRun this task manually to immediately scan your product catalog for outdated variants, and delete them. This task will also run nightly, at midnight in your store's timezone.",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Delete",
     "Metafields",

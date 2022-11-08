@@ -1,18 +1,18 @@
 {
+  "docs": "This task does exactly as it sounds :) Add time delays to your Shopify Flow workflows. Choose your time delays by using offsets in the Subscriptions field. Learn more about [offsets here.](https://learn.mechanic.dev/core/tasks/subscriptions#offsets \"Offsets\")\n\nEasily modify this task to subscribe to any [Shopify webhook.](https://learn.mechanic.dev/platform/events/topics#shopify \"Shopify webhook\") Use either `product_id` or `order_id` or `customer_id` in the Mechanic Flow action to bring the corresponding object into context in Shopify Flow. ",
+  "halt_action_run_sequence_on_error": false,
   "name": "Trigger Shopify Flow with a time delay",
+  "online_store_javascript": null,
   "options": {},
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% action \"flow\" %}\n  {\n    {% comment %}\n      If you want your Mechanic Flow trigger to be associated\n      with a Shopify resource, you may include its numeric ID\n      below. Only one resource at a time is supported. Leave\n      this out entirely to use the General Mechanic Flow trigger.\n    {% endcomment %}\n    \"order_id\": {{order.id }},\n\n    {% comment %}\n      Keep as many of the following as you like. Any omitted\n      keys *will* be submitted anyway, using the default value\n      given below. If you don't want to use Mechanic's default\n      value, make sure to *keep* the key in place below, setting\n      it to whatever you like.\n    {% endcomment %}\n    \"user_boolean\": false,\n    \"user_email\":   \"hey@mechanic.invalid\",\n    \"user_number\":  0,\n    \"user_string\":  \"\",\n    \"user_url\":     \"https://mechanic.invalid/\"\n  }\n{% endaction %}",
   "subscriptions": [
     "shopify/orders/create+5.minutes",
     "shopify/orders/create+5.days",
     "shopify/orders/create+5.months"
   ],
   "subscriptions_template": "shopify/orders/create+5.minutes\nshopify/orders/create+5.days\nshopify/orders/create+5.months",
-  "script": "{% action \"flow\" %}\n  {\n    {% comment %}\n      If you want your Mechanic Flow trigger to be associated\n      with a Shopify resource, you may include its numeric ID\n      below. Only one resource at a time is supported. Leave\n      this out entirely to use the General Mechanic Flow trigger.\n    {% endcomment %}\n    \"order_id\": {{order.id }},\n\n    {% comment %}\n      Keep as many of the following as you like. Any omitted\n      keys *will* be submitted anyway, using the default value\n      given below. If you don't want to use Mechanic's default\n      value, make sure to *keep* the key in place below, setting\n      it to whatever you like.\n    {% endcomment %}\n    \"user_boolean\": false,\n    \"user_email\":   \"hey@mechanic.invalid\",\n    \"user_number\":  0,\n    \"user_string\":  \"\",\n    \"user_url\":     \"https://mechanic.invalid/\"\n  }\n{% endaction %}",
-  "docs": "This task does exactly as it sounds :) Add time delays to your Shopify Flow workflows. Choose your time delays by using offsets in the Subscriptions field. Learn more about [offsets here.](https://learn.mechanic.dev/core/tasks/subscriptions#offsets \"Offsets\")\n\nEasily modify this task to subscribe to any [Shopify webhook.](https://learn.mechanic.dev/platform/events/topics#shopify \"Shopify webhook\") Use either `product_id` or `order_id` or `customer_id` in the Mechanic Flow action to bring the corresponding object into context in Shopify Flow. ",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Integration",
     "Shopify Flow"

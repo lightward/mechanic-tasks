@@ -1,18 +1,18 @@
 {
+  "docs": "Use this task to apply the same categorizations you use for your customers. Useful for pre-approving customers, and then quickly sorting your orders based on that pre-approval. Optionally, configure this task to only copy certain tags from customers to their orders.",
+  "halt_action_run_sequence_on_error": false,
   "name": "Auto-tag new orders using the customer's tags",
+  "online_store_javascript": null,
   "options": {
     "only_copy_these_tags__array": null
   },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% if event.preview %}\n  {% capture order_json %}\n    {\n      \"admin_graphql_api_id\": \"gid://shopify/Order/1234567890\",\n      \"tags\": \"\",\n      \"customer\": {\n        \"tags\": {{ options.only_copy_these_tags__array | join: \", \" | default: \"wholesale, approved\" | json }}\n      }\n    }\n  {% endcapture %}\n\n  {% assign order = order_json | parse_json %}\n{% endif %}\n\n{% assign customer_tags = order.customer.tags | split: \", \" %}\n{% assign order_tags = order.tags | split: \", \" %}\n{% assign tags_to_add = array %}\n\n{% for tag in customer_tags %}\n  {% if options.only_copy_these_tags__array == blank or options.only_copy_these_tags__array contains tag %}\n    {% unless order_tags contains tag %}\n      {% assign tags_to_add[tags_to_add.size] = tag %}\n    {% endunless %}\n  {% endif %}\n{% endfor %}\n\n{% if tags_to_add != empty %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ order.admin_graphql_api_id | json }}\n        tags: {{ tags_to_add | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}",
   "subscriptions": [
     "shopify/orders/create"
   ],
   "subscriptions_template": "shopify/orders/create",
-  "script": "{% if event.preview %}\n  {% capture order_json %}\n    {\n      \"admin_graphql_api_id\": \"gid://shopify/Order/1234567890\",\n      \"tags\": \"\",\n      \"customer\": {\n        \"tags\": {{ options.only_copy_these_tags__array | join: \", \" | default: \"wholesale, approved\" | json }}\n      }\n    }\n  {% endcapture %}\n\n  {% assign order = order_json | parse_json %}\n{% endif %}\n\n{% assign customer_tags = order.customer.tags | split: \", \" %}\n{% assign order_tags = order.tags | split: \", \" %}\n{% assign tags_to_add = array %}\n\n{% for tag in customer_tags %}\n  {% if options.only_copy_these_tags__array == blank or options.only_copy_these_tags__array contains tag %}\n    {% unless order_tags contains tag %}\n      {% assign tags_to_add[tags_to_add.size] = tag %}\n    {% endunless %}\n  {% endif %}\n{% endfor %}\n\n{% if tags_to_add != empty %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ order.admin_graphql_api_id | json }}\n        tags: {{ tags_to_add | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}",
-  "docs": "Use this task to apply the same categorizations you use for your customers. Useful for pre-approving customers, and then quickly sorting your orders based on that pre-approval. Optionally, configure this task to only copy certain tags from customers to their orders.",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Auto-Tag",
     "Customers",

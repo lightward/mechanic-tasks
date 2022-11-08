@@ -1,18 +1,18 @@
 {
+  "docs": "Immediately upon the creation of a draft order, add one or more tags. Simple as that. :)",
+  "halt_action_run_sequence_on_error": false,
   "name": "Auto-tag new draft orders",
+  "online_store_javascript": null,
   "options": {
     "draft_order_tags_to_add__array_required": null
   },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% if event.preview %}\n  {% assign draft_order = hash %}\n  {% assign draft_order[\"admin_graphql_api_id\"] = \"gid://shopify/DraftOrder/1234567890\" %}\n{% endif %}\n\n{% action \"shopify\" %}\n  mutation {\n    tagsAdd(\n      id: {{ draft_order.admin_graphql_api_id | json }}\n      tags: {{ options.draft_order_tags_to_add__array_required | json }}\n    ) {\n      userErrors {\n        field\n        message\n      }\n    }\n  }\n{% endaction %}",
   "subscriptions": [
     "shopify/draft_orders/create"
   ],
   "subscriptions_template": "shopify/draft_orders/create",
-  "script": "{% if event.preview %}\n  {% assign draft_order = hash %}\n  {% assign draft_order[\"admin_graphql_api_id\"] = \"gid://shopify/DraftOrder/1234567890\" %}\n{% endif %}\n\n{% action \"shopify\" %}\n  mutation {\n    tagsAdd(\n      id: {{ draft_order.admin_graphql_api_id | json }}\n      tags: {{ options.draft_order_tags_to_add__array_required | json }}\n    ) {\n      userErrors {\n        field\n        message\n      }\n    }\n  }\n{% endaction %}",
-  "docs": "Immediately upon the creation of a draft order, add one or more tags. Simple as that. :)",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Auto-Tag",
     "Draft Orders"

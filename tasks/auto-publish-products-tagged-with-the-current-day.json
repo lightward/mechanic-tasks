@@ -1,17 +1,17 @@
 {
+  "docs": "Use this task to automatically roll out your products on specific days of the week. This task runs every midnight, in your shop's local timezone, and it scans your catalog for unpublished products tagged with the current day of the week (e.g. \"Monday\", \"tuesday\", etc).\n\nThis task runs every midnight, in your shop's local timezone, and it scans your catalog for unpublished products tagged with the current day of the week (e.g. \"Monday\", \"tuesday\", etc).\r\n\r\nYou can also run this task manually, to publish any unpublished products tagged with the current day of the week.",
+  "halt_action_run_sequence_on_error": false,
   "name": "Auto-publish products tagged with the current day",
+  "online_store_javascript": null,
   "options": {},
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% if event.preview %}\n  {\n    \"action\": {\n      \"type\": \"shopify\",\n      \"options\": [\n        \"update\",\n        [\n          \"product\",\n          1234567890\n        ],\n        {\n          \"published\": true\n        }\n      ]\n    }\n  }\n{% else %}\n  {% assign dow_tag = \"now\" | date: \"%A\" | downcase %}\n  {\"log\": {{ \"Publishing unpublished products tagged with '\" | append: dow_tag | append: \"'\" | json }}}\n\n  {% for product in shop.products.unpublished %}\n    {% assign product_tags = product.tags | downcase | split: \", \" %}\n    {% if product_tags contains dow_tag %}\n      {\n        \"action\": {\n          \"type\": \"shopify\",\n          \"options\": [\n            \"update\",\n            [\n              \"product\",\n              {{ product.id | json }}\n            ],\n            {\n              \"published\": true\n            }\n          ]\n        }\n      }\n    {% endif %}\n  {% endfor %}\n{% endif %}",
   "subscriptions": [
     "mechanic/scheduler/daily",
     "mechanic/user/trigger"
   ],
   "subscriptions_template": "mechanic/scheduler/daily\nmechanic/user/trigger",
-  "script": "{% if event.preview %}\n  {\n    \"action\": {\n      \"type\": \"shopify\",\n      \"options\": [\n        \"update\",\n        [\n          \"product\",\n          1234567890\n        ],\n        {\n          \"published\": true\n        }\n      ]\n    }\n  }\n{% else %}\n  {% assign dow_tag = \"now\" | date: \"%A\" | downcase %}\n  {\"log\": {{ \"Publishing unpublished products tagged with '\" | append: dow_tag | append: \"'\" | json }}}\n\n  {% for product in shop.products.unpublished %}\n    {% assign product_tags = product.tags | downcase | split: \", \" %}\n    {% if product_tags contains dow_tag %}\n      {\n        \"action\": {\n          \"type\": \"shopify\",\n          \"options\": [\n            \"update\",\n            [\n              \"product\",\n              {{ product.id | json }}\n            ],\n            {\n              \"published\": true\n            }\n          ]\n        }\n      }\n    {% endif %}\n  {% endfor %}\n{% endif %}",
-  "docs": "Use this task to automatically roll out your products on specific days of the week. This task runs every midnight, in your shop's local timezone, and it scans your catalog for unpublished products tagged with the current day of the week (e.g. \"Monday\", \"tuesday\", etc).\n\nThis task runs every midnight, in your shop's local timezone, and it scans your catalog for unpublished products tagged with the current day of the week (e.g. \"Monday\", \"tuesday\", etc).\r\n\r\nYou can also run this task manually, to publish any unpublished products tagged with the current day of the week.",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Products",
     "Publish",

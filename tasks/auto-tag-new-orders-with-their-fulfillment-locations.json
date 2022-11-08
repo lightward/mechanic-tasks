@@ -1,16 +1,16 @@
 {
+  "docs": "Monitoring for brand-new orders, this task tags each order with the fulfillment locations that Shopify automatically assigns at the moment of order creation. (Note: It's not currently possible to adjust tags when assigned fulfillment locations change.)\r\n\r\nImportant: This task requires Shopify API version 2020-01 or later.",
+  "halt_action_run_sequence_on_error": false,
   "name": "Auto-tag new orders with their fulfillment locations",
+  "online_store_javascript": null,
   "options": {},
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% if event.preview %}\n  {% assign order = hash %}\n  {% assign order[\"admin_graphql_api_id\"] = \"gid://shopify/Order/1234567890\" %}\n{% endif %}\n\n{% capture query %}\n  query {\n    order(id: {{ order.admin_graphql_api_id | json }}) {\n      fulfillmentOrders(first: 250) {\n        edges {\n          node {\n            assignedLocation {\n              name\n            }\n          }\n        }\n      }\n    }\n  }\n{% endcapture %}\n\n{% assign result = query | shopify %}\n\n{% if event.preview %}\n  {% capture result_json %}\n    {\n      \"data\": {\n        \"order\": {\n          \"fulfillmentOrders\": {\n            \"edges\": [\n              {\n                \"node\": {\n                  \"assignedLocation\": {\n                    \"name\": \"Store #12345\"\n                  }\n                }\n              },\n              {\n                \"node\": {\n                  \"assignedLocation\": {\n                    \"name\": \"Store #67890\"\n                  }\n                }\n              }\n            ]\n          }\n        }\n      }\n    }\n  {% endcapture %}\n\n  {% assign result = result_json | parse_json %}\n{% endif %}\n\n{% assign fulfillment_location_names = result.data.order.fulfillmentOrders.edges | map: \"node\" | map: \"assignedLocation\" | map: \"name\" %}\n\n{% action \"shopify\" %}\n  mutation {\n    tagsAdd(\n      id: {{ order.admin_graphql_api_id | json }}\n      tags: {{ fulfillment_location_names | json }}\n    ) {\n      userErrors {\n        field\n        message\n      }\n    }\n  }\n{% endaction %}",
   "subscriptions": [
     "shopify/orders/create"
   ],
   "subscriptions_template": "shopify/orders/create",
-  "script": "{% if event.preview %}\n  {% assign order = hash %}\n  {% assign order[\"admin_graphql_api_id\"] = \"gid://shopify/Order/1234567890\" %}\n{% endif %}\n\n{% capture query %}\n  query {\n    order(id: {{ order.admin_graphql_api_id | json }}) {\n      fulfillmentOrders(first: 250) {\n        edges {\n          node {\n            assignedLocation {\n              name\n            }\n          }\n        }\n      }\n    }\n  }\n{% endcapture %}\n\n{% assign result = query | shopify %}\n\n{% if event.preview %}\n  {% capture result_json %}\n    {\n      \"data\": {\n        \"order\": {\n          \"fulfillmentOrders\": {\n            \"edges\": [\n              {\n                \"node\": {\n                  \"assignedLocation\": {\n                    \"name\": \"Store #12345\"\n                  }\n                }\n              },\n              {\n                \"node\": {\n                  \"assignedLocation\": {\n                    \"name\": \"Store #67890\"\n                  }\n                }\n              }\n            ]\n          }\n        }\n      }\n    }\n  {% endcapture %}\n\n  {% assign result = result_json | parse_json %}\n{% endif %}\n\n{% assign fulfillment_location_names = result.data.order.fulfillmentOrders.edges | map: \"node\" | map: \"assignedLocation\" | map: \"name\" %}\n\n{% action \"shopify\" %}\n  mutation {\n    tagsAdd(\n      id: {{ order.admin_graphql_api_id | json }}\n      tags: {{ fulfillment_location_names | json }}\n    ) {\n      userErrors {\n        field\n        message\n      }\n    }\n  }\n{% endaction %}",
-  "docs": "Monitoring for brand-new orders, this task tags each order with the fulfillment locations that Shopify automatically assigns at the moment of order creation. (Note: It's not currently possible to adjust tags when assigned fulfillment locations change.)\r\n\r\nImportant: This task requires Shopify API version 2020-01 or later.",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Auto-Tag",
     "Fulfillment",

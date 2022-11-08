@@ -1,18 +1,18 @@
 {
+  "docs": "This task illustrates how to use a typeface from Google Fonts, embedding it in a generated PDF which is then emailed to the recipient of your choice.",
+  "halt_action_run_sequence_on_error": false,
   "name": "Demonstration: Web fonts in PDFs",
+  "online_store_javascript": null,
   "options": {
     "destination_email_address__email_required": null
   },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% capture html %}\n\n<link href=\"https://fonts.googleapis.com/css2?family=Liu+Jian+Mao+Cao&display=swap\" rel=\"stylesheet\">\n\n<style>\np {\n  font-family: 'Liu Jian Mao Cao', cursive;\n}\n</style>\n\n<p>Almost before we knew it, we had left the ground.</p>\n\n{% endcapture %}\n\n{% action \"email\" %}\n  {\n    \"to\": {{ options.destination_email_address__email_required | json }},\n    \"subject\": \"PDF test\",\n    \"body\": \"Please see the attached PDF. :)\",\n    \"reply_to\": {{ shop.customer_email | json }},\n    \"from_display_name\": {{ shop.name | json }},\n    \"attachments\": {\n      \"font-demo.pdf\": {\n        \"pdf\": {\n          \"html\": {{ html | json }}\n        }\n      }\n    }\n  }\n{% endaction %}",
   "subscriptions": [
     "mechanic/user/trigger"
   ],
   "subscriptions_template": "mechanic/user/trigger",
-  "script": "{% capture html %}\n\n<link href=\"https://fonts.googleapis.com/css2?family=Liu+Jian+Mao+Cao&display=swap\" rel=\"stylesheet\">\n\n<style>\np {\n  font-family: 'Liu Jian Mao Cao', cursive;\n}\n</style>\n\n<p>Almost before we knew it, we had left the ground.</p>\n\n{% endcapture %}\n\n{% action \"email\" %}\n  {\n    \"to\": {{ options.destination_email_address__email_required | json }},\n    \"subject\": \"PDF test\",\n    \"body\": \"Please see the attached PDF. :)\",\n    \"reply_to\": {{ shop.customer_email | json }},\n    \"from_display_name\": {{ shop.name | json }},\n    \"attachments\": {\n      \"font-demo.pdf\": {\n        \"pdf\": {\n          \"html\": {{ html | json }}\n        }\n      }\n    }\n  }\n{% endaction %}",
-  "docs": "This task illustrates how to use a typeface from Google Fonts, embedding it in a generated PDF which is then emailed to the recipient of your choice.",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Demonstration",
     "Files",

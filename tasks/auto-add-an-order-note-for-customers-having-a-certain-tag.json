@@ -1,19 +1,19 @@
 {
+  "docs": "This task monitors newly-created orders, and appends an order note if the customer has a certain tag. Useful for identifying orders for a particular customer group, and adding fulfillment notes as appropriate.",
+  "halt_action_run_sequence_on_error": false,
   "name": "Auto-add an order note for customers having a certain tag",
+  "online_store_javascript": null,
   "options": {
     "order_note_to_add__required_multiline": "",
     "required_customer_tag__required": ""
   },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% assign required_customer_tag_downcased = options.required_customer_tag__required | downcase %}\n\n{% if event.preview %}\n  {% capture order_json %}\n    {\n      \"note\": \"An existing order note\",\n      \"name\": \"#9999\",\n      \"admin_graphql_api_id\": \"gid:\\/\\/shopify\\/Order\\/1234567890\",\n      \"customer\": {\n        \"tags\": {{ options.required_customer_tag__required | json }}\n      }\n    }\n  {% endcapture %}\n\n  {% assign order = order_json | parse_json %}\n{% endif %}\n\n{% assign customer_tags_downcased = order.customer.tags | downcase | split: \", \" %}\n{% if customer_tags_downcased contains required_customer_tag_downcased %}\n  {% assign note = order.note | append: newline | append: newline | append: options.order_note_to_add__required_multiline | strip %}\n\n  {% action \"shopify\" %}\n    mutation {\n      orderUpdate(\n        input: {\n          id: {{ order.admin_graphql_api_id | json }}\n          note: {{ note | json }}\n        }\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}",
   "subscriptions": [
     "shopify/orders/create"
   ],
   "subscriptions_template": "shopify/orders/create",
-  "script": "{% assign required_customer_tag_downcased = options.required_customer_tag__required | downcase %}\n\n{% if event.preview %}\n  {% capture order_json %}\n    {\n      \"note\": \"An existing order note\",\n      \"name\": \"#9999\",\n      \"admin_graphql_api_id\": \"gid:\\/\\/shopify\\/Order\\/1234567890\",\n      \"customer\": {\n        \"tags\": {{ options.required_customer_tag__required | json }}\n      }\n    }\n  {% endcapture %}\n\n  {% assign order = order_json | parse_json %}\n{% endif %}\n\n{% assign customer_tags_downcased = order.customer.tags | downcase | split: \", \" %}\n{% if customer_tags_downcased contains required_customer_tag_downcased %}\n  {% assign note = order.note | append: newline | append: newline | append: options.order_note_to_add__required_multiline | strip %}\n\n  {% action \"shopify\" %}\n    mutation {\n      orderUpdate(\n        input: {\n          id: {{ order.admin_graphql_api_id | json }}\n          note: {{ note | json }}\n        }\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}",
-  "docs": "This task monitors newly-created orders, and appends an order note if the customer has a certain tag. Useful for identifying orders for a particular customer group, and adding fulfillment notes as appropriate.",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Customers",
     "Order Note",

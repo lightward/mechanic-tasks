@@ -1,5 +1,8 @@
 {
+  "docs": "This task sends a new-order email alert to somebody specific, based on the contents of a cart attribute. Useful for allowing customers to select their salesperson, alerting the appropriate salesperson when the order is placed.\n\nThis task sends a new-order email alert to somebody specific, based on the contents of a cart attribute. If a matching email address is not found in the task's configuration, no email will be sent.",
+  "halt_action_run_sequence_on_error": false,
   "name": "Send a new-order email to someone based on a cart attribute",
+  "online_store_javascript": null,
   "options": {
     "cart_attribute_name__required": "Salesperson",
     "cart_attribute_values_and_email_addresses__keyval_email_required": {
@@ -10,16 +13,13 @@
     "email_body__multiline_required": "Hello,\n\nAn order has arrived, and it's assigned to you.\n\nhttps://{{ shop.domain }}/admin/orders/{{ order.id }}\n\nThanks,\n{{ shop.name }}",
     "only_send_for_paid_orders__boolean": false
   },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% if event.preview %}\n  {% assign order = order | json | parse_json %}\n  {% assign order[\"note_attributes\"][0] = hash %}\n  {% assign order[\"note_attributes\"][0][\"name\"] = options.cart_attribute_name__required %}\n  {% assign order[\"note_attributes\"][0][\"value\"] = options.cart_attribute_values_and_email_addresses__keyval_email_required.first.first %}\n{% endif %}\n\n{% assign attribute = order.note_attributes | where: \"name\", options.cart_attribute_name__required | first %}\n{% assign attribute_value = attribute.value %}\n{% assign email = options.cart_attribute_values_and_email_addresses__keyval_email_required[attribute_value] %}\n\n{% if attribute == nil %}\n  {\"log\": {{ options.cart_attribute_name__required | json | prepend: \"This order did not contain the attribute \" |  json }}}\n{% elsif email == blank %}\n  {\"log\": {{ attribute_value | json | prepend: \"There is no configured email corresponding with \" |  json }}}\n{% else %}\n  {% action \"email\" %}\n    {\n      \"to\": {{ email | json }},\n      \"subject\": {{ options.email_subject__required | json }},\n      \"body\": {{ options.email_body__multiline_required | strip | newline_to_br | json }},\n      \"reply_to\": {{ shop.customer_email | json }},\n      \"from_display_name\": {{ shop.name | json }}\n    }\n  {% endaction %}\n{% endif %}",
   "subscriptions": [
     "shopify/orders/create"
   ],
   "subscriptions_template": "{% if options.only_send_for_paid_orders__boolean %}\n  shopify/orders/paid\n{% else %}\n  shopify/orders/create\n{% endif %}",
-  "script": "{% if event.preview %}\n  {% assign order = order | json | parse_json %}\n  {% assign order[\"note_attributes\"][0] = hash %}\n  {% assign order[\"note_attributes\"][0][\"name\"] = options.cart_attribute_name__required %}\n  {% assign order[\"note_attributes\"][0][\"value\"] = options.cart_attribute_values_and_email_addresses__keyval_email_required.first.first %}\n{% endif %}\n\n{% assign attribute = order.note_attributes | where: \"name\", options.cart_attribute_name__required | first %}\n{% assign attribute_value = attribute.value %}\n{% assign email = options.cart_attribute_values_and_email_addresses__keyval_email_required[attribute_value] %}\n\n{% if attribute == nil %}\n  {\"log\": {{ options.cart_attribute_name__required | json | prepend: \"This order did not contain the attribute \" |  json }}}\n{% elsif email == blank %}\n  {\"log\": {{ attribute_value | json | prepend: \"There is no configured email corresponding with \" |  json }}}\n{% else %}\n  {% action \"email\" %}\n    {\n      \"to\": {{ email | json }},\n      \"subject\": {{ options.email_subject__required | json }},\n      \"body\": {{ options.email_body__multiline_required | strip | newline_to_br | json }},\n      \"reply_to\": {{ shop.customer_email | json }},\n      \"from_display_name\": {{ shop.name | json }}\n    }\n  {% endaction %}\n{% endif %}",
-  "docs": "This task sends a new-order email alert to somebody specific, based on the contents of a cart attribute. Useful for allowing customers to select their salesperson, alerting the appropriate salesperson when the order is placed.\n\nThis task sends a new-order email alert to somebody specific, based on the contents of a cart attribute. If a matching email address is not found in the task's configuration, no email will be sent.",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Cart Attributes",
     "Email",

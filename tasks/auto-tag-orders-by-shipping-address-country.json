@@ -1,18 +1,18 @@
 {
+  "docs": "This task automatically adds the tag of your choice to incoming orders, based on the country in the order's shipping address.\n\nBegin by clicking the __Add item__ link next to the _Tags to apply and country codes_ field. Enter tags on the left (one per row), and for each tag add one or more two-character country codes on the right, separated by commas. Country codes should be entered in all caps. [Find country codes here.](https://help.shopify.com/en/api/storefront-api/reference/enum/countrycode)\n\nExample input: Central America > BZ,CR,SV,GT,HN,NI,PA",
+  "halt_action_run_sequence_on_error": false,
   "name": "Auto-tag orders by shipping address country",
+  "online_store_javascript": null,
   "options": {
     "tags_to_apply_and_country_codes__keyval_required": null
   },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% assign tags_to_apply_and_country_codes = options.tags_to_apply_and_country_codes__keyval_required %}    \n\n{% if event.preview %}\n  {% assign order = '{\"admin_graphql_api_id\": \"gid://shopify/Order/1234567890\"}' | parse_json %}\n  {% assign order[\"shipping_address\"] = hash %}\n  {% assign order[\"shipping_address\"][\"country_code\"] = tags_to_apply_and_country_codes.first.last %}\n{% endif %}\n\n{% for tag_to_apply_and_country_codes in tags_to_apply_and_country_codes %}\n  {% if tag_to_apply_and_country_codes.last contains order.shipping_address.country_code %}\n    {% action \"shopify\" %}\n      mutation {\n        tagsAdd(\n          id: {{ order.admin_graphql_api_id | json }}\n          tags: {{ tag_to_apply_and_country_codes.first | json }}\n        ) {\n          userErrors {\n            field\n            message\n          }\n        }\n      }\n    {% endaction %}\n\n    {% break %}\n  {% endif %}\n{% endfor %}",
   "subscriptions": [
     "shopify/orders/create"
   ],
   "subscriptions_template": "shopify/orders/create",
-  "script": "{% assign tags_to_apply_and_country_codes = options.tags_to_apply_and_country_codes__keyval_required %}    \n\n{% if event.preview %}\n  {% assign order = '{\"admin_graphql_api_id\": \"gid://shopify/Order/1234567890\"}' | parse_json %}\n  {% assign order[\"shipping_address\"] = hash %}\n  {% assign order[\"shipping_address\"][\"country_code\"] = tags_to_apply_and_country_codes.first.last %}\n{% endif %}\n\n{% for tag_to_apply_and_country_codes in tags_to_apply_and_country_codes %}\n  {% if tag_to_apply_and_country_codes.last contains order.shipping_address.country_code %}\n    {% action \"shopify\" %}\n      mutation {\n        tagsAdd(\n          id: {{ order.admin_graphql_api_id | json }}\n          tags: {{ tag_to_apply_and_country_codes.first | json }}\n        ) {\n          userErrors {\n            field\n            message\n          }\n        }\n      }\n    {% endaction %}\n\n    {% break %}\n  {% endif %}\n{% endfor %}",
-  "docs": "This task automatically adds the tag of your choice to incoming orders, based on the country in the order's shipping address.\n\nBegin by clicking the __Add item__ link next to the _Tags to apply and country codes_ field. Enter tags on the left (one per row), and for each tag add one or more two-character country codes on the right, separated by commas. Country codes should be entered in all caps. [Find country codes here.](https://help.shopify.com/en/api/storefront-api/reference/enum/countrycode)\n\nExample input: Central America > BZ,CR,SV,GT,HN,NI,PA",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Auto-Tag",
     "Orders",

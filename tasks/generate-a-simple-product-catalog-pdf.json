@@ -1,16 +1,16 @@
 {
+  "docs": "This task is a simple demonstration of pulling product titles and images into a PDF, resulting in a simple catalog of the products available in your store. Use it as a starting point for building something more complex.\r\n\r\nRun this task manually to generate the PDF.",
+  "halt_action_run_sequence_on_error": false,
   "name": "Generate a simple product catalog PDF",
+  "online_store_javascript": null,
   "options": {},
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% capture html %}\n  <h1>Product catalog</h1>\n  <ul>\n  {% for product in shop.products %}\n    {% assign image = product | img_url: \"300x300\", crop: \"center\" %}\n    <li>\n      <b>{{ product.title }}</b>\n      <br>\n      {% if image %}\n        <img src=\"{{ image }}\"/>\n      {% else %}\n        (no image)\n      {% endif %}\n    </li>\n  {% endfor %}\n{% endcapture %}\n\n{% action \"files\" %}\n  {\n    \"catalog.pdf\": {\n      \"pdf\": {\n        \"html\": {{ html | json }}\n      }\n    }\n  }\n{% endaction %}",
   "subscriptions": [
     "mechanic/user/trigger"
   ],
   "subscriptions_template": "mechanic/user/trigger",
-  "script": "{% capture html %}\n  <h1>Product catalog</h1>\n  <ul>\n  {% for product in shop.products %}\n    {% assign image = product | img_url: \"300x300\", crop: \"center\" %}\n    <li>\n      <b>{{ product.title }}</b>\n      <br>\n      {% if image %}\n        <img src=\"{{ image }}\"/>\n      {% else %}\n        (no image)\n      {% endif %}\n    </li>\n  {% endfor %}\n{% endcapture %}\n\n{% action \"files\" %}\n  {\n    \"catalog.pdf\": {\n      \"pdf\": {\n        \"html\": {{ html | json }}\n      }\n    }\n  }\n{% endaction %}",
-  "docs": "This task is a simple demonstration of pulling product titles and images into a PDF, resulting in a simple catalog of the products available in your store. Use it as a starting point for building something more complex.\r\n\r\nRun this task manually to generate the PDF.",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Catalog",
     "Email",

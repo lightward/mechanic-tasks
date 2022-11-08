@@ -1,19 +1,19 @@
 {
+  "docs": "Does what it says on the tin. :) Provide your GetResponse API key (found under the account menu, under \"Integrations & API\" and \"API\") and a list token (found in the settings for your list – look for 5-6 letters and numbers), and Mechanic will automatically send each new customer account (full name and email address) over to GetResponse.",
+  "halt_action_run_sequence_on_error": false,
   "name": "Add new customers to GetResponse",
+  "online_store_javascript": null,
   "options": {
     "getresponse_api_key__required": null,
     "getresponse_list_token__required": null
   },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% capture customer_name %}{{ customer.first_name }} {{ customer.last_name }}{% endcapture %}\n\n{\n  \"action\": {\n    \"type\": \"http\",\n    \"options\": {\n      \"method\": \"post\",\n      \"url\": \"https://api.getresponse.com/v3/contacts\",\n      \"headers\": {\n        \"X-Auth-Token\": \"api-key {{ options.getresponse_api_key__required }}\"\n      },\n      \"body\": {\n        \"name\": {{ customer_name | json }},\n        \"email\": {{ customer.email | json }},\n        \"campaign\": {\n          \"campaignId\": {{ options.getresponse_list_token__required | json }}\n        },\n        \"tags\": [],\n        \"customFieldValues\": []\n      }\n    }\n  }\n}",
   "subscriptions": [
     "shopify/customers/create"
   ],
   "subscriptions_template": "shopify/customers/create",
-  "script": "{% capture customer_name %}{{ customer.first_name }} {{ customer.last_name }}{% endcapture %}\n\n{\n  \"action\": {\n    \"type\": \"http\",\n    \"options\": {\n      \"method\": \"post\",\n      \"url\": \"https://api.getresponse.com/v3/contacts\",\n      \"headers\": {\n        \"X-Auth-Token\": \"api-key {{ options.getresponse_api_key__required }}\"\n      },\n      \"body\": {\n        \"name\": {{ customer_name | json }},\n        \"email\": {{ customer.email | json }},\n        \"campaign\": {\n          \"campaignId\": {{ options.getresponse_list_token__required | json }}\n        },\n        \"tags\": [],\n        \"customFieldValues\": []\n      }\n    }\n  }\n}",
-  "docs": "Does what it says on the tin. :) Provide your GetResponse API key (found under the account menu, under \"Integrations & API\" and \"API\") and a list token (found in the settings for your list – look for 5-6 letters and numbers), and Mechanic will automatically send each new customer account (full name and email address) over to GetResponse.",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Customers",
     "External API"

@@ -1,23 +1,23 @@
 {
+  "docs": "This task watches for updates to customers, and sends invites for any customer who has the tag you choose, who hasn't previously been invited. This task also supports sending invitations in bulk, to all tagged customers who haven't previously been invited.\n\nThis task watches for updates to customers, and sends invites for any customer who has the tag you choose, who hasn't previously been invited.\r\n\r\nUse the \"Run task\" button to send invites to all of your previously-uninvited customers who have the configured tag.\r\n\r\nInvitation emails are sent using your store's account invite notification email template. [Learn how to update this template.](https://help.shopify.com/en/manual/sell-online/notifications/edit-template)",
+  "halt_action_run_sequence_on_error": false,
   "name": "Auto-invite customers when tagged",
+  "online_store_javascript": null,
   "options": {
     "tag_to_watch_for__required": "invite",
     "ignore_tag_case__boolean": true,
     "invitation_email_subject__required": "Your account is ready!",
     "invitation_email_body__multiline_required": "Your account for {{ shop.name }} has been pre-approved! Use the button below to get started."
   },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% assign customers = array %}\n\n{% if event.preview %}\n  {% assign customers[0] = hash %}\n  {% assign customers[0][\"id\"] = 1234567890 %}\n{% elsif event.topic contains \"shopify/customers/\" %}\n  {% assign customer_qualifies = true %}\n\n  {% assign customer_tags = customer.tags | split: \", \" %}\n  {% assign tag = options.tag_to_watch_for__required %}\n\n  {% if options.ignore_tag_case__boolean %}\n    {% assign customer_tags = customer.tags | downcase | split: \", \" %}\n    {% assign tag = tag | downcase %}\n    {% unless customer_tags contains tag %}\n      {% assign customer_qualifies = false %}\n    {% endunless %}\n  {% else %}\n    {% unless customer_tags contains tag %}\n      {% assign customer_qualifies = false %}\n    {% endunless %}\n  {% endif %}\n\n  {% if customer.state != \"disabled\" %}\n    {% assign customer_qualifies = false %}\n  {% endif %}\n\n  {% if customer_qualifies %}\n    {% assign customers[customers.size] = customer %}\n  {% endif %}\n{% elsif event.topic == \"mechanic/user/trigger\" %}\n  {% assign query = \"tag:\" | append: approval_tag | append: \" state:disabled\" %}\n  {% assign customers = shop.customers.search[query] %}\n{% endif %}\n\n{% for customer in customers %}\n  {% action \"shopify\" %}\n    [\n      \"post\",\n      \"/admin/customers/{{ customer.id | json }}/send_invite.json\",\n      {\n        \"customer_invite\": {\n          \"subject\": {{ options.invitation_email_subject__required | json }},\n          \"custom_message\": {{ options.invitation_email_body__multiline_required | json }}\n        }\n      }\n    ]\n  {% endaction %}\n{% endfor %}",
   "subscriptions": [
     "shopify/customers/create",
     "shopify/customers/update",
     "mechanic/user/trigger"
   ],
   "subscriptions_template": "shopify/customers/create\nshopify/customers/update\nmechanic/user/trigger",
-  "script": "{% assign customers = array %}\n\n{% if event.preview %}\n  {% assign customers[0] = hash %}\n  {% assign customers[0][\"id\"] = 1234567890 %}\n{% elsif event.topic contains \"shopify/customers/\" %}\n  {% assign customer_qualifies = true %}\n\n  {% assign customer_tags = customer.tags | split: \", \" %}\n  {% assign tag = options.tag_to_watch_for__required %}\n\n  {% if options.ignore_tag_case__boolean %}\n    {% assign customer_tags = customer.tags | downcase | split: \", \" %}\n    {% assign tag = tag | downcase %}\n    {% unless customer_tags contains tag %}\n      {% assign customer_qualifies = false %}\n    {% endunless %}\n  {% else %}\n    {% unless customer_tags contains tag %}\n      {% assign customer_qualifies = false %}\n    {% endunless %}\n  {% endif %}\n\n  {% if customer.state != \"disabled\" %}\n    {% assign customer_qualifies = false %}\n  {% endif %}\n\n  {% if customer_qualifies %}\n    {% assign customers[customers.size] = customer %}\n  {% endif %}\n{% elsif event.topic == \"mechanic/user/trigger\" %}\n  {% assign query = \"tag:\" | append: approval_tag | append: \" state:disabled\" %}\n  {% assign customers = shop.customers.search[query] %}\n{% endif %}\n\n{% for customer in customers %}\n  {% action \"shopify\" %}\n    [\n      \"post\",\n      \"/admin/customers/{{ customer.id | json }}/send_invite.json\",\n      {\n        \"customer_invite\": {\n          \"subject\": {{ options.invitation_email_subject__required | json }},\n          \"custom_message\": {{ options.invitation_email_body__multiline_required | json }}\n        }\n      }\n    ]\n  {% endaction %}\n{% endfor %}",
-  "docs": "This task watches for updates to customers, and sends invites for any customer who has the tag you choose, who hasn't previously been invited. This task also supports sending invitations in bulk, to all tagged customers who haven't previously been invited.\n\nThis task watches for updates to customers, and sends invites for any customer who has the tag you choose, who hasn't previously been invited.\r\n\r\nUse the \"Run task\" button to send invites to all of your previously-uninvited customers who have the configured tag.\r\n\r\nInvitation emails are sent using your store's account invite notification email template. [Learn how to update this template.](https://help.shopify.com/en/manual/sell-online/notifications/edit-template)",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Email",
     "Invite",
