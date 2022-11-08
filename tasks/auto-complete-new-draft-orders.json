@@ -1,18 +1,18 @@
 {
+  "docs": "This task monitors for newly-created draft orders, and converts each one into a completed order. Nothing more, nothing less. :)",
+  "halt_action_run_sequence_on_error": false,
   "name": "Auto-complete new draft orders",
+  "online_store_javascript": null,
   "options": {
     "mark_new_orders_as_fully_paid__boolean": true
   },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% assign payment_pending = true %}\n{% if options.mark_new_orders_as_fully_paid__boolean %}\n  {% assign payment_pending = false %}\n{% endif %}\n\n{% action \"shopify\" %}\n  mutation {\n    draftOrderComplete(\n      id: {{ draft_order.admin_graphql_api_id | json }}\n      paymentPending: {{ payment_pending | json }}\n    ) {\n      draftOrder {\n        order {\n          id\n          name\n          fullyPaid\n        }\n      }\n      userErrors {\n        field\n        message\n      }\n    }\n  }\n{% endaction %}",
   "subscriptions": [
     "shopify/draft_orders/create"
   ],
   "subscriptions_template": "shopify/draft_orders/create",
-  "script": "{% assign payment_pending = true %}\n{% if options.mark_new_orders_as_fully_paid__boolean %}\n  {% assign payment_pending = false %}\n{% endif %}\n\n{% action \"shopify\" %}\n  mutation {\n    draftOrderComplete(\n      id: {{ draft_order.admin_graphql_api_id | json }}\n      paymentPending: {{ payment_pending | json }}\n    ) {\n      draftOrder {\n        order {\n          id\n          name\n          fullyPaid\n        }\n      }\n      userErrors {\n        field\n        message\n      }\n    }\n  }\n{% endaction %}",
-  "docs": "This task monitors for newly-created draft orders, and converts each one into a completed order. Nothing more, nothing less. :)",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Draft Orders",
     "Payment"

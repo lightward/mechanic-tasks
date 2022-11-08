@@ -1,20 +1,20 @@
 {
+  "docs": "Useful for keeping an eye on unexpected cancellations by third party shipping services.\n\nThis task performs two actions: one to send an email, and one to \"remember\" that an email has been sent. (Without this second action, this task would send an email every time a cancelled fulfillment is updated.)",
+  "halt_action_run_sequence_on_error": false,
   "name": "Send an email alert when a fulfillment is cancelled",
+  "online_store_javascript": null,
   "options": {
     "email_recipient__email_required": "",
     "email_subject__required": "A fulfillment for order {{ fulfillment.order.name | default: \"an order\" }} was cancelled",
     "email_body__multiline_required": "Hello,\n\nA fulfillment with {{ fulfillment.line_items.size }} line item(s) was cancelled.\n\n<a href=\"https://{{ shop.domain }}/admin/orders/{{ fulfillment.order.id }}\">Manage this order in Shopify</a>\n\nThanks,\nMechanic, for {{ shop.name }}"
   },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% assign fulfillment_qualifies = false %}\n{% assign cache_key = task.id | append: fulfillment.id | sha256 %}\n\n{% if fulfillment.status == \"cancelled\" and cache[cache_key] == blank %}\n  {% assign fulfillment_qualifies = true %}\n{% endif %}\n\n{% if event.preview or fulfillment_qualifies %}\n  {% action \"email\" %}\n    {\n      \"to\": {{ options.email_recipient__email_required | json }},\n      \"subject\": {{ options.email_subject__required | json }},\n      \"body\": {{ options.email_body__multiline_required | strip | newline_to_br | json }},\n      \"reply_to\": {{ shop.customer_email | json }},\n      \"from_display_name\": {{ shop.name | json }}\n    }\n  {% endaction %}\n\n  {% action \"cache\", \"set\", cache_key, true %}\n{% endif %}",
   "subscriptions": [
     "shopify/fulfillments/update"
   ],
   "subscriptions_template": "shopify/fulfillments/update",
-  "script": "{% assign fulfillment_qualifies = false %}\n{% assign cache_key = task.id | append: fulfillment.id | sha256 %}\n\n{% if fulfillment.status == \"cancelled\" and cache[cache_key] == blank %}\n  {% assign fulfillment_qualifies = true %}\n{% endif %}\n\n{% if event.preview or fulfillment_qualifies %}\n  {% action \"email\" %}\n    {\n      \"to\": {{ options.email_recipient__email_required | json }},\n      \"subject\": {{ options.email_subject__required | json }},\n      \"body\": {{ options.email_body__multiline_required | strip | newline_to_br | json }},\n      \"reply_to\": {{ shop.customer_email | json }},\n      \"from_display_name\": {{ shop.name | json }}\n    }\n  {% endaction %}\n\n  {% action \"cache\", \"set\", cache_key, true %}\n{% endif %}",
-  "docs": "Useful for keeping an eye on unexpected cancellations by third party shipping services.\n\nThis task performs two actions: one to send an email, and one to \"remember\" that an email has been sent. (Without this second action, this task would send an email every time a cancelled fulfillment is updated.)",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Alert",
     "Email",

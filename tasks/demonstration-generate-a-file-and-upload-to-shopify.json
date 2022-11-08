@@ -1,17 +1,17 @@
 {
+  "docs": "This task demonstrates how one might use the Files action to generate a file, using the fileCreate GraphQL mutation to transfer the resulting file to Shopify for storage.",
+  "halt_action_run_sequence_on_error": false,
   "name": "Demonstration: Generating a file and uploading it to Shopify",
+  "online_store_javascript": null,
   "options": {},
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% if event.topic == \"mechanic/user/trigger\" %}\n  {% action \"files\" %}\n    {\n      \"invoice.pdf\": {\n        \"pdf\": {\n          \"html\": \"<h1>Order #12345</h1>\\n<p>It's due!</p>\"\n        }\n      }\n    }\n  {% endaction %}\n{% elsif event.topic == \"mechanic/actions/perform\" %}\n  {% if event.preview %}\n    {% capture action_json %}\n      {\n        \"type\": \"files\",\n        \"run\": {\n          \"result\": {\n            \"invoice.pdf\": {\n              \"url\": \"https://usemechanic.com/file/0000/invoice.pdf\"\n            }\n          }\n        }\n      }\n    {% endcapture %}\n\n    {% assign action = action_json | parse_json %}\n  {% endif %}\n\n  {% if action.type == \"files\" %}\n    {% action \"shopify\" %}\n      mutation {\n        fileCreate(\n          files: [\n            {\n              originalSource: {{ action.run.result[\"invoice.pdf\"].url | json }}\n            }\n          ]\n        ) {\n          files {\n            fileStatus\n            fileErrors {\n              code\n              details\n              message\n            }\n          }\n          userErrors {\n            code\n            field\n            message\n          }\n        }\n      }\n    {% endaction %}\n  {% endif %}\n{% endif %}",
   "subscriptions": [
     "mechanic/user/trigger",
     "mechanic/actions/perform"
   ],
   "subscriptions_template": "mechanic/user/trigger\nmechanic/actions/perform",
-  "script": "{% if event.topic == \"mechanic/user/trigger\" %}\n  {% action \"files\" %}\n    {\n      \"invoice.pdf\": {\n        \"pdf\": {\n          \"html\": \"<h1>Order #12345</h1>\\n<p>It's due!</p>\"\n        }\n      }\n    }\n  {% endaction %}\n{% elsif event.topic == \"mechanic/actions/perform\" %}\n  {% if event.preview %}\n    {% capture action_json %}\n      {\n        \"type\": \"files\",\n        \"run\": {\n          \"result\": {\n            \"invoice.pdf\": {\n              \"url\": \"https://usemechanic.com/file/0000/invoice.pdf\"\n            }\n          }\n        }\n      }\n    {% endcapture %}\n\n    {% assign action = action_json | parse_json %}\n  {% endif %}\n\n  {% if action.type == \"files\" %}\n    {% action \"shopify\" %}\n      mutation {\n        fileCreate(\n          files: [\n            {\n              originalSource: {{ action.run.result[\"invoice.pdf\"].url | json }}\n            }\n          ]\n        ) {\n          files {\n            fileStatus\n            fileErrors {\n              code\n              details\n              message\n            }\n          }\n          userErrors {\n            code\n            field\n            message\n          }\n        }\n      }\n    {% endaction %}\n  {% endif %}\n{% endif %}",
-  "docs": "This task demonstrates how one might use the Files action to generate a file, using the fileCreate GraphQL mutation to transfer the resulting file to Shopify for storage.",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Demonstration",
     "Files",

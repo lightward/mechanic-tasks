@@ -1,18 +1,18 @@
 {
+  "docs": "Immediately upon order creation, add one or more tags to the order. Simple as that. :)",
+  "halt_action_run_sequence_on_error": false,
   "name": "Auto-tag new orders",
+  "online_store_javascript": null,
   "options": {
     "order_tags_to_add__array_required": null
   },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% if event.preview %}\n  {% assign order = hash %}\n  {% assign order[\"admin_graphql_api_id\"] = \"gid://shopify/Order/1234567890\" %}\n{% endif %}\n\n{% action \"shopify\" %}\n  mutation {\n    tagsAdd(\n      id: {{ order.admin_graphql_api_id | json }}\n      tags: {{ options.order_tags_to_add__array_required | json }}\n    ) {\n      userErrors {\n        field\n        message\n      }\n    }\n  }\n{% endaction %}",
   "subscriptions": [
     "shopify/orders/create"
   ],
   "subscriptions_template": "shopify/orders/create",
-  "script": "{% if event.preview %}\n  {% assign order = hash %}\n  {% assign order[\"admin_graphql_api_id\"] = \"gid://shopify/Order/1234567890\" %}\n{% endif %}\n\n{% action \"shopify\" %}\n  mutation {\n    tagsAdd(\n      id: {{ order.admin_graphql_api_id | json }}\n      tags: {{ options.order_tags_to_add__array_required | json }}\n    ) {\n      userErrors {\n        field\n        message\n      }\n    }\n  }\n{% endaction %}",
-  "docs": "Immediately upon order creation, add one or more tags to the order. Simple as that. :)",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Auto-Tag",
     "Orders"

@@ -1,16 +1,16 @@
 {
+  "docs": "Don't keep your customers waiting! Stay on top of orders that have yet to be delivered, by auto-archiving every order once every item has reached the customer.\n\nThis task monitors fulfillment events. Every time a fulfillment event occurs, every fulfillment in the related order is scanned - once each fulfillment reaches the \"delivered\" status, this task archives the order.",
+  "halt_action_run_sequence_on_error": false,
   "name": "Archive orders on delivery",
+  "online_store_javascript": null,
   "options": {},
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% assign order_qualifies = false %}\n{% assign order = fulfillment_event.order %}\n\n{% if order.closed_at == blank %}\n  {% if order.fulfillment_status == \"fulfilled\" %}\n    {% assign shipment_statuses = order.fulfillments | map: \"shipment_status\" | uniq %}\n\n    {% if shipment_statuses.size == 1 and shipment_statuses.first == \"delivered\" %}\n      {% assign order_qualifies = true %}\n    {% else %}\n      {\"log\": {{ shipment_statuses | join: \", \" | prepend: \"Order is not fully delivered. Status(es) found: \" | json }}}\n    {% endif %}\n  {% else %}\n    {\"log\": {{ \"Order is not fulfilled; status is \" | append: order.fulfillment_status | json }}}\n  {% endif %}\n{% else %}\n  {\"log\": \"Order is already closed.\"}\n{% endif %}\n\n{% if order_qualifies or event.preview %}\n  {\n    \"action\": {\n      \"type\": \"shopify\",\n      \"options\": [\n        \"post\",\n        \"/admin/orders/{{ order.id | default: \"0000\" }}/close.json\",\n        {}\n      ]\n    }\n  }\n{% endif %}",
   "subscriptions": [
     "shopify/fulfillment_events/create"
   ],
   "subscriptions_template": "shopify/fulfillment_events/create",
-  "script": "{% assign order_qualifies = false %}\n{% assign order = fulfillment_event.order %}\n\n{% if order.closed_at == blank %}\n  {% if order.fulfillment_status == \"fulfilled\" %}\n    {% assign shipment_statuses = order.fulfillments | map: \"shipment_status\" | uniq %}\n\n    {% if shipment_statuses.size == 1 and shipment_statuses.first == \"delivered\" %}\n      {% assign order_qualifies = true %}\n    {% else %}\n      {\"log\": {{ shipment_statuses | join: \", \" | prepend: \"Order is not fully delivered. Status(es) found: \" | json }}}\n    {% endif %}\n  {% else %}\n    {\"log\": {{ \"Order is not fulfilled; status is \" | append: order.fulfillment_status | json }}}\n  {% endif %}\n{% else %}\n  {\"log\": \"Order is already closed.\"}\n{% endif %}\n\n{% if order_qualifies or event.preview %}\n  {\n    \"action\": {\n      \"type\": \"shopify\",\n      \"options\": [\n        \"post\",\n        \"/admin/orders/{{ order.id | default: \"0000\" }}/close.json\",\n        {}\n      ]\n    }\n  }\n{% endif %}",
-  "docs": "Don't keep your customers waiting! Stay on top of orders that have yet to be delivered, by auto-archiving every order once every item has reached the customer.\n\nThis task monitors fulfillment events. Every time a fulfillment event occurs, every fulfillment in the related order is scanned - once each fulfillment reaches the \"delivered\" status, this task archives the order.",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Archive",
     "Delivery",

@@ -1,18 +1,18 @@
 {
+  "docs": "Configure this task with a customer tag, and Mechanic will take care of applying it to your customers as soon as their order payment goes through. Easy as that. :)",
+  "halt_action_run_sequence_on_error": false,
   "name": "Auto-tag customers when their order is paid",
+  "online_store_javascript": null,
   "options": {
     "customer_tag__required": null
   },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% action \"shopify\" %}\n  mutation {\n    tagsAdd(\n      id: {{ order.customer.admin_graphql_api_id | json }}\n      tags: {{ options.customer_tag__required | json }}\n    ) {\n      userErrors {\n        field\n        message\n      }\n    }\n  }\n{% endaction %}",
   "subscriptions": [
     "shopify/orders/paid"
   ],
   "subscriptions_template": "shopify/orders/paid",
-  "script": "{% action \"shopify\" %}\n  mutation {\n    tagsAdd(\n      id: {{ order.customer.admin_graphql_api_id | json }}\n      tags: {{ options.customer_tag__required | json }}\n    ) {\n      userErrors {\n        field\n        message\n      }\n    }\n  }\n{% endaction %}",
-  "docs": "Configure this task with a customer tag, and Mechanic will take care of applying it to your customers as soon as their order payment goes through. Easy as that. :)",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Auto-Tag",
     "Customers",

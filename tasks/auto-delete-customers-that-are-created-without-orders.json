@@ -1,18 +1,18 @@
 {
+  "docs": "Useful for stores that are subjected to bot abuse, this task watches for newly-created customers, and deletes any that don't come with an associated order. Optionally, choose to ignore any customers that are created with a certain tag – helpful if you create customers yourself, via the Shopify admin.",
+  "halt_action_run_sequence_on_error": false,
   "name": "Auto-delete customers that are created without orders",
+  "online_store_javascript": null,
   "options": {
     "ignore_customers_having_this_tag": null
   },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% assign delete_customer = false %}\n\n{% if customer.orders.first == nil %}\n  {% log \"Customer has no orders\" %}\n  {% assign delete_customer = true %}\n{% endif %}\n\n{% if options.ignore_customers_having_this_tag != blank %}\n  {% assign customer_tags = customer.tags | split: \", \" %}\n  {% if customer_tags contains options.ignore_customers_having_this_tag %}\n    {% log \"Customer had a whitelisted tag; ignoring\" %}\n    {% assign delete_customer = false %}\n  {% endif %}\n{% endif %}\n\n{% if event.preview or delete_customer %}\n  {% action \"shopify\" %}\n    [\n      \"delete\",\n      [\"customer\", {{ customer.id | json }}]\n    ]\n  {% endaction %}\n{% endif %}",
   "subscriptions": [
     "shopify/customers/create"
   ],
   "subscriptions_template": "shopify/customers/create",
-  "script": "{% assign delete_customer = false %}\n\n{% if customer.orders.first == nil %}\n  {% log \"Customer has no orders\" %}\n  {% assign delete_customer = true %}\n{% endif %}\n\n{% if options.ignore_customers_having_this_tag != blank %}\n  {% assign customer_tags = customer.tags | split: \", \" %}\n  {% if customer_tags contains options.ignore_customers_having_this_tag %}\n    {% log \"Customer had a whitelisted tag; ignoring\" %}\n    {% assign delete_customer = false %}\n  {% endif %}\n{% endif %}\n\n{% if event.preview or delete_customer %}\n  {% action \"shopify\" %}\n    [\n      \"delete\",\n      [\"customer\", {{ customer.id | json }}]\n    ]\n  {% endaction %}\n{% endif %}",
-  "docs": "Useful for stores that are subjected to bot abuse, this task watches for newly-created customers, and deletes any that don't come with an associated order. Optionally, choose to ignore any customers that are created with a certain tag – helpful if you create customers yourself, via the Shopify admin.",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Customers",
     "Delete",

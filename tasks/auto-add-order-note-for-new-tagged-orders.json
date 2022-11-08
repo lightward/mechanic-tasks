@@ -3,18 +3,18 @@
   "halt_action_run_sequence_on_error": false,
   "name": "Auto-add a note for new orders having a certain tag",
   "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
-  "script": "{% assign required_tag_downcased = options.required_order_tag__required | downcase %}\n\n{% if event.preview %}\n  {% capture order_json %}\n    {\n      \"note\": \"An existing order note\",\n      \"name\": \"#9999\",\n      \"admin_graphql_api_id\": \"gid:\\/\\/shopify\\/Order\\/1234567890\",\n      \"tags\": {{ options.required_order_tag__required | json }}\n    }\n  {% endcapture %}\n\n  {% assign order = order_json | parse_json %}\n{% endif %}\n\n{% assign tags_downcased = order.tags | downcase | split: \", \" %}\n\n{% if tags_downcased contains required_tag_downcased %}\n  {% assign note = order.note | append: newline | append: newline | append: options.order_note_to_add__required_multiline | strip %}\n\n  {% action \"shopify\" %}\n    mutation {\n      orderUpdate(\n        input: {\n          id: {{ order.admin_graphql_api_id | json }}\n          note: {{ note | json }}\n        }\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% else %}\n  {% log order_tags: order.tags %}\n{% endif %}",
-  "subscriptions_template": "shopify/orders/create",
-  "subscriptions": [
-    "shopify/orders/create"
-  ],
-  "preview_event_definitions": [],
   "options": {
     "required_order_tag__required": "foo",
     "order_note_to_add__required_multiline": "bar"
   },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "preview_event_definitions": [],
+  "script": "{% assign required_tag_downcased = options.required_order_tag__required | downcase %}\n\n{% if event.preview %}\n  {% capture order_json %}\n    {\n      \"note\": \"An existing order note\",\n      \"name\": \"#9999\",\n      \"admin_graphql_api_id\": \"gid:\\/\\/shopify\\/Order\\/1234567890\",\n      \"tags\": {{ options.required_order_tag__required | json }}\n    }\n  {% endcapture %}\n\n  {% assign order = order_json | parse_json %}\n{% endif %}\n\n{% assign tags_downcased = order.tags | downcase | split: \", \" %}\n\n{% if tags_downcased contains required_tag_downcased %}\n  {% assign note = order.note | append: newline | append: newline | append: options.order_note_to_add__required_multiline | strip %}\n\n  {% action \"shopify\" %}\n    mutation {\n      orderUpdate(\n        input: {\n          id: {{ order.admin_graphql_api_id | json }}\n          note: {{ note | json }}\n        }\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% else %}\n  {% log order_tags: order.tags %}\n{% endif %}",
+  "subscriptions": [
+    "shopify/orders/create"
+  ],
+  "subscriptions_template": "shopify/orders/create",
   "tags": [
     "Order Note",
     "Orders"

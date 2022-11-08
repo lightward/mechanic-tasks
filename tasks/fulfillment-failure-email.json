@@ -1,18 +1,18 @@
 {
+  "docs": "Get an alert email sent to you when your tracking service reports a fulfillment failure. This email contains a link to the order details, so you can jump in and resolve the issue for the customer without losing any time.",
+  "halt_action_run_sequence_on_error": false,
   "name": "Send an email alert on fulfillment failure",
+  "online_store_javascript": null,
   "options": {
     "email_recipient__required": null
   },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% if event.preview or fulfillment_event.status == \"failure\" %}\n  {% capture email_subject %}\n    Fulfillment failed for order #{% if event.preview %}12345{% else %}{{ fulfillment_event.order.order_number }}{% endif %}\n  {% endcapture %}\n\n  {% capture email_body %}\n    Hello,\n\n    {% if event.preview %}FedEx{% else %}{{ fulfillment_event.fulfillment.tracking_company }}{% endif %} has reported a fulfillment failure for order #{% if event.preview %}12345{% else %}{{ fulfillment_event.order.order_number }}{% endif %}. Here's the message they included:\n\n    {% if fulfillment_event.message != blank %}> {{ fulfillment_event.message }}{% else %}(no message){% endif %}\n\n    View this order's details in Shopify:\n\n    https://{{ shop.myshopify_domain }}/admin/orders/{% if event.preview %}1234567890{% else %}{{ fulfillment_event.order.id }}{% endif %}\n\n    Thanks,\n\n    - Mechanic, for {{ shop.name }}\n  {% endcapture %}\n\n  {\n    \"action\": {\n      \"type\": \"email\",\n      \"options\": {\n        \"to\": {{ options.email_recipient__required | json }},\n        \"subject\": {{ email_subject | unindent | json }},\n        \"body\": {{ email_body | unindent | newline_to_br | json }},\n        \"from_display_name\": {{ shop.name | json }}\n      }\n    }\n  }\n{% endif %}",
   "subscriptions": [
     "shopify/fulfillment_events/create"
   ],
   "subscriptions_template": "shopify/fulfillment_events/create",
-  "script": "{% if event.preview or fulfillment_event.status == \"failure\" %}\n  {% capture email_subject %}\n    Fulfillment failed for order #{% if event.preview %}12345{% else %}{{ fulfillment_event.order.order_number }}{% endif %}\n  {% endcapture %}\n\n  {% capture email_body %}\n    Hello,\n\n    {% if event.preview %}FedEx{% else %}{{ fulfillment_event.fulfillment.tracking_company }}{% endif %} has reported a fulfillment failure for order #{% if event.preview %}12345{% else %}{{ fulfillment_event.order.order_number }}{% endif %}. Here's the message they included:\n\n    {% if fulfillment_event.message != blank %}> {{ fulfillment_event.message }}{% else %}(no message){% endif %}\n\n    View this order's details in Shopify:\n\n    https://{{ shop.myshopify_domain }}/admin/orders/{% if event.preview %}1234567890{% else %}{{ fulfillment_event.order.id }}{% endif %}\n\n    Thanks,\n\n    - Mechanic, for {{ shop.name }}\n  {% endcapture %}\n\n  {\n    \"action\": {\n      \"type\": \"email\",\n      \"options\": {\n        \"to\": {{ options.email_recipient__required | json }},\n        \"subject\": {{ email_subject | unindent | json }},\n        \"body\": {{ email_body | unindent | newline_to_br | json }},\n        \"from_display_name\": {{ shop.name | json }}\n      }\n    }\n  }\n{% endif %}",
-  "docs": "Get an alert email sent to you when your tracking service reports a fulfillment failure. This email contains a link to the order details, so you can jump in and resolve the issue for the customer without losing any time.",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Alert",
     "Email",

@@ -1,20 +1,20 @@
 {
+  "docs": "Use this task to send a quick welcome email to customers, when they sign up or are otherwise created in your shop. Optionally, filter by customer tag to only send welcome emails to certain customers.\n\nThis task will send out your email to any customer when their account is created. This can happen when a customer signs themselves up, when you create their customer record within the store, when a new customer places an order, or for any other reason that a customer record is created.",
+  "halt_action_run_sequence_on_error": false,
   "name": "Email customers when created",
+  "online_store_javascript": null,
   "options": {
     "required_customer_tag": null,
     "email_subject__required": null,
     "email_body__multiline_required": null
   },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% assign customer_qualifies = false %}\n\n{% if options.required_customer_tag == blank %}\n  {% assign customer_qualifies = true %}\n{% else %}\n  {% assign customer_tags = customer.tags | split: \", \" %}\n  {% if customer_tags contains options.required_customer_tag %}\n    {% assign customer_qualifies = true %}\n  {% endif %}\n{% endif %}\n\n{% if customer.email == blank %}\n  {% assign customer_qualifies = false %}\n{% endif %}\n\n{% if event.preview or customer_qualifies %}\n  {\n    \"action\": {\n      \"type\": \"email\",\n      \"options\": {\n        \"to\": {{ customer.email | default: \"customer@example.com\" | json }},\n        \"reply_to\": {{ shop.customer_email | json }},\n        \"from_display_name\": {{ shop.name | json }},\n        \"subject\": {{ options.email_subject__required | json }},\n        \"body\": {{ options.email_body__multiline_required | strip | newline_to_br | json }}\n      }\n    }\n  }\n{% endif %}",
   "subscriptions": [
     "shopify/customers/create"
   ],
   "subscriptions_template": "shopify/customers/create",
-  "script": "{% assign customer_qualifies = false %}\n\n{% if options.required_customer_tag == blank %}\n  {% assign customer_qualifies = true %}\n{% else %}\n  {% assign customer_tags = customer.tags | split: \", \" %}\n  {% if customer_tags contains options.required_customer_tag %}\n    {% assign customer_qualifies = true %}\n  {% endif %}\n{% endif %}\n\n{% if customer.email == blank %}\n  {% assign customer_qualifies = false %}\n{% endif %}\n\n{% if event.preview or customer_qualifies %}\n  {\n    \"action\": {\n      \"type\": \"email\",\n      \"options\": {\n        \"to\": {{ customer.email | default: \"customer@example.com\" | json }},\n        \"reply_to\": {{ shop.customer_email | json }},\n        \"from_display_name\": {{ shop.name | json }},\n        \"subject\": {{ options.email_subject__required | json }},\n        \"body\": {{ options.email_body__multiline_required | strip | newline_to_br | json }}\n      }\n    }\n  }\n{% endif %}",
-  "docs": "Use this task to send a quick welcome email to customers, when they sign up or are otherwise created in your shop. Optionally, filter by customer tag to only send welcome emails to certain customers.\n\nThis task will send out your email to any customer when their account is created. This can happen when a customer signs themselves up, when you create their customer record within the store, when a new customer places an order, or for any other reason that a customer record is created.",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Customers",
     "Email"

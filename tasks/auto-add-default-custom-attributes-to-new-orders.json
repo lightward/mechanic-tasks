@@ -1,20 +1,20 @@
 {
+  "docs": "Shopify allows orders to have custom attributes associated with them – and these attributes can be edited from within Shopify. Use this task to configure default attributes to be added to all new orders, providing an attribute name and (optionally) a value. Feel free to leave the value blank if you know you'll want to add your own values later, within Shopify.",
+  "halt_action_run_sequence_on_error": false,
   "name": "Auto-add default custom attributes to new orders",
+  "online_store_javascript": null,
   "options": {
     "default_order_attributes_to_add__keyval_required": {
       "Assigned CSM": ""
     }
   },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% if event.preview %}\n  {% assign order = hash %}\n  {% assign order[\"admin_graphql_api_id\"] = \"gid://shopify/Order/1234567890\" %}\n  {% assign order[\"note_attributes\"] = array %}\n  {% assign order[\"note_attributes\"][0] = hash %}\n  {% assign order[\"note_attributes\"][0][\"name\"] = \"Existing attribute name\" %}\n  {% assign order[\"note_attributes\"][0][\"value\"] = \"Existing attribute value\" %}\n{% endif %}\n\n{% assign attributes = array %}\n\n{% for pair in options.default_order_attributes_to_add__keyval_required %}\n  {% assign attribute = hash %}\n  {% assign attribute[\"key\"] = pair[0] %}\n  {% assign attribute[\"value\"] = \"\" | append: pair[1] %}\n  {% assign attributes[attributes.size] = attribute %}\n{% endfor %}\n\n{% for note_attribute in order.note_attributes %}\n  {% assign attribute = hash %}\n  {% assign attribute[\"key\"] = note_attribute.name %}\n  {% assign attribute[\"value\"] = note_attribute.value %}\n  {% assign attributes[attributes.size] = attribute %}\n{% endfor %}\n\n{% action \"shopify\" %}\n  mutation {\n    orderUpdate(\n      input: {\n        id: {{ order.admin_graphql_api_id | json }}\n        customAttributes: {{ attributes | graphql_arguments }}\n      }\n    ) {\n      order {\n        customAttributes {\n          key\n          value\n        }\n      }\n      userErrors {\n        field\n        message\n      }\n    }\n  }\n{% endaction %}",
   "subscriptions": [
     "shopify/orders/create"
   ],
   "subscriptions_template": "shopify/orders/create",
-  "script": "{% if event.preview %}\n  {% assign order = hash %}\n  {% assign order[\"admin_graphql_api_id\"] = \"gid://shopify/Order/1234567890\" %}\n  {% assign order[\"note_attributes\"] = array %}\n  {% assign order[\"note_attributes\"][0] = hash %}\n  {% assign order[\"note_attributes\"][0][\"name\"] = \"Existing attribute name\" %}\n  {% assign order[\"note_attributes\"][0][\"value\"] = \"Existing attribute value\" %}\n{% endif %}\n\n{% assign attributes = array %}\n\n{% for pair in options.default_order_attributes_to_add__keyval_required %}\n  {% assign attribute = hash %}\n  {% assign attribute[\"key\"] = pair[0] %}\n  {% assign attribute[\"value\"] = \"\" | append: pair[1] %}\n  {% assign attributes[attributes.size] = attribute %}\n{% endfor %}\n\n{% for note_attribute in order.note_attributes %}\n  {% assign attribute = hash %}\n  {% assign attribute[\"key\"] = note_attribute.name %}\n  {% assign attribute[\"value\"] = note_attribute.value %}\n  {% assign attributes[attributes.size] = attribute %}\n{% endfor %}\n\n{% action \"shopify\" %}\n  mutation {\n    orderUpdate(\n      input: {\n        id: {{ order.admin_graphql_api_id | json }}\n        customAttributes: {{ attributes | graphql_arguments }}\n      }\n    ) {\n      order {\n        customAttributes {\n          key\n          value\n        }\n      }\n      userErrors {\n        field\n        message\n      }\n    }\n  }\n{% endaction %}",
-  "docs": "Shopify allows orders to have custom attributes associated with them – and these attributes can be edited from within Shopify. Use this task to configure default attributes to be added to all new orders, providing an attribute name and (optionally) a value. Feel free to leave the value blank if you know you'll want to add your own values later, within Shopify.",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Order Attributes",
     "Orders"

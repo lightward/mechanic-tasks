@@ -1,20 +1,20 @@
 {
+  "docs": "This task watches for order tags, and adds a corresponding tag to the customer whenever a known order tag is found.\n\nConfigure this task with order tags on the left, and customer tags on the right. When an order is created or updated with one or more of the tags on the left, the corresponding customer tags will be applied to the customer. Simple as that. :)",
+  "halt_action_run_sequence_on_error": false,
   "name": "Auto-tag customers when their order is tagged",
+  "online_store_javascript": null,
   "options": {
     "order_tags_and_customer_tags__keyval_required": {
       "order-tag-to-watch-for": "corresponding-customer-tag-to-apply"
     }
   },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% if event.preview %}\n  {% capture order_json %}\n    {\n      \"tags\": {{ options.order_tags_and_customer_tags__keyval_required.first.first | json }},\n      \"customer\": {\n        \"admin_graphql_api_id\": \"gid://shopify/Customer/1234567890\",\n        \"tags\": \"\"\n      }\n    }\n  {% endcapture %}\n\n  {% assign order = order_json | parse_json %}\n{% endif %}\n\n{% assign order_tags = order.tags | split: \", \" %}\n{% assign customer_tags = order.customer.tags | split: \", \" %}\n\n{% assign customer_tags_to_apply = array %}\n\n{% for order_tag in order_tags %}\n  {% assign customer_tag_to_apply = options.order_tags_and_customer_tags__keyval_required[order_tag] %}\n  {% if customer_tag_to_apply != blank %}\n    {% if customer_tags contains customer_tag_to_apply %}\n      {% log message: \"Customer already has this tag; skipping\", tag: customer_tag_to_apply %}\n    {% else %}\n      {% assign customer_tags_to_apply[customer_tags_to_apply.size] = customer_tag_to_apply %}\n    {% endif %}\n  {% endif %}\n{% endfor %}\n\n{% if customer_tags_to_apply != empty %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ order.customer.admin_graphql_api_id | json }}\n        tags: {{ customer_tags_to_apply | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}",
   "subscriptions": [
     "shopify/orders/updated"
   ],
   "subscriptions_template": "shopify/orders/updated",
-  "script": "{% if event.preview %}\n  {% capture order_json %}\n    {\n      \"tags\": {{ options.order_tags_and_customer_tags__keyval_required.first.first | json }},\n      \"customer\": {\n        \"admin_graphql_api_id\": \"gid://shopify/Customer/1234567890\",\n        \"tags\": \"\"\n      }\n    }\n  {% endcapture %}\n\n  {% assign order = order_json | parse_json %}\n{% endif %}\n\n{% assign order_tags = order.tags | split: \", \" %}\n{% assign customer_tags = order.customer.tags | split: \", \" %}\n\n{% assign customer_tags_to_apply = array %}\n\n{% for order_tag in order_tags %}\n  {% assign customer_tag_to_apply = options.order_tags_and_customer_tags__keyval_required[order_tag] %}\n  {% if customer_tag_to_apply != blank %}\n    {% if customer_tags contains customer_tag_to_apply %}\n      {% log message: \"Customer already has this tag; skipping\", tag: customer_tag_to_apply %}\n    {% else %}\n      {% assign customer_tags_to_apply[customer_tags_to_apply.size] = customer_tag_to_apply %}\n    {% endif %}\n  {% endif %}\n{% endfor %}\n\n{% if customer_tags_to_apply != empty %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ order.customer.admin_graphql_api_id | json }}\n        tags: {{ customer_tags_to_apply | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}",
-  "docs": "This task watches for order tags, and adds a corresponding tag to the customer whenever a known order tag is found.\n\nConfigure this task with order tags on the left, and customer tags on the right. When an order is created or updated with one or more of the tags on the left, the corresponding customer tags will be applied to the customer. Simple as that. :)",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Auto-Tag",
     "Customers",

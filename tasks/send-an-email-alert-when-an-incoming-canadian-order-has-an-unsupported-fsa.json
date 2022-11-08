@@ -1,5 +1,8 @@
 {
+  "docs": "Useful for Canadian stores with limited shipping zones, this task inspects [the FSA (the first three characters of the postal code)](https://en.wikipedia.org/wiki/Postal_codes_in_Canada#Forward_sortation_areas) for each order's shipping address. If an FSA is found that's not on a preconfigured list, this task sends an email to the recipients of your choice.\n\nThe FSA list must be comprised of FSAs in the format 'A1A', without the quotation marks. The FSAs must be separated by commas and no spaces. The FSAs can be entered in any order.\n\nThe task will log orders whose FSA was found in the available FSA list.\n\nIt also displays the available FSA list in json format to more easily catch if there were errors in inputting the availability list. ",
+  "halt_action_run_sequence_on_error": false,
   "name": "Send an email alert when an incoming Canadian order has an unsupported FSA",
+  "online_store_javascript": null,
   "options": {
     "supported_fsa_values__required_array": [
       "K1A"
@@ -8,16 +11,13 @@
     "email_subject__required": "Order {{ order.name }} may be out of delivery zone",
     "email_body__required_multiline": "Hi team,\n\nPlease see details for order {{ order.name }}:\n\nhttps://{{ shop.myshopify_domain }}/admin/orders/{{ order.id }}\n\nIt looks like this might be out of our delivery zone!\n\nThanks,\n- Mechanic, for {{ shop.name }}"
   },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "script": "{% if event.preview %}\n  {% assign order = hash %}\n  {% assign order[\"shipping_address\"] = hash %}\n  {% assign order[\"shipping_address\"][\"name\"] = \"#1234\" %}\n  {% assign order[\"shipping_address\"][\"zip\"] = \"XXX123\" %}\n{% endif %}\n\n{% assign supported_fsa_values = options.supported_fsa_values__required_array %}\n{% assign order_fsa = order.shipping_address.zip | slice: 0, 3 %}\n\n{% if supported_fsa_values contains order_fsa %}\n  {% assign order_disqualified = false %}\n  {% log %}\n    {{ \"The FSA (\" | append: order_fsa | append: \") for order: \" | append: order.name | append: \" is on the supported list, and should be in our delivery area.\" | json }}\n  {% endlog %}\n{% else %}\n  {% assign order_disqualified = true %}\n{% endif %}\n\n{% if order_disqualified %}\n  {% action \"email\" %}\n  {\n    \"to\": {{ options.email_recipients__required | json }},\n    \"subject\": {{ options.email_subject__required | strip | json }},\n    \"body\": {{ options.email_body__required_multiline | newline_to_br | strip | json }},\n    \"reply_to\": {{ shop.customer_email | json }},\n    \"from_display_name\": {{ shop.name | json }}\n  }\n  {% endaction %}\n{% endif %}\n\n{% log order_fsa: order_fsa, supported_fsa_values: supported_fsa_values %}",
   "subscriptions": [
     "shopify/orders/create"
   ],
   "subscriptions_template": "shopify/orders/create",
-  "script": "{% if event.preview %}\n  {% assign order = hash %}\n  {% assign order[\"shipping_address\"] = hash %}\n  {% assign order[\"shipping_address\"][\"name\"] = \"#1234\" %}\n  {% assign order[\"shipping_address\"][\"zip\"] = \"XXX123\" %}\n{% endif %}\n\n{% assign supported_fsa_values = options.supported_fsa_values__required_array %}\n{% assign order_fsa = order.shipping_address.zip | slice: 0, 3 %}\n\n{% if supported_fsa_values contains order_fsa %}\n  {% assign order_disqualified = false %}\n  {% log %}\n    {{ \"The FSA (\" | append: order_fsa | append: \") for order: \" | append: order.name | append: \" is on the supported list, and should be in our delivery area.\" | json }}\n  {% endlog %}\n{% else %}\n  {% assign order_disqualified = true %}\n{% endif %}\n\n{% if order_disqualified %}\n  {% action \"email\" %}\n  {\n    \"to\": {{ options.email_recipients__required | json }},\n    \"subject\": {{ options.email_subject__required | strip | json }},\n    \"body\": {{ options.email_body__required_multiline | newline_to_br | strip | json }},\n    \"reply_to\": {{ shop.customer_email | json }},\n    \"from_display_name\": {{ shop.name | json }}\n  }\n  {% endaction %}\n{% endif %}\n\n{% log order_fsa: order_fsa, supported_fsa_values: supported_fsa_values %}",
-  "docs": "Useful for Canadian stores with limited shipping zones, this task inspects [the FSA (the first three characters of the postal code)](https://en.wikipedia.org/wiki/Postal_codes_in_Canada#Forward_sortation_areas) for each order's shipping address. If an FSA is found that's not on a preconfigured list, this task sends an email to the recipients of your choice.\n\nThe FSA list must be comprised of FSAs in the format 'A1A', without the quotation marks. The FSAs must be separated by commas and no spaces. The FSAs can be entered in any order.\n\nThe task will log orders whose FSA was found in the available FSA list.\n\nIt also displays the available FSA list in json format to more easily catch if there were errors in inputting the availability list. ",
-  "halt_action_run_sequence_on_error": false,
-  "online_store_javascript": null,
-  "order_status_javascript": null,
-  "perform_action_runs_in_sequence": false,
   "tags": [
     "Alert",
     "Delivery",
