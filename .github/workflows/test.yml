@@ -9,12 +9,13 @@ jobs:
     - uses: actions/checkout@v3
     - name: Extract versions from package.json
       id: versions
-      run: echo "npm=$(jq -r .engines.npm ./package.json)" >> $GITHUB_OUTPUT
+      run: |
+        echo "node=$(jq -r .engines.node ./package.json)" >> $GITHUB_OUTPUT
+        echo "npm=$(jq -r .engines.npm ./package.json)" >> $GITHUB_OUTPUT
     - name: Install node
       uses: actions/setup-node@v3
       with:
-        node-version-file: 'package.json'
-        cache: 'npm'
+        node-version: '${{steps.versions.outputs.node}}'
     - name: Install npm
       run: npm install -g npm@${{steps.versions.outputs.npm}}
     - name: Install node packages
