@@ -1,6 +1,6 @@
 # Set product templates based on product tags
 
-Tags: Products, Tag
+Tags: Products, Tag, Template
 
 Use this task to automatically select a specific product template for each of your products, based on how each product is tagged. Useful for a set-it-and-forget-it setup. :)
 
@@ -22,8 +22,10 @@ Use this task to automatically select a specific product template for each of yo
 
 ```liquid
 mechanic/user/trigger
+mechanic/shopify/bulk_operation
 shopify/products/create
 shopify/products/update
+
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)

@@ -1,61 +1,75 @@
-{% if event.preview %}
-  {
-    "action": {
-      "type": "shopify",
-      "options": [
-        "update",
-        [
-          "product",
-          1234567890
-        ],
-        {
-          "template_suffix": "special"
-        }
-      ]
-    }
-  }
-{% elsif event.topic == "mechanic/user/trigger" %}
-  {% for product in shop.products %}
-    {% assign product_tags = product.tags | split: ", " %}
-    {% assign product_qualifies_for_update = false %}
-    {% assign product_template_suffix_to_apply = nil %}
+{% assign products = array %}
 
-    {% for keyval in options.product_tags_and_template_suffixes__keyval_required %}
-      {% assign product_tag_to_check = keyval[0] %}
-      {% assign product_template_to_apply = keyval[1] %}
-
-      {% if product_tags contains product_tag_to_check %}
-        {% assign product_template_suffix_to_apply = product_template_to_apply %}
-        {% break %}
-      {% endif %}
-    {% endfor %}
-
-    {% if product_template_suffix_to_apply == blank and product.template_suffix != blank %}
-      {% assign product_qualifies_for_update = true %}
-    {% elsif product_template_suffix_to_apply != product.template_suffix %}
-      {% assign product_qualifies_for_update = true %}
-    {% endif %}
-
-    {% if product_qualifies_for_update %}
-      {
-        "action": {
-          "type": "shopify",
-          "options": [
-            "update",
-            [
-              "product",
-              {{ product.id | json }}
-            ],
-            {
-              "template_suffix": {{ product_template_suffix_to_apply | json }}
-            }
-          ]
+{% if event.topic == "mechanic/user/trigger" %}
+  {% capture bulk_operation_query %}
+    query {
+      products {
+        edges {
+          node {
+            __typename
+            id
+            tags
+            templateSuffix
+          }
         }
       }
-    {% endif %}
-  {% endfor %}
-{% elsif event.topic contains "shopify/products/" %}
-  {% assign product_tags = product.tags | split: ", " %}
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic contains "shopify/products/" or event.preview %}
+
+  {% capture query %}
+    query {
+      product(id: {{ product.admin_graphql_api_id | json }} ) {
+        id
+        tags
+        templateSuffix
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "product": {
+              "id": "gid://shopify/Product/4354268561469",
+              "tags": ["123", {{ options.product_tags_and_template_suffixes__keyval_required.first.first | json }}],
+              "template_suffix": {{ options.product_tags_and_template_suffixes__keyval_required.first.last | json }}
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}  
+
+  {% assign products[0] = result.data.product %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% assign products = bulkOperation.objects %}
+{% endif %}
+
+{% for product in products %}
   {% assign product_qualifies_for_update = false %}
   {% assign product_template_suffix_to_apply = nil %}
 
@@ -63,33 +77,36 @@
     {% assign product_tag_to_check = keyval[0] %}
     {% assign product_template_to_apply = keyval[1] %}
 
-    {% if product_tags contains product_tag_to_check %}
+    {% if product.tags contains product_tag_to_check %}
       {% assign product_template_suffix_to_apply = product_template_to_apply %}
       {% break %}
     {% endif %}
   {% endfor %}
 
-  {% if product_template_suffix_to_apply == blank and product.template_suffix != blank %}
+  {% comment %} Allow setting to template to blank{% endcomment %}
+  {% if product_template_suffix_to_apply == blank and product.templateSuffix != blank %}
     {% assign product_qualifies_for_update = true %}
-  {% elsif product_template_suffix_to_apply != product.template_suffix %}
+  {% comment %} Make sure the template is not the right one already {% endcomment %}  
+  {% elsif product_template_suffix_to_apply != product.templateSuffix %}
     {% assign product_qualifies_for_update = true %}
-  {% endif %}
+  {% endif %}  
 
   {% if product_qualifies_for_update %}
-    {
-      "action": {
-        "type": "shopify",
-        "options": [
-          "update",
-          [
-            "product",
-            {{ product.id | json }}
-          ],
-          {
-            "template_suffix": {{ product_template_suffix_to_apply | json }}
+    {% action "shopify" %}
+      mutation {
+        productUpdate(
+          input: {
+            id: {{ product.id | json }}
+            templateSuffix: {{ product_template_suffix_to_apply | json }}
           }
-        ]
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
       }
-    }
+    {% endaction %}  
   {% endif %}
-{% endif %}
+
+{% endfor %}
