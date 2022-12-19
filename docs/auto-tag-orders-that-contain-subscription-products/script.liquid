@@ -1,7 +1,6 @@
 {% assign orders = array %}
 
 {% if event.topic == "shopify/orders/create" %}
-
   {% capture query %}
     query {
       order(id: {{ order.admin_graphql_api_id | json }}) {
@@ -85,20 +84,9 @@
           "edges": [
             {
               "node": {
-                "sellingPlan": [
-                  {
-                    "name": "Subscription, Delivery every month"
-                  }
-                ]
-              }
-            },
-            {
-              "node": {
-                "sellingPlan": [
-                  {
-                    "name": "Subscription, Delivery every month"
-                  }
-                ]
+                "sellingPlan": {
+                  "name": "Subscription, Delivery every month"
+                }
               }
             }
           ]
