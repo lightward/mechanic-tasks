@@ -127,7 +127,6 @@
   {% endunless %}
 
   {% for metafield_key in metafield_keys %}
-    {% assign tags = nil %}
     {% assign tag_prefix = tag_prefixes_hash[metafield_key] %}
     {% assign product_metafield = product[metafield_key] %}
 
