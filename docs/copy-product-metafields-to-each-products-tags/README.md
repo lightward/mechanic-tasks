@@ -36,7 +36,7 @@ mechanic/user/trigger
 
 This task exists to fill the gap between Shopify's admin product search, and product metafields. Use this task to copy metafield values to product tags, allowing you to filter products by tags based on those metafields.
 
-Begin by entering in the namespace for the metafield(s) you will be configuring for this task. Then, for each metafield, click __Add item__, add the *exact* metafield key on the left, and *optionally* a prefix to apply to tags generated for that specific metafield key. The tag prefix should include any desired demarcation (e.g. spaces, dashes, colons) from the metafield value.
+Begin by entering in the namespace for the metafield(s) you will be configuring for this task. Then, for each metafield, click __Add item__, add the *exact* metafield type on the left, and *optionally* a prefix to apply to tags generated for that specific metafield type. The tag prefix should include any desired demarcation (e.g. spaces, dashes, colons) from the metafield value.
 
 To have the task remove *prefixed* tags that no longer apply, then enable the __Remove outdated prefixed tags__ option. As an example: if a product has a "Released: 2021-10-01" tag, and this task is configured with a "Released: " tag prefix, and the associated metafield value changes (or is cleared), then the task can remove the original tag. 
 
@@ -44,7 +44,7 @@ When run manually, this task scans your entire product catalog. Optionally, you 
 
 It is *highly* recommended that you first run this task in __Test mode__ and review the task log to see what tags will be set based on your configuration settings, the metafield data, and the task logic for handling each type.
 
-This task supports the following [Shopify metafield types](https://shopify.dev/apps/metafields/definitions/types): `boolean`, `color`, `date`, `date_time`, `dimension`, `number_decimal`, `number_integer`, `rating`, `single_line_text_field`, `volume`, and `weight`. Support for the deprecated `integer` and `string` types is included by treating them as `number_integer` and `single_line_text_field` types respectively.
+This task supports the following [Shopify metafield types](https://shopify.dev/apps/metafields/types): `boolean`, `color`, `date`, `date_time`, `dimension`, `number_decimal`, `number_integer`, `rating`, `single_line_text_field`, `volume`, and `weight`. Additionally, [list types](https://shopify.dev/apps/metafields/types#list-types) are supported for all of the above fields except for boolean.
 
 __Important Notes:__
 - Be sure to run a full manual scan when new metafield keys are added in this task, so that all of your products can be evaluated with the tagging logic.

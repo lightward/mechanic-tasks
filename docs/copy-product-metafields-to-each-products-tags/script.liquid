@@ -127,48 +127,88 @@
   {% endunless %}
 
   {% for metafield_key in metafield_keys %}
-    {% assign tag = nil %}
     {% assign tag_prefix = tag_prefixes_hash[metafield_key] %}
     {% assign product_metafield = product[metafield_key] %}
 
     {% if product_metafield != blank %}
-      {% case product_metafield.type %}
+      {% if product_metafield.type contains "list." %}
+        {% assign product_metafield_values = product_metafield.value | parse_json %}
+        {% assign product_metafield_type = product_metafield.type | remove: "list." %}
+      {% else %}
+        {% assign product_metafield_values = array | push: product_metafield.value %}
+        {% assign product_metafield_type = product_metafield.type %}
+      {% endif %}
+
+      {% case product_metafield_type %}
         {% when "boolean" %}
-          {% capture tag %}{{ tag_prefix }}{{ product_metafield.value }}{% endcapture %}
+          {% for product_metafield_value in product_metafield_values %}
+            {% capture tag %}{{ tag_prefix }}{{ product_metafield_value }}{% endcapture %}
+            {% assign tags_should_have = tags_should_have | push: tag %}
+          {% endfor %}
 
         {% when "color" %}
-          {% capture tag %}{{ tag_prefix }}{{ product_metafield.value }}{% endcapture %}
+          {% for product_metafield_value in product_metafield_values %}
+            {% capture tag %}{{ tag_prefix }}{{ product_metafield_value }}{% endcapture %}
+            {% assign tags_should_have = tags_should_have | push: tag %}
+          {% endfor %}
 
         {% when "date" %}
-          {% capture tag %}{{ tag_prefix }}{{ product_metafield.value }}{% endcapture %}
+          {% for product_metafield_value in product_metafield_values %}
+            {% capture tag %}{{ tag_prefix }}{{ product_metafield_value }}{% endcapture %}
+            {% assign tags_should_have = tags_should_have | push: tag %}
+          {% endfor %}
 
         {% when "date_time" %}
-          {% capture tag %}{{ tag_prefix }}{{ product_metafield.value }}{% endcapture %}
+          {% for product_metafield_value in product_metafield_values %}
+            {% capture tag %}{{ tag_prefix }}{{ product_metafield_value }}{% endcapture %}
+            {% assign tags_should_have = tags_should_have | push: tag %}
+          {% endfor %}
 
         {% when "dimension" %}
-          {% assign product_metafield_value = product_metafield.value | parse_json %}
-          {% capture tag %}{{ tag_prefix }}{{ product_metafield_value.value }} {{ product_metafield_value.unit }}{% endcapture %}
+          {% for product_metafield_value in product_metafield_values %}
+            {% assign parsed_product_metafield_value = product_metafield_value | parse_json %}
+            {% capture tag %}{{ tag_prefix }}{{ parsed_product_metafield_value.value }} {{ parsed_product_metafield_value.unit }}{% endcapture %}
+            {% assign tags_should_have = tags_should_have | push: tag %}
+          {% endfor %}
 
         {% when "number_decimal" %}
-          {% capture tag %}{{ tag_prefix }}{{ product_metafield.value }}{% endcapture %}
+          {% for product_metafield_value in product_metafield_values %}
+            {% capture tag %}{{ tag_prefix }}{{ product_metafield_value }}{% endcapture %}
+            {% assign tags_should_have = tags_should_have | push: tag %}
+          {% endfor %}
 
-        {% when "number_integer" or "integer" %}
-          {% capture tag %}{{ tag_prefix }}{{ product_metafield.value }}{% endcapture %}
+        {% when "number_integer" %}
+          {% for product_metafield_value in product_metafield_values %}
+            {% capture tag %}{{ tag_prefix }}{{ product_metafield_value }}{% endcapture %}
+            {% assign tags_should_have = tags_should_have | push: tag %}
+          {% endfor %}
 
         {% when "rating" %}
-          {% assign product_metafield_value = product_metafield.value | parse_json %}
-          {% capture tag %}{{ tag_prefix }}{{ product_metafield_value.value }} / {{ product_metafield_value.scale_max }}{% endcapture %}
+          {% for product_metafield_value in product_metafield_values %}
+            {% assign parsed_product_metafield_value = product_metafield_value | parse_json %}
+            {% capture tag %}{{ tag_prefix }}{{ parsed_product_metafield_value.value }} / {{ parsed_product_metafield_value.scale_max }}{% endcapture %}
+            {% assign tags_should_have = tags_should_have | push: tag %}
+          {% endfor %}
 
-        {% when "single_line_text_field" or "string" %}
-          {% capture tag %}{{ tag_prefix }}{{ product_metafield.value }}{% endcapture %}
+        {% when "single_line_text_field" %}
+          {% for product_metafield_value in product_metafield_values %}
+            {% capture tag %}{{ tag_prefix }}{{ product_metafield_value }}{% endcapture %}
+            {% assign tags_should_have = tags_should_have | push: tag %}
+          {% endfor %}
 
         {% when "volume" %}
-          {% assign product_metafield_value = product_metafield.value | parse_json %}
-          {% capture tag %}{{ tag_prefix }}{{ product_metafield_value.value }} {{ product_metafield_value.unit }}{% endcapture %}
+          {% for product_metafield_value in product_metafield_values %}
+            {% assign parsed_product_metafield_value = product_metafield_value | parse_json %}
+            {% capture tag %}{{ tag_prefix }}{{ parsed_product_metafield_value.value }} {{ parsed_product_metafield_value.unit }}{% endcapture %}
+            {% assign tags_should_have = tags_should_have | push: tag %}
+          {% endfor %}
 
         {% when "weight" %}
-          {% assign product_metafield_value = product_metafield.value | parse_json %}
-          {% capture tag %}{{ tag_prefix }}{{ product_metafield_value.value }} {{ product_metafield_value.unit }}{% endcapture %}
+          {% for product_metafield_value in product_metafield_values %}
+            {% assign parsed_product_metafield_value = product_metafield_value | parse_json %}
+            {% capture tag %}{{ tag_prefix }}{{ parsed_product_metafield_value.value }} {{ parsed_product_metafield_value.unit }}{% endcapture %}
+            {% assign tags_should_have = tags_should_have | push: tag %}
+          {% endfor %}
 
         {% else %}
           {% log
@@ -177,10 +217,6 @@
             product_id: product.id
           %}
       {% endcase %}
-
-      {% if tag %}
-        {% assign tags_should_have = tags_should_have | push: tag %}
-      {% endif %}
     {% endif %}
   {% endfor %}
 
