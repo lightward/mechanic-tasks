@@ -1,0 +1,127 @@
+{% comment %}
+  An opinion about option order
+
+  {{ options.query_parameter_name__required }}
+  {{ options.cart_attribute_name__required }}
+  {{ options.tag_customer_with_parameter_value__boolean }}
+  {{ options.only_tag_the_customer_for_their_first_order__boolean }}
+{% endcomment %}
+
+{% if event.preview %}
+  {% assign order = hash %}
+  {% assign order["admin_graphql_api_id"] = "gid://shopify/Order/1234567890" %}
+  {% assign order["note_attributes"] = hash %}
+  {% assign order["note_attributes"][options.cart_attribute_name__required] = "ABC123" %}
+  {% assign order["customer"] = hash %}
+  {% assign order["customer"]["admin_graphql_api_id"] = "gid://shopify/Customer/1234567890" %}
+{% endif %}
+
+{% assign value = order.note_attributes[options.cart_attribute_name__required] %}
+{% if value == blank %}
+  {% log message: "This order did not have the specified cart attribute - nothing to do.", attributes: order.note_attributes %}
+{% else %}
+  {% assign order_tags = order.tags | split: ", " %}
+  {% unless order_tags contains value %}
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {{ order.admin_graphql_api_id | json }}
+          tags: {{ value | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endunless %}
+{% endif %}
+
+{% if options.tag_customer_with_parameter_value__boolean %}
+  {% assign customer_qualifies = true %}
+
+  {% assign customer_tags = order.customer.tags | split: ", " %}
+  {% if customer_tags contains value %}
+    {% assign customer_qualifies = false %}
+  {% endif %}
+
+  {% if options.only_tag_the_customer_for_their_first_order__boolean %}
+    {% comment %}
+      We go the long way about this, because (a) in a test store,
+      Shopify is not incrementing customer.orders_count, and (b)
+      it does not seem like the order reliably exists for retrieval
+      the instant it is placed. This way, we can mark the customer
+      as qualified if there are no orders, or if there is an order
+      and this is it.
+    {% endcomment %}
+
+    {% capture query %}
+      query {
+        customer(id: {{ order.customer.admin_graphql_api_id | json }}) {
+          tags
+          orders(first: 1) {
+            pageInfo {
+              hasNextPage
+            }
+            edges {
+              node {
+                id
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "customer": {
+              "tags": [],
+              "orders": {
+                "pageInfo": {
+                  "hasNextPage": false
+                },
+                "edges": [
+                  {
+                    "node": {
+                      "id": {{ order.admin_graphql_api_id | json }}
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% if result.data.customer.orders.pageInfo.hasNextPage %}
+      {% assign customer_qualifies = false %}
+    {% elsif result.data.customer.orders.edges != empty and result.data.customer.orders.edges.first.node.id != order.admin_graphql_api_id %}
+      {% assign customer_qualifies = false %}
+    {% endif %}
+  {% endif %}
+
+  {% if customer_qualifies and value != blank %}
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {{ order.customer.admin_graphql_api_id | json }}
+          tags: {{ value | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endif %}
