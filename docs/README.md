@@ -309,6 +309,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Tag customers in bulk by email address](./tag-customers-in-bulk-by-email-address)
 * [Tag customers on the anniversary of their first order](./tag-customers-on-the-anniversary-of-their-first-order)
 * [Tag customers when their last order is before/after x days ago](./tag-customers-when-their-last-order-is-before-after-x-days-ago)
+* [Tag online orders by ?ls= Locksmith secret link used](./tag-orders-by-locksmith-secret-link)
 * [Tag online orders by their ?ref= referral codes](./tag-orders-by-url-referrer)
 * [Tag orders in bulk by order name](./tag-orders-in-bulk-by-order-name)
 * [Tag orders that have at least x of a certain product](./tag-orders-that-have-at-least-x-of-a-certain-product)
