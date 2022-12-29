@@ -1,0 +1,144 @@
+{% assign custom_event_topic = options.custom_event_topic__required %}
+{% assign attribute_lookups = options.attribute_lookups__array_required %}
+
+{% if event.preview %}
+  {% assign custom_event_topic = "user/product/price_update" %}
+  {% assign attribute_lookups = "price" %}
+{% endif %}
+
+{% assign metafield_key = attribute_lookups | join: "_" | prepend: "snapshot_" %}
+{% assign custom_event_topic_parts = custom_event_topic | split: "/" %}
+
+{% if custom_event_topic_parts[0] != "user" %}
+  {% error "The custom event topic must start with 'user/'" %}
+{% endif %}
+
+{% if custom_event_topic_parts.size != 3 %}
+  {% error "The custom event topic should be in the form of 'user/[subject]/[verb]'" %}
+{% endif %}
+
+{% log custom_event_topic: custom_event_topic, attribute_lookups: attribute_lookups %}
+
+{% if event.topic == "mechanic/user/trigger" %}
+  {% assign products = shop.products %}
+
+{% elsif event.topic == "shopify/products/update" %}
+  {% assign products = array | push: product %}
+{% endif %}
+
+{% if event.preview %}
+  {% capture products_json %}
+    [
+      {
+        "admin_graphql_api_id": "gid://shopify/Product/1234567890",
+        "variants": [
+          {
+            "id": 1234567890,
+            "price": "1.23"
+          }
+        ]
+      }
+    ]
+  {% endcapture %}
+
+  {% assign products = products_json | parse_json %}
+{% endif %}
+
+{% assign products_that_need_a_metafield_update = hash %}
+{% assign products_that_cause_a_custom_event = array %}
+
+{% for product in products %}
+  {% assign variant_ids_and_values = hash %}
+
+  {% for variant in product.variants %}
+    {% assign variant_id = variant.id | append: "" %}
+    {% assign attribute_value = variant %}
+
+    {% for lookup in attribute_lookups %}
+      {% assign attribute_value = attribute_value[lookup] %}
+    {% endfor %}
+
+    {% comment %}
+      Make sure attribute_value is always a serializable object, defaulting to nil in the case of an empty string
+    {% endcomment %}
+
+    {% assign variant_ids_and_values[variant_id] = attribute_value | json | parse_json | default: nil %}
+  {% endfor %}
+
+  {% assign expected_metafield_value = variant_ids_and_values %}
+  {% assign existing_metafield = product.metafields.mechanic[metafield_key] %}
+
+  {% if existing_metafield == blank %}
+    {% unless expected_metafield_value == blank %}
+      {% assign products_that_need_a_metafield_update[product.admin_graphql_api_id] = expected_metafield_value %}
+    {% endunless %}
+
+  {% elsif existing_metafield.value == expected_metafield_value %}
+    {% log
+      message: "Product metafield is already up to date",
+      product_id: product.id,
+      metafield_value: expected_metafield_value
+    %}
+
+  {% else %}
+    {% assign products_that_need_a_metafield_update[product.admin_graphql_api_id] = expected_metafield_value %}
+    {% assign products_that_cause_a_custom_event = products_that_cause_a_custom_event | push: product %}
+  {% endif %}
+{% endfor %}
+
+{% assign metafield_inputs = array %}
+
+{% for keyval in products_that_need_a_metafield_update %}
+  {% capture metafield_input %}
+    {
+      ownerId: {{ keyval[0] | json }}
+      namespace: "mechanic"
+      key: {{ metafield_key | json }}
+      value: {{ keyval[1] | json | json }}
+      type: "json"
+    }
+  {% endcapture %}
+
+  {% assign metafield_inputs = metafield_inputs | push: metafield_input %}
+{% endfor %}
+
+{% assign groups_of_metafield_inputs = metafield_inputs | in_groups_of: 25, fill_with: false %}
+
+{% for group_of_metafield_inputs in groups_of_metafield_inputs %}
+  {% action "shopify" %}
+    mutation {
+      metafieldsSet(
+        metafields: [
+          {{ group_of_metafield_inputs | join: newline }}
+        ]
+      ) {
+        metafields {
+          id
+          namespace
+          key
+          type
+          value
+          owner {
+            ... on Product {
+              id
+            }
+          }
+        }
+        userErrors {
+          code
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endfor %}
+
+{% for product in products_that_cause_a_custom_event %}
+  {% action "event" %}
+    {
+      "topic": {{ custom_event_topic | json }},
+      "data": {{ product | json }}
+    }
+  {% endaction %}
+{% endfor %}

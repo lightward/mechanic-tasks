@@ -182,6 +182,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Demonstration: Order editing](./demonstration-order-editing)
 * [Demonstration: Performing action runs in sequence](./demonstration-performing-action-runs-in-sequence)
 * [Demonstration: Shopify Flow integration](./demonstration-shopify-flow-integration)
+* [Demonstration: Trigger a custom event on specific variant changes](./demonstration-trigger-a-custom-event-on-specific-variant-changes)
 * [Demonstration: Web fonts in PDFs](./demonstration-web-fonts-in-pdfs)
 * [Demonstration: Write to a customer metafield](./demonstration-write-to-a-customer-metafield)
 * [Download and email a file to a customer, when purchased](./download-and-email-a-file-to-a-customer-when-purchased)
