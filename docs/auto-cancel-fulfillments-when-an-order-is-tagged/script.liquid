@@ -1,58 +1,54 @@
-{% if event.topic == "shopify/orders/updated" %}
-  {% if event.preview %}
-    {% assign order = hash %}
-    {% assign order["id"] = 1234567890 %}
-    {% assign order["tags"] = options.required_order_tag__required %}
-    {% assign order["admin_graphql_api_id"] = "gid://shopify/Order/1234567890" %}
-    {% assign order["fulfillments"] = array %}
-    {% assign order["fulfillments"][0] = hash %}
-    {% assign order["fulfillments"][0]["id"] = 1234567890 %}
-    {% assign order["fulfillments"][1] = hash %}
-    {% assign order["fulfillments"][1]["id"] = 1234567890 %}
-  {% endif %}
+{% capture query %}
+  query {
+    order(id: {{ order.admin_graphql_api_id | json }}) {
+      id
+      tags
+      fulfillments {
+        id
+        status
+      }
+    }
+  }  
+{% endcapture %}
 
-  {% assign order_tags = order.tags | split: ", " %}
+{% assign result = query | shopify %}
 
-  {% if order_tags contains options.required_order_tag__required %}
-    {% assign cancellation_count = 0 %}
-    {% for fulfillment in order.fulfillments %}
-      {% if fulfillment.status == "cancelled" %}
-        {% continue %}
-      {% endif %}
-
-      {% assign cancellation_count = cancellation_count | plus: 1 %}
-
-      {% if cancellation_count == 1 %}
-        {% action "shopify" %}
-          [
-            "post",
-            "/admin/orders/{{ order.id }}/fulfillments/{{ fulfillment.id }}/cancel.json",
-            {}
-          ]
-        {% endaction %}
-      {% else %}
-        {% assign delay = 60 | times: cancellation_count %}
-
-        {% action "event" %}
-          {
-            "topic": "user/orders/cancel_fulfillment",
-            "task_id": {{ task.id | json }},
-            "run_at": {{ "now" | date: "%s" | plus: delay | json }},
-            "data": {
-              "order_id": {{ order.id | json }},
-              "fulfillment_id": {{ fulfillment.id | json }}
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "order": {
+          "id": "gid://shopify/Order/1234567890",
+          "tags": {{ options.required_order_tag__required | json }},
+          "fulfillments": [
+            {
+              "id": "gid://shopify/Fulfillment/1234567890",
+              "status": "SUCCESS"
             }
-          }
-        {% endaction %}
-      {% endif %}
-    {% endfor %}
+          ]
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% assign order = result.data.order %}
+
+{% if order.tags contains options.required_order_tag__required %}
+  {% for fulfillment in order.fulfillments %}
+    {% if fulfillment.status == "CANCELLED" %}
+      {% continue %}
+    {% endif %}
 
     {% action "shopify" %}
       mutation {
-        tagsRemove(
-          id: {{ order.admin_graphql_api_id | json }}
-          tags: {{ options.required_order_tag__required | json }}
-        ) {
+        fulfillmentCancel(id: {{ fulfillment.id | json }}) {
+          fulfillment {
+            id
+            status
+          }
           userErrors {
             field
             message
@@ -60,20 +56,19 @@
         }
       }
     {% endaction %}
-  {% endif %}
-{% elsif event.topic == "user/orders/cancel_fulfillment" %}
-  {% if event.preview %}
-    {% assign event = hash %}
-    {% assign event["data"] = hash %}
-    {% assign event["data"]["order_id"] = 1234567890 %}
-    {% assign event["data"]["fulfillment_id"] = 1234567890 %}
-  {% endif %}
+  {% endfor %}
 
   {% action "shopify" %}
-    [
-      "post",
-      "/admin/orders/{{ event.data.order_id }}/fulfillments/{{ event.data.fulfillment_id }}/cancel.json",
-      {}
-    ]
+    mutation {
+      tagsRemove(
+        id: {{ order.id | json }}
+        tags: {{ options.required_order_tag__required | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
   {% endaction %}
 {% endif %}
