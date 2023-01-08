@@ -36,6 +36,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-capture payments when an order is created](./auto-capture-payments-when-an-order-is-created)
 * [Auto-complete new draft orders](./auto-complete-new-draft-orders)
 * [Auto-connect new products to all locations](./auto-connect-new-products-to-all-locations)
+* [Auto-copy customer metafields to new orders](./auto-copy-customer-metafields-to-new-orders)
 * [Auto-copy notes from customers to their orders](./auto-copy-notes-from-customers-to-their-orders)
 * [Auto-copy order notes to the customer's note](./auto-copy-order-notes-to-the-customers-note)
 * [Auto-create collections by product type or vendor](./auto-create-collections-by-product-type-or-vendor)

@@ -1,0 +1,23 @@
+{
+  "docs": "When new orders are created, this task will check to see if the customer has any of the configured metafields, and if so it will copy the metafield values to the paired order attributes.\n\nConfigure this task by adding customer metafields on the left, in the form of __namespace.key__, and the order attribute names on the right.\n\n_Example configuration:_ \"custom.group\": \"Group\"",
+  "halt_action_run_sequence_on_error": false,
+  "name": "Auto-copy customer metafields to new orders",
+  "online_store_javascript": null,
+  "options": {
+    "customer_metafields_and_order_attributes__keyval_required": {}
+  },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "preview_event_definitions": [],
+  "script": "{% assign customer_metafields_and_order_attributes = options.customer_metafields_and_order_attributes__keyval_required %}\n\n{% capture query %}\n  query {\n    order(id: {{ order.admin_graphql_api_id | json }}) {\n      id\n      customer {\n        metafields(\n          first: {{ customer_metafields_and_order_attributes.size }}\n          keys: {{ customer_metafields_and_order_attributes | keys | json }}\n        ) {\n          nodes {\n            key\n            value\n          }\n        }\n      }\n      customAttributes {\n        key\n        value\n      }\n    }\n  }\n{% endcapture %}\n\n{% assign result = query | shopify %}\n\n{% if event.preview %}\n  {% capture result_json %}\n    {\n      \"data\": {\n        \"order\": {\n          \"id\": \"gid://shopify/Order/1234567890\",\n          \"customer\": {\n            \"metafields\": {\n              \"nodes\": [\n                {\n                  \"key\": {{ customer_metafields_and_order_attributes | first | first | json }},\n                  \"value\": \"Alpha\"\n                }\n              ]\n            }\n          },\n          \"customAttributes\": [\n            {\n              \"key\": \"__sample\",\n              \"value\": \"Beta\"\n            }\n          ]\n        }\n      }\n    }\n  {% endcapture %}\n\n  {% assign result = result_json | parse_json %}\n{% endif %}\n\n{% assign metafields = result.data.order.customer.metafields.nodes %}\n{% assign attributes = result.data.order.customAttributes | default: array %}\n\n{% log\n  existing_attributes_on_order: attributes,\n  matched_customer_metafields: metafields\n%}\n\n{% for metafield in metafields %}\n  {% assign attribute = hash %}\n  {% assign attribute[\"key\"] = customer_metafields_and_order_attributes[metafield.key] %}\n  {% assign attribute[\"value\"] = metafield.value %}\n  {% assign attributes = attributes | push: attribute %}\n{% else %}\n  {% break %}\n{% endfor %}\n\n{% action \"shopify\" %}\n  mutation {\n    orderUpdate(\n      input: {\n        id: {{ order.admin_graphql_api_id | json }}\n        customAttributes: {{ attributes | graphql_arguments }}\n      }\n    ) {\n      order {\n        id\n        name\n        customAttributes {\n          key\n          value\n        }\n      }\n      userErrors {\n        field\n        message\n      }\n    }\n  }\n{% endaction %}",
+  "subscriptions": [
+    "shopify/orders/create"
+  ],
+  "subscriptions_template": "shopify/orders/create",
+  "tags": [
+    "Customers",
+    "Metafields",
+    "Order Attributes",
+    "Orders"
+  ]
+}
