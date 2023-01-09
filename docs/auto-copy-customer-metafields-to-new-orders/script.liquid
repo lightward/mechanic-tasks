@@ -1,0 +1,97 @@
+{% assign customer_metafields_and_order_attributes = options.customer_metafields_and_order_attributes__keyval_required %}
+
+{% capture query %}
+  query {
+    order(id: {{ order.admin_graphql_api_id | json }}) {
+      id
+      customer {
+        metafields(
+          first: {{ customer_metafields_and_order_attributes.size }}
+          keys: {{ customer_metafields_and_order_attributes | keys | json }}
+        ) {
+          nodes {
+            key
+            value
+          }
+        }
+      }
+      customAttributes {
+        key
+        value
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "order": {
+          "id": "gid://shopify/Order/1234567890",
+          "customer": {
+            "metafields": {
+              "nodes": [
+                {
+                  "key": {{ customer_metafields_and_order_attributes | first | first | json }},
+                  "value": "Alpha"
+                }
+              ]
+            }
+          },
+          "customAttributes": [
+            {
+              "key": "__sample",
+              "value": "Beta"
+            }
+          ]
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% assign metafields = result.data.order.customer.metafields.nodes %}
+{% assign attributes = result.data.order.customAttributes | default: array %}
+
+{% log
+  existing_attributes_on_order: attributes,
+  matched_customer_metafields: metafields
+%}
+
+{% for metafield in metafields %}
+  {% assign attribute = hash %}
+  {% assign attribute["key"] = customer_metafields_and_order_attributes[metafield.key] %}
+  {% assign attribute["value"] = metafield.value %}
+  {% assign attributes = attributes | push: attribute %}
+{% else %}
+  {% break %}
+{% endfor %}
+
+{% action "shopify" %}
+  mutation {
+    orderUpdate(
+      input: {
+        id: {{ order.admin_graphql_api_id | json }}
+        customAttributes: {{ attributes | graphql_arguments }}
+      }
+    ) {
+      order {
+        id
+        name
+        customAttributes {
+          key
+          value
+        }
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+{% endaction %}
