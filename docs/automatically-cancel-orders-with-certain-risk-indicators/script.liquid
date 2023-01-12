@@ -50,6 +50,10 @@
   {% endif %}
 {% endif %}
 
+{% if order.fulfillment_status == "fulfilled" or order.fulfillment_status == "partial" %}
+  {% assign order_qualifies = false %}
+{% endif %}
+
 {% if order_qualifies %}
   {% if options.attempt_to_void_or_refund_payment_for_cancelled_orders__boolean %}
     {% capture query %}

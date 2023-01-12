@@ -23,8 +23,15 @@
   {% endif %}
 {% endfor %}
 
+{% if order.fulfillment_status == "fulfilled" or order.fulfillment_status == "partial" %}
+  {% assign order_qualifies = false %}
+{% else %}
+    {% assign order_qualifies = true %}
+{% endif %}
+
 {% if event.preview or sku_count >= options.quantity_threshold_for_cancellation__number_required %}
-  {% action "shopify" %}
+  {% if order_qualifies %}
+    {% action "shopify" %}
       [
         "post",
         "/admin/orders/{{ order.id }}/cancel.json",
@@ -60,5 +67,6 @@
           "reason": {{ options.reason_for_cancellation__required | json }}
         }
       ]
-    {% endaction %}
+    {% endaction %}    
+  {% endif %}
 {% endif %}
