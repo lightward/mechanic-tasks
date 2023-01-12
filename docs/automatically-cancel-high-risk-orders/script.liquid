@@ -47,7 +47,7 @@
     {% endaction %}
   {% endif %}
 
-{% if options.attempt_to_void_or_refund_payment_for_cancelled_orders__boolean %}
+  {% if options.attempt_to_void_or_refund_payment_for_cancelled_orders__boolean %}
     {% capture order_refund_query %}
       query {
         order(id: {{ order.admin_graphql_api_id | json }}) {
