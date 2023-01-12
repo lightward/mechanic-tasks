@@ -177,6 +177,12 @@
       {% assign summary["qualifies_for_closing"] = false %}
     {% endif %}
 
+    {% if order.fulfillment_status == "fulfilled" or order.fulfillment_status == "partial" %}
+      {% assign summary["qualifies_for_closing"] = false %}
+    {% else %}
+      {% assign summary["qualifies_for_closing"] = true %}
+    {% endif %}
+
     {% assign summary["qualifies_for_tagging"] = false %}
     {% if options.tag_to_add_to_the_order != blank %}
       {% assign order_tags = order.tags | join: "," | downcase | split: "," %}
@@ -198,6 +204,17 @@
     {% log summary %}
 
     {% if summary.qualifies_for_cancellation %}
+
+      {% action "shopify" %}
+        [
+          "post",
+          "/admin/orders/{{ order.legacyResourceId }}/cancel.json",
+          {
+            "email": {{ options.send_cancellation_email_to_customer__boolean | json }}
+          }
+        ]
+      {% endaction %}
+
       {% action "shopify" %}
         mutation {
           refundCreate(input: {
@@ -242,16 +259,6 @@
             }
           }
         }
-      {% endaction %}
-
-      {% action "shopify" %}
-        [
-          "post",
-          "/admin/orders/{{ order.legacyResourceId }}/cancel.json",
-          {
-            "email": {{ options.send_cancellation_email_to_customer__boolean | json }}
-          }
-        ]
       {% endaction %}
     {% endif %}
 
