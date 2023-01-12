@@ -1,6 +1,6 @@
 {
   "docs": "This task scans for orders that are more than X days or hours old that have a financial status of \"pending\", and ensures that they are all closed/archived and cancelled. Orders that are already closed will be cancelled, and orders that are already cancelled will be closed. Optionally, choose to add a tag to such orders.\n\nIf configured with an interval in hours, this task will run hourly. If configured with an interval in days, the task will run every night at midnight, in your store's local timezone. Run this task manually to perform the scan on demand.\n\nRun first using test mode, to ensure expected results before running without it.",
-  "halt_action_run_sequence_on_error": false,
+  "halt_action_run_sequence_on_error": true,
   "name": "Cancel and close unpaid orders after x hours/days",
   "online_store_javascript": null,
   "options": {

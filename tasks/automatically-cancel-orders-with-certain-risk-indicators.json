@@ -1,6 +1,6 @@
 {
   "docs": "This task auto-cancels incoming orders when it finds all of a certain set of risk indicator messages. Risk messages must match exactly, so double-check your configuration!",
-  "halt_action_run_sequence_on_error": false,
+  "halt_action_run_sequence_on_error": true,
   "name": "Automatically cancel orders with certain risk indicators",
   "online_store_javascript": null,
   "options": {
