@@ -19,6 +19,34 @@
 {% endif %}
 
 {% if event.preview or order_qualifies %}
+
+  {% action "shopify" %}
+    [
+      "post",
+      "/admin/orders/{{ order.id | json }}/cancel.json",
+      {
+        "reason": {{ cancellation_reason | json }},
+        "email": {{ options.email_customer_when_cancelling__boolean | json }}
+      }
+    ]
+  {% endaction %}
+
+  {% if options.add_this_order_tag_when_cancelling != blank %}
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {{ order.admin_graphql_api_id | json }}
+          tags: {{ options.add_this_order_tag_when_cancelling | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+
   {% if options.attempt_to_void_or_refund_payment_for_cancelled_orders__boolean %}
     {% capture order_refund_query %}
       query {
@@ -85,7 +113,13 @@
       -- NOTE: this task only refunds the first successful capture or sale transaction, the theory being that risk analyses would run before any order edits or upsells would likely occur
     {% endcomment %}
 
-    {% if sale_or_capture_transaction != blank %}
+    {% assign not_fulfilled = true %}
+
+    {% if order.fulfillment_status == "fulfilled" or order.fulfillment_status == "partial" %}
+      {% assign not_fulfilled = false %}
+    {% endif %}
+
+    {% if sale_or_capture_transaction != blank and not_fulfilled %}
       {% action "shopify" %}
         mutation {
           refundCreate(input: {
@@ -110,32 +144,5 @@
         }
       {% endaction %}
     {% endif %}
-  {% endif %}
-
-  {% action "shopify" %}
-    [
-      "post",
-      "/admin/orders/{{ order.id | json }}/cancel.json",
-      {
-        "reason": {{ cancellation_reason | json }},
-        "email": {{ options.email_customer_when_cancelling__boolean | json }}
-      }
-    ]
-  {% endaction %}
-
-  {% if options.add_this_order_tag_when_cancelling != blank %}
-    {% action "shopify" %}
-      mutation {
-        tagsAdd(
-          id: {{ order.admin_graphql_api_id | json }}
-          tags: {{ options.add_this_order_tag_when_cancelling | json }}
-        ) {
-          userErrors {
-            field
-            message
-          }
-        }
-      }
-    {% endaction %}
   {% endif %}
 {% endif %}
