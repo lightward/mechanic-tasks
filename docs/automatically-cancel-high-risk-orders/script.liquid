@@ -1,43 +1,120 @@
-{% assign cancel_risk = order.risks | where: "recommendation", "cancel" | first %}
-
 {% assign cancellation_reason = options.cancellation_reason | default: "other" %}
 {% assign valid_cancellation_reasons = "customer,inventory,fraud,declined,other" | split: "," %}
+
 {% unless valid_cancellation_reasons contains cancellation_reason %}
   {% error %}
     {{ "Cancellation reason " | append: cancellation_reason | append: " - must be one of 'customer', 'inventory', 'fraud', 'declined', or 'other'." | json }}
   {% enderror %}
 {% endunless %}
 
-{% assign order_qualifies = false %}
+{% assign cancel_risk = order.risks | where: "recommendation", "cancel" | first %}
 
-{% if order.cancelled_at == blank and cancel_risk %}
-  {% assign order_qualifies = true %}
+{% unless cancel_risk %}
+  {% break %}
+{% endunless %}
+
+{% if order.fulfillment_status %}
+  {% log "This order has already been partially or fully fulfilled; no cancellation (nor refund if that option is checked) will be made." %}
+  {% break %}  
+{% endif %}
+
+{% if order.cancelled_at %}
+  {% log "This order has already been cancelled." %}
+  {% break %}  
 {% endif %}
 
 {% if options.ignore_unpaid_orders__boolean and order.financial_status == "pending" %}
-   {% assign order_qualifies = false %}
+  {% log "This order has not been paid, and the ignore unpaid orders option is checked; no cancellation will be made." %}
+  {% break %}  
 {% endif %}
 
-{% if event.preview or order_qualifies %}
+{% comment %}
+  -- NOTE: refunds via API must occur before cancellation, otherwise the refund will fail
+{% endcomment %}
 
-  {% action "shopify" %}
-    [
-      "post",
-      "/admin/orders/{{ order.id | json }}/cancel.json",
-      {
-        "reason": {{ cancellation_reason | json }},
-        "email": {{ options.email_customer_when_cancelling__boolean | json }}
+{% if options.attempt_to_void_or_refund_payment_for_cancelled_orders__boolean %}
+  {% capture order_refund_query %}
+    query {
+      order(id: {{ order.admin_graphql_api_id | json }}) {
+        suggestedRefund(suggestFullRefund: true, refundShipping: true) {
+          amountSet {
+            shopMoney {
+              amount
+            }
+          }
+        }
+        transactions {
+          id
+          gateway
+          kind
+          status
+        }
       }
-    ]
-  {% endaction %}
+    }
+  {% endcapture %}
 
-  {% if options.add_this_order_tag_when_cancelling != blank %}
+  {% assign order_refund_result = order_refund_query | shopify %}
+
+  {% if event.preview %}
+    {% capture order_refund_result_json %}
+      {
+        "data": {
+          "order": {
+            "suggestedRefund": {
+              "amountSet": {
+                "shopMoney": {
+                  "amount": "123.0"
+                }
+              }
+            },
+            "transactions": [
+              {
+                "id": "gid://shopify/OrderTransaction/1234567890",
+                "gateway": "bogus",
+                "kind": "CAPTURE",
+                "status": "SUCCESS"
+              }
+            ]
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign order_refund_result = order_refund_result_json | parse_json %}
+  {% endif %}
+
+  {% assign suggested_refund = order_refund_result.data.order.suggestedRefund.amountSet.shopMoney.amount %}
+
+  {% assign successful_transactions = order_refund_result.data.order.transactions | where: "status", "SUCCESS" %}
+
+  {% for transaction in successful_transactions %}
+    {% if transaction.kind == "CAPTURE" or transaction.kind == "SALE" %}
+      {% assign sale_or_capture_transaction = transaction %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% comment %}
+    -- NOTE: this task only refunds the first successful capture or sale transaction, the theory being that risk analyses would run before any order edits or upsells would likely occur
+  {% endcomment %}
+
+  {% if sale_or_capture_transaction != blank %}
     {% action "shopify" %}
       mutation {
-        tagsAdd(
-          id: {{ order.admin_graphql_api_id | json }}
-          tags: {{ options.add_this_order_tag_when_cancelling | json }}
-        ) {
+        refundCreate(input: {
+          orderId: {{ order.admin_graphql_api_id | json }}
+            transactions: [
+              {
+                amount: {{ suggested_refund | json }}
+                gateway: {{ sale_or_capture_transaction.gateway | json }}
+                kind: VOID
+                orderId: {{ order.admin_graphql_api_id | json }}
+                parentId: {{ sale_or_capture_transaction.id | json }}
+              }
+            ]
+          notify: false
+          note: {{ task.name | json }}
+        }) {
           userErrors {
             field
             message
@@ -46,103 +123,31 @@
       }
     {% endaction %}
   {% endif %}
+{% endif %}
 
-  {% if options.attempt_to_void_or_refund_payment_for_cancelled_orders__boolean %}
-    {% capture order_refund_query %}
-      query {
-        order(id: {{ order.admin_graphql_api_id | json }}) {
-          suggestedRefund(suggestFullRefund: true, refundShipping: true) {
-            amountSet {
-              shopMoney {
-                amount
-              }
-            }
-          }
-          transactions {
-            id
-            gateway
-            kind
-            status
-          }
+{% action "shopify" %}
+  [
+    "post",
+    "/admin/orders/{{ order.id | json }}/cancel.json",
+    {
+      "reason": {{ cancellation_reason | json }},
+      "email": {{ options.email_customer_when_cancelling__boolean | json }}
+    }
+  ]
+{% endaction %}
+
+{% if options.add_this_order_tag_when_cancelling != blank %}
+  {% action "shopify" %}
+    mutation {
+      tagsAdd(
+        id: {{ order.admin_graphql_api_id | json }}
+        tags: {{ options.add_this_order_tag_when_cancelling | json }}
+      ) {
+        userErrors {
+          field
+          message
         }
       }
-    {% endcapture %}
-
-    {% assign order_refund_result = order_refund_query | shopify %}
-
-    {% if event.preview %}
-      {% capture order_refund_result_json %}
-        {
-          "data": {
-            "order": {
-              "suggestedRefund": {
-                "amountSet": {
-                  "shopMoney": {
-                    "amount": "123.0"
-                  }
-                }
-              },
-              "transactions": [
-                {
-                  "id": "gid://shopify/OrderTransaction/1234567890",
-                  "gateway": "bogus",
-                  "kind": "CAPTURE",
-                  "status": "SUCCESS"
-                }
-              ]
-            }
-          }
-        }
-      {% endcapture %}
-
-      {% assign order_refund_result = order_refund_result_json | parse_json %}
-    {% endif %}
-
-    {% assign suggested_refund = order_refund_result.data.order.suggestedRefund.amountSet.shopMoney.amount %}
-
-    {% assign successful_transactions = order_refund_result.data.order.transactions | where: "status", "SUCCESS" %}
-
-    {% for transaction in successful_transactions %}
-      {% if transaction.kind == "CAPTURE" or transaction.kind == "SALE" %}
-        {% assign sale_or_capture_transaction = transaction %}
-        {% break %}
-      {% endif %}
-    {% endfor %}
-
-    {% comment %}
-      -- NOTE: this task only refunds the first successful capture or sale transaction, the theory being that risk analyses would run before any order edits or upsells would likely occur
-    {% endcomment %}
-
-    {% assign not_fulfilled = true %}
-
-    {% if order.fulfillment_status == "fulfilled" or order.fulfillment_status == "partial" %}
-      {% assign not_fulfilled = false %}
-    {% endif %}
-
-    {% if sale_or_capture_transaction != blank and not_fulfilled %}
-      {% action "shopify" %}
-        mutation {
-          refundCreate(input: {
-            orderId: {{ order.admin_graphql_api_id | json }}
-              transactions: [
-                {
-                  amount: {{ suggested_refund | json }}
-                  gateway: {{ sale_or_capture_transaction.gateway | json }}
-                  kind: VOID
-                  orderId: {{ order.admin_graphql_api_id | json }}
-                  parentId: {{ sale_or_capture_transaction.id | json }}
-                }
-              ]
-            notify: false
-            note: {{ task.name | json }}
-          }) {
-            userErrors {
-              field
-              message
-            }
-          }
-        }
-      {% endaction %}
-    {% endif %}
-  {% endif %}
+    }
+  {% endaction %}
 {% endif %}
