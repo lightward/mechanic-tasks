@@ -206,16 +206,6 @@
     {% if summary.qualifies_for_cancellation %}
 
       {% action "shopify" %}
-        [
-          "post",
-          "/admin/orders/{{ order.legacyResourceId }}/cancel.json",
-          {
-            "email": {{ options.send_cancellation_email_to_customer__boolean | json }}
-          }
-        ]
-      {% endaction %}
-
-      {% action "shopify" %}
         mutation {
           refundCreate(input: {
             orderId: {{ order.id | json }}
@@ -259,6 +249,16 @@
             }
           }
         }
+      {% endaction %}
+
+      {% action "shopify" %}
+        [
+          "post",
+          "/admin/orders/{{ order.legacyResourceId }}/cancel.json",
+          {
+            "email": {{ options.send_cancellation_email_to_customer__boolean | json }}
+          }
+        ]
       {% endaction %}
     {% endif %}
 
