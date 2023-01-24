@@ -1,0 +1,27 @@
+{
+  "docs": "Automatically generate a PDF to be emailed to the address on file for the order(s) when sent to Mechanic. This task listens for orders sent to Mechanic via Admin and Bulk action links in the Shopify admin.\n\nNo email will be sent if the order does not have an email on file.",
+  "halt_action_run_sequence_on_error": false,
+  "name": "Send a PDF when an order is sent to Mechanic",
+  "online_store_javascript": null,
+  "options": {
+    "email_subject__required": "Thanks for your order: {{ order.name }}",
+    "email_body__multiline_required": "Hello,\n\nThank you for your order! Please see the attached receipt.\n\nThanks,\n{{ shop.name }}",
+    "pdf_attachment_filename__required": "receipt-{{ order.order_number }}.pdf",
+    "pdf_html_template__code_multiline_required": "<h1>Order {{ order.name }} for {{ shop.name }}</h1>\n\n<h2>Items</h2>\n\n<ul>\n  {% for line_item in order.line_items %}\n    <li>\n      {{ line_item.quantity }} x {{ line_item.title }}: {{ line_item.price | money_with_currency }}\n    </li>\n  {% endfor %}\n</ul>\n\n<h2>Totals</h2>\n\n<ul>\n  <li>Items: {{ order.total_line_items_price | money_with_currency }}</li>\n  <li>Discounts: {{ order.total_discounts | money_with_currency }}</li>\n  <li>Subtotal: {{ order.subtotal_price | money_with_currency }}</li>\n  <li>Total (including taxes, shipping, tips): {{ order.total_price | money_with_currency }}</li>\n</ul>"
+  },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "preview_event_definitions": [],
+  "script": "{% comment %}\n  Preferred option order:\n\n  {{ options.email_subject__required }}\n  {{ options.email_body__multiline_required }}\n  {{ options.pdf_attachment_filename__required }}\n  {{ options.pdf_html_template__code_multiline_required }}\n{% endcomment %}\n\n{% if event.preview %}\n  {% capture order_json %}\n    {\n      \"email\": \"customer@example.com\"\n    }\n  {% endcapture %}\n\n  {% assign order = order_json | parse_json %}\n{% endif %}\n\n{% if event.topic == \"mechanic/user/order\" or event.preview %}\n  {% assign orders = array %}\n  {% assign orders[0] = order %}\n{% endif %}\n\n{% comment %} \n  If this event topic is mechanic/user/orders the environment variable orders\n  will already exist\n{% endcomment %}\n\n{% for order in orders %}\n  {% if order.email != blank %}\n    {% action \"email\" %}\n      {\n        \"to\": {{ order.email | json }},\n        \"subject\": {{ options.email_subject__required | strip | json }},\n        \"body\": {{ options.email_body__multiline_required | strip | newline_to_br | json }},\n        \"reply_to\": {{ shop.customer_email | json }},\n        \"from_display_name\": {{ shop.name | json }},\n        \"attachments\": {\n          {{ options.pdf_attachment_filename__required | json }}: {\n            \"pdf\": {\n              \"html\": {{ options.pdf_html_template__code_multiline_required | json }}\n            }\n          }\n        }\n      }\n    {% endaction %}\n  {% endif %}\n{% endfor %}\n",
+  "subscriptions": [
+    "mechanic/user/orders",
+    "mechanic/user/order"
+  ],
+  "subscriptions_template": "mechanic/user/orders\nmechanic/user/order",
+  "tags": [
+    "Admin Link",
+    "Bulk Action Link",
+    "Email",
+    "PDF"
+  ]
+}
