@@ -1,0 +1,174 @@
+{% assign metafield_namespace_and_key = options.metafield_namespace_and_key__required %}
+{% assign metafield_value_to_match = options.metafield_value_to_match__required %}
+{% assign delivery_profile_id = options.delivery_profile_id__required_number %}
+
+{% capture query %}
+  query {
+    deliveryProfile(id: {{ "gid://shopify/DeliveryProfile/" | append: delivery_profile_id | json }}) {
+      name
+      id
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% assign delivery_profile = result.data.deliveryProfile %}
+
+{% unless delivery_profile or event.preview %}
+  {% error "Delivery profile not found! Please double-check the profile ID." %}
+  {% break %}
+{% endunless %}
+
+{% if event.topic == "shopify/products/update" %}
+  {% capture query %}
+    query {
+      product(id: {{ product.admin_graphql_api_id | json }}) {
+        variants(first: 100) {
+          nodes {
+            id
+            deliveryProfile {
+              id
+            }
+            metafield(
+              key: {{ metafield_namespace_and_key | json }}
+            ) {
+              value
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% assign variants = result.data.product.variants.nodes %}
+
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% assign cursor = nil %}  
+  {% assign variants = array %}
+  
+  {% for n in (1..200) %}
+    {% capture query %}
+      query {
+        productVariants(
+          first: 250
+          after: {{ cursor | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            deliveryProfile {
+              id
+            }
+            metafield(
+              key: {{ metafield_namespace_and_key | json }}
+            ) {
+              value
+            }
+          }
+        }
+      }
+    {% endcapture %}
+  
+    {% assign result = query | shopify %}
+    
+    {% assign variants
+      = result.data.productVariants.nodes
+      | default: array
+      | concat: variants
+    %}
+  
+    {% if result.data.productVariants.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.productVariants.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+{% if event.preview %}
+  {% capture variants_json %}
+    [
+      {
+        "id": "gid://shopify/ProductVariant/1234567890",
+        "deliveryProfile": {
+          "id": "gid://shopify/DeliveryProfile/1234567890"
+        },
+        "metafield": {
+          "value": {{ metafield_value_to_match | json }}
+        }
+      }
+    ]
+  {% endcapture %}
+
+  {% assign variants = variants_json | parse_json %}
+{% endif %}
+
+{% assign variant_actions_and_ids = array %}
+
+{% for variant in variants %}
+  {% unless variant.deliveryProfile %}
+    {% comment %}
+      -- digital or other type of product that does not require shipping; skip it
+    {% endcomment %}
+    {% continue %}
+  {% endunless%}
+
+  {% if variant.metafield.value == metafield_value_to_match %}
+    {% if variant.deliveryProfile.id != delivery_profile.id %}
+      {% assign variant_action_and_id = hash %}
+      {% assign variant_action_and_id["action"] = "associate" %}
+      {% assign variant_action_and_id["id"] = variant.id %}
+      {% assign variant_actions_and_ids = variant_actions_and_ids | push: variant_action_and_id %}
+    {% endif %}
+
+  {% elsif variant.deliveryProfile.id == delivery_profile.id %}
+    {% assign variant_action_and_id = hash %}
+    {% assign variant_action_and_id["action"] = "dissociate" %}
+    {% assign variant_action_and_id["id"] = variant.id %}
+    {% assign variant_actions_and_ids = variant_actions_and_ids | push: variant_action_and_id %}
+  {% endif %}
+{% endfor %}
+
+{% assign groups_of_variant_actions_and_ids = variant_actions_and_ids | in_groups_of: 250, fill_with: false %}
+
+{% for group_of_variant_actions_and_ids in groups_of_variant_actions_and_ids %}
+  {% assign variant_ids_to_associate
+    = group_of_variant_actions_and_ids
+    | where: "action", "associate"
+    | map: "id"
+  %}
+  {% assign variant_ids_to_dissociate
+    = group_of_variant_actions_and_ids
+    | where: "action", "dissociate"
+    | map: "id"
+  %}
+
+  {% action "shopify" %}
+    mutation {
+      deliveryProfileUpdate(
+        id: {{ delivery_profile.id | json }}
+        profile: {
+          variantsToAssociate: {{ variant_ids_to_associate | json }}
+          variantsToDissociate: {{ variant_ids_to_dissociate | json }}
+        }
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+{% else %}
+  {% log 
+    message: "No variants qualified to be added or removed from the configured delivery profile in this task run.",
+    task_options_for_this_run: task.options
+  %}
+{% endfor %}

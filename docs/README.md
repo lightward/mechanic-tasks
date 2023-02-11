@@ -28,6 +28,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-add the draft order to a new order's attributes](./auto-add-the-draft-order-id-to-an-orders-attributes)
 * [Auto-archive orders after fulfillment](./auto-archive-orders-after-fulfillment)
 * [Auto-associate products with a delivery profile, by product tag](./auto-associate-products-with-a-delivery-profile-by-product-tag)
+* [Auto-associate variants with a delivery profile, by metafield value](./auto-associate-variants-with-a-delivery-profile-by-metafield-value)
 * [Auto-cancel fulfillments when an order is tagged](./auto-cancel-fulfillments-when-an-order-is-tagged)
 * [Auto-cancel orders with too many of a certain SKU](./auto-cancel-orders-with-too-many-of-a-certain-sku)
 * [Auto-capture order payment after x days](./auto-capture-order-payment-after-x-days)
