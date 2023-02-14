@@ -109,7 +109,7 @@
     {% assign product_ids_and_publication_ids[0] = "gid://shopify/Publication/1234567890" %}
   {% endif %}
 
-  {% if options.test_mode__boolean %}
+  {% if options.test_mode__boolean and event.preview == false %}
     {% action "echo" %}
       {
         "message": "Found {{ product_ids_and_publication_ids.size }} publishing actions",
