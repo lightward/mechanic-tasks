@@ -2,7 +2,7 @@
 
 Tags: Bulk, Products, Sales Channel
 
-Does exactly as it says: this task will publish all products to the sales channel(s) of your choice, on demand. Optionally, filter products by a search query, or choose to have this task run every ten minutes, hourly, or daily.
+Does exactly as it says: this task will publish all products to the sales channel(s) of your choice, on demand. Optionally, filter products by a search query, or choose to have this task hourly or daily.
 
 * View in the task library: [tasks.mechanic.dev/add-all-products-to-a-certain-sales-channel](https://tasks.mechanic.dev/add-all-products-to-a-certain-sales-channel)
 * Task JSON, for direct import: [task.json](../../tasks/add-all-products-to-a-certain-sales-channel.json)
@@ -17,7 +17,6 @@ Does exactly as it says: this task will publish all products to the sales channe
   ],
   "only_publish_products_matching_this_query": null,
   "test_mode__boolean": true,
-  "run_every_10_minutes__boolean": null,
   "run_hourly__boolean": null,
   "run_daily__boolean": null
 }
@@ -29,7 +28,7 @@ Does exactly as it says: this task will publish all products to the sales channe
 
 ```liquid
 mechanic/user/trigger
-{% if options.run_every_10_minutes__boolean  %}mechanic/scheduler/10min{% endif %}
+mechanic/shopify/bulk_operation
 {% if options.run_hourly__boolean  %}mechanic/scheduler/hourly{% endif %}
 {% if options.run_daily__boolean  %}mechanic/scheduler/daily{% endif %}
 ```
@@ -38,7 +37,7 @@ mechanic/user/trigger
 
 ## Documentation
 
-Does exactly as it says: this task will publish all products to the sales channel(s) of your choice, on demand. Optionally, filter products by a search query, or choose to have this task run every ten minutes, hourly, or daily.
+Does exactly as it says: this task will publish all products to the sales channel(s) of your choice, on demand. Optionally, filter products by a search query, or choose to have this task hourly or daily.
 
 ## Installing this task
 
