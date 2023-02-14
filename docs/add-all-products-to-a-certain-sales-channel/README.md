@@ -16,7 +16,7 @@ Does exactly as it says: this task will publish all products to the sales channe
     "Online Store"
   ],
   "only_publish_products_matching_this_query": null,
-  "test_mode__boolean": false,
+  "test_mode__boolean": true,
   "run_hourly__boolean": null,
   "run_daily__boolean": null
 }
