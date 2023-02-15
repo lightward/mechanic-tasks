@@ -22,6 +22,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-add a note for new orders having a certain tag](./auto-add-order-note-for-new-tagged-orders)
 * [Auto-add an order note for customers having a certain tag](./auto-add-an-order-note-for-customers-having-a-certain-tag)
 * [Auto-add an order note for returning customers](./auto-add-an-order-note-for-returning-customers)
+* [Auto-add bundle components to orders, post-purchase](./auto-add-bundle-components-to-orders-post-purchase)
 * [Auto-add default custom attributes to new orders](./auto-add-default-custom-attributes-to-new-orders)
 * [Auto-add phone numbers to unfulfilled orders, when the customer is updated](./auto-add-phone-numbers-to-unfulfilled-orders-when-the-customer-is-updated)
 * [Auto-add products to a custom collection when tagged](./auto-add-products-to-a-custom-collection-when-tagged)
