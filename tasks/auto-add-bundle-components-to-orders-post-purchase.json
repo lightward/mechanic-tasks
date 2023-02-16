@@ -1,0 +1,134 @@
+{
+  "docs": "Use this task to automatically add product bundle components to qualifying paid orders, by configuring the task with a bundle parent SKU, unique SKUs for the bundle components, and with quantities needed from each component for each bundle parent unit. The bundle components will be added to the order at a 100% discount, and the order's subtotal will be unaffected.\n\n**Usage:**\n\nThis task is initially confiured with a *\"Manual mode\"* option enabled. This will allow you to try out the order edits on **live** orders by sending them manually via an [admin action link](https://learn.mechanic.dev/core/shopify/admin-action-links). When you are satisfied with the outcomes, then disable this mode to have the task process new, paid orders.\n\n**Task configuration:**\n- *Bundle parent SKU* - The SKU of the variant that must appear on a line item for an order to qualify for the order edit.\n- *Component SKUs and quantities per bundle* - Add **unique** component SKUs on the left-hand side of this option, and use the right-hand side to control how many units of each component SKU is required for each single bundle unit. If your bundle requires one wrench and two sprockets, for example, make sure to add \"1\" and \"2\" on the right-hand side, each number associated with the right component SKU.\n- *Discount message to display on each added componnent* - This appears on the order status page and any follow on Shopify emails that includes a list of line items.\n- *Staff note for the order edit* - Optional field to indicate a reason for the order edit in the order's timeline.\n- *Alert email recipients* - One or more recipients that should get an email from Mechanic if any of the order editing steps fail during a task run.\n\n**IMPORTANT:**\n- If duplicate variants are found with the same component SKU during a task run, it will halt processing and not make any order edits.\n- The bundle parent SKU can occur on multiple line items on an order, due to different line item attributes (e.g. gift messaging). This task will sum the quantites of each qualifying line item and use that as a multiplier when adding the bundle components.\n- This task does **NOT** remove the bundle parent from the order. The bundle parent contains the original discounted price, plus any custom line item attributes that may be important for additional processes or flows.\n- This task does **NOT** check the available inventory of the child components before adding them to the order. \n- This task does **NOT** sync inventory of the bundle parent and the child components. This [alternate task](https://tasks.mechanic.dev/maintain-inventory-for-a-product-bundle) is a better fit for that use case.\n\n_Addendum:_ \n\nBy its nature, this task can also be used as a simple way to add free items to orders when a qualifying item is bought. Typically, a free item task has more nuance around how an order qualifies (e.g. minimum quantities or subtotal, order tags, etc.), but this task can provide a great springboard for that additional customization.\n\nThis task uses [preview events](https://learn.mechanic.dev/core/tasks/previews/events) for each stage of the order edit. If you are interested in seeing the sample preview data, make sure you are viewing the task in Advanced mode.",
+  "halt_action_run_sequence_on_error": false,
+  "name": "Auto-add bundle components to orders, post-purchase",
+  "online_store_javascript": null,
+  "options": {
+    "bundle_parent_sku__required": null,
+    "component_skus_and_quantities_per_bundle__keyval_number_required": null,
+    "discount_message_to_display_on_each_added_component__required": null,
+    "staff_note_for_the_order_edit": "Bundle components auto-added by Mechanic",
+    "alert_email_recipients__array_required": null,
+    "manual_mode__boolean": true
+  },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "preview_event_definitions": [
+    {
+      "description": "Result of orderEditBegin mutation",
+      "event_attributes": {
+        "topic": "mechanic/actions/perform",
+        "data": {
+          "type": "shopify",
+          "meta": {
+            "mutation_type": "orderEditBegin",
+            "component_variants": [
+              {
+                "id": "gid://shopify/ProductVariant/1234567890",
+                "quantity": 1,
+                "legacyResourceId": "1234567890"
+              }
+            ]
+          },
+          "run": {
+            "ok": true,
+            "result": {
+              "data": {
+                "orderEditBegin": {
+                  "calculatedOrder": {
+                    "id": "gid://shopify/CalculatedOrder/1234567890",
+                    "originalOrder": {
+                      "name": "#TEST"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "Result of orderEditAddVariant mutation",
+      "event_attributes": {
+        "topic": "mechanic/actions/perform",
+        "data": {
+          "type": "shopify",
+          "meta": {
+            "mutation_type": "orderEditAddVariant",
+            "calculated_order": {
+              "id": "gid://shopify/CalculatedOrder/1234567890",
+              "originalOrder": {
+                "name": "#TEST"
+              }
+            }
+          },
+          "run": {
+            "ok": true,
+            "result": {
+              "data": {
+                "orderEditAddVariant_1234567890": {
+                  "calculatedLineItem": {
+                    "id": "gid://shopify/CalculatedLineItem/abcd-1234",
+                    "sku": "TEST",
+                    "variant": {
+                      "legacyResourceId": "1234567890"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "Result of orderEditAddLineItemDiscount mutation",
+      "event_attributes": {
+        "topic": "mechanic/actions/perform",
+        "data": {
+          "type": "shopify",
+          "meta": {
+            "mutation_type": "orderEditAddLineItemDiscount",
+            "calculated_order": {
+              "id": "gid://shopify/CalculatedOrder/1234567890",
+              "originalOrder": {
+                "name": "#TEST"
+              }
+            }
+          },
+          "run": {
+            "ok": true,
+            "result": {
+              "data": {
+                "orderEditAddLineItemDiscount_1234567890": {
+                  "calculatedLineItem": {
+                    "id": "gid://shopify/CalculatedLineItem/abcd-1234",
+                    "discountedUnitPriceSet": {
+                      "shopMoney": {
+                        "amount": "0.0"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "script": "{% assign bundle_sku = options.bundle_parent_sku__required %}\n{% assign component_skus_and_quantities = options.component_skus_and_quantities_per_bundle__keyval_number_required %}\n{% assign discount_message = options.discount_message_to_display_on_each_added_component__required %}\n{% assign staff_note = options.staff_note_for_the_order_edit %}\n{% assign alert_email_recipients = options.alert_email_recipients__array_required %}\n\n{% assign component_skus = component_skus_and_quantities | keys %}\n{% assign component_quantities = component_skus_and_quantities | values %}\n\n{% for component_quantity in component_quantities %}\n  {% unless component_quantity > 0 %}\n    {% error \"All component quantities must be greater than zero\" %}\n  {% endunless %}\n{% endfor %}\n\n{% if event.topic == \"shopify/orders/create\" or event.topic == \"shopify/orders/paid\" or event.topic == \"mechanic/user/order\" %}\n  {% if event.topic == \"mechanic/user/order\" %}\n    {% log \"CAUTION: Sending orders manually to this task via the admin link is provided for controlled testing; however, these are edits to live orders. Once you have thoroughly tested this task, uncheck 'Manual mode' so the bundle components can be added when qualifying orders are placed.\" %}\n  {% endif %}\n\n  {% if event.preview %}\n    {% capture order_json %}\n      {\n        \"admin_graphql_api_id\": \"gid://shopify/Order/1234567890\",\n        \"line_items\": [\n          {\n            \"sku\": {{ bundle_sku | json }},\n            \"quantity\": 1\n          }\n        ]\n      }\n    {% endcapture %}\n\n    {% assign order = order_json | parse_json %}\n  {% endif %}\n\n  {% assign bundle_parent_quantity\n    = order.line_items\n    | where: \"sku\", bundle_sku\n    | map: \"quantity\"\n    | sum\n  %}\n\n  {% unless bundle_parent_quantity > 0 %}\n    {% log %}\n      {\n        \"message\": \"No SKUs on this order match the configured bundle SKU.\",\n        \"bundle_sku\": {{ bundle_sku | json }},\n        \"order_skus\": {{ order.line_items | map: \"sku\" | json }}\n      }\n    {% endlog %}\n    {% break %}\n  {% endunless %}\n\n  {% assign component_variants = array %}\n\n  {% for component_sku in component_skus %}\n    {% capture query %}\n      query {\n        productVariants(\n          first: 2\n          query: {{ component_sku | json | prepend: \"sku:\" | json }}\n        ) {\n          nodes {\n            id\n            legacyResourceId\n            sku\n          }\n        }\n      }\n    {% endcapture %}\n\n    {% assign result = query | shopify %}\n\n    {% if event.preview %}\n      {% capture result_json %}\n        {\n          \"data\": {\n            \"productVariants\": {\n              \"nodes\": [\n                {\n                  \"id\": \"gid://shopify/ProductVariant/1234567890\",\n                  \"legacyResourceId\": \"1234567890\",\n                  \"sku\": {{ component_sku | json }}\n                }\n              ]\n            }\n          }\n        }\n      {% endcapture %}\n\n      {% assign result = result_json | parse_json %}\n    {% endif %}\n\n    {% assign variants = result.data.productVariants.nodes %}\n\n    {% if variants == blank %}\n      {% error\n        message: \"Component SKU does not match a variant in this shop.\",\n        component_sku: component_sku\n      %}\n\n    {% elsif variants.size > 1 %}\n      {% error\n        message: \"Component SKU matches multiple variants in this shop.\",\n        component_sku: component_sku,\n        variants: variants\n      %}\n\n    {% else %}\n      {% assign component_variant = hash %}\n      {% assign component_variant[\"id\"] = variants.first.id %}\n      {% assign component_variant[\"legacyResourceId\"] = variants.first.legacyResourceId %}\n      {% assign component_variant[\"quantity\"] = bundle_parent_quantity | times: component_skus_and_quantities[component_sku] %}\n      {% assign component_variants = component_variants | push: component_variant %}\n    {% endif %}\n  {% endfor %}\n\n  {% comment %}\n    -- begin the order edit and pass the component variants as meta information\n  {% endcomment %}\n\n  {% capture order_edit_begin_query %}\n    mutation {\n      orderEditBegin(\n        id: {{ order.admin_graphql_api_id | json }}\n      ) {\n        calculatedOrder {\n          id\n          originalOrder {\n            name\n          }\n        }\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endcapture %}\n\n  {% action %}\n    {\n      \"type\": \"shopify\",\n      \"options\": {\n        \"query\": {{ order_edit_begin_query | json }}\n      },\n      \"meta\": {\n        \"mutation_type\": \"orderEditBegin\",\n        \"component_variants\": {{ component_variants | json }}\n      }\n    }\n  {% endaction %}\n\n{% elsif event.topic == \"mechanic/actions/perform\" %}\n  {% comment %}\n    -- NOTE: task preview events have been configured for results of orderEditBegin, orderEditAddVariant, and orderEditAddLineItemDiscount\n  {% endcomment %}\n\n  {% unless action.run.ok %}\n    {% comment %}\n      -- send an alert email for any errors on action runs\n    {% endcomment %}\n\n    {% capture alert_email_subject -%}\n      ALERT - Error occured while running the Mechanic task: {{ task.name }}\n    {%- endcapture %}\n\n    {% capture alert_email_body -%}\n      Review the <a href=\"https://{{ shop.myshopify_domain }}/admin/apps/mechanic/events/{{ event.id }}\">task run log</a> to determine next steps.\n\n      <strong>Error summary (if any):</strong>\n      {{ action.run.error }}\n    {%- endcapture %}\n\n    {% action \"email\" %}\n      {\n        \"to\": {{ alert_email_recipients | json }},\n        \"subject\": {{ alert_email_subject | json }},\n        \"body\": {{ alert_email_body | newline_to_br | json }},\n        \"reply_to\": {{ shop.customer_email | json }},\n        \"from_display_name\": {{ shop.name | json }}\n      }\n    {% endaction %}\n\n    {% break %}\n  {% endunless %}\n\n  {% if action.meta.mutation_type == \"orderEditBegin\" %}\n    {% comment %}\n      -- add all of the component variants to the order\n    {% endcomment %}\n\n    {% assign calculated_order = action.run.result.data.orderEditBegin.calculatedOrder %}\n\n    {% assign add_variant_mutations = array %}\n\n    {% for component_variant in action.meta.component_variants %}\n      {% capture add_variant_mutation %}\n        orderEditAddVariant_{{ component_variant.legacyResourceId }}: orderEditAddVariant(\n          id: {{ calculated_order.id | json }}\n          variantId: {{ component_variant.id | json }}\n          quantity: {{ component_variant.quantity }}\n          allowDuplicates: true\n        ) {\n          calculatedLineItem {\n            id\n            sku\n            variant {\n              legacyResourceId\n            }\n          }\n          userErrors {\n            field\n            message\n          }\n        }\n      {% endcapture %}\n\n      {% assign add_variant_mutations = add_variant_mutations | push: add_variant_mutation %}\n    {% endfor %}\n\n    {% capture add_variant_query %}\n      mutation {\n        {{ add_variant_mutations | join: newline }}\n      }\n    {% endcapture %}\n\n    {% action %}\n      {\n        \"type\": \"shopify\",\n        \"options\": {\n          \"query\": {{ add_variant_query | json }}\n        },\n        \"meta\": {\n          \"mutation_type\": \"orderEditAddVariant\",\n          \"calculated_order\": {{ calculated_order | json }}\n        }\n      }\n    {% endaction %}\n\n  {% elsif action.meta.mutation_type == \"orderEditAddVariant\" %}\n    {% comment %}\n      -- add 100% line item discounts after adding component variants\n    {% endcomment %}\n\n    {% assign calculated_order = action.meta.calculated_order %}\n\n    {% assign add_line_item_discount_mutations = array %}\n\n    {% for add_variant_result in action.run.result.data %}\n      {% assign added_line_item = add_variant_result[1].calculatedLineItem %}\n\n      {% capture add_line_item_discount_mutation %}\n        orderEditAddLineItemDiscount_{{ added_line_item.variant.legacyResourceId }}: orderEditAddLineItemDiscount(\n          id: {{ calculated_order.id | json }}\n          lineItemId: {{ added_line_item.id | json }}\n          discount: {\n            description: {{ discount_message | json }}\n            percentValue: 100\n          }\n        ) {\n          calculatedLineItem {\n            id\n            discountedUnitPriceSet {\n              shopMoney {\n                amount\n              }\n            }\n          }\n          userErrors {\n            field\n            message\n          }\n        }\n      {% endcapture %}\n\n      {% assign add_line_item_discount_mutations = add_line_item_discount_mutations | push: add_line_item_discount_mutation %}\n    {% endfor %}\n\n    {% capture add_line_item_discount_query %}\n      mutation {\n        {{ add_line_item_discount_mutations | join: newline }}\n      }\n    {% endcapture %}\n\n    {% action %}\n      {\n        \"type\": \"shopify\",\n        \"options\": {\n          \"query\": {{ add_line_item_discount_query | json }}\n        },\n        \"meta\": {\n          \"mutation_type\": \"orderEditAddLineItemDiscount\",\n          \"calculated_order\": {{ calculated_order | json }}\n        }\n      }\n    {% endaction %}\n\n  {% elsif action.meta.mutation_type == \"orderEditAddLineItemDiscount\" %}\n    {% comment %}\n      -- commit the order edit after adding line item discounts\n    {% endcomment %}\n\n    {% assign calculated_order = action.meta.calculated_order %}\n\n    {% action \"shopify\" %}\n      mutation {\n        orderEditCommit(\n          id: {{ calculated_order.id | json }}\n          notifyCustomer: false\n          staffNote: {{ staff_note | json }}\n        ) {\n          order {\n            id\n          }\n          userErrors {\n            field\n            message\n          }\n        }\n      }\n    {% endaction %}\n  {% endif %}\n{% endif %}",
+  "subscriptions": [
+    "mechanic/user/order",
+    "mechanic/actions/perform"
+  ],
+  "subscriptions_template": "{% if options.manual_mode__boolean %}\n  mechanic/user/order\n{% else %}\n  shopify/orders/paid\n{% endif %}\nmechanic/actions/perform",
+  "tags": [
+    "Admin Link",
+    "Bundle",
+    "Order Editing",
+    "Orders",
+    "SKU"
+  ]
+}
