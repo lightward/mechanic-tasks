@@ -2,7 +2,7 @@
 
 Tags: Orders, Payment, Risk
 
-This task runs immediately after an order is created, and captures an authorized transaction if one is present. Choose which risk levels to capture for, and optionally choose to filter by order tag. You may also choose to only capture funds for line items that do not require shipping.
+This task runs immediately after an order is created, and captures any authorized transactions. Choose which risk levels to capture for, and optionally choose to filter by order tag.
 
 * View in the task library: [tasks.mechanic.dev/auto-capture-payments-when-an-order-is-created](https://tasks.mechanic.dev/auto-capture-payments-when-an-order-is-created)
 * Task JSON, for direct import: [task.json](../../tasks/auto-capture-payments-when-an-order-is-created.json)
@@ -32,9 +32,9 @@ shopify/orders/create+{{ options.minutes_to_wait_before_capturing__number | at_l
 
 ## Documentation
 
-This task runs immediately after an order is created, and captures an authorized transaction if one is present. Choose which risk levels to capture for, and optionally choose to filter by order tag. You may also choose to only capture funds for line items that do not require shipping.
+This task runs immediately after an order is created, and captures any authorized transactions. Choose which risk levels to capture for, and optionally choose to filter by order tag.
 
-This task runs immediately after an order is created. If you are selectively capturing by risk level, and if you have additional apps informing an order's risk level, increase "Number of minutes to wait before capturing" to make sure those apps have time to contribute their data.
+If you have additional apps or tasks informing an order's risk level, increase the "Minutes to wait before capturing" to make sure they have time to contribute their data.
 
 ## Installing this task
 

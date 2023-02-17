@@ -1,5 +1,5 @@
 {
-  "docs": "This task runs immediately after an order is created, and captures an authorized transaction if one is present. Choose which risk levels to capture for, and optionally choose to filter by order tag. You may also choose to only capture funds for line items that do not require shipping.\n\nThis task runs immediately after an order is created. If you are selectively capturing by risk level, and if you have additional apps informing an order's risk level, increase \"Number of minutes to wait before capturing\" to make sure those apps have time to contribute their data.",
+  "docs": "This task runs immediately after an order is created, and captures any authorized transactions. Choose which risk levels to capture for, and optionally choose to filter by order tag.\n\nIf you have additional apps or tasks informing an order's risk level, increase the \"Minutes to wait before capturing\" to make sure they have time to contribute their data.",
   "halt_action_run_sequence_on_error": false,
   "name": "Auto-capture payments when an order is created",
   "online_store_javascript": null,
