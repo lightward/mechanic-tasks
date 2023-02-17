@@ -1,6 +1,6 @@
 # Auto-capture payments when an order is created
 
-Tags: Orders, Payment
+Tags: Orders, Payment, Risk
 
 This task runs immediately after an order is created, and captures an authorized transaction if one is present. Choose which risk levels to capture for, and optionally choose to filter by order tag. You may also choose to only capture funds for line items that do not require shipping.
 
@@ -12,12 +12,11 @@ This task runs immediately after an order is created, and captures an authorized
 
 ```json
 {
-  "number_of_minutes_to_wait_before_capturing__number": null,
-  "capture_orders_with_a_high_risk_level__boolean": true,
-  "capture_orders_with_a_medium_risk_level__boolean": true,
-  "capture_orders_with_a_low_risk_level__boolean": true,
-  "required_order_tag": null,
-  "only_capture_for_line_items_that_do_not_require_shipping__boolean": false
+  "minutes_to_wait_before_capturing__number": null,
+  "filter_orders_by_this_tag": null,
+  "capture_orders_with_a_high_risk_level__boolean": false,
+  "capture_orders_with_a_medium_risk_level__boolean": false,
+  "capture_orders_with_a_low_risk_level__boolean": true
 }
 ```
 
@@ -26,9 +25,7 @@ This task runs immediately after an order is created, and captures an authorized
 ## Subscriptions
 
 ```liquid
-{% assign n = options.number_of_minutes_to_wait_before_capturing__number %}
-
-shopify/orders/create{% if n != blank and n > 0 %}+{{ n }}.minutes{% endif %}
+shopify/orders/create+{{ options.minutes_to_wait_before_capturing__number | at_least: 0 }}.minutes
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
