@@ -1,36 +1,23 @@
-{% assign n = options.number_of_minutes_to_wait_before_capturing__number %}
-{% if n != blank and n <= 0 %}
-  {"error": "'Number of minutes to wait before capturing' must be positive! :)"}
-{% endif %}
+{% assign min = options.minutes_to_wait_before_capturing__number | at_least: 0 %}
+{% assign filter_orders_by_this_tag = options.filter_orders_by_this_tag %}
+{% assign capture_orders_with_a_high_risk_level = options.capture_orders_with_a_high_risk_level__boolean %}
+{% assign capture_orders_with_a_medium_risk_level = options.capture_orders_with_a_medium_risk_level__boolean %}
+{% assign capture_orders_with_a_low_risk_level = options.capture_orders_with_a_low_risk_level__boolean %}
 
 {% capture query %}
   query {
     order(id: {{ order.admin_graphql_api_id | json }}) {
       id
+      name
+      displayFinancialStatus
       tags
       riskLevel
-      transactions(first: 1, capturable: true) {
+      transactions(capturable: true) {
         id
+        kind
         totalUnsettledSet {
-          presentmentMoney {
+          shopMoney {
             amount
-            currencyCode
-          }
-        }
-      }
-      lineItems(first: 250) {
-        pageInfo {
-          hasNextPage
-        }
-        edges {
-          node {
-            requiresShipping
-            discountedTotalSet {
-              presentmentMoney {
-                amount
-                currencyCode
-              }
-            }
           }
         }
       }
@@ -41,62 +28,35 @@
 {% assign result = query | shopify %}
 
 {% if event.preview %}
-  {% if options.capture_orders_with_a_high_risk_level__boolean %}
+  {% if capture_orders_with_a_high_risk_level %}
     {% assign preview_risk_level = "HIGH" %}
-  {% elsif options.capture_orders_with_a_medium_risk_level__boolean %}
+  {% elsif capture_orders_with_a_medium_risk_level %}
     {% assign preview_risk_level = "MEDIUM" %}
-  {% elsif options.capture_orders_with_a_low_risk_level__boolean %}
+  {% elsif capture_orders_with_a_low_risk_level %}
     {% assign preview_risk_level = "LOW" %}
   {% endif %}
-  
+
   {% capture result_json %}
     {
       "data": {
         "order": {
           "id": "gid://shopify/Order/1234567890",
-          "tags": [{{ options.required_order_tag | json }}],
+          "displayFinancialStatus": "AUTHORIZED",
+          "tags": [{{ filter_orders_by_this_tag | json }}],
           "capturable": true,
           "riskLevel": {{ preview_risk_level | json }},
           "transactions": [
             {
               "id": "gid://shopify/OrderTransaction/1234567890",
+              "kind": "AUTHORIZATION",
+              "status": "SUCCESS",
               "totalUnsettledSet": {
-                "presentmentMoney": {
-                  "amount": "200.0",
-                  "currencyCode": "CAD"
+                "shopMoney": {
+                  "amount": "12.34"
                 }
               }
             }
-          ],
-          "lineItems": {
-            "pageInfo": {
-              "hasNextPage": false
-            },
-            "edges": [
-              {
-                "node": {
-                  "requiresShipping": true,
-                  "discountedTotalSet": {
-                    "presentmentMoney": {
-                      "amount": "10.0",
-                      "currencyCode": "CAD"
-                    }
-                  }
-                }
-              },
-              {
-                "node": {
-                  "requiresShipping": false,
-                  "discountedTotalSet": {
-                    "presentmentMoney": {
-                      "amount": "100.0",
-                      "currencyCode": "CAD"
-                    }
-                  }
-                }
-              }
-            ]
-          }
+          ]
         }
       }
     }
@@ -105,72 +65,61 @@
   {% assign result = result_json | parse_json %}
 {% endif %}
 
-{% assign orderNode = result.data.order %}
-{% assign capturableTransactionNode = orderNode.transactions.first %}
+{% assign order = result.data.order %}
 
-{% log order: orderNode %}
+{% unless order.displayFinancialStatus == "AUTHORIZED" or order.displayFinancialStatus == "PARTIALLY_PAID" %}
+  {% break %}
+{% endunless %}
 
 {% assign do_capture = false %}
 
-{% if capturableTransactionNode %}
-  {% if orderNode.riskLevel == "HIGH" and options.capture_orders_with_a_high_risk_level__boolean %}
-    {% assign do_capture = true %}
-  {% elsif orderNode.riskLevel == "MEDIUM" and options.capture_orders_with_a_medium_risk_level__boolean %}
-    {% assign do_capture = true %}
-  {% elsif orderNode.riskLevel == "LOW" and options.capture_orders_with_a_low_risk_level__boolean %}
-    {% assign do_capture = true %}
-  {% endif %}
+{% if order.riskLevel == "HIGH" and capture_orders_with_a_high_risk_level %}
+  {% assign do_capture = true %}
+{% elsif order.riskLevel == "MEDIUM" and capture_orders_with_a_medium_risk_level %}
+  {% assign do_capture = true %}
+{% elsif order.riskLevel == "LOW" and capture_orders_with_a_low_risk_level %}
+  {% assign do_capture = true %}
+{% else %}
+  {% error "Choose at least one risk level to capture for!" %}
 {% endif %}
 
-{% if options.required_order_tag != blank %}
-  {% unless orderNode.tags contains options.required_order_tag %}
+{% if filter_orders_by_this_tag != blank %}
+  {% unless order.tags contains filter_orders_by_this_tag %}
     {% assign do_capture = false %}
   {% endunless %}
 {% endif %}
 
 {% if do_capture %}
-  {% assign maximum_amount_to_capture = capturableTransactionNode.totalUnsettledSet.presentmentMoney.amount | times: 1 %}
+  {% assign authorized_transactions = order.transactions | where: "kind", "AUTHORIZATION" %}
 
-  {% if options.only_capture_for_line_items_that_do_not_require_shipping__boolean %}
-    {% assign lineItemNodes_noShipping = orderNode.lineItems.edges | map: "node" | where: "requiresShipping", false %}
+  {% for transaction in authorized_transactions %}
+    {% assign unsettled_amount = transaction.totalUnsettledSet.shopMoney.amount | times: 1.0 %}
 
-    {% if lineItemNodes_noShipping.size == orderNode.lineItems.edges.size and orderNode.lineItems.pageInfo.hasNextPage == false %}
-      {% comment %}
-        Automatically include taxes/etc if every line item qualifies
-      {% endcomment %}
-      {% assign amount_to_capture = maximum_amount_to_capture %}
-    {% else %}
-      {% assign amount_to_capture = 0 %}
-      {% for lineItemNode in lineItemNodes_noShipping %}
-        {% assign amount_to_capture = amount_to_capture | plus: lineItemNode.discountedTotalSet.presentmentMoney.amount %}
-      {% endfor %}
-
-      {% if amount_to_capture > maximum_amount_to_capture %}
-        {% assign amount_to_capture = maximum_amount_to_capture %}
-      {% endif %}
+    {% if unsettled_amount > 0 %}
+      {% action "shopify" %}
+        mutation {
+          orderCapture(
+            input: {
+              id: {{ order.id | json }}
+              parentTransactionId: {{ transaction.id | json }}
+              amount: {{ unsettled_amount | json }}
+            }
+          ) {
+            transaction {
+              id
+              status
+              parentTransaction {
+                id
+                kind
+              }
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
     {% endif %}
-  {% else %}
-    {% assign amount_to_capture = maximum_amount_to_capture %}
-  {% endif %}
-
-  {% action "shopify" %}
-    mutation {
-      orderCapture(
-        input: {
-          id: {{ orderNode.id | json }}
-          parentTransactionId: {{ capturableTransactionNode.id | json }}
-          amount: {{ amount_to_capture | json }}
-          currency: {{ capturableTransactionNode.totalUnsettledSet.presentmentMoney.currencyCode }}
-        }
-      ) {
-        transaction {
-          status
-        }
-        userErrors {
-          field
-          message
-        }
-      }
-    }
-  {% endaction %}
+  {% endfor %}
 {% endif %}
