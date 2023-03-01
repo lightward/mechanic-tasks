@@ -4,17 +4,19 @@
   "name": "Send account invites to all customers in bulk",
   "online_store_javascript": null,
   "options": {
-    "only_invite_customers_with_this_tag": null,
-    "custom_subject": null,
-    "custom_message__multiline": null
+    "only_invite_customers_with_this_tag": "",
+    "custom_subject": "",
+    "custom_message__multiline": ""
   },
   "order_status_javascript": null,
   "perform_action_runs_in_sequence": false,
-  "script": "{% assign customers = shop.customers %}\n\n{% if options.only_invite_customers_with_this_tag != blank %}\n  {% assign query = \"tag:\" | append: options.only_invite_customers_with_this_tag %}\n  {% assign customers = shop.customers.search[query] %}\n{% endif %}\n\n{% if event.preview %}\n  {% assign customers = array %}\n  {% assign customers[0] = hash %}\n  {% assign customers[0][\"id\"] = 12345 %}\n{% endif %}\n\n{% for customer in customers %}\n  {% if customer.state == \"enabled\" %}\n    {% continue %}\n  {% endif %}\n\n  {% action \"shopify\" %}\n    [\n      \"post\",\n      \"/admin/customers/{{ customer.id }}/send_invite.json\",\n      {\n        \"customer_invite\": {\n          \"subject\": {{ options.custom_subject | json }},\n          \"custom_message\": {{ options.custom_message__multiline | json }}\n        }\n      }\n    ]\n  {% endaction %}\n{% endfor %}",
+  "preview_event_definitions": [],
+  "script": "{% if event.topic == \"mechanic/user/trigger\" %}\n  {% assign query = \"(-state:ENABLED AND -state:INVITED)\" %}\n  {% if options.only_invite_customers_with_this_tag %}\n    {% assign query = query | append: \" AND \" | append: \"tag:\" | append: options.only_invite_customers_with_this_tag %}\n  {% endif %}\n\n  {% capture bulk_operation_query %}\n    query {\n      customers (query: {{ query | json }} ) {\n        edges {\n          node {\n            __typename\n            legacyResourceId\n          }\n        }\n      }\n    }\n  {% endcapture %}\n\n  {% action \"shopify\" %}\n    mutation {\n      bulkOperationRunQuery(\n        query: {{ bulk_operation_query | json }}\n      )\t{\n        bulkOperation {\n          id\n          status\n        }\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n\n{% elsif event.topic == \"mechanic/shopify/bulk_operation\" %}\n  {% assign customers = bulkOperation.objects | where: \"__typename\", \"Customer\" %}\n  {% if event.preview %}\n    {% assign customers = array %}\n    {% assign customers[0] = hash %}\n    {% assign customers[0][\"legacyResourceId\"] = 12345 %}\n  {% endif %}  \n  {% for customer in customers %}\n\n    {% action \"shopify\" %}\n      [\n        \"post\",\n        \"/admin/customers/{{ customer.legacyResourceId }}/send_invite.json\",\n        {\n          \"customer_invite\": {\n            \"subject\": {{ options.custom_subject | json }},\n            \"custom_message\": {{ options.custom_message__multiline | json }}\n          }\n        }\n      ]\n    {% endaction %}\n  {% endfor %}\n{% endif %}\n\n\n",
   "subscriptions": [
-    "mechanic/user/trigger"
+    "mechanic/user/trigger",
+    "mechanic/shopify/bulk_operation"
   ],
-  "subscriptions_template": "mechanic/user/trigger",
+  "subscriptions_template": "mechanic/user/trigger\nmechanic/shopify/bulk_operation",
   "tags": [
     "Account",
     "Bulk",
