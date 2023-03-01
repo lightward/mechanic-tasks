@@ -1,5 +1,5 @@
 {% if event.topic == "mechanic/user/trigger" %}
-  {% assign query = "(-state:ENABLED AND -state:INVITED)" %}
+  {% assign query = "state:DISABLED" %}
   {% if options.only_invite_customers_with_this_tag %}
     {% assign query = query | append: " AND " | append: "tag:" | append: options.only_invite_customers_with_this_tag %}
   {% endif %}
