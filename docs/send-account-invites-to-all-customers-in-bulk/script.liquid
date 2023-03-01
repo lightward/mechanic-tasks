@@ -1,31 +1,59 @@
-{% assign customers = shop.customers %}
-
-{% if options.only_invite_customers_with_this_tag != blank %}
-  {% assign query = "tag:" | append: options.only_invite_customers_with_this_tag %}
-  {% assign customers = shop.customers.search[query] %}
-{% endif %}
-
-{% if event.preview %}
-  {% assign customers = array %}
-  {% assign customers[0] = hash %}
-  {% assign customers[0]["id"] = 12345 %}
-{% endif %}
-
-{% for customer in customers %}
-  {% if customer.state == "enabled" %}
-    {% continue %}
+{% if event.topic == "mechanic/user/trigger" %}
+  {% assign query = "state:DISABLED" %}
+  {% if options.only_invite_customers_with_this_tag %}
+    {% assign query = query | append: " AND " | append: "tag:" | append: options.only_invite_customers_with_this_tag %}
   {% endif %}
 
-  {% action "shopify" %}
-    [
-      "post",
-      "/admin/customers/{{ customer.id }}/send_invite.json",
-      {
-        "customer_invite": {
-          "subject": {{ options.custom_subject | json }},
-          "custom_message": {{ options.custom_message__multiline | json }}
+  {% capture bulk_operation_query %}
+    query {
+      customers (query: {{ query | json }} ) {
+        edges {
+          node {
+            __typename
+            legacyResourceId
+          }
         }
       }
-    ]
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      )	{
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
   {% endaction %}
-{% endfor %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% assign customers = bulkOperation.objects | where: "__typename", "Customer" %}
+  {% if event.preview %}
+    {% assign customers = array %}
+    {% assign customers[0] = hash %}
+    {% assign customers[0]["legacyResourceId"] = 12345 %}
+  {% endif %}  
+  {% for customer in customers %}
+
+    {% action "shopify" %}
+      [
+        "post",
+        "/admin/customers/{{ customer.legacyResourceId }}/send_invite.json",
+        {
+          "customer_invite": {
+            "subject": {{ options.custom_subject | json }},
+            "custom_message": {{ options.custom_message__multiline | json }}
+          }
+        }
+      ]
+    {% endaction %}
+  {% endfor %}
+{% endif %}

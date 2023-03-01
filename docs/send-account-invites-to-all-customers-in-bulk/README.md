@@ -12,9 +12,9 @@ Use this task to send out account invitations to all the customers you already h
 
 ```json
 {
-  "only_invite_customers_with_this_tag": null,
-  "custom_subject": null,
-  "custom_message__multiline": null
+  "only_invite_customers_with_this_tag": "",
+  "custom_subject": "",
+  "custom_message__multiline": ""
 }
 ```
 
@@ -24,6 +24,7 @@ Use this task to send out account invitations to all the customers you already h
 
 ```liquid
 mechanic/user/trigger
+mechanic/shopify/bulk_operation
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)

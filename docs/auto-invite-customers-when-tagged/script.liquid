@@ -28,9 +28,6 @@
   {% if customer_qualifies %}
     {% assign customers[customers.size] = customer %}
   {% endif %}
-{% elsif event.topic == "mechanic/user/trigger" %}
-  {% assign query = "tag:" | append: approval_tag | append: " state:disabled" %}
-  {% assign customers = shop.customers.search[query] %}
 {% endif %}
 
 {% for customer in customers %}

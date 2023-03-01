@@ -2,7 +2,7 @@
 
 Tags: Email, Invite, Tag, Watch
 
-This task watches for updates to customers, and sends invites for any customer who has the tag you choose, who hasn't previously been invited. This task also supports sending invitations in bulk, to all tagged customers who haven't previously been invited.
+This task watches for updates to customers, and sends invites for any customer who has the tag you choose, who hasn't previously been invited. If you'd like to run this task in bulk, you can find that version of the task [here](https://tasks.mechanic.dev/send-account-invites-to-all-customers-in-bulk).
 
 * View in the task library: [tasks.mechanic.dev/auto-invite-customers-when-tagged](https://tasks.mechanic.dev/auto-invite-customers-when-tagged)
 * Task JSON, for direct import: [task.json](../../tasks/auto-invite-customers-when-tagged.json)
@@ -26,18 +26,15 @@ This task watches for updates to customers, and sends invites for any customer w
 ```liquid
 shopify/customers/create
 shopify/customers/update
-mechanic/user/trigger
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
-This task watches for updates to customers, and sends invites for any customer who has the tag you choose, who hasn't previously been invited. This task also supports sending invitations in bulk, to all tagged customers who haven't previously been invited.
+This task watches for updates to customers, and sends invites for any customer who has the tag you choose, who hasn't previously been invited. If you'd like to run this task in bulk, you can find that version of the task [here](https://tasks.mechanic.dev/send-account-invites-to-all-customers-in-bulk).
 
 This task watches for updates to customers, and sends invites for any customer who has the tag you choose, who hasn't previously been invited.
-
-Use the "Run task" button to send invites to all of your previously-uninvited customers who have the configured tag.
 
 Invitation emails are sent using your store's account invite notification email template. [Learn how to update this template.](https://help.shopify.com/en/manual/sell-online/notifications/edit-template)
 
