@@ -1,88 +1,195 @@
-{% if event.preview %}
-  {% capture order_json %}
-    {
-      "id": 1234567890,
-      "fulfillments": [
-        {
-          "id": 23456778901,
-          "status": "open"
+{% assign shipment_tags_and_status = options.shipment_tags_and_status__keyval_required %}
+{% assign attempt_to_fulfill_the_order_before_setting_shipment_status = options.attempt_to_fulfill_the_order_before_setting_shipment_status__boolean %}
+{% assign send_shipment_notifications_to_customer = options.send_shipment_notifications_to_customer__boolean %}
+
+{% capture query %}
+  query {
+    order(id: {{ order.admin_graphql_api_id | json }}) {
+      id
+      name
+      tags
+      displayFulfillmentStatus
+      fulfillments(first: 10) {
+        id
+        status
+        displayStatus
+        requiresShipping
+        location {
+          name
         }
-      ],
-      "tags": {{ options.shipment_tags_and_status__keyval_required | keys | first | json }}
+      }
+      fulfillmentOrders(
+        first: 20
+        query: "status:open"
+      ) {
+        nodes {
+          id
+          assignedLocation {
+            name
+          }
+          deliveryMethod {
+            methodType
+          }
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "order": {
+          "id": "gid://shopify/Order/1234567890",
+          "name": "#SAMPLE",
+          "tags": {{ shipment_tags_and_status.first.first | json }},
+          "displayFulfillmentStatus": "FULFILLED",
+          "fulfillments": [
+            {
+              "id": "gid://shopify/Fulfillment/1234567890",
+              "status": "SUCCESS",
+              "displayStatus": null,
+              "requiresShipping": true,
+              "location": {
+                "name": "Warehouse"
+              }
+            }
+          ],
+          "fulfillmentOrders": {
+            "nodes": [
+              {
+                "id": "gid://shopify/FulfillmentOrder/1234567890",
+                "assignedLocation": {
+                  "name": "Warehouse"
+                },
+                "deliveryMethod": {
+                  "methodType": "SHIPPING"
+                }
+              }
+            ]
+          }
+        }
+      }
     }
   {% endcapture %}
 
-  {% assign order = order_json | parse_json %}
+  {% assign result = result_json | parse_json %}
 {% endif %}
 
-{% assign order_tags = order.tags | split: ", " %}
+{% assign order = result.data.order %}
+{% assign fulfillment_orders = order.fulfillmentOrders.nodes %}
 
-{% if order.fulfillments == blank and options.attempt_to_fulfill_the_order_before_tagging__boolean %}
-  {% for order_tag in order_tags %}
-    {% if options.shipment_tags_and_status__keyval_required[order_tag] != blank %}
+{% for order_tag in order.tags %}
+  {% if shipment_tags_and_status[order_tag] != blank %}
+    {% assign shipment_status_to_set = shipment_tags_and_status[order_tag] %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% unless shipment_status_to_set %}
+  {% log "No shipment status tags found on this order; skipping" %}
+  {% break %}
+{% endunless %}
+
+{% if attempt_to_fulfill_the_order_before_setting_shipment_status %}
+  {% if fulfillment_orders == blank %}
+    {% log "This order has no open fulfillment orders to fulfill; proceeding to check/set shipment status." %}
+
+  {% else %}
+    {% comment %}
+      Note: fulfillments cannot be created with fulfillment orders at different locations or delivery types; so separate them out
+    {% endcomment %}
+
+    {% assign fulfillment_order_ids_by_location_and_type = hash %}
+
+    {% for fulfillment_order in fulfillment_orders %}
+      {% assign location_and_type
+        = fulfillment_order.assignedLocation.name
+        | append: "|"
+        | append: fulfillment_order.deliveryMethod.methodType
+      %}
+      {% assign fulfillment_order_ids_by_location_and_type[location_and_type]
+        = fulfillment_order_ids_by_location_and_type[location_and_type]
+        | default: array
+        | push: fulfillment_order.id
+      %}
+    {% endfor %}
+
+    {% for keyval in fulfillment_order_ids_by_location_and_type %}
       {% action "shopify" %}
-        [
-          "post",
-          "/admin/api/{{ task.shopify_api_version }}/orders/{{ order.id }}/fulfillments.json",
-          {
-            "fulfillment": {
-              "location_id": {{ shop.primary_location_id | json }},
-              "tracking_number": null,
-              "notify_customer": {{ options.send_shipment_notifications_to_customer__boolean }}
+        mutation {
+          fulfillmentCreateV2(
+            fulfillment: {
+              lineItemsByFulfillmentOrder: [
+                {% for fulfillment_order_id in keyval[1] %}
+                  { fulfillmentOrderId: {{ fulfillment_order_id | json }} }
+                {% endfor %}
+              ]
+              notifyCustomer: {{ send_shipment_notifications_to_customer | json }}
+            }
+          ) {
+            fulfillment {
+              id
+              status
+            }
+            userErrors {
+              field
+              message
             }
           }
-        ]
+        }
       {% endaction %}
-
-      {% break %}
-    {% endif %}
-  {% endfor %}
-
-  {% log "No shipment status tags found on this order; skipping" %}
-{% else %}
-  {% assign open_fulfillments = array %}
-
-  {% for fulfillment in order.fulfillments %}
-    {% if fulfillment.status != "cancelled" %}
-      {% assign open_fulfillments[open_fulfillments.size] = fulfillment %}
-    {% endif %}
-  {% endfor %}
-
-  {% if open_fulfillments.size == 0 %}
-    {% log "Order has no open fulfillments - this task can only manage orders that have 1." %}
-  {% elsif open_fulfillments.size > 1 %}
-    {% log %}
-      "Order has {{ open_fulfillments.size }} open fulfillments - this task can only manage orders with 1."
-    {% endlog %}
-  {% else %}
-    {% assign fulfillment = open_fulfillments.first %}
-
-    {% for order_tag in order_tags %}
-      {% if options.shipment_tags_and_status__keyval_required[order_tag] == blank %}
-        {% continue %}
-      {% endif %}
-
-      {% assign desired_status = options.shipment_tags_and_status__keyval_required[order_tag] %}
-
-      {% if fulfillment.shipment_status == desired_status %}
-        {% log %}
-          "Fulfillment status is already {{ desired_status }}; nothing to do"
-        {% endlog %}
-      {% else %}
-        {% action "shopify" %}
-          [
-            "post",
-            "/admin/api/{{ task.shopify_api_version }}/orders/{{ order.id }}/fulfillments/{{ fulfillment.id }}/events.json",
-            {
-              "event": {
-                "status": {{ desired_status | json }}
-              }
-            }
-          ]
-        {% endaction %}
-      {% endif %}
-
-      {% break %}
     {% endfor %}
+
+    {% comment %}
+      -- break here so the fulfillments are complete for the next task run on order update
+    {% endcomment %}
+
+    {% unless event.preview %}
+      {% break %}
+    {% endunless %}
   {% endif %}
 {% endif %}
+
+{% assign fulfillments
+  = order.fulfillments
+  | where: "requiresShipping"
+  | where: "status", "SUCCESS"
+%}
+
+{% if fulfillments == blank %}
+  {% log "There are no successful fulfillments that require shipping available to update on this order; skipping." %}
+  {% break %}
+{% endif %}
+
+{% log
+  shipment_status_to_set: shipment_status_to_set,
+  fulfillments: fulfillments
+%}
+
+{% for fulfillment in fulfillments %}
+  {% if fulfillment.displayStatus != shipment_status_to_set %}
+    {% action "shopify" %}
+      mutation {
+        fulfillmentEventCreate(
+          fulfillmentEvent: {
+            fulfillmentId: {{ fulfillment.id | json }}
+            status: {{ shipment_status_to_set }}
+          }
+        ) {
+          fulfillmentEvent {
+            id
+            status
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}

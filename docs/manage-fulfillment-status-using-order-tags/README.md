@@ -1,8 +1,8 @@
 # Manage fulfillment shipment status using order tags
 
-Tags: Fulfillment, Orders, Tag
+Tags: Fulfillment, Orders, Shipping, Tag
 
-Use this task to easily set the shipment status of your single-fulfillment orders. Just add a tag, and a new fulfillment event will be recorded, using the corresponding shipment status. Optionally, you may have the task attempt to fulfill the order first and may choose whether to send shipment status notifications to the customer.
+Use this task to easily set the shipment status on your fulfilled orders. Just add a tag, and new fulfillment events will be created, using the corresponding shipment status. Optionally, you may have the task attempt to fulfill the order first and may choose whether to send shipment status notifications to the customer.
 
 * View in the task library: [tasks.mechanic.dev/manage-fulfillment-status-using-order-tags](https://tasks.mechanic.dev/manage-fulfillment-status-using-order-tags)
 * Task JSON, for direct import: [task.json](../../tasks/manage-fulfillment-status-using-order-tags.json)
@@ -13,17 +13,17 @@ Use this task to easily set the shipment status of your single-fulfillment order
 ```json
 {
   "shipment_tags_and_status__keyval_required": {
-    "shipment_label_printed": "label_printed",
-    "shipment_label_purchased": "label_purchased",
-    "shipment_attempted_delivery": "attempted_delivery",
-    "shipment_ready_for_pickup": "ready_for_pickup",
-    "shipment_confirmed": "confirmed",
-    "shipment_in_transit": "in_transit",
-    "shipment_out_for_delivery": "out_for_delivery",
-    "shipment_delivered": "delivered",
-    "shipment_failure": "failure"
+    "shipment_attempted_delivery": "ATTEMPTED_DELIVERY",
+    "shipment_confirmed": "CONFIRMED",
+    "shipment_delivered": "DELIVERED",
+    "shipment_failure": "FAILURE",
+    "shipment_in_transit": "IN_TRANSIT",
+    "shipment_label_printed": "LABEL_PRINTED",
+    "shipment_label_purchased": "LABEL_PURCHASED",
+    "shipment_out_for_delivery": "OUT_FOR_DELIVERY",
+    "shipment_ready_for_pickup": "READY_FOR_PICKUP"
   },
-  "attempt_to_fulfill_the_order_before_tagging__boolean": false,
+  "attempt_to_fulfill_the_order_before_setting_shipment_status__boolean": false,
   "send_shipment_notifications_to_customer__boolean": false
 }
 ```
@@ -40,13 +40,14 @@ shopify/orders/updated
 
 ## Documentation
 
-Use this task to easily set the shipment status of your single-fulfillment orders. Just add a tag, and a new fulfillment event will be recorded, using the corresponding shipment status. Optionally, you may have the task attempt to fulfill the order first and may choose whether to send shipment status notifications to the customer.
+Use this task to easily set the shipment status on your fulfilled orders. Just add a tag, and new fulfillment events will be created, using the corresponding shipment status. Optionally, you may have the task attempt to fulfill the order first and may choose whether to send shipment status notifications to the customer.
 
-This task monitors order tags. For an order that has a single fulfillment, this task will update that fulfillment's shipment status according to the order's tags. If the fulfill option is chosen, this task will only attempt to fulfill orders with no prior fulfillments (e.g., it will ignore orders that have been fulfilled, then cancelled, and then tagged).
+This task comes preconfigured with Shopify's shipment status identifiers on the right, and friendly order tags on the left. Feel free to update the tag names on the left-hand side. **Do not modify the labels on the right!** These must correspond directly to Shopify [fulfillment event statuses](https://shopify.dev/docs/api/admin-graphql/2023-04/enums/FulfillmentEventStatus).
 
-This task comes pre-configured with Shopify's shipment status identifiers on the right, and friendly order tags on the left. Feel free to update the tag names on the left-hand side. Do not modify the labels on the right! These must correspond directly to shipment statuses, as they're recorded by Shopify.
-
-For a complete description of all Shopify shipment statuses, [see Shopify's "shipment_status" documentation](https://shopify.dev/docs/admin-api/rest/reference/shipping-and-fulfillment/fulfillmentevent#status-property-2021-01).
+**Notes:**
+- This task will fulfill all open fulfillment orders from any location, if it has been configured to attempt to fulfill first. This includes digital items (i.e. shipping not required). However, digital items will not have a shipment status set on them.
+- When setting the shipment status, the task will use the first shipment tag it finds on the order. Be careful to remove any previous shipment tags before applying a new one, since Shopify auto-updates the order as soon as a tag is applied in admin.
+- This task has no knowledge of the typical sequence of shipment progression. It is your responsibility to not inadvertently apply a shipment status tag to an order that has previously been updated to a "later" tag (e.g. setting "CONFIRMED" on an order that was already at "DELIVERED").
 
 ## Installing this task
 
