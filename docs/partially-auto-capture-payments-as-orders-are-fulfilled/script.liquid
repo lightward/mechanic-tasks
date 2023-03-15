@@ -11,7 +11,7 @@
             {
               "id": "gid://shopify/OrderTransaction/1234567890",
               "amountSet": {
-                "shopMoney": {
+                "presentmentMoney": {
                   "amount": "16.99",
                   "currencyCode": "USD"
                 }
@@ -19,17 +19,17 @@
             }
           ],
           "totalPriceSet": {
-            "shopMoney": {
+            "presentmentMoney": {
               "amount": "16.99"
             }
           },
           "subtotalPriceSet": {
-            "shopMoney": {
+            "presentmentMoney": {
               "amount": "10.0"
             }
           },
           "totalCapturableSet": {
-            "shopMoney": {
+            "presentmentMoney": {
               "amount": "16.54"
             }
           },
@@ -44,7 +44,7 @@
                   {
                     "node": {
                       "discountedTotalSet": {
-                        "shopMoney": {
+                        "presentmentMoney": {
                           "amount": "5.0"
                         }
                       }
@@ -69,24 +69,24 @@
         transactions(capturable: true) {
           id
           amountSet {
-            shopMoney {
+            presentmentMoney {
               amount
               currencyCode
             }
           }
         }
         totalPriceSet {
-          shopMoney {
+          presentmentMoney {
             amount
           }
         }
         subtotalPriceSet {
-          shopMoney {
+          presentmentMoney {
             amount
           }
         }
         totalCapturableSet {
-          shopMoney {
+          presentmentMoney {
             amount
           }
         }
@@ -99,7 +99,7 @@
             edges {
               node {
                 discountedTotalSet {
-                  shopMoney {
+                  presentmentMoney {
                     amount
                   }
                 }
@@ -117,9 +117,9 @@
     {% assign result = preview_result_json | parse_json %}
   {% endif %}
 
-  {% assign total = result.data.order.totalPriceSet.shopMoney.amount | times: 1.0 %}
-  {% assign total_captured = total | minus: result.data.order.totalCapturableSet.shopMoney.amount %}
-  {% assign subtotal = result.data.order.subtotalPriceSet.shopMoney.amount | times: 1.0 %}
+  {% assign total = result.data.order.totalPriceSet.presentmentMoney.amount | times: 1.0 %}
+  {% assign total_captured = total | minus: result.data.order.totalCapturableSet.presentmentMoney.amount %}
+  {% assign subtotal = result.data.order.subtotalPriceSet.presentmentMoney.amount | times: 1.0 %}
   {% assign subtotal_fulfilled = 0.0 %}
 
   {% for fulfillment in result.data.order.fulfillments %}
@@ -129,7 +129,7 @@
     {% endif %}
 
     {% for fulfillment_line_item_edge in fulfillment.fulfillmentLineItems.edges %}
-      {% assign subtotal_fulfilled = subtotal_fulfilled | plus: fulfillment_line_item_edge.node.discountedTotalSet.shopMoney.amount %}
+      {% assign subtotal_fulfilled = subtotal_fulfilled | plus: fulfillment_line_item_edge.node.discountedTotalSet.presentmentMoney.amount %}
     {% endfor %}
   {% endfor %}
 
@@ -137,7 +137,7 @@
   {% assign amount_to_capture = desired_total_captured | minus: total_captured | times: 100 | round | divided_by: 100.0 %}
   {% assign parent_transaction = result.data.order.transactions.first %}
 
-  {% log 
+  {% log
     total: total,
     total_captured: total_captured,
     subtotal: subtotal,
@@ -159,7 +159,7 @@
             id: {{ order.admin_graphql_api_id | json }}
             parentTransactionId: {{ parent_transaction.id | json }}
             amount: {{ amount_to_capture | append: "" | json }}
-            currency: {{ parent_transaction.amountSet.shopMoney.currencyCode }}
+            currency: {{ parent_transaction.amountSet.presentmentMoney.currencyCode }}
           }
         ) {
           transaction {

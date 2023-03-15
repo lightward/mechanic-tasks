@@ -14,8 +14,9 @@
       transactions(first: 1, capturable: true) {
         id
         totalUnsettledSet {
-          shopMoney {
+          presentmentMoney {
             amount
+            currencyCode
           }
         }
       }
@@ -33,7 +34,7 @@
   {% elsif options.capture_orders_with_a_low_risk_level__boolean %}
     {% assign preview_risk_level = "LOW" %}
   {% endif %}
-  
+
   {% capture result_json %}
     {
       "data": {
@@ -50,8 +51,9 @@
             {
               "id": "gid://shopify/OrderTransaction/1234567890",
               "totalUnsettledSet": {
-                "shopMoney": {
-                  "amount": "200.0"
+                "presentmentMoney": {
+                  "amount": "12.34",
+                  "currencyCode": "USD"
                 }
               }
             }
@@ -94,7 +96,7 @@
 {% endif %}
 
 {% if do_capture %}
-  {% assign amount_to_capture = capturableTransactionNode.totalUnsettledSet.shopMoney.amount | times: 1 %}
+  {% assign amount_to_capture = capturableTransactionNode.totalUnsettledSet.presentmentMoney.amount | times: 1 %}
 
   {% action "shopify" %}
     mutation {
@@ -103,6 +105,7 @@
           id: {{ orderNode.id | json }}
           parentTransactionId: {{ capturableTransactionNode.id | json }}
           amount: {{ amount_to_capture | json }}
+          currency: {{ capturableTransactionNode.totalUnsettledSet.presentmentMoney.currencyCode }}
         }
       ) {
         transaction {
