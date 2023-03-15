@@ -44,7 +44,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-create collections by product type or vendor](./auto-create-collections-by-product-type-or-vendor)
 * [Auto-delete customers that are created without orders](./auto-delete-customers-that-are-created-without-orders)
 * [Auto-fulfill items that don't require shipping](./auto-fulfill-items-that-dont-require-shipping)
-* [Auto-fulfill orders on a weekly schedule](./auto-fulfill-orders-on-a-weekly-schedule)
 * [Auto-fulfill orders when tagged](./auto-fulfill-orders-when-tagged)
 * [Auto-generate SKUs](./auto-generate-skus)
 * [Auto-invite customers after an order](./auto-invite-customers-after-an-order)
