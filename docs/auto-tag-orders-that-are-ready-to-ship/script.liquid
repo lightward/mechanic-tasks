@@ -1,4 +1,4 @@
-{% assign order_nodes = array %}
+{% assign orders = array %}
 
 {% if event.topic contains "shopify/orders/" %}
   {% capture query %}
@@ -7,20 +7,14 @@
         id
         name
         tags
-        lineItems(first: 15) {
-          pageInfo {
-            hasNextPage
-          }
-          edges {
-            cursor
-            node {
-              variant {
-                inventoryQuantity
-                {% if options.ignore_line_items_not_fulfilled_manually__boolean %}
-                  fulfillmentService {
-                    id
-                  }
-                {% endif %}
+        lineItems(first: 20) {
+          nodes {
+            variant {
+              id
+              displayName
+              inventoryQuantity
+              inventoryItem {
+                id
               }
             }
           }
@@ -31,184 +25,102 @@
 
   {% assign result = query | shopify %}
 
-  {% if event.preview %}
-    {% capture result_json %}
-      {
-        "data": {
-          "order": {
-            "id": "gid://shopify/Order/1234567890",
-            "tags": [],
-            "lineItems": {
-              "pageInfo": {
-                "hasNextPage": false
-              },
-              "edges": [
-                {
-                  "cursor": "eyJsYXN0X2lkIjo0MDc4NTI5NjQyNTMxLCJsYXN0X3ZhbHVlIjo0MDc4NTI5NjQyNTMxfQ==",
-                  "node": {
-                    "variant": {
-                      "inventoryQuantity": 2,
-                      "fulfillmentService": {
-                        "id": "gid://shopify/FulfillmentService/manual"
-                      }
-                    }
+  {% unless result.data.order.tags contains options.order_tag_to_add__required %}
+    {% assign orders[0] = result.data.order %}
+  {% endunless %}
+
+{% elsif event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% assign cursor = nil %}
+
+  {% for n in (0..200) %}
+    {% capture query %}
+      query {
+        orders(
+          first: 10
+          after: {{ cursor | json }}
+          query: {{ options.order_tag_to_add__required | json | prepend: "fulfillment_status:unshipped tag_not:" | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            name
+            lineItems(first: 20) {
+              nodes {
+                variant {
+                  id
+                  displayName
+                  inventoryQuantity
+                  inventoryItem {
+                    id
                   }
                 }
-              ]
+              }
             }
           }
         }
       }
     {% endcapture %}
 
-    {% assign result = result_json | parse_json %}
-  {% endif %}
+    {% assign result = query | shopify %}
 
-  {% unless result.data.order.tags contains options.order_tag_to_add__required %}
-    {% assign order_nodes[0] = result.data.order %}
-  {% endunless %}
-{% else %}
-  {% assign event_qualifies_for_bulk_scan = false %}
-  {% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
-    {% assign event_qualifies_for_bulk_scan = true %}
-  {% elsif event.topic == "shopify/inventory_levels/update" and options.scan_unfulfilled_orders_when_inventory_is_updated__boolean%}
-    {% assign event_qualifies_for_bulk_scan = true %}
-  {% endif %}
+    {% assign orders = result.data.orders.nodes | default: array | concat: orders %}
 
-  {% if event_qualifies_for_bulk_scan %}
-    {% assign cursor = nil %}
-    {% for n in (0..100) %}
-      {% capture query %}
-        query {
-          orders(
-            first: 20
-            after: {{ cursor | json }}
-            query: {{ options.order_tag_to_add__required | json | prepend: "fulfillment_status:unshipped AND -tag:" | json }}
-
-            {% comment %}
-              This is important! If we sort the other direction (as is the default), and the Mechanic account
-              has read_all_orders disabled, we run the risk of seeing a true pageInfo.hasNextPage, but an empty
-              set of edges, preventing us from being able to continue paging.
-            {% endcomment %}
-            sortKey: CREATED_AT
-            reverse: true
-          ) {
-            pageInfo {
-              hasNextPage
-            }
-            edges {
-              cursor
-              node {
-                id
-                name
-                lineItems(
-                  first: 5
-                ) {
-                  pageInfo {
-                    hasNextPage
-                  }
-                  edges {
-                    cursor
-                    node {
-                      variant {
-                        inventoryQuantity
-                        {% if options.ignore_line_items_not_fulfilled_manually__boolean %}
-                          fulfillmentService {
-                            id
-                          }
-                        {% endif %}
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      {% endcapture %}
-
-      {% assign result = query | shopify %}
-
-      {% if event.preview %}
-        {% capture result_json %}
-          {
-            "data": {
-              "orders": {
-                "edges": [
-                  {
-                    "cursor": "eyJsYXN0X2lkIjoxODM1MTU0NDA3NDU5LCJsYXN0X3ZhbHVlIjoxNTcyNTU3MzQ1MDAwfQ==",
-                    "node": {
-                      "id": "gid://shopify/Order/1835138777123",
-                      "lineItems": {
-                        "pageInfo": {
-                          "hasNextPage": false
-                        },
-                        "edges": [
-                          {
-                            "cursor": "eyJsYXN0X2lkIjo0MDc4NTI5NjQyNTMxLCJsYXN0X3ZhbHVlIjo0MDc4NTI5NjQyNTMxfQ==",
-                            "node": {
-                              "variant": {
-                                "inventoryQuantity": 1,
-                                "fulfillmentService": {
-                                  "id": "gid://shopify/FulfillmentService/manual"
-                                }
-                              }
-                            }
-                          }
-                        ]
-                      }
-                    }
-                  }
-                ]
-              }
-            }
-          }
-        {% endcapture %}
-
-        {% assign result = result_json | parse_json %}
-      {% endif %}
-
-      {% assign order_nodes = result.data.orders.edges | map: "node" | concat: order_nodes %}
-
-      {% if result.data.orders.pageInfo.hasNextPage %}
-        {% assign cursor = result.data.orders.edges.last.cursor %}
-        {% if cursor == nil %}
-          {% log "Encountered pageInfo.hasNextPage = true and cursor = nil in result.data.orders.edges.last.cursor; stopping the loop." %}
-          {% break %}
-        {% endif %}
-      {% else %}
-        {% break %}
-      {% endif %}
-    {% endfor %}
-  {% endif %}
+    {% if result.data.orders.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.orders.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
 {% endif %}
 
-{% for order_node in order_nodes %}
-  {% assign order_node_index = forloop.index0 %}
-  {% if order_node.lineItems.pageInfo.hasNextPage %}
-    {% assign cursor = order_node.lineItems.edges.last.cursor %}
-    {% for n in (0..100) %}
+{% if event.preview %}
+  {% capture orders_json %}
+    [
+      {
+        "id": "gid://shopify/Order/1234567890",
+        "name": "#PREVIEW",
+        "lineItems": {
+          "nodes": [
+            {
+              "variant": {
+                "id": "gid://shopify/ProductVariant/1234567890",
+                "displayName": "ACME Widget - Alpha",
+                "inventoryQuantity": 2,
+                "inventoryItem": {
+                  "id": "gid://shopify/inventoryItem/1234567890"
+                }
+              }
+            }
+          ]
+        }
+      }
+    ]
+  {% endcapture %}
+
+  {% assign orders = orders_json | parse_json %}
+{% endif %}
+
+{% for order in orders %}
+  {% assign order_qualifies = nil %}
+
+  {% for line_item in order.lineItems.nodes %}
+    {% if line_item.variant == blank %}
+      {% continue %}
+    {% endif %}
+
+    {% if options.ignore_line_items_not_fulfilled_manually__boolean %}
       {% capture query %}
         query {
-          order(id: {{ order_node.id | json }}) {
-            id
-            lineItems(
-              first: 15
-              after: {{ cursor | json }}
-            ) {
-              pageInfo {
-                hasNextPage
-              }
-              edges {
-                cursor
-                node {
-                  variant {
-                    inventoryQuantity
-                    {% if options.ignore_line_items_not_fulfilled_manually__boolean %}
-                      fulfillmentService {
-                        id
-                      }
-                    {% endif %}
+          inventoryItem(id: {{ line_item.variant.inventoryItem.id | json }}) {
+            inventoryLevels(first: 100) {
+              nodes {
+                location {
+                  fulfillmentService {
+                    handle
+                    serviceName
                   }
                 }
               }
@@ -219,32 +131,32 @@
 
       {% assign result = query | shopify %}
 
-      {% assign order_nodes[order_node_index]["lineItems"]["edges"] = order_nodes[order_node_index]["lineItems"]["edges"] | concat: result.data.order.lineItems.edges %}
+      {% comment %}
+        Note: no preview stub data needed here, as null values for the fulfillment services are literally the happy path :)
+      {% endcomment %}
 
-      {% if result.data.order.lineItems.pageInfo.hasNextPage %}
-        {% assign cursor = result.data.order.lineItems.edges.last.cursor %}
-        {% if cursor == nil %}
-          {% log "Encountered pageInfo.hasNextPage = true and cursor = nil in result.data.order.lineItems.edges.last.cursor; stopping the loop." %}
-          {% break %}
-        {% endif %}
-      {% else %}
-        {% break %}
-      {% endif %}
-    {% endfor %}
-  {% endif %}
+      {% assign fulfillment_services
+        = result.data.inventoryItem.inventoryLevels.nodes
+        | map: "location"
+        | map: "fulfillmentService"
+        | compact
+      %}
 
-  {% assign order_qualifies = nil %}
-
-  {% for lineItem_edge in order_node.lineItems.edges %}
-    {% if options.ignore_line_items_not_fulfilled_manually__boolean %}
-      {% if lineItem_edge.node.variant.fulfillmentService.id != "gid://shopify/FulfillmentService/manual" %}
+      {% if fulfillment_services != blank %}
+        {% log
+          message: "This inventory item for this line item variant is configured to use at least one 3rd party fulfillment service'; skipping.",
+          order_name: order.name,
+          line_item: line_item,
+          fulfillment_services: fulfillment_services
+        %}
         {% continue %}
       {% endif  %}
     {% endif %}
 
-    {% if order_qualifies == nil and lineItem_edge.node.variant.inventoryQuantity >= 0 %}
+    {% if order_qualifies == nil and line_item.variant.inventoryQuantity >= 0 %}
       {% assign order_qualifies = true %}
-    {% elsif lineItem_edge.node.variant.inventoryQuantity < 0 %}
+
+    {% elsif line_item.variant.inventoryQuantity < 0 %}
       {% assign order_qualifies = false %}
       {% break %}
     {% endif %}
@@ -252,14 +164,21 @@
 
   {% if order_qualifies %}
     {% if options.test_mode__boolean %}
-      {% action "echo", order_id_to_tag: order_node.id, order_name_to_tag: order_node.name %}
+      {% log order_id_to_tag: order.id, order_name_to_tag: order.name %}
+
     {% else %}
       {% action "shopify" %}
         mutation {
           tagsAdd(
-            id: {{ order_node.id | json }}
+            id: {{ order.id | json }}
             tags: {{ options.order_tag_to_add__required | json }}
           ) {
+            node {
+              ... on Order {
+                id
+                name
+              }
+            }
             userErrors {
               field
               message
