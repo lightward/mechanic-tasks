@@ -8,8 +8,9 @@
         id
         kind
         totalUnsettledSet {
-          shopMoney {
+          presentmentMoney {
             amount
+            currencyCode
           }
         }
       }
@@ -32,8 +33,9 @@
               "id": "gid://shopify/OrderTransaction/1234567890",
               "kind": "AUTHORIZATION",
               "totalUnsettledSet": {
-                "shopMoney": {
-                  "amount": "12.34"
+                "presentmentMoney": {
+                  "amount": "12.34",
+                  "currencyCode": "USD"
                 }
               }
             }
@@ -52,7 +54,7 @@
   {% assign authorized_transactions = order.transactions | where: "kind", "AUTHORIZATION" %}
 
   {% for transaction in authorized_transactions %}
-    {% assign unsettled_amount = transaction.totalUnsettledSet.shopMoney.amount | times: 1.0 %}
+    {% assign unsettled_amount = transaction.totalUnsettledSet.presentmentMoney.amount | times: 1.0 %}
 
     {% if unsettled_amount > 0 %}
       {% action "shopify" %}
@@ -62,6 +64,7 @@
               id: {{ order.id | json }}
               parentTransactionId: {{ transaction.id | json }}
               amount: {{ unsettled_amount | json }}
+              currency: {{ transaction.totalUnsettledSet.presentmentMoney.currencyCode }}
             }
           ) {
             transaction {
