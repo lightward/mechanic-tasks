@@ -2,7 +2,7 @@
 
 Tags: Collections, Products, Sort
 
-This task re-sorts your collections by any product property that you choose. A property lookup can be something simple, like "published_at", or more complicated: use multiple property lookups, like "metafields", "store", and "priority", to sort collections by product metafield values.
+This task re-sorts your collections by any product property that you choose. A property lookup can be something simple, like "published_at", or more complicated: use multiple property lookups, like "metafields", "store", "priority", and "value" to sort collections by product metafield values.
 
 * View in the task library: [tasks.mechanic.dev/auto-sort-collections-by-product-properties](https://tasks.mechanic.dev/auto-sort-collections-by-product-properties)
 * Task JSON, for direct import: [task.json](../../tasks/auto-sort-collections-by-product-properties.json)
@@ -36,9 +36,9 @@ mechanic/user/trigger
 
 ## Documentation
 
-This task re-sorts your collections by any product property that you choose. A property lookup can be something simple, like "published_at", or more complicated: use multiple property lookups, like "metafields", "store", and "priority", to sort collections by product metafield values.
+This task re-sorts your collections by any product property that you choose. A property lookup can be something simple, like "published_at", or more complicated: use multiple property lookups, like "metafields", "store", "priority", and "value" to sort collections by product metafield values.
 
-This task re-sorts your collections by any product property that you choose. Use the "Product property lookups" option to control what attribute the task "looks up". For example, using "published_at" will result in sorting by the date and time the product was published. Add more than one lookup to dive more deeply into product data: using the lookups "metafields", "store", and "priority" will result in a collection sorted by the `store.priority` metafield on each product.
+This task re-sorts your collections by any product property that you choose. Use the "Product property lookups" option to control what attribute the task "looks up". For example, using "published_at" will result in sorting by the date and time the product was published. Add more than one lookup to dive more deeply into product data: using the lookups "metafields", "store", "priority", and "value" will result in a collection sorted by the `store.priority` metafield on each product.
 
 Refer to [Shopify's API documentation](https://help.shopify.com/en/api/reference/products/product) to find the product property you're looking for
 
