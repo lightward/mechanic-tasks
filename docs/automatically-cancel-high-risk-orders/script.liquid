@@ -7,26 +7,29 @@
   {% enderror %}
 {% endunless %}
 
-{% assign cancel_risk = order.risks | where: "recommendation", "cancel" | first %}
 
-{% unless cancel_risk %}
-  {% break %}
+{% unless event.preview %}
+  {% assign cancel_risk = order.risks | where: "recommendation", "cancel" | first %}
+
+  {% unless cancel_risk %}
+    {% break %}
+  {% endunless %}
+
+  {% if order.fulfillment_status %}
+    {% log "This order has already been partially or fully fulfilled; no cancellation (nor refund if that option is checked) will be made." %}
+    {% break %}  
+  {% endif %}
+
+  {% if order.cancelled_at  %}
+    {% log "This order has already been cancelled." %}
+    {% break %}  
+  {% endif %}
+
+  {% if options.ignore_unpaid_orders__boolean and order.financial_status == "pending" %}
+    {% log "This order has not been paid, and the ignore unpaid orders option is checked; no cancellation will be made." %}
+    {% break %}  
+  {% endif %}  
 {% endunless %}
-
-{% if order.fulfillment_status %}
-  {% log "This order has already been partially or fully fulfilled; no cancellation (nor refund if that option is checked) will be made." %}
-  {% break %}  
-{% endif %}
-
-{% if order.cancelled_at %}
-  {% log "This order has already been cancelled." %}
-  {% break %}  
-{% endif %}
-
-{% if options.ignore_unpaid_orders__boolean and order.financial_status == "pending" %}
-  {% log "This order has not been paid, and the ignore unpaid orders option is checked; no cancellation will be made." %}
-  {% break %}  
-{% endif %}
 
 {% comment %}
   -- NOTE: refunds via API must occur before cancellation, otherwise the refund will fail
