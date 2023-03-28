@@ -1,32 +1,184 @@
-{% assign order = order.reload %}
+{% assign days_to_wait = options.days_to_wait__number_required %}
+{% assign email_subject = options.email_subject__required %}
+{% assign email_body = options.email_body__multiline_required %}
+{% assign pending_tag = options.pending_tag__required %}
+{% assign sent_tag = options.sent_tag__required %}
+{% assign order_referral_code = options.order_referral_code %}
 
-{% if event.preview or order.email != blank %}
-  {% assign variant_string = "" %}
+{% assign days_to_wait_round = days_to_wait | round %}
 
-  {% for line_item in order.line_items %}
-    {% if line_item.variant_id %}
-      {% capture variant_string %}{% if variant_string != blank %}{{ variant_string }},{% endif %}{{ line_item.variant_id }}:{{ line_item.quantity }}{% endcapture %}
-    {% endif %}
-  {% endfor %}
+{% unless days_to_wait >= 1 and days_to_wait_round == days_to_wait %}
+  {% error "Days to wait must be a positive integer!" %}
+{% endunless %}
 
-  {% if event.preview and variant_string == blank %}
-    {% assign variant_string = "1234567890:1,0987654321:2" %}
+{% if event.topic == "shopify/orders/paid" %}
+  {% assign variants = order.line_items | where: "variant_id" %}
+  {% assign tags = order.tags | split: ", " %}
+
+  {% if order.email == blank or variants == blank %}
+    {% break %}
   {% endif %}
 
-  {% if variant_string != blank %}
-    {% capture reorder_url %}https://{{ shop.domain }}/cart/{{ variant_string }}?{% if options.order_referral_code != blank %}ref={{ options.order_referral_code | url_param_escape }}&{% endif %}checkout[email]={{ order.email | url_param_escape }}{% endcapture %}
+  {% if tags contains pending_tag or tags contains sent_tag %}
+    {% break %}
+  {% endif %}
 
-    {
-      "action": {
-        "type": "email",
-        "options": {
-          "to": {{ order.email | json }},
-          "subject": {{ options.email_subject__required | strip | json }},
-          "body": {{ options.email_body__multiline_required | replace: "REORDER_URL", reorder_url | strip | newline_to_br | json }},
-          "reply_to": {{ shop.customer_email | json }},
-          "from_display_name": {{ shop.name | json }}
+  {% action "shopify" %}
+    mutation {
+      tagsAdd(
+        id: {{ order.admin_graphql_api_id | json }}
+        tags: {{ pending_tag | json }}
+      ) {
+        userErrors {
+          field
+          message
         }
       }
     }
-  {% endif %}
+  {% endaction %}
+
+{% elsif event.topic contains "mechanic/scheduler/" or event.topic == "mechanic/user/trigger" %}
+  {% assign reorder_interval_s = days_to_wait | times: 86400 %}
+  {% assign now_s = "now" | date: "%s" | times: 1 %}
+  {% assign processed_at_cutoff = now_s | minus: reorder_interval_s | date: "%Y-%m-%dT%H:%M:%SZ", tz: "UTC" %}
+
+  {% capture search_query -%}
+    tag:{{ pending_tag | json }} AND tag_not:{{ sent_tag | json }} AND processed_at<:{{ processed_at_cutoff }}
+  {%- endcapture %}
+
+  {% log search_query: search_query %}
+
+  {% assign cursor = nil %}
+  {% assign orders = array %}
+
+  {% for n in (1..1000) %}
+    {% capture query %}
+      query {
+        orders(
+          first: 4
+          after: {{ cursor | json }}
+          query: {{ search_query | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            email
+            name
+            processedAt
+            tags
+            lineItems(first: 100) {
+              nodes {
+                quantity
+                variant {
+                  legacyResourceId
+                }
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "orders": {
+              "nodes": [
+                {
+                  "id": "gid://shopify/Order/1234567890",
+                  "email": "sample@example.com",
+                  "lineItems": {
+                    "nodes": [
+                      {
+                        "quantity": 1,
+                        "variant": {
+                          "legacyResourceId": 1234567890
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign orders = orders | concat: result.data.orders.nodes %}
+
+    {% if result.data.orders.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.orders.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% for order in orders %}
+    {% assign reorder_variants = array %}
+
+    {% for line_item in order.lineItems.nodes %}
+      {% if line_item.variant %}
+        {% assign reorder_variant = line_item.variant.legacyResourceId | append: ":" | append: line_item.quantity %}
+        {% assign reorder_variants = reorder_variants | push: reorder_variant %}
+      {% endif %}
+    {% endfor %}
+
+    {% if reorder_variants == blank %}
+      {% continue %}
+    {% endif %}
+
+    {% capture reorder_url %}https://{{ shop.domain }}/cart/{{ reorder_variants | join: "," }}?{% if order_referral_code != blank %}ref={{ order_referral_code | url_param_escape }}&{% endif %}checkout[email]={{ order.email | url_param_escape }}{% endcapture %}
+
+    {% action "email" %}
+      {
+        "to": {{ order.email | json }},
+        "subject": {{ email_subject | json }},
+        "body": {{ email_body | replace: "REORDER_URL", reorder_url | strip | newline_to_br | json }},
+        "reply_to": {{ shop.customer_email | json }},
+        "from_display_name": {{ shop.name | json }}
+      }
+    {% endaction %}
+
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {{ order.id | json }}
+          tags: {{ sent_tag | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+        tagsRemove(
+          id: {{ order.id | json }}
+          tags: {{ pending_tag | json }}
+        ) {
+          node {
+            ... on Order {
+              id
+              name
+              tags
+            }
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+
+  {% else %}
+    {% log "No orders qualified to have a reorder link sent during this task run." %}
+  {% endfor %}
 {% endif %}

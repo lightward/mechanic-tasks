@@ -1,21 +1,42 @@
 {
-  "docs": "Use this task to make repeat business easy. Set the number of days to wait, then let this task automatically email your customers a one-click reorder link X days after their purchase, sending them straight to checkout with their entire cart pre-filled.\n\nTip: Fill in the \"Order referral code\" option to enable order conversion tracking for this task's emails. ([Learn more about conversion tracking with order links.](https://help.shopify.com/en/themes/customization/cart/use-permalinks-to-preload-cart#conversion-tracking))",
+  "docs": "Use this task to make repeat business easy by automatically emailing your customers X days after their purchase, with a one-click reorder link that will send them straight to checkout with their entire cart pre-filled.\n\nConfigure the task with the days to wait, an email subject and body, and the pending and sent tags to be applied to the orders that prevent the task from sending more than one email per order.\n\nTip: Fill in the \"Order referral code\" option to enable order conversion tracking for this task's emails. ([Learn more about conversion tracking with order links.](https://help.shopify.com/en/themes/customization/cart/use-permalinks-to-preload-cart#conversion-tracking))",
   "halt_action_run_sequence_on_error": false,
   "name": "Send customers a reorder link X days after ordering",
   "online_store_javascript": null,
   "options": {
+    "days_to_wait__number_required": null,
     "email_subject__required": "Would you like to order again?",
     "email_body__multiline_required": "Hello,\n\nThanks for your order! Use this link to reorder in just a couple clicks:\n\n<b><a href=\"REORDER_URL\">Reorder now</a></b>\n\nCheers,\n{{ shop.name }}",
-    "days_to_wait__number_required": null,
+    "pending_tag__required": "reorder-link-pending",
+    "sent_tag__required": "reorder-link-sent",
     "order_referral_code": null
   },
   "order_status_javascript": null,
   "perform_action_runs_in_sequence": false,
-  "script": "{% assign order = order.reload %}\n\n{% if event.preview or order.email != blank %}\n  {% assign variant_string = \"\" %}\n\n  {% for line_item in order.line_items %}\n    {% if line_item.variant_id %}\n      {% capture variant_string %}{% if variant_string != blank %}{{ variant_string }},{% endif %}{{ line_item.variant_id }}:{{ line_item.quantity }}{% endcapture %}\n    {% endif %}\n  {% endfor %}\n\n  {% if event.preview and variant_string == blank %}\n    {% assign variant_string = \"1234567890:1,0987654321:2\" %}\n  {% endif %}\n\n  {% if variant_string != blank %}\n    {% capture reorder_url %}https://{{ shop.domain }}/cart/{{ variant_string }}?{% if options.order_referral_code != blank %}ref={{ options.order_referral_code | url_param_escape }}&{% endif %}checkout[email]={{ order.email | url_param_escape }}{% endcapture %}\n\n    {\n      \"action\": {\n        \"type\": \"email\",\n        \"options\": {\n          \"to\": {{ order.email | json }},\n          \"subject\": {{ options.email_subject__required | strip | json }},\n          \"body\": {{ options.email_body__multiline_required | replace: \"REORDER_URL\", reorder_url | strip | newline_to_br | json }},\n          \"reply_to\": {{ shop.customer_email | json }},\n          \"from_display_name\": {{ shop.name | json }}\n        }\n      }\n    }\n  {% endif %}\n{% endif %}",
-  "subscriptions": [
-    "shopify/orders/paid+30.days"
+  "preview_event_definitions": [
+    {
+      "description": "Sample order",
+      "event_attributes": {
+        "topic": "shopify/orders/paid",
+        "data": {
+          "admin_graphql_api_id": "gid://shopify/Order/1234567890",
+          "email": "sample@example.com",
+          "line_items": [
+            {
+              "quantity": 1,
+              "variant_id": 1234567890
+            }
+          ]
+        }
+      }
+    }
   ],
-  "subscriptions_template": "shopify/orders/paid+{{ options.days_to_wait__number_required | default: 30 }}.days",
+  "script": "{% assign days_to_wait = options.days_to_wait__number_required %}\n{% assign email_subject = options.email_subject__required %}\n{% assign email_body = options.email_body__multiline_required %}\n{% assign pending_tag = options.pending_tag__required %}\n{% assign sent_tag = options.sent_tag__required %}\n{% assign order_referral_code = options.order_referral_code %}\n\n{% assign days_to_wait_round = days_to_wait | round %}\n\n{% unless days_to_wait >= 1 and days_to_wait_round == days_to_wait %}\n  {% error \"Days to wait must be a positive integer!\" %}\n{% endunless %}\n\n{% if event.topic == \"shopify/orders/paid\" %}\n  {% assign variants = order.line_items | where: \"variant_id\" %}\n  {% assign tags = order.tags | split: \", \" %}\n\n  {% if order.email == blank or variants == blank %}\n    {% break %}\n  {% endif %}\n\n  {% if tags contains pending_tag or tags contains sent_tag %}\n    {% break %}\n  {% endif %}\n\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ order.admin_graphql_api_id | json }}\n        tags: {{ pending_tag | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n\n{% elsif event.topic contains \"mechanic/scheduler/\" or event.topic == \"mechanic/user/trigger\" %}\n  {% assign reorder_interval_s = days_to_wait | times: 86400 %}\n  {% assign now_s = \"now\" | date: \"%s\" | times: 1 %}\n  {% assign processed_at_cutoff = now_s | minus: reorder_interval_s | date: \"%Y-%m-%dT%H:%M:%SZ\", tz: \"UTC\" %}\n\n  {% capture search_query -%}\n    tag:{{ pending_tag | json }} AND tag_not:{{ sent_tag | json }} AND processed_at<:{{ processed_at_cutoff }}\n  {%- endcapture %}\n\n  {% log search_query: search_query %}\n\n  {% assign cursor = nil %}\n  {% assign orders = array %}\n\n  {% for n in (1..1000) %}\n    {% capture query %}\n      query {\n        orders(\n          first: 4\n          after: {{ cursor | json }}\n          query: {{ search_query | json }}\n        ) {\n          pageInfo {\n            hasNextPage\n            endCursor\n          }\n          nodes {\n            id\n            email\n            name\n            processedAt\n            tags\n            lineItems(first: 100) {\n              nodes {\n                quantity\n                variant {\n                  legacyResourceId\n                }\n              }\n            }\n          }\n        }\n      }\n    {% endcapture %}\n\n    {% assign result = query | shopify %}\n\n    {% if event.preview %}\n      {% capture result_json %}\n        {\n          \"data\": {\n            \"orders\": {\n              \"nodes\": [\n                {\n                  \"id\": \"gid://shopify/Order/1234567890\",\n                  \"email\": \"sample@example.com\",\n                  \"lineItems\": {\n                    \"nodes\": [\n                      {\n                        \"quantity\": 1,\n                        \"variant\": {\n                          \"legacyResourceId\": 1234567890\n                        }\n                      }\n                    ]\n                  }\n                }\n              ]\n            }\n          }\n        }\n      {% endcapture %}\n\n      {% assign result = result_json | parse_json %}\n    {% endif %}\n\n    {% assign orders = orders | concat: result.data.orders.nodes %}\n\n    {% if result.data.orders.pageInfo.hasNextPage %}\n      {% assign cursor = result.data.orders.pageInfo.endCursor %}\n    {% else %}\n      {% break %}\n    {% endif %}\n  {% endfor %}\n\n  {% for order in orders %}\n    {% assign reorder_variants = array %}\n\n    {% for line_item in order.lineItems.nodes %}\n      {% if line_item.variant %}\n        {% assign reorder_variant = line_item.variant.legacyResourceId | append: \":\" | append: line_item.quantity %}\n        {% assign reorder_variants = reorder_variants | push: reorder_variant %}\n      {% endif %}\n    {% endfor %}\n\n    {% if reorder_variants == blank %}\n      {% continue %}\n    {% endif %}\n\n    {% capture reorder_url %}https://{{ shop.domain }}/cart/{{ reorder_variants | join: \",\" }}?{% if order_referral_code != blank %}ref={{ order_referral_code | url_param_escape }}&{% endif %}checkout[email]={{ order.email | url_param_escape }}{% endcapture %}\n\n    {% action \"email\" %}\n      {\n        \"to\": {{ order.email | json }},\n        \"subject\": {{ email_subject | json }},\n        \"body\": {{ email_body | replace: \"REORDER_URL\", reorder_url | strip | newline_to_br | json }},\n        \"reply_to\": {{ shop.customer_email | json }},\n        \"from_display_name\": {{ shop.name | json }}\n      }\n    {% endaction %}\n\n    {% action \"shopify\" %}\n      mutation {\n        tagsAdd(\n          id: {{ order.id | json }}\n          tags: {{ sent_tag | json }}\n        ) {\n          userErrors {\n            field\n            message\n          }\n        }\n        tagsRemove(\n          id: {{ order.id | json }}\n          tags: {{ pending_tag | json }}\n        ) {\n          node {\n            ... on Order {\n              id\n              name\n              tags\n            }\n          }\n          userErrors {\n            field\n            message\n          }\n        }\n      }\n    {% endaction %}\n\n  {% else %}\n    {% log \"No orders qualified to have a reorder link sent during this task run.\" %}\n  {% endfor %}\n{% endif %}\n",
+  "subscriptions": [
+    "shopify/orders/paid",
+    "mechanic/scheduler/hourly"
+  ],
+  "subscriptions_template": "shopify/orders/paid\nmechanic/scheduler/hourly",
   "tags": [
     "Customers",
     "Email",
