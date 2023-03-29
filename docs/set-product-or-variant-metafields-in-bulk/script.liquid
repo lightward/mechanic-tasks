@@ -84,7 +84,11 @@
   {% if event.preview %}
     {% assign objects = array %}
     {% assign objects[0] = hash %}
-    {% assign objects[0]["id"] = "gid://shopify/{{ object_type }}/1234567890" %}
+    {% if set_product_metafields %}
+      {% assign objects[0]["id"] = "gid://shopify/Product/1234567890" %}
+    {% elsif set_variant_metafields %}
+      {% assign objects[0]["id"] = "gid://shopify/ProductVariant/1234567890" %}
+    {% endif %}    
   {% endif %}
 
   {% assign metafields_to_set = array %}
