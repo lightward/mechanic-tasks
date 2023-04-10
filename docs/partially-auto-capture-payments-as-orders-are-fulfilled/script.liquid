@@ -1,71 +1,23 @@
+{% assign payment_gateway_names = options.payment_gateway_names__array_required %}
+
+{% if payment_gateway_names contains "shopify_payments" %}
+  {% error "Shopify payments does not support multiple partial captures on a single authorization. Verify that any configured payment gateways support multiple captures." %}
+{% endif %}
+
 {% if event.preview %}
   {% assign order = hash %}
   {% assign order["admin_graphql_api_id"] = "gid://shopify/Order/1234567890" %}
   {% assign order["financial_status"] = "partially_paid" %}
-
-  {% capture preview_result_json %}
-    {
-      "data": {
-        "order": {
-          "transactions": [
-            {
-              "id": "gid://shopify/OrderTransaction/1234567890",
-              "amountSet": {
-                "presentmentMoney": {
-                  "amount": "16.99",
-                  "currencyCode": "USD"
-                }
-              }
-            }
-          ],
-          "totalPriceSet": {
-            "presentmentMoney": {
-              "amount": "16.99"
-            }
-          },
-          "subtotalPriceSet": {
-            "presentmentMoney": {
-              "amount": "10.0"
-            }
-          },
-          "totalCapturableSet": {
-            "presentmentMoney": {
-              "amount": "16.54"
-            }
-          },
-          "fulfillments": [
-            {
-              "name": "#1234-F1",
-              "fulfillmentLineItems": {
-                "pageInfo": {
-                  "hasNextPage": false
-                },
-                "edges": [
-                  {
-                    "node": {
-                      "discountedTotalSet": {
-                        "presentmentMoney": {
-                          "amount": "5.0"
-                        }
-                      }
-                    }
-                  }
-                ]
-              }
-            }
-          ]
-        }
-      }
-    }
-  {% endcapture %}
 {% endif %}
 
 {% if order.financial_status != "authorized" and order.financial_status != "partially_paid" %}
   {% log "Order is not either authorized or partially_paid." %}
+
 {% else %}
   {% capture query %}
     query {
       order(id: {{ order.admin_graphql_api_id | json }}) {
+        paymentGatewayNames
         transactions(capturable: true) {
           id
           amountSet {
@@ -96,12 +48,10 @@
             pageInfo {
               hasNextPage
             }
-            edges {
-              node {
-                discountedTotalSet {
-                  presentmentMoney {
-                    amount
-                  }
+            nodes {
+              discountedTotalSet {
+                presentmentMoney {
+                  amount
                 }
               }
             }
@@ -114,28 +64,93 @@
   {% assign result = query | shopify %}
 
   {% if event.preview %}
-    {% assign result = preview_result_json | parse_json %}
+    {% capture result_json %}
+      {
+        "data": {
+          "order": {
+            "paymentGatewayNames": [
+              {{ payment_gateway_names.first | json }}
+            ],
+            "transactions": [
+              {
+                "id": "gid://shopify/OrderTransaction/1234567890",
+                "amountSet": {
+                  "presentmentMoney": {
+                    "amount": "16.99",
+                    "currencyCode": "USD"
+                  }
+                }
+              }
+            ],
+            "totalPriceSet": {
+              "presentmentMoney": {
+                "amount": "16.99"
+              }
+            },
+            "subtotalPriceSet": {
+              "presentmentMoney": {
+                "amount": "10.0"
+              }
+            },
+            "totalCapturableSet": {
+              "presentmentMoney": {
+                "amount": "16.54"
+              }
+            },
+            "fulfillments": [
+              {
+                "name": "#1234-F1",
+                "fulfillmentLineItems": {
+                  "nodes": [
+                    {
+                      "discountedTotalSet": {
+                        "presentmentMoney": {
+                          "amount": "5.0"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
   {% endif %}
 
-  {% assign total = result.data.order.totalPriceSet.presentmentMoney.amount | times: 1.0 %}
-  {% assign total_captured = total | minus: result.data.order.totalCapturableSet.presentmentMoney.amount %}
-  {% assign subtotal = result.data.order.subtotalPriceSet.presentmentMoney.amount | times: 1.0 %}
+  {% assign order = result.data.order %}
+
+  {% unless order.paymentGatewayNames.size == 1 and payment_gateway_names contains order.paymentGatewayNames.first %}
+    {% log
+      message: "This order did not use one of the configured gateways or there are multiple gateways on the order; skipping.",
+      configured_payment_gateway_names: payment_gateway_names,
+      order: result.data.order
+    %}
+    {% break %}
+  {% endunless %}
+
+  {% assign total = order.totalPriceSet.presentmentMoney.amount | times: 1.0 %}
+  {% assign total_captured = total | minus: order.totalCapturableSet.presentmentMoney.amount %}
+  {% assign subtotal = order.subtotalPriceSet.presentmentMoney.amount | times: 1.0 %}
   {% assign subtotal_fulfilled = 0.0 %}
 
-  {% for fulfillment in result.data.order.fulfillments %}
+  {% for fulfillment in order.fulfillments %}
     {% if fulfillment.fulfillmentLineItems.pageInfo.hasNextPage %}
       {% error "This order has a fulfillment with more than 250 line items in it. This is not supported by this task." %}
       {% break %}
     {% endif %}
 
-    {% for fulfillment_line_item_edge in fulfillment.fulfillmentLineItems.edges %}
-      {% assign subtotal_fulfilled = subtotal_fulfilled | plus: fulfillment_line_item_edge.node.discountedTotalSet.presentmentMoney.amount %}
+    {% for fulfillment_line_item in fulfillment.fulfillmentLineItems.nodes %}
+      {% assign subtotal_fulfilled = subtotal_fulfilled | plus: fulfillment_line_item.discountedTotalSet.presentmentMoney.amount %}
     {% endfor %}
   {% endfor %}
 
   {% assign desired_total_captured = subtotal_fulfilled | divided_by: subtotal | times: total %}
   {% assign amount_to_capture = desired_total_captured | minus: total_captured | times: 100 | round | divided_by: 100.0 %}
-  {% assign parent_transaction = result.data.order.transactions.first %}
+  {% assign parent_transaction = order.transactions.first %}
 
   {% log
     total: total,
@@ -147,16 +162,18 @@
     parent_transaction: parent_transaction
   %}
 
-  {% if result.data.order.capturable == false %}
+  {% if order.capturable == false %}
     {% log "This order is not capturable." %}
+
   {% elsif amount_to_capture == 0 %}
     {% log "Nothing to capture at this time." %}
+
   {% else %}
     {% action "shopify" %}
       mutation {
         orderCapture(
           input: {
-            id: {{ order.admin_graphql_api_id | json }}
+            id: {{ order.id | json }}
             parentTransactionId: {{ parent_transaction.id | json }}
             amount: {{ amount_to_capture | append: "" | json }}
             currency: {{ parent_transaction.amountSet.presentmentMoney.currencyCode }}
@@ -175,5 +192,5 @@
     {% endaction %}
   {% endif %}
 
-  {% log result %}
+  {% log order %}
 {% endif %}
