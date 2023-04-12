@@ -1,13 +1,3 @@
-{% comment %}
-  Preferred option order:
-
-  {{ options.datetime_product_metafield_namespace__required }}
-  {{ options.datetime_product_metafield_key__required }}
-  {{ options.run_hourly__boolean }}
-  {{ options.run_daily__boolean }}
-  {{ options.test_mode__boolean }}
-{% endcomment %}
-
 {% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
   {% capture bulk_operation_query %}
     query {
@@ -16,10 +6,7 @@
           node {
             __typename
             id
-            metafield(
-              namespace: {{ options.datetime_product_metafield_namespace__required | json }}
-              key: {{ options.datetime_product_metafield_key__required | json }}
-            ) {
+            metafield(key: {{ options.datetime_product_metafield_namespace_dot_key__required | json }}) {
               value
             }
             variants {
@@ -29,12 +16,19 @@
                   id
                   inventoryPolicy
                   inventoryItem {
+                    id
                     inventoryLevels {
                       edges {
                         node {
                           __typename
                           id
-                          available
+                          location {
+                            id
+                          }
+                          quantities(names: "available") {
+                            name
+                            quantity
+                          }
                         }
                       }
                     }
@@ -64,55 +58,27 @@
       }
     }
   {% endaction %}
+
 {% elsif event.topic == "mechanic/shopify/bulk_operation" %}
   {% assign now_s = "now" | date: "%s" | times: 1 %}
 
   {% if event.preview %}
-    {% capture objects_json %}
-    [
-      {
-        "__typename": "ProductVariant",
-        "id": "gid://shopify/ProductVariant/1234567890",
-        "inventoryPolicy": "CONTINUE",
-        "inventoryItem": {},
-        "__parentId": "gid://shopify/Product/1234567890",
-
-        {% comment %}
-          This is just stub data, remember, and it doesn't have
-          the richness of a real bulkOperations.objects object. So,
-          we insert this parent object in the place where we'd
-          normally have access to it, even though this isn't literally
-          where it would appear in the JSONL file from Shopify
-        {% endcomment %}
-        "__parent": {
-          "__typename": "Product",
-          "id": "gid://shopify/Product/1234567890",
-          "metafield": {
-            "value": "2021-10-01"
-          }
-        }
-      },
-      {
-        "__typename": "InventoryLevel",
-        "id": "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890",
-        "available": 4,
-        "__parentId": "gid://shopify/ProductVariant/1234567890"
-      }
-    ]
+    {% capture bulkOperation_objects_jsonl %}
+      {"__typename":"Product","id":"gid:\/\/shopify\/Product\/1234567890","metafield":{"value":"2023-04-01"}}
+      {"__typename":"ProductVariant","id":"gid:\/\/shopify\/ProductVariant\/1234567890","inventoryPolicy": "CONTINUE","inventoryItem":{"id":"gid:\/\/shopify\/InventoryItem\/1234567890"},"__parentId":"gid:\/\/shopify\/Product\/1234567890"}
+      {"__typename":"InventoryLevel","id": "gid:\/\/shopify\/InventoryLevel\/1234567890?inventory_item_id=1234567890","location":{"id":"gid:\/\/shopify\/Location\/1234567890"},"quantities":[{"name":"available","quantity":4}],"__parentId":"gid:\/\/shopify\/ProductVariant\/1234567890"}
     {% endcapture %}
 
     {% assign bulkOperation = hash %}
-    {% assign bulkOperation["objects"] = objects_json | parse_json %}
+    {% assign bulkOperation["objects"] = bulkOperation_objects_jsonl | parse_jsonl %}
   {% endif %}
 
-  {% assign summary = array %}
+  {% assign bulk_products = bulkOperation.objects | where: "__typename", "Product" %}
+  {% assign bulk_variants = bulkOperation.objects | where: "__typename", "ProductVariant" %}
+  {% assign bulk_inventory_levels = bulkOperation.objects | where: "__typename", "InventoryLevel" %}
 
-  {% assign variants = bulkOperation.objects | where: "__typename", "ProductVariant" %}
-
-  {% for variant in variants %}
-    {% assign variant_mutations = array %}
-    {% assign inventoryLevels = bulkOperation.objects | where: "__typename", "InventoryLevel" | where: "__parentId", variant.id %}
-    {% assign product = variant.__parent %}
+  {% for product in bulk_products %}
+    {% assign summary = array %}
 
     {% if product.metafield.value == blank %}
       {% continue %}
@@ -121,7 +87,10 @@
     {% assign product_date = product.metafield.value | parse_date: "%Y-%m-%d" %}
 
     {% if product_date == nil %}
-      {% log message: "Found a product metafield value that doesn't match the Shopify date or date_time metafield format. Skipping.", product_metafield_value: product.metafield.value %}
+      {% log
+        message: "Found a product metafield value that doesn't match the Shopify date or date_time metafield format. Skipping.",
+        product_metafield_value: product.metafield.value
+      %}
       {% continue %}
     {% endif %}
 
@@ -131,66 +100,117 @@
       {% continue %}
     {% endif %}
 
-    {% if variant.inventoryPolicy != "DENY" %}
-      {% capture mutation %}
-        productVariantUpdate(
-          input: {
-            id: {{ variant.id | json }}
-            inventoryPolicy: DENY
-          }
-        ) {
-          product {
-            id
-            title
-          }
-          productVariant {
-            inventoryPolicy
-          }
-          userErrors {
-            field
-            message
-          }
-        }
-      {% endcapture %}
+    {% assign variants = bulk_variants | where: "__parentId", product.id %}
 
-      {% assign variant_mutations[variant_mutations.size] = mutation %}
-      {% assign summary[summary.size] = "Change variant inventory policy for " | append: variant.id | append: " to DENY" %}
+    {% assign variant_ids_to_update = array %}
+    {% assign inventory_adjustments = array %}
+
+    {% for variant in variants %}
+      {% assign inventory_levels = bulk_inventory_levels | where: "__parentId", variant.id %}
+
+      {% if variant.inventoryPolicy != "DENY" %}
+        {% assign variant_ids_to_update = variant_ids_to_update | push: variant.id %}
+        {% assign summary[summary.size]
+          = "Change variant inventory policy for "
+          | append: variant.id
+          | append: " to DENY"
+        %}
+      {% endif %}
+
+      {% for inventory_level in inventory_levels %}
+        {% if inventory_level.quantities.first.quantity > 0 %}
+          {% assign inventory_adjustment = hash %}
+          {% assign inventory_adjustment["inventoryItemId"] = variant.inventoryItem.id %}
+          {% assign inventory_adjustment["locationId"] = inventory_level.location.id %}
+          {% assign inventory_adjustment["delta"] = inventory_level.quantities.first.quantity | times: -1 %}
+          {% assign inventory_adjustments = inventory_adjustments | push: inventory_adjustment %}
+
+          {% assign summary[summary.size]
+            = "Set available inventory for "
+            | append: variant.id
+            | append: " at location "
+            | append: inventory_level.location.id
+            | append: " to 0, by adjusting it by -"
+            | append: inventory_level.quantities.first.quantity
+          %}
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+
+    {% if summary != blank %}
+      {% log product_id: product.id, updates_to_be_made: summary %}
     {% endif %}
 
-    {% for inventoryLevel in inventoryLevels %}
-      {% if inventoryLevel.available > 0 %}
-        {% capture mutation %}
-          inventoryAdjustQuantity(
-            input: {
-              inventoryLevelId: {{ inventoryLevel.id | json }}
-              availableDelta: {{ inventoryLevel.available | times: -1 | json }}
+    {% if inventory_adjustments != blank %}
+      {% assign groups_of_inventory_adjustments = inventory_adjustments | in_groups_of: 250, fill_with: false %}
+
+      {% for group_of_inventory_adjustments in groups_of_inventory_adjustments %}
+        {% action "shopify" %}
+          mutation {
+            inventoryAdjustQuantities(
+              input: {
+                reason: "correction"
+                name: "available"
+                changes: {{ group_of_inventory_adjustments | graphql_arguments }}
+              }
+            ) {
+              inventoryAdjustmentGroup {
+                reason
+                changes {
+                  name
+                  delta
+                  quantityAfterChange
+                  item {
+                    id
+                    sku
+                  }
+                  location {
+                    name
+                  }
+                }
+              }
+              userErrors {
+                code
+                field
+                message
+              }
             }
+          }
+        {% endaction %}
+      {% endfor %}
+    {% endif %}
+
+    {% if variant_ids_to_update != blank %}
+      {% action "shopify" %}
+        mutation {
+          productVariantsBulkUpdate(
+            allowPartialUpdates: true
+            productId: {{ product.id | json }}
+            variants: [
+              {% for variant_id in variant_ids_to_update -%}
+                {
+                  id: {{ variant_id | json }}
+                  inventoryPolicy: DENY
+                }
+              {%- endfor %}
+            ]
           ) {
-            inventoryLevel {
-              available
+            product {
+              id
+              title
+            }
+            productVariants {
+              displayName
+              sku
+              inventoryPolicy
             }
             userErrors {
               field
               message
             }
           }
-        {% endcapture %}
-
-        {% assign variant_mutations[variant_mutations.size] = mutation %}
-      {% assign summary[summary.size] = "Set inventory level for " | append: inventoryLevel.id | append: " to 0, by adjusting it by -" | append: inventoryLevel.available %}
-      {% endif %}
-    {% endfor %}
-
-    {% if variant_mutations != empty %}
-      {% if options.test_mode__boolean %}
-        {% action "echo" summary %}
-      {% else %}
-        {% action "shopify" %}
-          mutation {
-            {{ variant_mutations | join: newline }}
-          }
-        {% endaction %}
-      {% endif %}
+        }
+      {% endaction %}
     {% endif %}
   {% endfor %}
 {% endif %}
