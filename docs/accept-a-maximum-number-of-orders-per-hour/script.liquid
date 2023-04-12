@@ -76,11 +76,11 @@
   {% if orders_this_hour == options.maximum_hourly_orders__number_required %}
     {% assign cursor = nil %}
 
-    {% for n in (0..100) %}
+    {% for n in (0..2000) %}
       {% capture query %}
         query {
           inventoryItems(
-            first: 65
+            first: 4
             after: {{ cursor | json }}
           ) {
             pageInfo {
@@ -95,12 +95,15 @@
                   }
                 }
                 inventoryLevels(
-                  first: 10
+                  first: 100
                 ) {
                   edges {
                     node {
                       id
-                      available
+                      quantities(names: "available") {
+                        name
+                        quantity
+                      }
                     }
                   }
                 }
@@ -138,7 +141,12 @@
                           {
                             "node": {
                               "id": "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890",
-                              "available": 20
+                              "quantities": [
+                                {
+                                  "name": "available",
+                                  "quantity": 20
+                                }
+                              ]
                             }
                           }
                         ]
@@ -162,11 +170,11 @@
         {% endif %}
 
         {% for inventoryLevel_edge in inventoryItem_edge.node.inventoryLevels.edges %}
-          {% if inventoryLevel_edge.node.available <= 0 %}
+          {% if inventoryLevel_edge.node.quantities.first.quantity <= 0 %}
             {% continue %}
           {% endif %}
 
-          {% assign inventory_levels_to_zero[inventoryLevel_edge.node.id] = inventoryLevel_edge.node.available %}
+          {% assign inventory_levels_to_zero[inventoryLevel_edge.node.id] = inventoryLevel_edge.node.quantities.first.quantity %}
         {% endfor %}
       {% endfor %}
 
@@ -191,7 +199,10 @@
               }
             ) {
               inventoryLevel {
-                available
+                quantities(names: "available") {
+                  name
+                  quantity
+                }
               }
               userErrors {
                 field
@@ -238,7 +249,7 @@
     {% endif %}
 
     {% log inventory_levels_to_restore_count: inventory_levels_to_restore.size, inventory_levels_to_restore: inventory_levels_to_restore, since: previous_hour %}
-     
+
     {% for keyval in inventory_levels_to_restore %}
       {% assign inventory_level_id = keyval[0] %}
       {% assign inventory_level_available = keyval[1] %}

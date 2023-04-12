@@ -88,11 +88,11 @@
 
     {% assign cursor = nil %}
 
-    {% for n in (0..100) %}
+    {% for n in (0..2000) %}
       {% capture query %}
         query {
           inventoryItems(
-            first: 65
+            first: 4
             after: {{ cursor | json }}
           ) {
             pageInfo {
@@ -107,12 +107,15 @@
                   }
                 }
                 inventoryLevels(
-                  first: 10
+                  first: 100
                 ) {
                   edges {
                     node {
                       id
-                      available
+                      quantities(names: "available") {
+                        name
+                        quantity
+                      }
                     }
                   }
                 }
@@ -150,7 +153,12 @@
                           {
                             "node": {
                               "id": "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890",
-                              "available": 20
+                              "quantities": [
+                                {
+                                  "name": "available",
+                                  "quantity": 20
+                                }
+                              ]
                             }
                           }
                         ]
@@ -174,7 +182,7 @@
         {% endif %}
 
         {% for inventoryLevel_edge in inventoryItem_edge.node.inventoryLevels.edges %}
-          {% if inventoryLevel_edge.node.available <= 0 %}
+          {% if inventoryLevel_edge.node.quantities.first.quantity <= 0 %}
             {% continue %}
           {% endif %}
 
@@ -196,11 +204,14 @@
             inventoryAdjustQuantity(
               input: {
                 inventoryLevelId: {{ inventory_level.id | json }}
-                availableDelta: {{ inventory_level.available | times: -1 | json }}
+                availableDelta: {{ inventory_level.quantities.first.quantity | times: -1 | json }}
               }
             ) {
               inventoryLevel {
-                available
+                quantities(names: "available") {
+                  name
+                  quantity
+                }
               }
               userErrors {
                 field
@@ -234,6 +245,7 @@
       {% endif %}
     {% endif %}
   {% endif %}
+
 {% elsif event.topic contains "mechanic/" %}
   {% assign proceed = false %}
 
@@ -266,7 +278,10 @@
       {% assign inventory_levels_cache_group["value"] = array %}
       {% assign inventory_levels_cache_group["value"][0] = hash %}
       {% assign inventory_levels_cache_group["value"][0]["id"] = "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890" %}
-      {% assign inventory_levels_cache_group["value"][0]["available"] = 20 %}
+      {% assign inventory_levels_cache_group["value"][0]["quantities"] = array %}
+      {% assign inventory_levels_cache_group["value"][0]["quantities"][0] = hash %}
+      {% assign inventory_levels_cache_group["value"][0]["quantities"][0]["name"] = "available" %}
+      {% assign inventory_levels_cache_group["value"][0]["quantities"][0]["quantity"] = 20 %}
     {% endif %}
 
     {% if inventory_levels_cache_group != blank %}
@@ -291,11 +306,14 @@
           inventoryAdjustQuantity(
             input: {
               inventoryLevelId: {{ inventory_level.id | json }}
-              availableDelta: {{ inventory_level.available | json }}
+              availableDelta: {{ inventory_level.quantities.first.quantity | json }}
             }
           ) {
             inventoryLevel {
-              available
+              quantities(names: "available") {
+                name
+                quantity
+              }
             }
             userErrors {
               field
