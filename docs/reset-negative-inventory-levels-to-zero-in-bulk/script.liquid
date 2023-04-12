@@ -11,7 +11,10 @@
                 node {
                   id
                   __typename
-                  available
+                  quantities(names: "available") {
+                    name
+                    quantity
+                  }
                 }
               }
             }
@@ -37,40 +40,42 @@
       }
     }
   {% endaction %}
+
 {% elsif event.topic == "mechanic/shopify/bulk_operation" %}
   {% if event.preview %}
+    {% capture bulkOperation_objects_jsonl %}
+      {"__typename":"InventoryLevel","id":"gid:\/\/shopify\/InventoryLevel\/1234567890?inventory_item_id=1234567890","quantities":[{"name":"available","quantity":-5}]}
+    {% endcapture %}
+
     {% assign bulkOperation = hash %}
-    {% assign bulkOperation["objects"] = array %}
-    {% assign bulkOperation["objects"][0] = '{"id": "gid://shopify/InventoryItem/1234567890", "__typename": "InventoryItem"}' | parse_json %}
-    {% assign bulkOperation["objects"][1] = '{"id": "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890", "__typename": "InventoryLevel", "available": -5, "__parentId": "gid://shopify/InventoryItem/1234567890"}' | parse_json %}
+    {% assign bulkOperation["objects"] = bulkOperation_objects_jsonl | parse_jsonl %}
   {% endif %}
 
-  {% for object in bulkOperation.objects %}
-    {% if object.__typename != "InventoryLevel" %}
-      {% continue %}
-    {% endif %}
+  {% assign inventory_levels = bulkOperation.objects | where: "__typename", "InventoryLevel" %}
 
-    {% if object.available >= 0 %}
-      {% continue %}
-    {% endif %}
-
-    {% action "shopify" %}
-      mutation {
-        inventoryAdjustQuantity(
-          input: {
-            inventoryLevelId: {{ object.id | json }}
-            availableDelta: {{ object.available | times: -1 | json }}
-          }
-        ) {
-          inventoryLevel {
-            available
-          }
-          userErrors {
-            field
-            message
+  {% for inventory_level in inventory_levels %}
+    {% if inventory_level.quantities.first.quantity < 0 %}
+      {% action "shopify" %}
+        mutation {
+          inventoryAdjustQuantity(
+            input: {
+              inventoryLevelId: {{ inventory_level.id | json }}
+              availableDelta: {{ inventory_level.quantities.first.quantity | times: -1 | json }}
+            }
+          ) {
+            inventoryLevel {
+              quantities(names: "available") {
+                name
+                quantity
+              }
+            }
+            userErrors {
+              field
+              message
+            }
           }
         }
-      }
-    {% endaction %}
+      {% endaction %}
+    {% endif %}
   {% endfor %}
 {% endif %}

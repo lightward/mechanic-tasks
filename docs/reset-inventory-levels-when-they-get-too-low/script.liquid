@@ -174,7 +174,10 @@
           }
         ) {
           inventoryLevel {
-            available
+            quantities(names: "available") {
+              name
+              quantity
+            }
           }
           userErrors {
             field
