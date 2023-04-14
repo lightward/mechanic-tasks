@@ -26,11 +26,9 @@ This task works by setting your inventory to zero when the order limit is reache
 
 ```liquid
 shopify/orders/create
-
 {% if options.restore_inventory_levels_the_next_day__boolean %}
   mechanic/scheduler/daily
 {% endif %}
-
 {% if options.restore_inventory_levels_on_demand__boolean %}
   mechanic/user/trigger
 {% endif %}
