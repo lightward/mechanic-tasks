@@ -4,13 +4,16 @@
       inventoryItems {
         edges {
           node {
-            id
             __typename
+            id
             inventoryLevels {
               edges {
                 node {
-                  id
                   __typename
+                  id
+                  location {
+                    id
+                  }
                   quantities(names: "available") {
                     name
                     quantity
@@ -44,38 +47,69 @@
 {% elsif event.topic == "mechanic/shopify/bulk_operation" %}
   {% if event.preview %}
     {% capture bulkOperation_objects_jsonl %}
-      {"__typename":"InventoryLevel","id":"gid:\/\/shopify\/InventoryLevel\/1234567890?inventory_item_id=1234567890","quantities":[{"name":"available","quantity":-5}]}
+      {"__typename":"InventoryItem","id":"gid:\/\/shopify\/InventoryItem\/1234567890"}
+      {"__typename":"InventoryLevel","location":{"id":"gid:\/\/shopify\/Location\/1234567890"},"quantities":[{"name":"available","quantity":-5}],"__parentId":"gid:\/\/shopify\/InventoryItem\/1234567890"}
     {% endcapture %}
 
     {% assign bulkOperation = hash %}
     {% assign bulkOperation["objects"] = bulkOperation_objects_jsonl | parse_jsonl %}
   {% endif %}
 
-  {% assign inventory_levels = bulkOperation.objects | where: "__typename", "InventoryLevel" %}
+  {% assign bulk_inventory_items = bulkOperation.objects | where: "__typename", "InventoryItem" %}
+  {% assign bulk_inventory_levels = bulkOperation.objects | where: "__typename", "InventoryLevel" %}
 
-  {% for inventory_level in inventory_levels %}
-    {% if inventory_level.quantities.first.quantity < 0 %}
+  {% assign inventory_adjustments = array %}
+
+  {% for inventory_item in bulk_inventory_items %}
+    {% assign inventory_levels = bulk_inventory_levels | where: "__parentId", inventory_item.id %}
+
+    {% for inventory_level in inventory_levels %}
+      {% if inventory_level.quantities.first.quantity < 0 %}
+        {% assign inventory_adjustment = hash %}
+        {% assign inventory_adjustment["inventoryItemId"] = inventory_item.id %}
+        {% assign inventory_adjustment["locationId"] = inventory_level.location.id %}
+        {% assign inventory_adjustment["delta"] = inventory_level.quantities.first.quantity | times: -1 %}
+        {% assign inventory_adjustments = inventory_adjustments | push: inventory_adjustment %}
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+
+  {% if inventory_adjustments != blank %}
+    {% assign groups_of_inventory_adjustments = inventory_adjustments | in_groups_of: 250, fill_with: false %}
+
+    {% for group_of_inventory_adjustments in groups_of_inventory_adjustments %}
       {% action "shopify" %}
         mutation {
-          inventoryAdjustQuantity(
+          inventoryAdjustQuantities(
             input: {
-              inventoryLevelId: {{ inventory_level.id | json }}
-              availableDelta: {{ inventory_level.quantities.first.quantity | times: -1 | json }}
+              reason: "correction"
+              name: "available"
+              changes: {{ group_of_inventory_adjustments | graphql_arguments }}
             }
           ) {
-            inventoryLevel {
-              quantities(names: "available") {
+            inventoryAdjustmentGroup {
+              reason
+              changes {
                 name
-                quantity
+                delta
+                quantityAfterChange
+                item {
+                  id
+                  sku
+                }
+                location {
+                  name
+                }
               }
             }
             userErrors {
+              code
               field
               message
             }
           }
         }
       {% endaction %}
-    {% endif %}
-  {% endfor %}
+    {% endfor %}
+  {% endif %}
 {% endif %}

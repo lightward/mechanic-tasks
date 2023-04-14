@@ -1,17 +1,25 @@
+{% assign reset_level = options.reset_all_inventory_items_to_this_level__number_required  %}
+
 {% if event.topic == "mechanic/user/trigger" %}
   {% capture bulk_operation_query %}
     query {
       inventoryItems {
         edges {
           node {
-            id
             __typename
+            id
             inventoryLevels {
               edges {
                 node {
-                  id
                   __typename
-                  available
+                  id
+                  location {
+                    id
+                  }
+                  quantities(names: "available") {
+                    name
+                    quantity
+                  }
                 }
               }
             }
@@ -37,49 +45,73 @@
       }
     }
   {% endaction %}
+
 {% elsif event.topic == "mechanic/shopify/bulk_operation" %}
   {% if event.preview %}
     {% capture bulkOperation_objects_jsonl %}
-      {"id": "gid://shopify/InventoryItem/1234567890", "__typename": "InventoryItem"}
-      {"id": "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890", "__typename": "InventoryLevel", "available": -5, "__parentId": "gid://shopify/InventoryItem/1234567890"}
+      {"__typename":"InventoryItem","id":"gid:\/\/shopify\/InventoryItem\/1234567890"}
+      {"__typename":"InventoryLevel","location":{"id":"gid:\/\/shopify\/Location\/1234567890"},"quantities":[{"name":"available","quantity":{{ reset_level | minus: 5 }}}],"__parentId":"gid:\/\/shopify\/InventoryItem\/1234567890"}
     {% endcapture %}
 
     {% assign bulkOperation = hash %}
     {% assign bulkOperation["objects"] = bulkOperation_objects_jsonl | parse_jsonl %}
   {% endif %}
 
-  {% for object in bulkOperation.objects %}
-    {% if object.__typename != "InventoryLevel" %}
-      {% continue %}
-    {% endif %}
+  {% assign bulk_inventory_items = bulkOperation.objects | where: "__typename", "InventoryItem" %}
+  {% assign bulk_inventory_levels = bulkOperation.objects | where: "__typename", "InventoryLevel" %}
 
-    {% if event.preview != true and object.available == options.reset_all_inventory_items_to_this_level__number_required %}
-      {% continue %}
-    {% endif %}
+  {% assign inventory_adjustments = array %}
 
-    {% assign adjustment = options.reset_all_inventory_items_to_this_level__number_required | minus: object.available %}
+  {% for inventory_item in bulk_inventory_items %}
+    {% assign inventory_levels = bulk_inventory_levels | where: "__parentId", inventory_item.id %}
 
-    {% if options.test_mode__boolean %}
-      {% log inventoryLevelId: object.id, currentlyAvailable: object.available, adjustment: adjustment %}
-    {% else %}
+    {% for inventory_level in inventory_levels %}
+      {% if inventory_level.quantities.first.quantity != reset_level %}
+        {% assign inventory_adjustment = hash %}
+        {% assign inventory_adjustment["inventoryItemId"] = inventory_item.id %}
+        {% assign inventory_adjustment["locationId"] = inventory_level.location.id %}
+        {% assign inventory_adjustment["delta"] = reset_level | minus: inventory_level.quantities.first.quantity %}
+        {% assign inventory_adjustments = inventory_adjustments | push: inventory_adjustment %}
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+
+  {% if inventory_adjustments != blank %}
+    {% assign groups_of_inventory_adjustments = inventory_adjustments | in_groups_of: 250, fill_with: false %}
+
+    {% for group_of_inventory_adjustments in groups_of_inventory_adjustments %}
       {% action "shopify" %}
         mutation {
-          inventoryAdjustQuantity(
+          inventoryAdjustQuantities(
             input: {
-              inventoryLevelId: {{ object.id | json }}
-              availableDelta: {{ adjustment | json }}
+              reason: "correction"
+              name: "available"
+              changes: {{ group_of_inventory_adjustments | graphql_arguments }}
             }
           ) {
-            inventoryLevel {
-              available
+            inventoryAdjustmentGroup {
+              reason
+              changes {
+                name
+                delta
+                quantityAfterChange
+                item {
+                  id
+                  sku
+                }
+                location {
+                  name
+                }
+              }
             }
             userErrors {
+              code
               field
               message
             }
           }
         }
       {% endaction %}
-    {% endif %}
-  {% endfor %}
+    {% endfor %}
+  {% endif %}
 {% endif %}
