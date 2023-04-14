@@ -145,6 +145,7 @@
           nodes {
             sku
             inventoryItem {
+              id
               inventoryLevel(locationId: {{ primary_location.admin_graphql_api_id | json }}) {
                 id
                 quantities(names: "available") {
@@ -169,6 +170,7 @@
                 {
                   "sku": {{ bundle_sku | json }},
                   "inventoryItem": {
+                    "id": "gid://shopify/InventoryItem/1234567890",
                     "inventoryLevel": {
                       "id": "gid://shopify/InventoryLevel/1234567890?x=bundle&sku={{ bundle_sku }}&inventory_item_id=1234567890",
                       "quantities": [
@@ -184,8 +186,9 @@
                   {
                     "sku": {{ component_sku | json }},
                     "inventoryItem": {
+                      "id": "gid://shopify/InventoryItem/2345678901",
                       "inventoryLevel": {
-                        "id": "gid://shopify/InventoryLevel/1234567890?x=component&sku={{ component_sku }}&inventory_item_id=1234567890",
+                        "id": "gid://shopify/InventoryLevel/2345678901?x=component&sku={{ component_sku }}&inventory_item_id=2345678901",
                         "quantities": [
                           {
                             "name": "available",
@@ -242,6 +245,8 @@
 {% endif %}
 
 {% if do_component_adjustment %}
+  {% assign inventory_adjustments = array %}
+
   {% for keyval in variants_by_sku %}
     {% assign sku = keyval[0] %}
     {% assign variants = keyval[1] %}
@@ -259,36 +264,49 @@
       {% assign variant_delta = component_adjustment_bundle_quantity | times: component_skus_and_quantities[variant.sku] %}
 
       {% if variant_delta != 0 %}
-        {% action "shopify" %}
-          mutation {
-            inventoryAdjustQuantity(
-              input: {
-                inventoryLevelId: {{ variant.inventoryItem.inventoryLevel.id | json }}
-                availableDelta: {{ variant_delta | json }}
-              }
-            ) {
-              inventoryLevel {
-                id
-                quantities(names: "available") {
-                  name
-                  quantity
-                }
-                item {
-                  variant {
-                    sku
-                  }
-                }
-              }
-              userErrors {
-                field
-                message
-              }
-            }
-          }
-        {% endaction %}
+        {% assign inventory_adjustment = hash %}
+        {% assign inventory_adjustment["inventoryItemId"] = variant.inventoryItem.id %}
+        {% assign inventory_adjustment["locationId"] = primary_location.admin_graphql_api_id %}
+        {% assign inventory_adjustment["delta"] = variant_delta %}
+        {% assign inventory_adjustments = inventory_adjustments | push: inventory_adjustment %}
       {% endif %}
     {% endfor %}
   {% endfor %}
+
+  {% if inventory_adjustments != blank %}
+    {% action "shopify" %}
+      mutation {
+        inventoryAdjustQuantities(
+          input: {
+            reason: "correction"
+            name: "available"
+            changes: {{ inventory_adjustments | graphql_arguments }}
+          }
+        ) {
+          inventoryAdjustmentGroup {
+            reason
+            changes {
+              name
+              delta
+              quantityAfterChange
+              item {
+                id
+                sku
+              }
+              location {
+                name
+              }
+            }
+          }
+          userErrors {
+            code
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
 {% endif %}
 
 {% if do_full_sync %}
@@ -361,25 +379,36 @@
   {% else %}
     {% action "shopify" %}
       mutation {
-        inventoryAdjustQuantity(
+        inventoryAdjustQuantities(
           input: {
-            inventoryLevelId: {{ bundle_variant.inventoryItem.inventoryLevel.id | json }}
-            availableDelta: {{ bundle_delta | json }}
+            reason: "correction"
+            name: "available"
+            changes: [
+              {
+                inventoryItemId: {{ bundle_variant.inventoryItem.id | json }}
+                locationId: {{ primary_location.admin_graphql_api_id | json }}
+                delta: {{ bundle_delta }}
+              }
+            ]
           }
         ) {
-          inventoryLevel {
-            id
-            quantities(names: "available") {
+          inventoryAdjustmentGroup {
+            reason
+            changes {
               name
-              quantity
-            }
-            item {
-              variant {
+              delta
+              quantityAfterChange
+              item {
+                id
                 sku
+              }
+              location {
+                name
               }
             }
           }
           userErrors {
+            code
             field
             message
           }
