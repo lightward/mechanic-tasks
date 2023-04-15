@@ -1,221 +1,243 @@
-{% comment %}
-  Use 10/10 for a simple preview. Use 100/101 to demonstrate batching,
-  since we only get 100 inventory updates per mutation.
-{% endcomment %}
-{% assign starting_inventory_for_preview = 10 %}
-{% assign variant_count_for_preview = 100 %}
+{% assign product_types = options.product_types_to_monitor__array_required %}
+{% assign only_sync_active_products = options.only_sync_active_products__boolean %}
 
-{% assign search_query_parts = array %}
-{% for product_type in options.product_types_to_monitor__array_required %}
-  {% assign search_query_parts[search_query_parts.size] = product_type | json | prepend: "product_type:" %}
-{% endfor %}
-{% assign search_query = search_query_parts | join: " OR " %}
+{% assign primary_location = shop.locations[shop.primary_location_id] %}
 
 {% assign variants_by_product = hash %}
 {% assign cursor = nil %}
+{% assign search_query_parts = array %}
 
-{% for n in (0..100) %}
-  {% capture variant_query %}
-    {
+{% for product_type in product_types %}
+  {% assign search_query_parts[search_query_parts.size] = product_type | json | prepend: "product_type:" %}
+{% endfor %}
+
+{% capture search_query -%}
+  location_id:{{ shop.primary_location_id }} ({{ search_query_parts | join: " OR " }}) managed:true
+{%- endcapture %}
+
+{% for n in (0..200) %}
+  {% capture query %}
+    query {
       productVariants(
-        first: 250
+        first: 150
         query: {{ search_query | json }}
         after: {{ cursor | json }}
       ) {
         pageInfo {
           hasNextPage
+          endCursor
         }
-        edges {
-          node {
+        nodes {
+          id
+          inventoryItem {
             id
-            inventoryQuantity
-            inventoryItem {
-              id
-            }
-            product {
-              id
+            inventoryLevel(locationId: {{ primary_location.admin_graphql_api_id | json }}) {
+              quantities(names: "available") {
+                name
+                quantity
+              }
             }
           }
-          cursor
+          product {
+            id
+          }
         }
       }
     }
   {% endcapture %}
 
-  {% assign variant_query_result = variant_query | shopify %}
+  {% assign result = query | shopify %}
 
   {% if event.preview %}
-    {% capture variant_query_result_json %}
+    {% capture result_json %}
       {
         "data": {
           "productVariants": {
-            "pageInfo": {
-              "hasNextPage": false
-            },
-            "edges": [
+            "nodes": [
               {
-                "node": {
-                  "id": "gid://shopify/ProductVariant/1234567890",
-                  "inventoryQuantity": {{ starting_inventory_for_preview }},
-                  "inventoryItem": {
-                    "id": "gid://shopify/InventoryItem/1234567890"
-                  },
-                  "product": {
-                    "id": "gid://shopify/Product/1234567890"
+                "id": "gid://shopify/ProductVariant/1234567890",
+                "inventoryItem": {
+                  "id": "gid://shopify/InventoryItem/1234567890",
+                  "inventoryLevel": {
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 30
+                      }
+                    ]
                   }
+                },
+                "product": {
+                  "id": "gid://shopify/Product/1234567890"
                 }
               },
-              {% for n in (2..variant_count_for_preview) %}
-                {
-                  "node": {
-                    "id": "gid://shopify/ProductVariant/134567890-{{ n }}",
-                    "inventoryQuantity": {% if event.topic == "mechanic/user/trigger" %}{{ starting_inventory_for_preview }}{% else %}{{ starting_inventory_for_preview | minus: 1 }}{% endif %},
-                    "inventoryItem": {
-                      "id": "gid://shopify/InventoryItem/1234567890-{{ n}}"
-                    },
-                    "product": {
-                      "id": "gid://shopify/Product/1234567890"
-                    }
+              {
+                "id": "gid://shopify/ProductVariant/2345678901",
+                "inventoryItem": {
+                  "id": "gid://shopify/InventoryItem/2345678901",
+                  "inventoryLevel": {
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": {% if event.topic == "mechanic/user/trigger" %}30{% else %}31{% endif %}
+                      }
+                    ]
                   }
-                }{% unless forloop.last %},{% endunless %}
-              {% endfor %}
+                },
+                "product": {
+                  "id": "gid://shopify/Product/1234567890"
+                }
+              }
             ]
           }
         }
       }
     {% endcapture %}
 
-    {% assign variant_query_result = variant_query_result_json | parse_json %}
+    {% assign result = result_json | parse_json %}
   {% endif %}
 
-  {% assign variant_nodes = variant_query_result.data.productVariants.edges | map: "node" %}
-  {% for variant_node in variant_nodes %}
-    {% assign product_id = variant_node.product.id %}
-    {% if variants_by_product[product_id] == nil %}
-      {% assign variants_by_product[product_id] = array %}
-    {% endif %}
-
-    {% assign index = variants_by_product[product_id].size %}
-    {% assign variants_by_product[product_id][index] = variant_node %}
+  {% for variant in result.data.productVariants.nodes %}
+    {% assign variants_by_product[variant.product.id]
+      = variants_by_product[variant.product.id]
+      | default: array
+      | push: variant
+    %}
   {% endfor %}
 
-  {% if variant_query_result.data.productVariants.pageInfo.hasNextPage %}
-    {% assign cursor = variant_query_result.data.productVariants.edges.last.cursor %}
-    {% continue %}
+  {% if result.data.productVariants.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.productVariants.pageInfo.endCursor %}
+  {% else %}
+    {% break %}
   {% endif %}
-
-  {% break %}
 {% endfor %}
 
-{% if variants_by_product == empty %}
-  {% log mesage: "No matching product variants found! Check your product type settings for this task.", search_query: search_query %}
-{% elsif event.topic == "mechanic/user/trigger" %}
+{% if variants_by_product == blank %}
+  {% log
+    message: "No matching product variants found! Check your product type settings for this task.",
+    search_query: search_query
+  %}
+  {% break %}
+{% endif %}
+
+{% if event.topic == "mechanic/user/trigger" %}
   {% for pair in variants_by_product %}
     {% assign product_id = pair[0] %}
     {% assign variants = pair[1] %}
 
-    {% assign unique_inventory_levels = variants | map: "inventoryQuantity" | uniq %}
-    {% if unique_inventory_levels.size != 1 %}
-      {% error message: "Ensure all products have even inventory levels across their variants, then try again.", product_id_with_mismatching_inventory_quantities: product_id %}
-      {% break %}
+    {% assign available_quantites = array %}
+
+    {% for variant in variants %}
+      {% assign available_quantites = available_quantites | push: variant.inventoryItem.inventoryLevel.quantities.first.quantity %}
+    {% endfor %}
+
+    {% assign inventory_total = available_quantites | sum %}
+    {% assign expected_inventory_total = available_quantites.first | times: available_quantites.size %}
+
+    {% if inventory_total != expected_inventory_total %}
+      {% error
+        message: "Product variant inventory levels are not in sync. Manually ensure everything is at the same level, then try again.",
+        product_id: product_id,
+        expected_inventory_total: expected_inventory_total,
+        inventory_total: inventory_total,
+        available_quantites: available_quantites
+      %}
+
     {% else %}
       {% assign cache_key = "inventory_by_product:" | append: product_id %}
-      {% action "cache", "set", cache_key, variants.first.inventoryQuantity %}
+      {% action "cache", "set", cache_key, available_quantites.first %}
     {% endif %}
   {% endfor %}
+
 {% elsif event.topic contains "mechanic/scheduler/" %}
-  {% assign inventory_item_adjustments = array %}
-
-  {% capture primary_location_query %}
-    {
-      location {
-        id
-      }
-    }
-  {% endcapture %}
-
-  {% assign primary_location_query_result = primary_location_query | shopify %}
-
-  {% if event.preview %}
-    {% capture primary_location_query_result_json %}
-      {
-        "data": {
-          "location": {
-            "id": "gid://shopify/Location/1234567890"
-          }
-        }
-      }
-    {% endcapture %}
-
-    {% assign primary_location_query_result = primary_location_query_result_json | parse_json %}
-  {% endif %}
-
-  {% assign primary_location_id = primary_location_query_result.data.location.id %}
+  {% assign inventory_adjustments = array %}
 
   {% for pair in variants_by_product %}
     {% assign product_id = pair[0] %}
     {% assign variants = pair[1] %}
 
     {% assign cache_key = "inventory_by_product:" | append: product_id %}
-    {% assign starting_inventory = cache[cache_key] %}
+    {% assign inventory_old = cache[cache_key] %}
 
     {% if event.preview %}
-      {% assign starting_inventory = starting_inventory_for_preview %}
+      {% assign inventory_old = 30 %}
     {% endif %}
 
-    {% if starting_inventory == blank %}
-      {% error message: "The inventory for this product has not yet been cached. Manually synchronize the inventory for this product and run this task manually per steps 2 and 3 in the task instructions.", product_id: product_id %}
-    {% endif %}    
-
-    {% assign inventory_list = variants | map: "inventoryQuantity" %}
-    {% assign inventory_total = inventory_list | sum %}
-    {% assign inventory_diff = starting_inventory | times: inventory_list.size | minus: inventory_total %}
-    {% assign new_inventory = starting_inventory | minus: inventory_diff %}
-
-    {% if new_inventory == starting_inventory %}
-      {% log message: "No inventory adjustments needed for this product", product_id: product_id, inventory_available: starting_inventory %}
-    {% else %}
-      {% action "cache", "set", cache_key, new_inventory %}
-
-      {% for variant in variants %}
-        {% assign adjustment = hash %}
-        {% assign adjustment["inventoryItemId"] = variant.inventoryItem.id %}
-        {% assign adjustment["availableDelta"] = new_inventory | minus: variant.inventoryQuantity %}
-
-        {% if new_inventory == variant.inventoryQuantity %}
-          {% continue %}
-        {% endif %}
-
-        {% assign inventory_item_adjustments[inventory_item_adjustments.size] = adjustment %}
-      {% endfor %}
+    {% if inventory_old == blank %}
+      {% error
+        message: "The inventory for this product has not yet been cached. Manually synchronize the inventory for this product and run this task manually per steps 2 and 3 in the task instructions.",
+        product_id: product_id
+      %}
     {% endif %}
+
+    {% assign available_quantites = array %}
+
+    {% for variant in variants %}
+      {% assign available_quantites = available_quantites | push: variant.inventoryItem.inventoryLevel.quantities.first.quantity %}
+    {% endfor %}
+
+    {% assign inventory_total_old = inventory_old | times: available_quantites.size %}
+    {% assign inventory_total_new = available_quantites | sum %}
+    {% assign inventory_total_diff = inventory_total_new | minus: inventory_total_old %}
+    {% assign inventory_new = inventory_old | plus: inventory_total_diff %}
+
+    {% log
+      inventory_old: inventory_old,
+      inventory_total_old: inventory_total_old,
+      inventory_total_new: inventory_total_new,
+      inventory_total_diff: inventory_total_diff,
+      inventory_new: inventory_new,
+      product_id: product_id,
+      variants_count: variants.size,
+      variants: variants
+    %}
+
+    {% if inventory_new == inventory_old %}
+      {% log "No inventory adjustments needed for this product." %}
+      {% continue %}
+    {% endif %}
+
+    {% action "cache", "set", cache_key, inventory_new %}
+
+    {% for variant in variants %}
+      {% assign inventory_adjustment = hash %}
+      {% assign inventory_adjustment["inventoryItemId"] = variant.inventoryItem.id %}
+      {% assign inventory_adjustment["locationId"] = primary_location.admin_graphql_api_id %}
+      {% assign inventory_adjustment["delta"] = inventory_new | minus: variant.inventoryItem.inventoryLevel.quantities.first.quantity %}
+      {% assign inventory_adjustments = inventory_adjustments | push: inventory_adjustment %}
+    {% endfor %}
   {% endfor %}
 
-  {% if inventory_item_adjustments.size > 0 %}
-    {% assign batch_size = 100 %}
-    {% assign batch_count = inventory_item_adjustments.size | times: 1.0 | divided_by: batch_size | ceil %}
+  {% if inventory_adjustments != blank %}
+    {% assign groups_of_inventory_adjustments = inventory_adjustments | in_groups_of: 250, fill_with: false %}
 
-    {% for n in (1..batch_count) %}
-      {% assign inventory_item_adjustments_batch = array %}
-      {% assign start_index = batch_size  | times: forloop.index0 %}
-      {% assign stop_index = start_index | plus: batch_size | minus: 1 %}
-
-      {% for m in (start_index..stop_index) %}
-        {% if inventory_item_adjustments[m] %}
-          {% assign inventory_item_adjustments_batch[inventory_item_adjustments_batch.size] = inventory_item_adjustments[m] %}
-        {% endif %}
-      {% endfor %}
-
+    {% for group_of_inventory_adjustments in groups_of_inventory_adjustments %}
       {% action "shopify" %}
         mutation {
-          inventoryBulkAdjustQuantityAtLocation(
-            inventoryItemAdjustments: {{ inventory_item_adjustments_batch | graphql_arguments }}
-            locationId: {{ primary_location_id | json }}
+          inventoryAdjustQuantities(
+            input: {
+              reason: "correction"
+              name: "available"
+              changes: {{ group_of_inventory_adjustments | graphql_arguments }}
+            }
           ) {
-            inventoryLevels {
-              id
+            inventoryAdjustmentGroup {
+              reason
+              changes {
+                name
+                delta
+                quantityAfterChange
+                item {
+                  id
+                  sku
+                }
+                location {
+                  name
+                }
+              }
             }
             userErrors {
+              code
               field
               message
             }

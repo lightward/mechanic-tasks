@@ -36,15 +36,15 @@ Useful for multiple price points, or for offering customizations of the same ite
 ### Getting started
 
 1. Populate the list of product types that you'd like this task to monitor.
-2. In the Shopify admin, navigate to the Products > Inventory area. Use the tools here to ensure that all products, for the types you care about, have all their variant inventory in sync.
-3. Back in Mechanic, click the "Run task" button. Mechanic will scan your products, and cache the current inventory level for each one.
+2. In the Shopify admin, navigate to the Products > Inventory area. Use the tools here to ensure that all products, for the types you care about, have the same "available" level for all of their variants.
+3. Back in Mechanic, click the "Run task" button. Mechanic will scan your products, and cache the current available inventory level for each one.
 4. Wait! :) Every ten minutes, Mechanic will check your inventory, and make any adjustments necessary to keep everything in sync. For example, if three different inventory items - within the same product - are each sold three different times, Mechanic will ensure that each of those items are lowered by a further 6, and that all others are lowered by 9.
 
 ### Notes
 
-* This task only works with a single location. Multiple locations are not supported.
+* This task only counts and adjusts available inventory at the default location configured in Shopify.
 * To manually change inventory levels for a product, adjust _only one_ variant to the desired level. During the next scheduled run, the task will bring the other variants into sync.
-* By default, Mechanic will check your inventory every 10 minutes. Feel free to change that subscription to "mechanic/scheduler/hourly", or [something else that suits your needs](https://learn.mechanic.dev/core-concepts/events/event-topic-reference/mechanic#scheduler).
+* By default, Mechanic will check your inventory every 10 minutes. Feel free to change that subscription to "mechanic/scheduler/hourly", or [something else that suits your needs](https://learn.mechanic.dev/platform/events/topics#scheduler).
 
 ## Installing this task
 

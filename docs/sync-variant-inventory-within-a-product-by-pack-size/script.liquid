@@ -1,19 +1,12 @@
 {% assign product_inventory_tag_prefix = options.product_inventory_tag_prefix__required %}
 {% assign product_inventory_tag_prefix_size = product_inventory_tag_prefix.size %}
 {% assign pack_size_option_name = options.variant_pack_size_option_name %}
-{% assign metafield_namespace = options.variant_pack_size_metafield_namespace %}
-{% assign metafield_key = options.variant_pack_size_metafield_key %}
+{% assign metafield_namespace_dot_key = options.variant_pack_size_metafield_namespace_dot_key %}
 
-{% if pack_size_option_name == blank and metafield_namespace == blank and metafield_key == blank %}
-  {"error": "Choose a method for determining variant pack size: either option name, or metafield."}
-{% elsif pack_size_option_name != blank and metafield_namespace != blank %}
-  {"error": "Choose to determine the variant pack size by *either* option name or by metafield - not both."}
-{% elsif pack_size_option_name != blank and metafield_key != blank %}
-  {"error": "Choose to determine the variant pack size by *either* option name or by metafield - not both."}
-{% elsif pack_size_option_name != blank %}
-  {% comment %} cool {% endcomment %}
-{% elsif metafield_namespace == blank or metafield_key == blank %}
-  {"error": "If using metafields to determine variant pack size, fill in both metafield namespace and key."}
+{% if pack_size_option_name == blank and metafield_namespace_dot_key == blank %}
+  {% error "Choose a method for determining variant pack size: either option name, or metafield." %}
+{% elsif pack_size_option_name != blank and metafield_namespace_dot_key != blank %}
+  {% error "Choose to determine the variant pack size by *either* option name or by metafield - not both." %}
 {% endif %}
 
 {% if pack_size_option_name != blank %}
@@ -22,35 +15,32 @@
   {% assign pack_size_mode = "metafield" %}
 {% endif %}
 
+{% assign primary_location = shop.locations[shop.primary_location_id] %}
+
 {% assign product_considerations = array %}
 
 {% if event.topic contains "shopify/orders/" %}
-  {% capture order_query %}
+  {% capture query %}
     query {
       order(id: {{ order.admin_graphql_api_id | json }}) {
-        lineItems(first: 249) {
-          edges {
-            node {
-              quantity
-              variant {
-                product {
-                  id
-                  tags
-                }
-                {% if pack_size_mode == "option" %}
-                  selectedOptions {
-                    name
-                    value
-                  }
-                {% else %}
-                  packSizeMetafield: metafield(
-                    namespace: {{ metafield_namespace | json }}
-                    key: {{ metafield_key | json }}
-                  ) {
-                    value
-                  }
-                {% endif %}
+        lineItems(first: 200) {
+          nodes {
+            quantity
+            variant {
+              product {
+                id
+                tags
               }
+              {% if pack_size_mode == "option" %}
+                selectedOptions {
+                  name
+                  value
+                }
+              {% else %}
+                metafield(key: {{ metafield_namespace_dot_key | json }}) {
+                  value
+                }
+              {% endif %}
             }
           }
         }
@@ -58,59 +48,68 @@
     }
   {% endcapture %}
 
-  {% assign order_result = order_query | shopify %}
-  {% assign lineItem_nodes = order_result.data.order.lineItems.edges | map: "node" %}
+  {% assign result = query | shopify %}
 
   {% if event.preview %}
-    {% capture lineItem_node_json %}
+    {% capture result_json %}
       {
-        "quantity": 2,
-        "variant": {
-          "product": {
-            "id": "gid://shopify/Product/1234567890",
-            "tags": {{ product_inventory_tag_prefix | append: 80 | json }}
-          },
-          {% if pack_size_mode == "option" %}
-            "selectedOptions": [{
-              "name": {{ pack_size_option_name | json }},
-              "value": "25"
-            }]
-          {% else %}
-            "packSizeMetafield": {
-              "value": "25"
+        "data": {
+          "order": {
+            "lineItems": {
+              "nodes": [
+                {
+                  "quantity": 2,
+                  "variant": {
+                    "product": {
+                      "id": "gid://shopify/Product/1234567890",
+                      "tags": {{ product_inventory_tag_prefix | append: 80 | json }}
+                    },
+                    {% if pack_size_mode == "option" %}
+                      "selectedOptions": [{
+                        "name": {{ pack_size_option_name | json }},
+                        "value": "25"
+                      }]
+                    {% else %}
+                      "metafield": {
+                        "value": "25"
+                      }
+                    {% endif %}
+                  }
+                }
+              ]
             }
-          {% endif %}
+          }
         }
       }
     {% endcapture %}
 
-    {% assign lineItem_nodes = array %}
-    {% assign lineItem_nodes[0] = lineItem_node_json | parse_json %}
+    {% assign result = result_json | parse_json %}
   {% endif %}
 
-  {% for lineItem_node in lineItem_nodes %}
+  {% for line_item in result.data.order.lineItems.nodes %}
     {% assign pack_size = nil %}
 
     {% if pack_size_mode == "option" %}
-      {% assign pack_size_option = lineItem_node.variant.selectedOptions | where: "name", pack_size_option_name | first %}
+      {% assign pack_size_option = line_item.variant.selectedOptions | where: "name", pack_size_option_name | first %}
       {% assign pack_size = pack_size_option.value %}
     {% else %}
-      {% assign pack_size = lineItem_node.variant.packSizeMetafield.value %}
+      {% assign pack_size = line_item.variant.metafield.value %}
     {% endif %}
 
-    {% if pack_size == nil %}
+    {% if pack_size == blank %}
       {% continue %}
     {% endif %}
 
-    {% assign quantity_times_pack_size = lineItem_node.quantity | times: pack_size %}
+    {% assign quantity_times_pack_size = line_item.quantity | times: pack_size %}
     {% assign product_inventory_new = product_inventory_old | minus: quantity_times_pack_size %}
 
     {% assign product_consideration = hash %}
-    {% assign product_consideration["id"] = lineItem_node.variant.product.id %}
-    {% assign product_consideration["tags"] = lineItem_node.variant.product.tags %}
+    {% assign product_consideration["id"] = line_item.variant.product.id %}
+    {% assign product_consideration["tags"] = line_item.variant.product.tags %}
     {% assign product_consideration["inventory_difference"] = quantity_times_pack_size %}
     {% assign product_considerations[product_considerations.size] = product_consideration %}
   {% endfor %}
+
 {% elsif event.topic contains "shopify/products/" %}
   {% assign product_id = product.admin_graphql_api_id %}
   {% assign product_tags = product.tags | split: ", " %}
@@ -131,122 +130,148 @@
 
   {% for product_tag in product_consideration.tags %}
     {% assign product_tag_possible_prefix = product_tag | slice: 0, product_inventory_tag_prefix_size %}
+
     {% if product_tag_possible_prefix == product_inventory_tag_prefix %}
       {% assign product_inventory_old = product_tag | slice: product_inventory_tag_prefix_size, 100 | times: 1 %}
       {% break %}
     {% endif %}
   {% endfor %}
 
-  {% if product_inventory_old == nil %}
+  {% if product_inventory_old == blank %}
     {% continue %}
   {% endif %}
 
   {% assign product_inventory_new = product_inventory_old | minus: product_consideration.inventory_difference %}
 
-  {% capture product_query %}
+  {% capture query %}
     query {
       product(id: {{ product_consideration.id | json }}) {
-        variants(first: 250) {
-          edges {
-            node {
-              inventoryQuantity
-              inventoryItem {
-                id
-              }
-              {% if pack_size_mode == "option" %}
-                selectedOptions {
+        variants(first: 100) {
+          nodes {
+            inventoryItem {
+              id
+              inventoryLevel(locationId: {{ primary_location.admin_graphql_api_id | json }}) {
+                quantities(names: "available") {
                   name
-                  value
+                  quantity
                 }
-              {% else %}
-                packSizeMetafield: metafield(
-                  namespace: {{ metafield_namespace | json }}
-                  key: {{ metafield_key | json }}
-                ) {
-                  value
-                }
-              {% endif %}
+              }
             }
+            {% if pack_size_mode == "option" %}
+              selectedOptions {
+                name
+                value
+              }
+            {% else %}
+              metafield(key: {{ metafield_namespace_dot_key | json }}) {
+                value
+              }
+            {% endif %}
           }
         }
       }
     }
   {% endcapture %}
 
-  {% assign product_result = product_query | shopify %}
-  {% assign variant_nodes = product_result.data.product.variants.edges | map: "node" %}
+  {% assign result = query | shopify %}
 
   {% if event.preview %}
-    {% capture variant_nodes_json %}
-      [
-        {
-          "inventoryQuantity": {% if event.topic contains "shopify/orders/" %}3{% else %}0{% endif %},
-          "inventoryItem": {
-            "id": "gid://shopify/InventoryItem/1234567890"
-          },
-          {% if pack_size_mode == "option" %}
-            "selectedOptions": [{
-              "name": {{ pack_size_option_name | json }},
-              "value": "25"
-            }]
-          {% else %}
-            "packSizeMetafield": {
-              "value": "25"
+    {% capture result_json %}
+      {
+        "data": {
+          "product": {
+            "variants": {
+              "nodes":
+              [
+                {
+                  "inventoryItem": {
+                    "id": "gid://shopify/InventoryItem/1234567890",
+                    "inventoryLevel": {
+                      "quantities": [
+                        {
+                          "name": "available",
+                          "quantity": {% if event.topic contains "shopify/orders/" %}3{% else %}0{% endif %}
+                        }
+                      ]
+                    }
+                  },
+                  {% if pack_size_mode == "option" %}
+                    "selectedOptions": [
+                      {
+                        "name": {{ pack_size_option_name | json }},
+                        "value": "25"
+                      }
+                    ]
+                  {% else %}
+                    "metafield": {
+                      "value": "25"
+                    }
+                  {% endif %}
+                },
+                {
+                  "inventoryItem": {
+                    "id": "gid://shopify/InventoryItem/2345678901",
+                    "inventoryLevel": {
+                      "quantities": [
+                        {
+                          "name": "available",
+                          "quantity": {% if event.topic contains "shopify/orders/" %}1{% else %}0{% endif %}
+                        }
+                      ]
+                    }
+                  },
+                  {% if pack_size_mode == "option" %}
+                    "selectedOptions": [
+                      {
+                        "name": {{ pack_size_option_name | json }},
+                        "value": "50"
+                      }
+                    ]
+                  {% else %}
+                    "metafield": {
+                      "value": "50"
+                    }
+                  {% endif %}
+                }
+              ]
             }
-          {% endif %}
-        },
-        {
-          "inventoryQuantity": {% if event.topic contains "shopify/orders/" %}1{% else %}0{% endif %},
-          "inventoryItem": {
-            "id": "gid://shopify/InventoryItem/2345678901"
-          },
-          {% if pack_size_mode == "option" %}
-            "selectedOptions": [{
-              "name": {{ pack_size_option_name | json }},
-              "value": "50"
-            }]
-          {% else %}
-            "packSizeMetafield": {
-              "value": "50"
-            }
-          {% endif %}
+          }
         }
-      ]
+      }
     {% endcapture %}
 
-    {% assign variant_nodes = variant_nodes_json | parse_json %}
+    {% assign result = result_json | parse_json %}
   {% endif %}
 
-  {% assign inventory_item_adjustments = array %}
+  {% assign variants = result.data.product.variants.nodes %}
 
-  {% for variant_node in variant_nodes %}
+  {% assign inventory_adjustments = array %}
+
+  {% for variant in variants %}
     {% assign pack_size = nil %}
 
     {% if pack_size_mode == "option" %}
-      {% assign pack_size_option = variant_node.selectedOptions | where: "name", pack_size_option_name | first %}
+      {% assign pack_size_option = variant.selectedOptions | where: "name", pack_size_option_name | first %}
       {% assign pack_size = pack_size_option.value %}
     {% else %}
-      {% assign pack_size = variant_node.packSizeMetafield.value %}
+      {% assign pack_size = variant.metafield.value %}
     {% endif %}
 
-    {% if pack_size == nil %}
+    {% if pack_size == blank %}
       {% continue %}
     {% endif %}
 
     {% assign new_inventory_level = product_inventory_new | times: 1.0 | divided_by: pack_size | floor %}
 
-    {% if variant_node.inventoryQuantity == new_inventory_level %}
+    {% if new_inventory_level == variant.inventoryItem.inventoryLevel.quantities.first.quantity %}
       {% continue %}
     {% endif %}
 
-    {% capture adjustment %}
-      {
-        inventoryItemId: {{ variant_node.inventoryItem.id | json }}
-        availableDelta: {{ new_inventory_level | minus: variant_node.inventoryQuantity | json }}
-      }
-    {% endcapture %}
-
-    {% assign inventory_item_adjustments[inventory_item_adjustments.size] = adjustment %}
+    {% assign inventory_adjustment = hash %}
+    {% assign inventory_adjustment["inventoryItemId"] = variant.inventoryItem.id %}
+    {% assign inventory_adjustment["locationId"] = primary_location.admin_graphql_api_id %}
+    {% assign inventory_adjustment["delta"] = new_inventory_level | minus: variant.inventoryItem.inventoryLevel.quantities.first.quantity %}
+    {% assign inventory_adjustments = inventory_adjustments | push: inventory_adjustment %}
   {% endfor %}
 
   {% capture mutations %}
@@ -272,14 +297,31 @@
       }
     {% endif %}
 
-    {% if inventory_item_adjustments != empty %}
-      inventoryBulkAdjustQuantityAtLocation(
-        locationId: {{ shop.locations[shop.primary_location_id].admin_graphql_api_id | json }}
-        inventoryItemAdjustments: [
-          {{ inventory_item_adjustments | join: newline }}
-        ]
+    {% if inventory_adjustments != blank %}
+      inventoryAdjustQuantities(
+        input: {
+          reason: "correction"
+          name: "available"
+          changes: {{ inventory_adjustments | graphql_arguments }}
+        }
       ) {
+        inventoryAdjustmentGroup {
+          reason
+          changes {
+            name
+            delta
+            quantityAfterChange
+            item {
+              id
+              sku
+            }
+            location {
+              name
+            }
+          }
+        }
         userErrors {
+          code
           field
           message
         }
