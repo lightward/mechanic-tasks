@@ -22,11 +22,9 @@ Super simple. Scans all inventory levels in your store, on demand, and brings th
 
 ```liquid
 mechanic/user/trigger
-
 {% if options.run_daily_at_midnight__boolean %}
   mechanic/scheduler/daily
 {% endif %}
-
 mechanic/shopify/bulk_operation
 ```
 
