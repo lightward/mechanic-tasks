@@ -1,4 +1,4 @@
-{% if event.topic == "mechanic/user/trigger" %}
+{% if event.topic == "mechanic/user/trigger" or event.topic == "mechanic/scheduler/daily" %}
   {% capture bulk_operation_query %}
     query {
       inventoryItems {
