@@ -12,7 +12,8 @@ Useful for custom orders, this task lets you offer multiple product and variant 
 
 ```json
 {
-  "product_types_to_monitor__array_required": null
+  "product_types_to_monitor__array_required": null,
+  "only_sync_active_products__boolean": true
 }
 ```
 
@@ -34,14 +35,14 @@ Useful for custom orders, this task lets you offer multiple product and variant 
 ### Getting started
 
 1. Populate the list of product types that you'd like this task to monitor.
-2. In the Shopify admin, navigate to the Products > Inventory area. For the first product type that you've chosen, search for all inventory items with that specific type, and ensure that all inventory items are at the same level. Repeat for each additional product type you're using.
-3. Back in Mechanic, click the "Run task" button. Mechanic will scan your product types, and cache the current inventory level for each one.
+2. In the Shopify admin, navigate to the Products > Inventory area. For the first product type that you've chosen, search for all inventory items with that specific type, and ensure that all inventory items have the same "available" level. Repeat for each additional product type you're using.
+3. Back in Mechanic, click the "Run task" button. Mechanic will scan your product types, and cache the current available inventory for each one.
 4. Wait! :) Every ten minutes, Mechanic will check your inventory, and make any adjustments necessary to keep everything in sync. For example, if three different inventory items - within the same product type - are each sold three different times, Mechanic will ensure that each of those items are lowered by a further 6, and that all others are lowered by 9.
 
 ### Notes
 
-* This task only works with a single location. Multiple locations are not supported.
-* By default, Mechanic will check your inventory every 10 minutes. Feel free to change that subscription to "mechanic/scheduler/hourly", or [something else that suits your needs](https://help.usemechanic.com/events/all-event-topics#mechanic).
+* This task only counts and adjusts available inventory at the default location configured in Shopify.
+* By default, Mechanic will check your inventory every 10 minutes. Feel free to change that subscription to "mechanic/scheduler/hourly", or [something else that suits your needs](https://learn.mechanic.dev/platform/events/topics#scheduler).
 
 ## Installing this task
 

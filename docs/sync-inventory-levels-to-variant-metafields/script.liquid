@@ -17,14 +17,14 @@
   {% assign metafield_key = location_ids_and_metafield_keys[inventory_level_string] %}
 
   {% if metafield_key != blank %}
-    {% comment %}
-      Note: querying for "available" here in lieu of using webhook value that could be delayed
-    {% endcomment %}
     {% capture query %}
       query {
         inventoryLevel(id: {{ inventory_level.admin_graphql_api_id | json }}) {
           id
-          available
+          quantities(names: "available") {
+            name
+            quantity
+          }
           item {
             variant {
               id
@@ -41,7 +41,12 @@
         {
           "data": {
             "inventoryLevel": {
-              "available": 20,
+              "quantities": [
+                {
+                  "name": "available",
+                  "quantity": 20
+                }
+              ],
               "item": {
                 "variant": {
                   "id": "gid://shopify/ProductVariant/1234567890"
@@ -64,7 +69,7 @@
               namespace: {{ metafield_namespace | json }}
               key: {{ metafield_key | json }}
               type: "number_integer"
-              value: {{ result.data.inventoryLevel.available | append: "" | json }}
+              value: {{ result.data.inventoryLevel.quantities.first.quantity | append: "" | json }}
             }
           ]
         ) {
@@ -104,7 +109,10 @@
                   node {
                     __typename
                     id
-                    available
+                    quantities(names: "available") {
+                      name
+                      quantity
+                    }
                     location {
                       legacyResourceId
                     }
@@ -138,9 +146,8 @@
 {% elsif event.topic == "mechanic/shopify/bulk_operation" %}
   {% if event.preview %}
     {% capture jsonl_string %}
-      {"id":"gid:\/\/shopify\/ProductVariant\/37960094679210","inventoryItem":{"id":"gid:\/\/shopify\/InventoryItem\/40053738340522"}}
-      {"__typename":"InventoryLevel","id":"gid:\/\/shopify\/InventoryLevel\/93973250218?inventory_item_id=40053738340522","available":25,"location":{"legacyResourceId":"59746025642"},"__parentId":"gid:\/\/shopify\/ProductVariant\/37960094679210"}
-      {"__typename":"InventoryLevel","id":"gid:\/\/shopify\/InventoryLevel\/95549063338?inventory_item_id=40053738340522","available":0,"location":{"legacyResourceId":"61238640810"},"__parentId":"gid:\/\/shopify\/ProductVariant\/37960094679210"}
+      {"id":"gid:\/\/shopify\/ProductVariant\/1234567890"}
+      {"__typename":"InventoryLevel","quantities":[{"name":"available","quantity":20}],"location":{"legacyResourceId":{{ location_ids_and_metafield_keys.first.first | json }}},"__parentId":"gid:\/\/shopify\/ProductVariant\/1234567890"}
     {% endcapture %}
 
     {% assign bulkOperation = hash %}
@@ -154,14 +161,14 @@
   {% for inventory_level in inventory_levels %}
     {% assign metafield_key = location_ids_and_metafield_keys[inventory_level.location.legacyResourceId] %}
 
-    {% if metafield_key != blank and inventory_level.available != blank %}
+    {% if metafield_key != blank and inventory_level.quantities.first.quantity != blank %}
       {% capture metafield %}
         {
           ownerId: {{ inventory_level.__parentId | json }}
           namespace: {{ metafield_namespace | json }}
           key: {{ metafield_key | json }}
           type: "number_integer"
-          value: {{ inventory_level.available | append: "" | json }}
+          value: {{ inventory_level.quantities.first.quantity | append: "" | json }}
         }
       {% endcapture %}
 

@@ -5,28 +5,27 @@
 
   {% assign cursor = nil %}
 
-  {% for n in (1..20) %}
+  {% for n in (1..34) %}
     {% capture query %}
       query {
         product(id: {{ inventory_level.variant.product.admin_graphql_api_id | json }}) {
           id
           tags
           variants(
-            first: 5
+            first: 3
             after: {{ cursor | json }}
           ) {
             pageInfo {
               hasNextPage
+              endCursor
             }
-            edges {
-              cursor
-              node {
-                inventoryItem {
-                  inventoryLevels(first: 100) {
-                    edges {
-                      node {
-                        incoming
-                      }
+            nodes {
+              inventoryItem {
+                inventoryLevels(first: 100) {
+                  nodes {
+                    quantities(names: "incoming") {
+                      name
+                      quantity
                     }
                   }
                 }
@@ -46,19 +45,20 @@
             "product": {
               "id": "gid://shopify/Product/1234567890",
               "variants": {
-                "edges": [
+                "nodes": [
                   {
-                    "node": {
-                      "inventoryItem": {
-                        "inventoryLevels": {
-                          "edges": [
-                            {
-                              "node": {
-                                "incoming": 1
+                    "inventoryItem": {
+                      "inventoryLevels": {
+                        "nodes": [
+                          {
+                            "quantities": [
+                              {
+                                "name": "incoming",
+                                "quantity": 0
                               }
-                            }
-                          ]
-                        }
+                            ]
+                          }
+                        ]
                       }
                     }
                   }
@@ -74,18 +74,15 @@
 
     {% assign product = result.data.product %}
 
-    {% assign inventory_levels
-      = product.variants.edges
-      | map: "node"
-      | map: "inventoryItem"
-      | map: "inventoryLevels"
-      | map: "edges"
-      | map: "node"
-    %}
+    {% for variant in product.variants.nodes %}
+      {% for inventory_level in variant.inventoryItem.inventoryLevels.nodes %}
+        {% if inventory_level.quantities.first.quantity > 0 %}
+          {% assign qualifies_to_be_tagged = true %}
+          {% break %}
+        {% endif %}
+      {% endfor %}
 
-    {% for inventory_level in inventory_levels %}
-      {% if inventory_level.incoming > 0 %}
-        {% assign qualifies_to_be_tagged = true %}
+      {% if qualifies_to_be_tagged %}
         {% break %}
       {% endif %}
     {% endfor %}
@@ -93,7 +90,7 @@
     {% if qualifies_to_be_tagged or product.variants.pageInfo.hasNextPage == false %}
       {% break %}
     {% else %}
-      {% assign cursor = product.variants.edges.last.cursor %}
+      {% assign cursor = product.variants.pageInfo.endCursor %}
     {% endif %}
   {% endfor %}
 
@@ -152,7 +149,10 @@
                         node {
                           __typename
                           id
-                          incoming
+                          quantities(names: "incoming") {
+                            name
+                            quantity
+                          }
                         }
                       }
                     }
@@ -188,34 +188,38 @@
     {% capture jsonl_string %}
       {"__typename":"Product","id":"gid:\/\/shopify\/Product\/1234567890","tags":["testing"]}
       {"__typename":"ProductVariant","id":"gid:\/\/shopify\/ProductVariant\/1234567890","inventoryItem":{},"__parentId":"gid:\/\/shopify\/Product\/1234567890"}
-      {"__typename":"InventoryLevel","id":"gid:\/\/shopify\/InventoryLevel\/95549063338?inventory_item_id=1234567890","incoming":1,"__parentId":"gid:\/\/shopify\/ProductVariant\/1234567890"}
+      {"__typename":"InventoryLevel","quantities":[{"name":"incoming","quantity":1}],"__parentId":"gid:\/\/shopify\/ProductVariant\/1234567890"}
       {"__typename":"Product","id":"gid:\/\/shopify\/Product\/2345678901","tags":[{{ product_tag_to_apply | json }}]}
       {"__typename":"ProductVariant","id":"gid:\/\/shopify\/ProductVariant\/2345678901","inventoryItem":{},"__parentId":"gid:\/\/shopify\/Product\/2345678901"}
-      {"__typename":"InventoryLevel","id":"gid:\/\/shopify\/InventoryLevel\/95549063338?inventory_item_id=2345678901","incoming":0,"__parentId":"gid:\/\/shopify\/ProductVariant\/2345678901"}
+      {"__typename":"InventoryLevel","quantities":[{"name":"incoming","quantity":1}],"__parentId":"gid:\/\/shopify\/ProductVariant\/2345678901"}
     {% endcapture %}
 
     {% assign bulkOperation = hash %}
     {% assign bulkOperation["objects"] = jsonl_string | parse_jsonl %}
   {% endif %}
 
-  {% assign products = bulkOperation.objects | where: "__typename", "Product" %}
-  {% assign all_variants = bulkOperation.objects | where: "__typename", "ProductVariant" %}
-  {% assign all_inventory_levels = bulkOperation.objects | where: "__typename", "InventoryLevel" %}
+  {% assign bulk_products = bulkOperation.objects | where: "__typename", "Product" %}
+  {% assign bulk_variants = bulkOperation.objects | where: "__typename", "ProductVariant" %}
+  {% assign bulk_inventory_levels = bulkOperation.objects | where: "__typename", "InventoryLevel" %}
 
-  {% for product in products %}
+  {% for product in bulk_products %}
     {% assign qualifies_to_be_tagged = nil %}
 
-    {% assign variants = all_variants | where: "__parentId", product.id %}
+    {% assign variants = bulk_variants | where: "__parentId", product.id %}
 
     {% for variant in variants %}
-      {% assign inventory_levels = all_inventory_levels | where: "__parentId", variant.id %}
+      {% assign inventory_levels = bulk_inventory_levels | where: "__parentId", variant.id %}
 
       {% for inventory_level in inventory_levels %}
-        {% if inventory_level.incoming > 0 %}
+        {% if inventory_level.quantities.first.quantity > 0 %}
           {% assign qualifies_to_be_tagged = true %}
           {% break %}
         {% endif %}
       {% endfor %}
+
+      {% if qualifies_to_be_tagged %}
+        {% break %}
+      {% endif %}
     {% endfor %}
 
     {% if qualifies_to_be_tagged %}

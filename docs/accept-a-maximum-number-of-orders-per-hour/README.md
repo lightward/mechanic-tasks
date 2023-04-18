@@ -13,6 +13,7 @@ This task works by monitoring the number of orders created per hour, and clearin
 ```json
 {
   "maximum_hourly_orders__number_required": 10,
+  "only_count_orders_matching_this_query": "-status:cancelled",
   "only_clear_inventory_for_products_with_this_tag": null,
   "restore_inventory_levels_the_next_hour__boolean": true,
   "restore_inventory_levels_on_demand__boolean": null
@@ -25,11 +26,9 @@ This task works by monitoring the number of orders created per hour, and clearin
 
 ```liquid
 shopify/orders/create
-
 {% if options.restore_inventory_levels_the_next_hour__boolean %}
   mechanic/scheduler/hourly
 {% endif %}
-
 {% if options.restore_inventory_levels_on_demand__boolean %}
   mechanic/user/trigger
 {% endif %}

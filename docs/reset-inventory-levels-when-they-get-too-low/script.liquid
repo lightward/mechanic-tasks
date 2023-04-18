@@ -17,6 +17,10 @@
   {% assign inventory_level["location_id"] = options.location_id__number | default: 1234567890 %}
   {% assign inventory_level["available"] = options.minimum_inventory_level__number_required | minus: 1 %}
   {% assign inventory_level["admin_graphql_api_id"] = "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890" %}
+  {% assign inventory_level["inventory_item"] = hash %}
+  {% assign inventory_level["inventory_item"]["admin_graphql_api_id"] = "gid://shopify/InventoryItem/1234567890" %}
+  {% assign inventory_level["location"] = hash %}
+  {% assign inventory_level["location"]["admin_graphql_api_id"] = "gid://shopify/Location/1234567890" %}
 {% endif %}
 
 {% assign minimum_inventory_level = options.minimum_inventory_level__number_required %}
@@ -61,7 +65,7 @@
           "inventoryLevel": {
             "item": {
               "variant": {
-                "legacyResourceId": 
+                "legacyResourceId":
                   {% if options.whitelist_filter_mode__boolean %}
                     {{ options.filter_for_these_variant_ids__array_number.first | append: "" | json }}
                   {% else %}
@@ -82,14 +86,14 @@
                   {% endif %}
                 ],
                 "product": {
-                  "productType": 
+                  "productType":
                     {% if options.whitelist_filter_mode__boolean %}
                       {{ options.filter_for_these_product_types__array.first | json }}
                     {% else %}
                       {{ "now" | date: "%s" | sha256 | json }}
                     {% endif %}
                     ,
-                  "legacyResourceId": 
+                  "legacyResourceId":
                     {% if options.whitelist_filter_mode__boolean %}
                       {{ options.filter_for_these_product_ids__array_number.first | append: "" | json }}
                     {% else %}
@@ -167,16 +171,36 @@
   {% if adjust_quantity %}
     {% action "shopify" %}
       mutation {
-        inventoryAdjustQuantity(
+        inventoryAdjustQuantities(
           input: {
-            inventoryLevelId: {{ inventory_level.admin_graphql_api_id | json }}
-            availableDelta: {{ minimum_inventory_level | minus: inventory_level.available | json }}
+            reason: "correction"
+            name: "available"
+            changes: [
+              {
+                inventoryItemId: {{ inventory_level.inventory_item.admin_graphql_api_id | json }}
+                locationId: {{ inventory_level.location.admin_graphql_api_id | json }}
+                delta: {{ minimum_inventory_level | minus: inventory_level.available }}
+              }
+            ]
           }
         ) {
-          inventoryLevel {
-            available
+          inventoryAdjustmentGroup {
+            reason
+            changes {
+              name
+              delta
+              quantityAfterChange
+              item {
+                id
+                sku
+              }
+              location {
+                name
+              }
+            }
           }
           userErrors {
+            code
             field
             message
           }
