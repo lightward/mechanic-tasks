@@ -5,7 +5,7 @@
   "homepage": "https://tasks.mechanic.dev/",
   "engines": {
     "node": "18.16.0",
-    "npm": "9.6.4"
+    "npm": "9.6.5"
   },
   "dependencies": {
     "ajv": "8.12.0",
