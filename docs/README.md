@@ -172,6 +172,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Credit customers for sample orders](./credit-customers-for-sample-orders)
 * [Delete all products](./delete-all-products)
 * [Delete cancelled orders after 48 hours](./delete-cancelled-orders-after-48-hours)
+* [Delete customer metafields in bulk](./delete-customer-metafields-in-bulk)
 * [Delete draft orders older than 30 days](./delete-draft-orders-older-than-30-days)
 * [Delete draft orders](./delete-draft-orders)
 * [Delete product or product variant metafields in bulk](./delete-product-or-product-variant-metafields-in-bulk)
