@@ -1,0 +1,138 @@
+{% if options.metafield_namespace == blank and options.metafield_key != blank %}
+  {% error "If you provide a metafield key, you must also provide a metafield namespace." %}
+{% endif %}
+
+{% if event.topic == "mechanic/user/trigger" %}
+  {% capture bulk_operation_query %}
+      query {
+          customers {
+          edges {
+            node {
+              __typename
+              id
+              {% if options.metafield_key != blank %}
+                metafield(
+                  namespace: {{ options.metafield_namespace | json }}
+                  key: {{ options.metafield_key | json }}
+                ) {
+                  __typename
+                  id
+                  description
+                  namespace
+                  key
+                  value
+                  type
+                }
+              {% else %}
+                metafields
+                  {% if options.metafield_namespace != blank %}
+                    (
+                    namespace: {{ options.metafield_namespace | json }}
+                    ) 
+                  {% endif %}
+                  {
+                  edges {
+                    node {
+                      __typename
+                      id
+                      description
+                      namespace
+                      key
+                      value
+                      type
+                    }
+                  }
+                }
+              {% endif %}
+            }
+          }
+        }
+      }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture objects_jsonl %}
+      {% if options.metafield_key != blank %}
+        {"__typename":"Customer","id":"gid:\/\/shopify\/Customer\/1234567890","metafield":{"__typename":"Metafield","id":"gid:\/\/shopify\/Metafield\/1234567890"}}
+      {% else %}
+        {"__typename":"Metafield","id":"gid:\/\/shopify\/Metafield\/0987654321","__parentId":"gid:\/\/shopify\/Customer\/0987654321"}
+      {% endif %}
+    {% endcapture %}        
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = objects_jsonl | parse_jsonl %}
+
+  {% endif %}
+
+  
+  {% assign metafield_ids = bulkOperation.objects | where: "__typename", "Metafield" | map: "id" %}
+  
+  {% assign metafield_ids = bulkOperation.objects | where: "__typename", "Customer" | where: "metafield" | map: "metafield" | map: "id" | concat: metafield_ids %}
+  {% assign customer_ids = bulkOperation.objects | where: "__typename", "Metafield" | map: "__parentId" | uniq %}
+  {% assign customer_ids = bulkOperation.objects | where: "__typename", "Customer" | where: "metafield" | map: "id" | concat: customer_ids %}
+
+
+  {% if options.test_mode__boolean %}
+    {% action "echo" metafields_found: metafield_ids.size, customers_with_metafields_found: customer_ids.size, metafield_ids: metafield_ids, customer_with_metafields_ids: customer_ids %}
+  {% else %}
+    {% log metafields_found: metafield_ids.size, customers_with_metafields_found: customer_ids.size, metafield_ids: metafield_ids, customer_with_metafields_ids: customer_ids %}  
+
+    {% for metafield_id in metafield_ids %}
+      {% action "shopify" %}
+        mutation {
+          metafieldDelete(
+            input: {
+              id: {{ metafield_id | json }}
+            }
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endfor %}
+
+    {% if event.preview %}
+      {% comment %}
+        As a rule, preview events should render realistic
+        action definitions. However, because Mechanic derives
+        a task's required permissions from these definitions,
+        and because a metafieldDelete mutation doesn't include
+        anything indicating what kind of resource the
+        metafield belongs to, we have to render an additional
+        spurious preview-only mutation to nudge Mechanic into
+        giving us write access to customers.
+      {% endcomment %}
+
+      {% action "shopify" %}
+        mutation {
+          customerUpdate(
+            id: "gid://requesting/write_customers"
+          ) {
+            thisMutationWillNotRunForLiveEvents
+          }
+        }
+      {% endaction %}
+    {% endif %}
+  {% endif %}
+{% endif %}
