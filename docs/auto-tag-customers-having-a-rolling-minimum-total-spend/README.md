@@ -26,9 +26,9 @@ Use this task to tag customers who reach a certain spending threshold, by scanni
 ```liquid
 mechanic/user/trigger
 mechanic/scheduler/daily
+mechanic/shopify/bulk_operation
 shopify/orders/create
 shopify/orders/updated
-shopify/orders/delete
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
@@ -41,7 +41,7 @@ Run this task manually to scan all of your customers. **This may take some time!
 
 This task will also scan all customers on a nightly basis, and will run for a single customer every time a customer's order is paid or cancelled.
 
-Note: By default, Mechanic only scans the last 60 days of order history. To change this, [follow this tutorial](https://help.usemechanic.com/tutorials/enabling-read_all_orders).
+Note: By default, Mechanic only scans the last 60 days of order history. To change this, [enable the option in Mehanic's settings](https://learn.mechanic.dev/platform/shopify/read-all-orders#configuration).
 
 ## Installing this task
 

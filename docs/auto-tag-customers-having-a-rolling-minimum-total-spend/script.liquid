@@ -1,48 +1,214 @@
-{% comment %}
-  express a preference for which option appears first
-  {{ options.minimum_total_spent__number_required }}
-  {{ options.customer_tag_to_apply__required }}
-  {{ options.days_of_order_history_to_consider__number_required }}
-{% endcomment %}
+{% assign minimum_total_spent = options.minimum_total_spent__number_required %}
+{% assign customer_tag_to_apply = options.customer_tag_to_apply__required %}
+{% assign days_of_order_history = options.days_of_order_history_to_consider__number_required %}
+{% assign monitor_customer_tag = options.only_monitor_customers_having_this_tag %}
 
-{% assign acceptable_order_financial_statuses = "paid partially_paid partially_refunded" | split: " " %}
-{% assign acceptable_transaction_kinds = "sale capture refund" | split: " " %}
-
-{% assign days_in_seconds = options.days_of_order_history_to_consider__number_required | times: 24 | times: 60 | times: 60 %}
+{% assign days_in_seconds = days_of_order_history | times: 24 | times: 60 | times: 60 %}
 {% assign min_created_at = "now" | date: "%s" | times: 1 | minus: days_in_seconds %}
+{% assign min_date_created_at = min_created_at | date: "%F" %}
 
-{% if options.only_monitor_customers_having_this_tag == options.customer_tag_to_apply__required %}
+{% if monitor_customer_tag == customer_tag_to_apply %}
   {% error "The two customer tag values must be different. Please change either 'Customer tag to apply' or 'Only monitor customers having this tag'." %}
 {% endif %}
 
-{% assign customers = shop.customers %}
+{% capture orders_search_query -%}
+  created_at:>{{ min_date_created_at }} financial_status:paid,partially_paid,partially_refunded
+{%- endcapture %}
+
 {% if event.topic == "shopify/orders/create" or event.topic == "shopify/orders/updated" %}
+  {% assign customer_tags = order.customer.tags | split: ", " %}
+
+  {% if monitor_customer_tag != blank %}
+    {% unless customer_tags contains monitor_customer_tag %}
+      {% log "Customer does not have the required tag for monitoring; skipping." %}
+      {% break %}
+    {% endunless %}
+  {% endif %}
+
+  {% log orders_search_query: orders_search_query %}
+
+  {% assign customer = hash %}
+  {% assign customer["id"] = order.customer.admin_graphql_api_id %}
+  {% assign customer["email"] = order.customer.email %}
+  {% assign customer["tags"] = customer_tags %}
+  {% assign customer["orders"] = array %}
+
+  {% assign cursor = nil %}
+
+  {% for n in (1..10) %}
+    {% capture query %}
+      query {
+        customer(id: {{ order.customer.admin_graphql_api_id | json }}) {
+          orders(
+            first: 250
+            after: {{ cursor | json }}
+            query: {{ orders_search_query | json }}
+          ) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              id
+              name
+              createdAt
+              displayFinancialStatus
+              transactions {
+                status
+                kind
+                amountSet {
+                  shopMoney {
+                    amount
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% assign customer["orders"]
+      = result.data.customer.orders.nodes
+      | default: array
+      | concat: customer["orders"]
+    %}
+
+    {% if result.data.customer.orders.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.customer.orders.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% assign customers = array | push: customer %}
+
+{% elsif event.topic == "mechanic/user/trigger" or event.topic == "mechanic/scheduler/daily" %}
+  {% assign customers_search_query = "orders_count:>0" %}
+
+  {% if monitor_customer_tag != blank %}
+    {% capture customers_search_query -%}
+      {{ customers_search_query }} AND tag:{{ monitor_customer_tag | json }}
+    {%- endcapture %}
+  {% endif %}
+
+  {% log
+    customers_search_query: customers_search_query,
+    orders_search_query: orders_search_query
+  %}
+
+  {% capture bulk_operation_query %}
+    query {
+      customers(
+        query: {{ customers_search_query | json }}
+      ) {
+        edges {
+          node {
+            __typename
+            id
+            displayName
+            email
+            tags
+            orders(
+              query: {{ orders_search_query | json }}
+            ) {
+              edges {
+                node {
+                  __typename
+                  id
+                  name
+                  createdAt
+                  displayFinancialStatus
+                  transactions {
+                    status
+                    kind
+                    amountSet {
+                      shopMoney {
+                        amount
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+  {% break %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% assign bulk_customers = bulkOperation.objects | where: "__typename", "Customer" %}
+  {% assign bulk_orders = bulkOperation.objects | where: "__typename", "Order" %}
+
   {% assign customers = array %}
-  {% assign customers[0] = order.customer %}
+
+  {% for bulk_customer in bulk_customers %}
+    {% assign customer = hash %}
+    {% assign customer["id"] = bulk_customer.id %}
+    {% assign customer["email"] = bulk_customer.email %}
+    {% assign customer["tags"] = bulk_customer.tags %}
+    {% assign customer["orders"]
+      = bulk_orders
+      | where: "__parentId", bulk_customer.id
+      | default: array
+    %}
+    {% assign customers = customers | push: customer %}
+  {% endfor %}
 {% endif %}
 
 {% if event.preview %}
   {% capture customers_json %}
     [
       {
-        "admin_graphql_api_id": "gid://shopify/Customer/1234567890",
+        "id": "gid://shopify/Customer/1234567890",
         "email": "customer@example.com",
-        "tags": {{ options.only_monitor_customers_having_this_tag | json }},
-        "orders": {
-          "any": [
-            {
-              "created_at": {{ min_created_at }},
-              "financial_status": "paid",
-              "transactions": [
-                {
-                  "status": "success",
-                  "kind": "sale",
-                  "amount": {{ options.minimum_total_spent__number_required | plus: 1 | json }}
+        "orders": [
+          {
+            "id": "gid://shopify/Order/1234567890",
+            "transactions": [
+              {
+                "status": "SUCCESS",
+                "kind": "SALE",
+                "amountSet": {
+                  "shopMoney": {
+                    "amount": {{ minimum_total_spent | plus: 100.0 | json }}
+                  }
                 }
-              ]
-            }
-          ]
-        }
+              },
+              {
+                "status": "SUCCESS",
+                "kind": "REFUND",
+                "amountSet": {
+                  "shopMoney": {
+                    "amount": "99.00"
+                  }
+                }
+              }
+            ]
+          }
+        ]
       }
     ]
   {% endcapture %}
@@ -51,41 +217,20 @@
 {% endif %}
 
 {% for customer in customers %}
-  {% assign customer_tags = customer.tags | split: ", " %}
-
-  {% if options.only_monitor_customers_having_this_tag != blank %}
-    {% unless customer_tags contains options.only_monitor_customers_having_this_tag %}
-      {% log "Customer does not have the required tag for monitoring; skipping." %}
-      {% continue %}
-    {% endunless %}
-  {% endif %}
-
   {% assign customer_total = 0.0 %}
   {% assign customer_orders_count = 0 %}
 
-  {% for customer_order in customer.orders.any %}
-    {% assign customer_order_created_at_in_seconds = customer_order.created_at | date: "%s" | times: 1 %}
-    {% if customer_order_created_at_in_seconds < min_created_at %}
-      {% continue %}
-    {% endif %}
-
-    {% unless acceptable_order_financial_statuses contains customer_order.financial_status %}
-      {% continue %}
-    {% endunless %}
-
-    {% for transaction in customer_order.transactions %}
-      {% if transaction.status != "success" %}
+  {% for order in customer.orders %}
+    {% for transaction in order.transactions %}
+      {% if transaction.status != "SUCCESS" %}
         {% continue %}
       {% endif %}
 
-      {% unless acceptable_transaction_kinds contains transaction.kind %}
-        {% continue %}
-      {% endunless %}
+      {% if transaction.kind == "REFUND" %}
+        {% assign customer_total = customer_total | minus: transaction.amountSet.shopMoney.amount %}
 
-      {% if transaction.kind == "refund" %}
-        {% assign customer_total = customer_total | minus: transaction.amount %}
-      {% else %}
-        {% assign customer_total = customer_total | plus: transaction.amount %}
+      {% elsif transaction.kind == "SALE" or transaction.kind == "CAPTURE" %}
+        {% assign customer_total = customer_total | plus: transaction.amountSet.shopMoney.amount %}
       {% endif %}
     {% endfor %}
 
@@ -97,17 +242,20 @@
 
   {% capture log_line_prefix %}{{ customer.email | default: customer.id }} spent {{ customer_total }} across {{ customer_orders_count }} orders, {% endcapture %}
 
-  {% if customer_total >= options.minimum_total_spent__number_required %}
-    {% if customer_tags contains options.customer_tag_to_apply__required %}
+  {% if customer_total >= minimum_total_spent %}
+    {% if customer.tags contains customer_tag_to_apply %}
       {% log %}{{ log_line_prefix | append: "qualifying them for the tag. They were already tagged, so there's nothing to do." | json }}{% endlog %}
+
     {% else %}
       {% log %}{{ log_line_prefix | append: "qualifying them for the tag" | json }}{% endlog %}
       {% assign add_tag = true %}
     {% endif %}
+
   {% else %}
-    {% if customer_tags contains options.customer_tag_to_apply__required %}
+    {% if customer.tags contains customer_tag_to_apply %}
       {% log %}{{ log_line_prefix | append: "and did not qualify for the tag" | json }}{% endlog %}
       {% assign remove_tag = true %}
+
     {% else %}
       {% log %}{{ log_line_prefix | append: "and did not qualify for the tag. They were not previously tagged, so there's nothing to do." | json }}{% endlog %}
     {% endif %}
@@ -117,14 +265,14 @@
     {% action "shopify" %}
       mutation {
       {% if add_tag %}tagsAdd{% elsif remove_tag %}tagsRemove{% endif %}(
-          id: {{ customer.admin_graphql_api_id | json }}
-          tags: {{ options.customer_tag_to_apply__required | json }}
+          id: {{ customer.id | json }}
+          tags: {{ customer_tag_to_apply | json }}
         ) {
           userErrors {
             field
             message
           }
-        } 
+        }
       }
     {% endaction %}
   {% endif %}
