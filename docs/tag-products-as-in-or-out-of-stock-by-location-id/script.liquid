@@ -87,6 +87,7 @@
   {% for product in bulk_products %}
     {% assign tags_to_add = array %}
     {% assign tags_to_remove = array %}
+    {% assign in_stock_by_location_id = hash %}
 
     {% assign variants = bulk_variants | where: "__parentId", product.id %}
 
@@ -95,28 +96,40 @@
 
       {% for inventory_level in inventory_levels %}
         {% assign location_id = inventory_level.location.legacyResourceId %}
-        {% assign in_stock_tag = tag_prefix_when_in_stock | append: location_id | append: tag_suffix_when_in_stock %}
-        {% assign out_of_stock_tag = tag_prefix_when_out_of_stock | append: location_id | append: tag_suffix_when_out_of_stock %}
 
         {% if inventory_level.quantities.first.quantity > 0 %}
-          {% unless product.tags contains in_stock_tag %}
-            {% assign tags_to_add = tags_to_add | push: in_stock_tag %}
-          {% endunless %}
+          {% assign in_stock_by_location_id[location_id] = true %}
 
-          {% if product.tags contains out_of_stock_tag %}
-            {% assign tags_to_remove = tags_to_remove | push: out_of_stock_tag %}
-          {% endif %}
-
-        {% else %}
-          {% unless product.tags contains out_of_stock_tag %}
-            {% assign tags_to_add = tags_to_add | push: out_of_stock_tag %}
-          {% endunless %}
-
-          {% if product.tags contains in_stock_tag %}
-            {% assign tags_to_remove = tags_to_remove | push: in_stock_tag %}
-          {% endif %}
+        {% elsif in_stock_by_location_id[location_id] == blank %}
+          {% assign in_stock_by_location_id[location_id] = false %}
         {% endif %}
       {% endfor %}
+    {% endfor %}
+
+    {% for keyval in in_stock_by_location_id %}
+      {% assign location_id = keyval[0] %}
+      {% assign in_stock = keyval[1] %}      
+      {% assign in_stock_tag = tag_prefix_when_in_stock | append: location_id | append: tag_suffix_when_in_stock %}
+      {% assign out_of_stock_tag = tag_prefix_when_out_of_stock | append: location_id | append: tag_suffix_when_out_of_stock %}
+
+      {% if in_stock %}
+        {% unless product.tags contains in_stock_tag %}
+          {% assign tags_to_add = tags_to_add | push: in_stock_tag %}
+        {% endunless %}
+
+        {% if product.tags contains out_of_stock_tag %}
+          {% assign tags_to_remove = tags_to_remove | push: out_of_stock_tag %}
+        {% endif %}
+
+      {% else %}
+        {% unless product.tags contains out_of_stock_tag %}
+          {% assign tags_to_add = tags_to_add | push: out_of_stock_tag %}
+        {% endunless %}
+
+        {% if product.tags contains in_stock_tag %}
+          {% assign tags_to_remove = tags_to_remove | push: in_stock_tag %}
+        {% endif %}
+      {% endif %}
     {% endfor %}
 
     {% if tags_to_add != blank or tags_to_remove != blank %}
