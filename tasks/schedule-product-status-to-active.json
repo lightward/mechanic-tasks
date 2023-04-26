@@ -1,0 +1,24 @@
+{
+  "docs": "Use this task to schedule product status to change to Active with support for scheduling by date and hour.\n\nEnter the date and hour for the products to become active using this format: 2023-March-01 12AM\n\nUse the \"Product IDs\" option to choose which products to target. (Learn how to find product IDs here](https://learn.mechanic.dev/techniques/finding-a-resource-id).",
+  "halt_action_run_sequence_on_error": false,
+  "name": "Schedule product status to active",
+  "online_store_javascript": null,
+  "options": {
+    "date_and_hour_to_become_active__required": "2025-April-26 1PM",
+    "product_ids__array_number_required": null
+  },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "preview_event_definitions": [],
+  "script": "{% assign time_format = \"%Y-%B-%d %I%p\" %}\n{% assign now_time = \"now\" | date: time_format %}\n{% assign active_time = options.date_and_hour_to_become_active__required | date: time_format %}\n\n{% assign products = array %}\n\n{% if event.preview %}\n  {% assign products[0] = '{\"admin_graphql_api_id\": \"gid://shopify/Product/1234567890\"}' | parse_json %}\n{% else %}\n  {% for product_id in options.product_ids__array_number_required %}\n    {% assign products[products.size] = shop.products[product_id] %}\n  {% endfor %}\n{% endif %}\n\n{% log %}\n  {\n    \"now\": {{ now_time | json }},\n    \"active_time\": {{ active_time | json }},\n    \"product_ids\": {{ options.product_ids__array_number_required | json }},\n    \"product_handles\": {{ products | map: \"handle\" | json }}\n  }\n{% endlog %}\n\n{% if now_time >= active_time or event.preview %}\n  {% for product in products %}\n    {% action \"shopify\" %}\n      mutation {\n        productChangeStatus(\n            productId: {{ product.admin_graphql_api_id | json }}\n            status: ACTIVE\n        ) {\n          userErrors {\n            field\n            message\n          }\n        }\n      }\n    {% endaction %}      \n  {% endfor %}\n{% endif %}",
+  "subscriptions": [
+    "mechanic/scheduler/hourly"
+  ],
+  "subscriptions_template": "mechanic/scheduler/hourly",
+  "tags": [
+    "Active",
+    "Products",
+    "Schedule",
+    "Status"
+  ]
+}
