@@ -2,7 +2,7 @@
 
 Tags: Active, Products, Schedule, Status
 
-Use this task to schedule product statuses to Active by date and hour.
+Use this task to schedule product status to change to Active with support for scheduling by date and hour.
 
 * View in the task library: [tasks.mechanic.dev/schedule-product-status-to-active](https://tasks.mechanic.dev/schedule-product-status-to-active)
 * Task JSON, for direct import: [task.json](../../tasks/schedule-product-status-to-active.json)
@@ -29,11 +29,13 @@ mechanic/scheduler/hourly
 
 ## Documentation
 
-Use this task to schedule product statuses to Active by date and hour.
+Use this task to schedule product status to change to Active with support for scheduling by date and hour.
 
 Enter the date and hour for the products to become active using this format: 2023-March-01 12AM
 
 Use the "Product IDs" option to choose which products to target. (Learn how to find product IDs here](https://learn.mechanic.dev/techniques/finding-a-resource-id).
+
+Note: Disable this task once your scheduled event is completed
 
 ## Installing this task
 
