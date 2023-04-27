@@ -1,5 +1,5 @@
 {
-  "docs": "Use this task to schedule product status to change to Active with support for scheduling by date and hour.\n\nEnter the date and hour for the products to become active using this format: 2023-March-01 12AM\n\nUse the \"Product IDs\" option to choose which products to target. (Learn how to find product IDs here](https://learn.mechanic.dev/techniques/finding-a-resource-id).\n\nNote: Disable this task once your scheduled event is completed",
+  "docs": "Use this task to schedule product statuses to Active by date and hour.\n\nEnter the date and hour for the products to become active using this format: 2023-March-01 12AM\n\nUse the \"Product IDs\" option to choose which products to target. (Learn how to find product IDs here](https://learn.mechanic.dev/techniques/finding-a-resource-id).\n\nNote: Disable this task once your scheduled event is completed",
   "halt_action_run_sequence_on_error": false,
   "name": "Schedule product status to active",
   "online_store_javascript": null,
