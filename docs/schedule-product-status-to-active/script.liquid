@@ -23,18 +23,20 @@
 
 {% if now_time >= active_time or event.preview %}
   {% for product in products %}
-    {% action "shopify" %}
-      mutation {
-        productChangeStatus(
-            productId: {{ product.admin_graphql_api_id | json }}
-            status: ACTIVE
-        ) {
-          userErrors {
-            field
-            message
+    {% unless product.status == "active" %}
+      {% action "shopify" %}
+        mutation {
+          productChangeStatus(
+              productId: {{ product.admin_graphql_api_id | json }}
+              status: ACTIVE
+          ) {
+            userErrors {
+              field
+              message
+            }
           }
         }
-      }
-    {% endaction %}      
+      {% endaction %}   
+    {% endunless %} 
   {% endfor %}
 {% endif %}

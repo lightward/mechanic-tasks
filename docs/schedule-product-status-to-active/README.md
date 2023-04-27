@@ -35,6 +35,8 @@ Enter the date and hour for the products to become active using this format: 202
 
 Use the "Product IDs" option to choose which products to target. (Learn how to find product IDs here](https://learn.mechanic.dev/techniques/finding-a-resource-id).
 
+Note: Disable this task once your scheduled event is completed
+
 ## Installing this task
 
 Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/schedule-product-status-to-active), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/schedule-product-status-to-active.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
