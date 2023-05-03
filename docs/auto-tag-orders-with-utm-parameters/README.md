@@ -25,7 +25,7 @@ This task automatically tags incoming orders with the UTM campaign, content, med
 ## Subscriptions
 
 ```liquid
-shopify/orders/create
+shopify/orders/create+2.minutes
 mechanic/user/trigger
 mechanic/shopify/bulk_operation
 ```
