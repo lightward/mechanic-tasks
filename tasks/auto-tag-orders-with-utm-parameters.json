@@ -18,7 +18,7 @@
     "mechanic/user/trigger",
     "mechanic/shopify/bulk_operation"
   ],
-  "subscriptions_template": "shopify/orders/create\nmechanic/user/trigger\nmechanic/shopify/bulk_operation",
+  "subscriptions_template": "shopify/orders/create+2.minutes\nmechanic/user/trigger\nmechanic/shopify/bulk_operation",
   "tags": [
     "Auto-Tag",
     "Marketing",
