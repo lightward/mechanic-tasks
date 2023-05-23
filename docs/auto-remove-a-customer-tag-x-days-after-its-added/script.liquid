@@ -76,7 +76,6 @@
                 key: {{ metafield_key | json }}
                 value: {{ now_s | plus: tag_removal_interval_s | append: "" | json }}
                 type: "number_integer"
-                description: {{ "Auto-removal time for customer tag " | append: tag | append: ", for task " | append: task.id | json }}
               }
             ]
           }
