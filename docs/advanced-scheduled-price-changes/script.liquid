@@ -757,7 +757,6 @@
             {% if set_compare_at_prices %}compareAtPrice: {{ variant.price | json }}{% endif %}
             metafields: [
               {
-                description: "Price change event metafield set by Mechanic"
                 key: {{ variant_metafield_key | json }}
                 namespace: {{ variant_metafield_namespace | json }}
                 type: "json"
