@@ -16,7 +16,7 @@
   "subscriptions": [
     "shopify/orders/create+0.minutes"
   ],
-  "subscriptions_template": "{% assign delay = options.only_run_for_paid_orders__boolean | default: 0 %}\n{% if options.only_run_for_paid_orders__boolean %}\n  shopify/orders/paid+{{ delay }}.minutes\n{% else %}  \n  shopify/orders/create+{{ delay }}.minutes\n{% endif %}",
+  "subscriptions_template": "{% assign delay = options.minutes_to_wait_before_removing_order_attributes__number_required | default: 0 %}\n{% if options.only_run_for_paid_orders__boolean %}\n  shopify/orders/paid+{{ delay }}.minutes\n{% else %}  \n  shopify/orders/create+{{ delay }}.minutes\n{% endif %}",
   "tags": [
     "Order Attributes",
     "Orders"
