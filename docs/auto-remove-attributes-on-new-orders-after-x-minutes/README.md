@@ -24,7 +24,7 @@ This task will remove order attributes from newly created or paid orders after a
 ## Subscriptions
 
 ```liquid
-{% assign delay = options.only_run_for_paid_orders__boolean | default: 0 %}
+{% assign delay = options.minutes_to_wait_before_removing_order_attributes__number_required | default: 0 %}
 {% if options.only_run_for_paid_orders__boolean %}
   shopify/orders/paid+{{ delay }}.minutes
 {% else %}  
