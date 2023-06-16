@@ -1,0 +1,518 @@
+{% comment %}
+  -- using a keyval with multiline configuration field allows location names to be mapped to multiple markets
+{% endcomment %}
+
+{% assign locations_and_market_names = options.locations_and_market_names__keyval_multiline_required %}
+
+{% assign location_names = locations_and_market_names | keys %}
+{% assign market_names
+  = locations_and_market_names
+  | values
+  | join: newline
+  | split: newline
+  | uniq
+%}
+
+{% if event.preview %}
+  {% assign location_names = array | push: "Warehouse" %}
+  {% assign market_names = array | push: "International" %}
+{% endif %}
+
+{% assign location_names_and_ids = hash %}
+{% assign inventory_level_inputs = array %}
+
+{% comment %}
+  -- check to make sure all of the location names configured in the task match locations in this shop
+  -- Shopify supports 1000 locations (as of June 2023), so searching by name filter instead of paginating
+{% endcomment %}
+
+{% for location_name in location_names %}
+  {% capture query %}
+    query {
+      locations(
+        first: 1
+        query: {{ location_name | json | prepend: "name:" | json }}
+      ) {
+        nodes {
+          id
+          name
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "locations": {
+            "nodes": [
+              {
+                "id": "gid://shopify/Location/1234567890"
+              }
+            ]
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% comment %}
+    -- using "echo" __error instead of log so that an error indicator shows in the event run log but the task still continues processing
+  {% endcomment %}
+
+  {% if result.data.locations == blank %}
+    {% action "echo"
+      __error: "Configured location name does not match a location in this shop.",
+      location_name: location_name
+    %}
+    {% continue %}
+  {% endif %}
+
+  {% assign location_id = result.data.locations.nodes.first.id %}
+  {% assign location_names_and_ids[location_name] = location_id %}
+
+  {% comment %}
+    -- save inventory level inputs for bulk querying so that only the locations configured in this task are returned
+    -- have to set alias for the inventoryLevel field because GraphQL requires field name uniqueness within each returned node
+  {% endcomment %}
+
+  {% capture inventory_level_input %}
+    {{ location_id | replace: "gid://shopify/Location/", "location_" }}: inventoryLevel(locationId: {{ location_id | json }}) {
+      location {
+        name
+      }
+      quantities(names: "available") {
+        quantity
+      }
+    }
+  {% endcapture %}
+
+  {% assign inventory_level_inputs = inventory_level_inputs | push: inventory_level_input %}
+{% endfor %}
+
+{% comment %}
+  -- Shopify only supports 50 markets (as of June 2023) and has no query filters for them, so have to retrieve them all
+  -- each market has only a single catalog and publication, so we can map market names to publication IDs in a hash for quicker lookup
+{% endcomment %}
+
+{% assign market_names_and_publication_ids = hash %}
+
+{% capture query %}
+  query {
+    markets(first: 50) {
+      nodes {
+        name
+        catalogs(first: 1) {
+          nodes {
+            publication {
+              id
+            }
+          }
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "markets": {
+          "nodes": [
+            {
+              "name": "International",
+              "catalogs": {
+                "nodes": [
+                  {
+                    "publication": {
+                      "id": "gid://shopify/Publication/1234567890"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% assign published_inputs = array %}
+
+{% for market in result.data.markets.nodes %}
+  {% assign publication_id = market.catalogs.nodes.first.publication.id %}
+  {% assign market_names_and_publication_ids[market.name] = publication_id %}
+
+  {% comment %}
+    -- save published inputs for checking to see which publications a product is currently published to
+    -- have to set alias for the publishedOnPublication field because GraphQL requires field name uniqueness within each returned node
+  {% endcomment %}
+
+  {% capture published_input -%}
+    published_{{ publication_id | remove: "gid://shopify/Publication/" }}: publishedOnPublication(publicationId: {{ publication_id | json }})
+  {%- endcapture %}
+
+  {% assign published_inputs = published_inputs | push: published_input %}
+{% endfor %}
+
+{% comment %}
+  -- check to make sure all of the market names configured in the task match markets in this shop
+  -- using "echo" __error instead of log or error tags so that an error indicator shows in the event run log but the task still continues processing
+{% endcomment %}
+
+{% for market_name in market_names %}
+  {% if market_names_and_publication_ids[market_name] == blank %}
+    {% action "echo"
+      __error: "Configured market name does not match a market in this shop.",
+      market_name: market_name
+    %}
+  {% endif %}
+{% endfor %}
+
+{% if event.topic == "shopify/inventory_levels/update" %}
+  {% comment %}
+    -- use the inventory level and location IDs from this event webhook to query available inventory for ALL of the product's variants at this location
+    -- Shopify supports 100 variants per product (as of June 2023)
+  {% endcomment %}
+
+  {% capture query %}
+    query {
+      inventoryLevel(id: {{ inventory_level.admin_graphql_api_id | json }}) {
+        location {
+          name
+        }
+        item {
+          variant {
+            product {
+              id
+              title
+              {{ published_inputs | join: newline }}
+              variants(first: 100) {
+                nodes {
+                  inventoryItem {
+                    inventoryLevel(locationId: {{ inventory_level.location_id | prepend: "gid://shopify/Location/" | json }}) {
+                      quantities(names: "available") {
+                        quantity
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "inventoryLevel": {
+            "location": {
+              "name": "Warehouse"
+            },
+            "item": {
+              "variant": {
+                "product": {
+                  "id": "gid://shopify/Product/1234567890",
+                  "title": "Widget",
+                  "published_1234567890": true,
+                  "variants": {
+                    "nodes": [
+                      {
+                        "inventoryItem": {
+                          "inventoryLevel": {
+                            "quantities": [
+                              {
+                                "quantity": 0
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign location_name = result.data.inventoryLevel.location.name %}
+  {% assign product = result.data.inventoryLevel.item.variant.product %}
+
+  {% comment %}
+    -- stop processing if this location isn't configured in the task
+  {% endcomment %}
+
+  {% unless location_names contains location_name %}
+    {% break %}
+  {% endunless %}
+
+  {% comment %}
+    -- stop processing if at least one variant is in stock at this location
+  {% endcomment %}
+
+  {% assign has_variant_in_stock_at_location = nil %}
+
+  {% for variant in product.variants.nodes %}
+    {% if variant.inventoryItem.inventoryLevel.quantities.first.quantity > 0 %}
+      {% assign has_variant_in_stock_at_location = true %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% if has_variant_in_stock_at_location %}
+    {% log
+      message: "Product has at least one variant in stock at this location; skipping.",
+      product_title: product.title,
+      location_name: location_name
+    %}
+    {% break %}
+  {% endif %}
+
+  {% assign unpublish_market_names = locations_and_market_names[location_name] | split: newline %}
+
+  {% if event.preview %}
+    {% assign unpublish_market_names = array | push: "International" %}
+  {% endif %}
+
+  {% log
+    message: "All variants of this product are out of stock at this location; unpublish the product from the paired markets.",
+    product_title: product.title,
+    location_name: location_name,
+    unpublish_market_names: unpublish_market_names
+  %}
+
+  {% comment %}
+    -- check if product is published to markets and if so save the publication ID inputs for unpublishing
+  {% endcomment %}
+
+  {% assign publication_id_inputs = array %}
+
+  {% for unpublish_market_name in unpublish_market_names %}
+    {% assign publication_id = market_names_and_publication_ids[unpublish_market_name] %}
+    {% assign published_alias = publication_id | replace: "gid://shopify/Publication/", "published_" %}
+
+    {% if product[published_alias] %}
+      {% assign publication_id_input = hash %}
+      {% assign publication_id_input["publicationId"] = publication_id %}
+      {% assign publication_id_inputs = publication_id_inputs | push: publication_id_input %}
+    {% endif %}
+  {% endfor %}
+
+  {% comment %}
+    -- "DENY" a product from markets by unpublishing it from the associated publications
+  {% endcomment %}
+
+  {% if publication_id_inputs != blank %}
+    {% action "shopify" %}
+      mutation {
+        publishableUnpublish(
+          id: {{ product.id | json }}
+          input: {{ publication_id_inputs | uniq | graphql_arguments }}
+        ) {
+          publishable {
+            ... on Product {
+              title
+            }
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+
+  {% else %}
+    {% log
+      message: "Product has already been unpublished from the paired markets.",
+      product_title: product.title
+    %}
+  {% endif %}
+
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% comment %}
+    -- use bulk operation to query all products in the shop that have at least one variant out of stock in any location
+    -- this filters out products that are in stock across all variants and locations, reducing the number of products to process
+    -- only query for inventory levels of locations configured in task, using inputs captured earlier
+    -- NOTE: bulk operation queries require edges and ids for each node, and __typename should be included for filtering returned data
+  {% endcomment %}
+
+  {% capture bulk_operation_query %}
+    query {
+      products(
+        query: "out_of_stock_somewhere:true"
+      ) {
+        edges {
+          node {
+            __typename
+            id
+            title
+            {{ published_inputs | join: newline }}
+            variants {
+              edges {
+                node {
+                  __typename
+                  id
+                  inventoryItem {
+                    {{ inventory_level_inputs | join: newline }}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture jsonl_string %}
+      {"__typename":"Product","id":"gid://shopify/Product/1234567890","title":"Widget","published_1234567890": true}
+      {"__typename":"ProductVariant","inventoryItem":{"location_1234567890":{"location":{"name":"International"},"quantities":[{"quantity":0}]}},"__parentId":"gid://shopify/Product/1234567890"}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = jsonl_string | parse_jsonl %}
+  {% endif %}
+
+  {% assign bulk_products = bulkOperation.objects | where: "__typename", "Product" %}
+  {% assign bulk_variants = bulkOperation.objects | where: "__typename", "ProductVariant" %}
+
+  {% comment %}
+    -- loop through all products returned by the bulk operation
+  {% endcomment %}
+
+  {% for product in bulk_products %}
+    {% assign variants = bulk_variants | where: "__parentId", product.id %}
+
+    {% assign publication_id_inputs = array %}
+
+    {% comment %}
+      -- process each configured location in turn since we short-circuit a loop once any variant is found to be in stock there
+    {% endcomment %}
+
+    {% for keyval in location_names_and_ids %}
+      {% assign location_name = keyval[0] %}
+      {% assign location_id = keyval[1] %}
+      {% assign location_alias = location_id | replace: "gid://shopify/Location/", "location_" %}
+
+      {% assign has_variant_in_stock_at_location = nil %}
+
+      {% for variant in variants %}
+        {% if variant.inventoryItem[location_alias].quantities.first.quantity > 0 %}
+          {% assign has_variant_in_stock_at_location = true %}
+          {% break %}
+        {% endif %}
+      {% endfor %}
+
+      {% if has_variant_in_stock_at_location %}
+        {% log
+          message: "Product has at least one variant in stock at this location; skipping.",
+          product_title: product.title,
+          location_name: location_name
+        %}
+        {% continue %}
+      {% endif %}
+
+      {% assign unpublish_market_names = locations_and_market_names[location_name] | split: newline %}
+
+      {% if event.preview %}
+        {% assign unpublish_market_names = array | push: "International" %}
+      {% endif %}
+
+      {% log
+        message: "All variants of this product are out of stock at this location; unpublish the product from the paired markets.",
+        product_title: product.title,
+        location_name: location_name,
+        unpublish_market_names: unpublish_market_names
+      %}
+
+      {% comment %}
+        -- check if product is published to markets and if so save the publication ID inputs for unpublishing
+      {% endcomment %}
+
+      {% for unpublish_market_name in unpublish_market_names %}
+        {% assign publication_id = market_names_and_publication_ids[unpublish_market_name] %}
+        {% assign published_alias = publication_id | replace: "gid://shopify/Publication/", "published_" %}
+
+        {% if product[published_alias] %}
+          {% assign publication_id_input = hash %}
+          {% assign publication_id_input["publicationId"] = publication_id %}
+          {% assign publication_id_inputs = publication_id_inputs | push: publication_id_input %}
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+
+    {% comment %}
+      -- "DENY" a product from markets by unpublishing it from the associated publications
+    {% endcomment %}
+
+    {% if publication_id_inputs != blank %}
+      {% action "shopify" %}
+        mutation {
+          publishableUnpublish(
+            id: {{ product.id | json }}
+            input: {{ publication_id_inputs | uniq | graphql_arguments }}
+          ) {
+            publishable {
+              ... on Product {
+                title
+              }
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+
+    {% else %}
+      {% log
+        message: "Product has already been unpublished from the paired markets.",
+        product_title: product.title
+      %}
+    {% endif %}
+  {% endfor %}
+{% endif %}

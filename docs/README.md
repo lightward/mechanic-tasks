@@ -329,6 +329,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Trigger order emails with a tag](./trigger-order-emails-with-a-tag)
 * [Tutorial: Trigger a task from a contact form, using webhooks](./tutorial-trigger-a-task-from-a-contact-form-using-webhooks)
 * [Unpublish a certain collection, daily](./unpublish-a-certain-collection-daily)
+* [Unpublish products from markets when locations are out of stock](./unpublish-products-from-markets-when-locations-are-out-of-stock)
 * [Unpublish products that fall below a rolling sales threshold](./unpublish-products-that-fall-below-a-rolling-sales-threshold)
 * [Unpublish products that have been out of stock for x days](./unpublish-products-that-have-been-out-of-stock-for-x-days)
 * [Unpublish products when tagged](./unpublish-products-when-tagged)
