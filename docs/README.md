@@ -164,6 +164,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Capture order payment upon fulfillment](./capture-order-payment-upon-fulfillment)
 * [Catalog update email](./catalog-update-email)
 * [Clean up draft orders](./clean-up-draft-orders)
+* [Copy draft order metafields to orders](./copy-draft-order-metafields-to-orders)
 * [Copy order and/or product tags to customers](./copy-order-tags-to-customers)
 * [Copy prefixed tags to metafields](./copy-prefixed-tags-to-metafields)
 * [Copy product metafields to each product's tags](./copy-product-metafields-to-each-products-tags)
