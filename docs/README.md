@@ -98,6 +98,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag new orders with their fulfillment locations](./auto-tag-new-orders-with-their-fulfillment-locations)
 * [Auto-tag new orders](./auto-tag-new-orders)
 * [Auto-tag new products by "back in stock" age](./auto-tag-new-products-by-back-in-stock-age)
+* [Auto-tag open orders from the same customer with the same shipping address](./auto-tag-open-orders-from-same-customer-and-shipping-address)
 * [Auto-tag orders based on cart attributes](./auto-tag-orders-based-on-cart-attributes)
 * [Auto-tag orders based on customer account tags](./auto-tag-orders-based-on-customer-account-tags)
 * [Auto-tag orders based on shipping method](./auto-tag-orders-based-on-shipping-method)

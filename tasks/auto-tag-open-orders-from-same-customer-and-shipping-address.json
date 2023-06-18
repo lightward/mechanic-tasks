@@ -1,0 +1,22 @@
+{
+  "docs": "When a new order is created, this task will tag all open orders for the customer which match the new order's shipping address, giving you the potential to combine shipments.",
+  "halt_action_run_sequence_on_error": false,
+  "name": "Auto-tag open orders from the same customer with the same shipping address",
+  "online_store_javascript": null,
+  "options": {
+    "tag_to_apply__required": "combine_check"
+  },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "preview_event_definitions": [],
+  "script": "{% assign tag_to_apply = options.tag_to_apply__required %}\n\n{% comment %}\n  -- stub data for the preview event\n{% endcomment %}\n\n{% if event.preview %}\n  {% assign order = hash %}\n  {% assign order[\"admin_graphql_api_id\"] = \"gid://shopify/Order/2345678901\" %}\n  {% assign order[\"shipping_address\"] = \"not null\" %}\n{% endif %}\n\n{% comment %}\n  -- need an order shipping address to match; otherwise exit this task run\n{% endcomment %}\n\n{% if order.shipping_address == blank %}\n  {% log \"This order does not have a shipping address; exiting this task run\" %}\n  {% break %}\n{% endif %}\n\n{% comment %}\n  -- query all open orders for this customer\n{% endcomment %}\n\n{% capture query %}\n  query {\n    customer(\n      id: {{ order.customer.admin_graphql_api_id | json }}\n    ) {\n      orders(\n        first: 100\n        sortKey: CREATED_AT\n        reverse: true\n        query: \"status:open\"\n      ) {\n        nodes {\n          id\n          tags\n          shippingAddress {\n            formatted\n          }\n        }\n      }\n    }\n  }\n{% endcapture %}\n\n{% assign result = query | shopify %}\n\n{% comment %} Stub data for the preview event {% endcomment %}\n{% if event.preview %}\n  {% capture result_json %}\n    {\n      \"data\": {\n        \"customer\": {\n          \"orders\": {\n            \"nodes\": [\n              {\n                \"id\": \"gid://shopify/Order/2345678901\",\n                \"shippingAddress\": {\n                  \"formatted\": [\n                    \"123 Main Street\",\n                    \"Santa Monica CA 90405\",\n                    \"United States\"\n                  ]\n                }\n              },\n              {\n                \"id\": \"gid://shopify/Order/1234567890\",\n                \"shippingAddress\": {\n                  \"formatted\": [\n                    \"123 Main Street\",\n                    \"Santa Monica CA 90405\",\n                    \"United States\"\n                  ]\n                }\n              }\n            ]\n          }\n        }\n      }\n    }\n  {% endcapture %}\n\n  {% assign result = result_json | parse_json %}\n{% endif %}\n\n{% assign orders = result.data.customer.orders.nodes %}\n\n{% comment %}\n  -- need at least 2 open orders to apply the tag; otherwise exit this task run\n{% endcomment %}\n\n{% if orders.size < 2 %}\n  {% break %}\n{% endif %}\n\n{% comment %}\n  -- get formatted shipping address from the order that initiated this event (this is not available in the webhook data)\n{% endcomment %}\n\n{% assign shipping_address_to_match\n  = orders\n  | where: \"id\", order.admin_graphql_api_id\n  | map: \"shippingAddress\"\n  | map: \"formatted\"\n  | first\n%}\n\n{% comment %}\n  -- search open orders for matching shipping address\n{% endcomment %}\n\n{% assign matched_orders = array %}\n\n{% for order in orders %}\n  {% if order.shippingAddress.formatted == shipping_address_to_match %}\n    {% assign matched_orders = matched_orders | push: order %}\n  {% endif %}\n{% endfor %}\n\n{% comment %}\n  -- if no other open orders for this customer match the shipping address from the order that initiated this event, then exit this task run\n{% endcomment %}\n\n{% if matched_orders.size == 1 %}\n  {% break %}\n{% endif %}\n\n{% comment %}\n  -- add tag to matched orders unless they already have it\n{% endcomment %}\n\n{% for order in matched_orders %}\n  {% unless order.tags contains tag_to_apply %}\n    {% action \"shopify\" %}\n      mutation {\n        tagsAdd(\n          id: {{ order.id | json }}\n          tags: {{ tag_to_apply | json }}\n        ) {\n          userErrors {\n            field\n            message\n          }\n        }\n      }\n    {% endaction %}\n  {% endunless %}\n{% endfor %}\n",
+  "subscriptions": [
+    "shopify/orders/create"
+  ],
+  "subscriptions_template": "shopify/orders/create",
+  "tags": [
+    "Auto-Tag",
+    "Orders",
+    "Shipping"
+  ]
+}
