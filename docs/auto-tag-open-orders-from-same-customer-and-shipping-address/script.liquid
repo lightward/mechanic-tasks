@@ -1,0 +1,151 @@
+{% assign tag_to_apply = options.tag_to_apply__required %}
+
+{% comment %}
+  -- stub data for the preview event
+{% endcomment %}
+
+{% if event.preview %}
+  {% assign order = hash %}
+  {% assign order["admin_graphql_api_id"] = "gid://shopify/Order/2345678901" %}
+  {% assign order["shipping_address"] = "not null" %}
+{% endif %}
+
+{% comment %}
+  -- need an order shipping address to match; otherwise exit this task run
+{% endcomment %}
+
+{% if order.shipping_address == blank %}
+  {% log "This order does not have a shipping address; exiting this task run" %}
+  {% break %}
+{% endif %}
+
+{% comment %}
+  -- query all open orders for this customer
+{% endcomment %}
+
+{% capture query %}
+  query {
+    customer(
+      id: {{ order.customer.admin_graphql_api_id | json }}
+    ) {
+      orders(
+        first: 100
+        sortKey: CREATED_AT
+        reverse: true
+        query: "status:open"
+      ) {
+        nodes {
+          id
+          tags
+          shippingAddress {
+            formatted
+          }
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% comment %} Stub data for the preview event {% endcomment %}
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "customer": {
+          "orders": {
+            "nodes": [
+              {
+                "id": "gid://shopify/Order/2345678901",
+                "shippingAddress": {
+                  "formatted": [
+                    "123 Main Street",
+                    "Santa Monica CA 90405",
+                    "United States"
+                  ]
+                }
+              },
+              {
+                "id": "gid://shopify/Order/1234567890",
+                "shippingAddress": {
+                  "formatted": [
+                    "123 Main Street",
+                    "Santa Monica CA 90405",
+                    "United States"
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% assign orders = result.data.customer.orders.nodes %}
+
+{% comment %}
+  -- need at least 2 open orders to apply the tag; otherwise exit this task run
+{% endcomment %}
+
+{% if orders.size < 2 %}
+  {% break %}
+{% endif %}
+
+{% comment %}
+  -- get formatted shipping address from the order that initiated this event (this is not available in the webhook data)
+{% endcomment %}
+
+{% assign shipping_address_to_match
+  = orders
+  | where: "id", order.admin_graphql_api_id
+  | map: "shippingAddress"
+  | map: "formatted"
+  | first
+%}
+
+{% comment %}
+  -- search open orders for matching shipping address
+{% endcomment %}
+
+{% assign matched_orders = array %}
+
+{% for order in orders %}
+  {% if order.shippingAddress.formatted == shipping_address_to_match %}
+    {% assign matched_orders = matched_orders | push: order %}
+  {% endif %}
+{% endfor %}
+
+{% comment %}
+  -- if no other open orders for this customer match the shipping address from the order that initiated this event, then exit this task run
+{% endcomment %}
+
+{% if matched_orders.size == 1 %}
+  {% break %}
+{% endif %}
+
+{% comment %}
+  -- add tag to matched orders unless they already have it
+{% endcomment %}
+
+{% for order in matched_orders %}
+  {% unless order.tags contains tag_to_apply %}
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {{ order.id | json }}
+          tags: {{ tag_to_apply | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endunless %}
+{% endfor %}
