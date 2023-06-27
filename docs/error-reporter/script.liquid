@@ -1,0 +1,77 @@
+{% comment %}
+  Only send error emails for the same errors at these thresholds.
+{% endcomment %}
+
+{% assign error_thresholds = array %}
+{% assign error_thresholds[0] = 10 %}
+{% assign error_thresholds[1] = 25 %}
+{% assign error_thresholds[2] = 50 %}
+{% assign error_thresholds[3] = 100 %}
+{% assign error_thresholds[4] = 200 %}
+
+{% comment %}
+  Fingerprinting the error, so that we can track if this is something
+  we have received recently.
+
+  See: https://learn.mechanic.dev/techniques/debouncing-events#fingerprinting  
+{% endcomment %}
+
+{% assign fingerprint_parts = hash %}
+{% assign fingerprint_parts["topic"] = event.topic %}
+{% assign fingerprint_parts["message"] = error.message %}
+{% assign fingerprint_parts["task_id"] = error.task.id %}
+{% assign fingerprint_parts["action_type"] = error.action.type %}
+{% assign fingerprint = fingerprint_parts | json | sha256 %}
+{% assign error_count_cache_key = "errors/" | append: fingerprint %}
+
+{% comment %} How many times have we seen this error recently? {% endcomment %}
+{% assign recent_error_count = cache[error_count_cache_key] | default: 0 %}
+
+{% assign event_url = "https://admin.shopify.com/store/" | append: shop.domain | replace: ".myshopify.com", "/apps/mechanic/events/" | append: error.event.id %}
+
+{% capture email_subject -%}
+  {{ event.topic }} on {{ shop.name }}
+{%- endcapture %}
+
+{% capture email_body %}
+<p><b>This an automated error notification from your Mechanic error reporting task.</b></p>
+
+{% if error_thresholds contains recent_error_count -%}
+    <p><b>Note:</b> There have been more than {{ recent_error_count }} errors of this type in the last 10 minutes.</p>
+{%- endif %}   
+
+<p><a href="{{ event_url }}">View error details</a></p>
+
+<p>Error topic: {{ event.topic }}</p>
+
+<p>Error message: <pre>{{ error.message }}</pre></p>
+
+<p>Thanks,<br><br>{{ shop.name }} via Mechanic</p>
+{% endcapture %}
+
+{% comment %}
+  We only send emails on the first error and again on specific thresholds
+{% endcomment %}
+{% if recent_error_count == 0 or error_thresholds contains recent_error_count %}
+  {% action "email" %}
+    {
+      "to": {{ options.email_recipients__email_array_required | json  }},
+      "subject": {{ email_subject | json }},
+      "template": "default_matt",
+      "body": {{ email_body | json }},
+      "from_display_name": {{ shop.name | json }}
+    }
+  {% endaction %}
+{% endif %}
+
+{% comment %}
+  Increment recent error count for this error
+{% endcomment %}
+{% action "cache" %}
+  {
+    "incr": {
+      "key": {{ fingerprint | json }},
+      "ttl": 600
+    }
+  }
+{% endaction %}

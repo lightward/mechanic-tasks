@@ -1,0 +1,59 @@
+{
+  "docs": "Use this task to get email reports when errors occur with events, tasks, and actions in Mechanic. Use this task out of the box, customize it, or borrow logic for your more advanced error reporting tasks.\n\n[Read more about error events](https://learn.mechanic.dev/platform/error-handling).",
+  "halt_action_run_sequence_on_error": false,
+  "name": "Error reporter",
+  "online_store_javascript": null,
+  "options": {
+    "email_recipients__email_array_required": null
+  },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "preview_event_definitions": [
+    {
+      "description": "",
+      "event_attributes": {
+        "topic": "mechanic/errors/event",
+        "data": {
+          "message": "Something happened!",
+          "event": {
+            "id": "8c8d3633-a0fd-4aa1-b724-c7d1f4df8292"
+          }
+        }
+      }
+    },
+    {
+      "description": "",
+      "event_attributes": {
+        "topic": "mechanic/errors/task",
+        "data": {
+          "message": "Something happened!",
+          "event": {
+            "id": "8c8d3633-a0fd-4aa1-b724-c7d1f4df8292"
+          }
+        }
+      }
+    },
+    {
+      "description": "",
+      "event_attributes": {
+        "topic": "mechanic/errors/action",
+        "data": {
+          "message": "Something happened!",
+          "event": {
+            "id": "8c8d3633-a0fd-4aa1-b724-c7d1f4df8292"
+          }
+        }
+      }
+    }
+  ],
+  "script": "{% comment %}\n  Only send error emails for the same errors at these thresholds.\n{% endcomment %}\n\n{% assign error_thresholds = array %}\n{% assign error_thresholds[0] = 10 %}\n{% assign error_thresholds[1] = 25 %}\n{% assign error_thresholds[2] = 50 %}\n{% assign error_thresholds[3] = 100 %}\n{% assign error_thresholds[4] = 200 %}\n\n{% comment %}\n  Fingerprinting the error, so that we can track if this is something\n  we have received recently.\n\n  See: https://learn.mechanic.dev/techniques/debouncing-events#fingerprinting  \n{% endcomment %}\n\n{% assign fingerprint_parts = hash %}\n{% assign fingerprint_parts[\"topic\"] = event.topic %}\n{% assign fingerprint_parts[\"message\"] = error.message %}\n{% assign fingerprint_parts[\"task_id\"] = error.task.id %}\n{% assign fingerprint_parts[\"action_type\"] = error.action.type %}\n{% assign fingerprint = fingerprint_parts | json | sha256 %}\n{% assign error_count_cache_key = \"errors/\" | append: fingerprint %}\n\n{% comment %} How many times have we seen this error recently? {% endcomment %}\n{% assign recent_error_count = cache[error_count_cache_key] | default: 0 %}\n\n{% assign event_url = \"https://admin.shopify.com/store/\" | append: shop.domain | replace: \".myshopify.com\", \"/apps/mechanic/events/\" | append: error.event.id %}\n\n{% capture email_subject -%}\n  {{ event.topic }} on {{ shop.name }}\n{%- endcapture %}\n\n{% capture email_body %}\n<p><b>This an automated error notification from your Mechanic error reporting task.</b></p>\n\n{% if error_thresholds contains recent_error_count -%}\n    <p><b>Note:</b> There have been more than {{ recent_error_count }} errors of this type in the last 10 minutes.</p>\n{%- endif %}   \n\n<p><a href=\"{{ event_url }}\">View error details</a></p>\n\n<p>Error topic: {{ event.topic }}</p>\n\n<p>Error message: <pre>{{ error.message }}</pre></p>\n\n<p>Thanks,<br><br>{{ shop.name }} via Mechanic</p>\n{% endcapture %}\n\n{% comment %}\n  We only send emails on the first error and again on specific thresholds\n{% endcomment %}\n{% if recent_error_count == 0 or error_thresholds contains recent_error_count %}\n  {% action \"email\" %}\n    {\n      \"to\": {{ options.email_recipients__email_array_required | json  }},\n      \"subject\": {{ email_subject | json }},\n      \"template\": \"default_matt\",\n      \"body\": {{ email_body | json }},\n      \"from_display_name\": {{ shop.name | json }}\n    }\n  {% endaction %}\n{% endif %}\n\n{% comment %}\n  Increment recent error count for this error\n{% endcomment %}\n{% action \"cache\" %}\n  {\n    \"incr\": {\n      \"key\": {{ fingerprint | json }},\n      \"ttl\": 600\n    }\n  }\n{% endaction %}",
+  "subscriptions": [
+    "mechanic/errors/event",
+    "mechanic/errors/task",
+    "mechanic/errors/action"
+  ],
+  "subscriptions_template": "mechanic/errors/event\nmechanic/errors/task\nmechanic/errors/action",
+  "tags": [
+    "Error"
+  ]
+}
