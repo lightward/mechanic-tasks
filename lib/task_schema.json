@@ -45,6 +45,7 @@
           "Download",
           "Draft Orders",
           "Email",
+          "Error",
           "Export",
           "External API",
           "Files",
@@ -159,16 +160,10 @@
       "type": "boolean"
     },
     "online_store_javascript": {
-      "type": [
-        "string",
-        "null"
-      ]
+      "type": ["string", "null"]
     },
     "order_status_javascript": {
-      "type": [
-        "string",
-        "null"
-      ]
+      "type": ["string", "null"]
     },
     "perform_action_runs_in_sequence": {
       "type": "boolean"
@@ -191,27 +186,15 @@
                 "type": "object"
               }
             },
-            "required": [
-              "topic",
-              "data"
-            ],
+            "required": ["topic", "data"],
             "additionalProperties": false
           }
         },
-        "required": [
-          "description",
-          "event_attributes"
-        ],
+        "required": ["description", "event_attributes"],
         "additionalProperties": false
       }
     }
   },
-  "required": [
-    "name",
-    "options",
-    "subscriptions_template",
-    "script",
-    "docs"
-  ],
+  "required": ["name", "options", "subscriptions_template", "script", "docs"],
   "additionalProperties": false
 }

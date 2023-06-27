@@ -210,6 +210,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Email vendors when an order shipping address changes](./email-vendors-when-an-order-shipping-address-changes)
 * [Email vendors when their products are ordered](./email-vendors-when-their-products-are-ordered)
 * [Email your customers after a quiet period of no orders](./email-your-customers-after-a-quiet-period-of-no-orders)
+* [Error reporter](./error-reporter)
 * [Export a CSV of order shipping addresses](./export-a-csv-of-order-shipping-addresses)
 * [Export all products to SFTP, as a Shopify-friendly CSV](./export-all-products-to-sftp-as-a-shopify-friendly-csv)
 * [Find duplicate SKUs](./find-duplicate-skus)
