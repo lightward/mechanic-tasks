@@ -13,7 +13,6 @@
     "dir-compare": "4.0.0",
     "glob": "10.3.0",
     "husky": "8.0.3",
-    "prettier-plugin-organize-imports": "3.2.2",
     "prettier": "2.8.8",
     "sort-json": "2.0.1",
     "lint-staged": "13.2.3"
