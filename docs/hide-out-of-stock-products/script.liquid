@@ -1,11 +1,19 @@
+{% assign out_of_stock_inventory_quantity = options.out_of_stock_inventory_quantity__number_required %}
+{% assign sales_channel_names = options.sales_channel_names__required_array %}
+{% assign inclusion_tags = options.only_include_products_with_any_of_these_tags__array %}
+{% assign exclusion_tags = options.always_exclude_products_with_any_of_these_tags__array %}
+{% assign email_notification_recipient = options.email_notification_recipient__email %}
+
+{% comment %}
+  -- get all of the sales channels in the shop
+{% endcomment %}
+
 {% capture query %}
   query {
     publications(first: 250) {
-      edges {
-        node {
-          id
-          name
-        }
+      nodes {
+        id
+        name
       }
     }
   }
@@ -16,17 +24,26 @@
 {% assign publication_ids = array %}
 {% assign publication_names_by_id = hash %}
 
-{% for publication_edge in result.data.publications.edges %}
-  {% if options.sales_channel_names__required_array contains publication_edge.node.name %}
-    {% assign publication_ids[publication_ids.size] = publication_edge.node.id %}
-    {% assign publication_names_by_id[publication_edge.node.id] = publication_edge.node.name %}
+{% for publication in result.data.publications.nodes %}
+  {% if sales_channel_names contains publication.name %}
+    {% assign publication_ids[publication_ids.size] = publication.id %}
+    {% assign publication_names_by_id[publication.id] = publication.name %}
   {% endif %}
 {% endfor %}
 
+{% comment %}
+  -- make sure the configured sales channel names match what is in the shop; send alert email otherwise
+{% endcomment %}
+
 {% unless event.preview %}
-  {% assign available_channels = result.data.publications.edges | map: "node" | map: "name" %}
-  {% if publication_ids.size != options.sales_channel_names__required_array.size %}
-    {% error message: "Didn't find all configured sales channels. Please check the list of available channels, and compare it with the list of configured channels.", available_channels: available_channels, configured_channels: options.sales_channel_names__required_array %}
+  {% assign available_channels = result.data.publications.nodes | map: "name" %}
+
+  {% if publication_ids.size != sales_channel_names.size %}
+    {% error
+      message: "Each sales channel configured in this task must exist in the shop. Check the list of available channels and verify each configured channel exists.",
+      available_sales_channel_names: available_channels,
+      configured_sales_channel_names: sales_channel_names
+    %}
   {% endif %}
 {% endunless %}
 
@@ -47,7 +64,7 @@
     }
   {% endaction %}
 
-  {% if options.email_notification_recipient__email != blank %}
+  {% if email_notification_recipient != blank %}
     {% capture email_subject %}
       Out of stock: Short Sleeve T-shirt
     {% endcapture %}
@@ -65,15 +82,59 @@
 
     {% action "email" %}
       {
-        "to": {{ options.email_notification_recipient__email | json }},
+        "to": {{ email_notification_recipient | json }},
         "subject": {{ email_subject | unindent | strip | json }},
         "body": {{ email_body | unindent | strip | newline_to_br | json }}
       }
     {% endaction %}
   {% endif %}
+
 {% elsif event.topic == "mechanic/user/trigger" %}
   {% assign unpublished_product_links = array %}
   {% assign cursor = nil %}
+  {% assign search_query = out_of_stock_inventory_quantity | prepend: "inventory_total:<=" %}
+
+  {% comment %}
+    -- if inclusion or exclusion tags are configured, use them to refine the search query in order to reduce the number of products to be processed
+  {% endcomment %}
+
+  {% if inclusion_tags != blank %}
+    {% assign inclusion_tag_filters = array %}
+
+    {% for inclusion_tag in inclusion_tags %}
+      {% assign inclusion_tag_filter
+        = inclusion_tag
+        | json
+        | prepend: "tag:"
+      %}
+      {% assign inclusion_tag_filters = inclusion_tag_filters | push: inclusion_tag_filter %}
+    {% endfor %}
+
+    {% capture search_query %}{{ search_query }} AND ({{ inclusion_tag_filters | join: " OR " }}){% endcapture %}
+  {% endif %}
+
+  {% if exclusion_tags != blank %}
+    {% assign exclusion_tag_filters = array %}
+
+    {% for exclusion_tag in exclusion_tags %}
+      {% assign exclusion_tag_filter
+        = exclusion_tag
+        | json
+        | prepend: "tag_not:"
+      %}
+      {% assign exclusion_tag_filters = exclusion_tag_filters | push: exclusion_tag_filter %}
+    {% endfor %}
+
+    {% capture search_query -%}
+      {{ search_query }} AND {{ exclusion_tag_filters | join: " AND " }}
+    {%- endcapture %}
+  {% endif %}
+
+  {% log search_query: search_query %}
+
+  {% comment %}
+    -- use paginated query to get all products in the shop at or below the inventory threshold, optionaly filtered by inclusion or exclusion tags
+  {% endcomment %}
 
   {% for n in (0..100) %}
     {% capture query %}
@@ -81,23 +142,21 @@
         products(
           first: 250
           after: {{ cursor | json }}
-          query: "inventory_total:<={{ options.out_of_stock_inventory_quantity__number_required }}"
+          query: {{ search_query | json }}
         ) {
           pageInfo {
             hasNextPage
+            endCursor
           }
-          edges {
-            cursor
-            node {
-              id
-              legacyResourceId
-              title
-              totalInventory
-
-              {% for publication_id in publication_ids %}
-                published{{ forloop.index }}: publishedOnPublication(publicationId: {{ publication_id | json }})
-              {% endfor %}
-            }
+          nodes {
+            id
+            legacyResourceId
+            title
+            totalInventory
+            tags
+            {% for publication_id in publication_ids %}
+              published{{ forloop.index }}: publishedOnPublication(publicationId: {{ publication_id | json }})
+            {% endfor %}
           }
         }
       }
@@ -105,14 +164,18 @@
 
     {% assign result = query | shopify %}
 
-    {% for edge in result.data.products.edges %}
-      {% assign product_node = edge.node %}
+    {% comment %}
+      -- process this batch of returned products, unpublishing as needed and saving links for optional email output
+    {% endcomment %}
+
+    {% for product in result.data.products.nodes %}
       {% assign mutations = array %}
       {% assign publication_names = array %}
 
       {% for publication_id in publication_ids %}
         {% assign key = "published" | append: forloop.index %}
-        {% if product_node[key] == false %}
+
+        {% if product[key] == false %}
           {% continue %}
         {% endif %}
 
@@ -120,7 +183,7 @@
 
         {% capture mutation %}
           publishableUnpublish{{ forloop.index}}: publishableUnpublish(
-            id: {{ product_node.id | json }}
+            id: {{ product.id | json }}
             input: {
               publicationId: {{ publication_id | json }}
             }
@@ -131,6 +194,7 @@
             }
           }
         {% endcapture %}
+
         {% assign mutations[mutations.size] = mutation %}
       {% endfor %}
 
@@ -141,19 +205,25 @@
           }
         {% endaction %}
 
-        {% capture link %}<li><a href="https://{{ shop.domain }}/admin/products/{{ product_node.legacyResourceId }}">{{ product_node.title }}</a> ({{ product_node.totalInventory }} - unpublished from {{ publication_names | join: ", " }})</li>{% endcapture %}
+        {% capture link %}<li><a href="https://{{ shop.domain }}/admin/products/{{ product.legacyResourceId }}">{{ product.title }}</a> ({{ product.totalInventory }} - unpublished from {{ publication_names | join: ", " }})</li>{% endcapture %}
+
         {% assign unpublished_product_links[unpublished_product_links.size] = link %}
       {% endif %}
     {% endfor %}
 
     {% if result.data.products.pageInfo.hasNextPage %}
-      {% assign cursor = result.data.products.edges.last.cursor %}
+      {% assign cursor = result.data.products.pageInfo.endCursor %}
     {% else %}
       {% break %}
     {% endif %}
   {% endfor %}
 
-  {% if unpublished_product_links != empty and options.email_notification_recipient__email != blank %}
+  {% if unpublished_product_links == blank %}
+    {% log "No products qualified to be unpublished during this task run." %}
+    {% break %}
+  {% endif %}
+
+  {% if email_notification_recipient != blank %}
     {% capture email_subject %}
       Found {{ unpublished_product_links.size }} {{ unpublished_product_links.size | pluralize: "product", "products" }} out of stock
     {% endcapture %}
@@ -161,7 +231,7 @@
     {% capture email_body %}
       Hi there,
       <br><br>
-      These products were found to be under your out of stock minimum quantity ({{ options.out_of_stock_inventory_quantity__number_required }}), when adding up the inventory for each product.
+      These products were found to be under your out of stock minimum quantity ({{ out_of_stock_inventory_quantity }}), when adding up the inventory for each product.
       <br>
       <ul>{{ unpublished_product_links | join: "" }}</ul>
       <br>
@@ -172,13 +242,18 @@
 
     {% action "email" %}
       {
-        "to": {{ options.email_notification_recipient__email | json }},
+        "to": {{ email_notification_recipient | json }},
         "subject": {{ email_subject | unindent | strip | json }},
         "body": {{ email_body | unindent | strip | json }}
       }
     {% endaction %}
   {% endif %}
+
 {% elsif event.topic contains "shopify/inventory_levels/" %}
+  {% comment %}
+    -- query the inventory level to get the product data needed for this task
+  {% endcomment %}
+
   {% capture query %}
     query {
       inventoryLevel(
@@ -191,7 +266,7 @@
               legacyResourceId
               title
               totalInventory
-
+              tags
               {% for publication_id in publication_ids %}
                 published{{ forloop.index }}: publishedOnPublication(publicationId: {{ publication_id | json }})
               {% endfor %}
@@ -203,15 +278,67 @@
   {% endcapture %}
 
   {% assign result = query | shopify %}
-  {% assign product_node = result.data.inventoryLevel.item.variant.product %}
 
-  {% if product_node.totalInventory <= options.out_of_stock_inventory_quantity__number_required %}
+  {% assign product = result.data.inventoryLevel.item.variant.product %}
+
+  {% comment %}
+    -- check to see if product is included or excluded (i.e. whether to process) by any configured tags
+  {% endcomment %}
+
+  {% assign product_included_by_tag = nil %}
+  {% assign product_excluded_by_tag = nil %}
+
+  {% if inclusion_tags != blank %}
+    {% for inclusion_tag in inclusion_tags %}
+      {% if product.tags contains inclusion_tag %}
+        {% assign product_included_by_tag = true %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
+  {% if exclusion_tags != blank %}
+    {% for exclusion_tag in exclusion_tags %}
+      {% if product.tags contains exclusion_tag %}
+        {% assign product_excluded_by_tag = true %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
+  {% comment %}
+    -- check if a product has been excluded first, then only if there are inclusion tags configured check if it has been included
+  {% endcomment %}
+
+  {% if product_excluded_by_tag %}
+    {% log
+      message: "Product was excluded by a configured tag and will not be processed by this task.",
+      exclusion_tags: exclusion_tags,
+      product: product
+    %}
+    {% break %}
+
+  {% elsif inclusion_tags != blank %}
+    {% unless product_included_by_tag %}
+      {% log
+        message: "Product was not included by any configured tag and will not be processed by this task.",
+        inclusion_tags: inclusion_tags,
+        product: product
+      %}
+      {% break %}
+    {% endunless %}
+  {% endif %}
+
+  {% comment %}
+    -- unpublish the product from the configured sales channels if it is at or below the configured out of stock threshold and optioanlly send email notification
+  {% endcomment %}
+
+  {% if product.totalInventory <= out_of_stock_inventory_quantity %}
     {% assign mutations = array %}
     {% assign publication_names = array %}
 
     {% for publication_id in publication_ids %}
       {% assign key = "published" | append: forloop.index %}
-      {% if product_node[key] == false %}
+
+      {% if product[key] == false %}
         {% continue %}
       {% endif %}
 
@@ -219,7 +346,7 @@
 
       {% capture mutation %}
         publishableUnpublish{{ forloop.index}}: publishableUnpublish(
-          id: {{ product_node.id | json }}
+          id: {{ product.id | json }}
           input: {
             publicationId: {{ publication_id | json }}
           }
@@ -230,6 +357,7 @@
           }
         }
       {% endcapture %}
+
       {% assign mutations[mutations.size] = mutation %}
     {% endfor %}
 
@@ -240,9 +368,9 @@
         }
       {% endaction %}
 
-      {% if options.email_notification_recipient__email != blank %}
+      {% if email_notification_recipient != blank %}
         {% capture email_subject %}
-          Out of stock: {{ product_node.title }}
+          Out of stock: {{ product.title }}
         {% endcapture %}
 
         {% capture email_body %}
@@ -250,7 +378,7 @@
 
           Your product is out of stock! This product has been unpublished from: {{ publication_names | join: ", " }}.
 
-          <a href="https://{{ shop.domain }}/admin/products/{{ product_node.legacyResourceId }}">Manage this product</a>
+          <a href="https://{{ shop.domain }}/admin/products/{{ product.legacyResourceId }}">Manage this product</a>
 
           Thanks,
           - Mechanic, for {{ shop.name }}
@@ -258,7 +386,7 @@
 
         {% action "email" %}
           {
-            "to": {{ options.email_notification_recipient__email | json }},
+            "to": {{ email_notification_recipient | json }},
             "subject": {{ email_subject | unindent | strip | json }},
             "body": {{ email_body | unindent | strip | newline_to_br | json }}
           }
