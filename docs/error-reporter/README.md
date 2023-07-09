@@ -1,6 +1,6 @@
 # Error reporter
 
-Tags: Error
+Tags: Alert, Error
 
 Use this task to get email reports when errors occur with events, tasks, and actions in Mechanic. Use this task out of the box, customize it, or borrow logic for your more advanced error reporting tasks.
 

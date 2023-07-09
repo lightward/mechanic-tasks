@@ -385,6 +385,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Catalog update email](./catalog-update-email)
 * [Email someone specific based on a new order's customer tags](./email-someone-specific-based-on-a-new-orders-customer-tags)
 * [Email someone when a certain product is purchased](./email-someone-when-certain-product-purchased)
+* [Error reporter](./error-reporter)
 * [Flag orders that aren't fulfilled after several days](./flag-orders-that-arent-fulfilled-after-two-days)
 * [Get email alerts for FBA failures](./get-email-alerts-for-fba-failures)
 * [Get email alerts for out of stock products](./get-email-alerts-for-out-of-stock-products)

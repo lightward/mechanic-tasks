@@ -10,10 +10,8 @@
 {% assign error_thresholds[4] = 200 %}
 
 {% comment %}
-  Fingerprinting the error, so that we can track if this is something
-  we have received recently.
-
-  See: https://learn.mechanic.dev/techniques/debouncing-events#fingerprinting  
+  Fingerprinting the error, so that we can track if this is something we have received recently.
+  See: https://learn.mechanic.dev/techniques/debouncing-events#fingerprinting
 {% endcomment %}
 
 {% assign fingerprint_parts = hash %}
@@ -25,6 +23,7 @@
 {% assign error_count_cache_key = "errors/" | append: fingerprint %}
 
 {% comment %} How many times have we seen this error recently? {% endcomment %}
+
 {% assign recent_error_count = cache[error_count_cache_key] | default: 0 %}
 
 {% assign event_url = "https://admin.shopify.com/store/" | append: shop.domain | replace: ".myshopify.com", "/apps/mechanic/events/" | append: error.event.id %}
@@ -34,13 +33,17 @@
 {%- endcapture %}
 
 {% capture email_body %}
-<p><b>This an automated error notification from your Mechanic error reporting task.</b></p>
+<p><b>This is an automated error notification from your Mechanic error reporting task.</b></p>
 
 {% if error_thresholds contains recent_error_count -%}
-    <p><b>Note:</b> There have been more than {{ recent_error_count }} errors of this type in the last 10 minutes.</p>
-{%- endif %}   
+  <p><b>Note:</b> There have been more than {{ recent_error_count }} errors of this type in the last 10 minutes.</p>
+{%- endif %}
 
-<p><a href="{{ event_url }}">View error details</a></p>
+{% if event.preview %}
+  <p>View error details</p>
+{% else %}
+  <p><a href="{{ event_url }}">View error details</a></p>
+{% endif %}
 
 <p>Error topic: {{ event.topic }}</p>
 
@@ -52,13 +55,14 @@
 {% comment %}
   We only send emails on the first error and again on specific thresholds
 {% endcomment %}
+
 {% if recent_error_count == 0 or error_thresholds contains recent_error_count %}
   {% action "email" %}
     {
       "to": {{ options.email_recipients__email_array_required | json  }},
       "subject": {{ email_subject | json }},
-      "template": "default_matt",
       "body": {{ email_body | json }},
+      "reply_to": {{ shop.customer_email | json }},
       "from_display_name": {{ shop.name | json }}
     }
   {% endaction %}
@@ -67,6 +71,7 @@
 {% comment %}
   Increment recent error count for this error
 {% endcomment %}
+
 {% action "cache" %}
   {
     "incr": {
