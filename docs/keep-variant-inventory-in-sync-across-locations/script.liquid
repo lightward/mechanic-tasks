@@ -1,0 +1,204 @@
+{% assign filter_by_these_product_types = options.filter_by_these_product_types__array %}
+
+{% comment %}
+  -- query for "available" quantites at all locations where this inventory item / variant is stocked
+{% endcomment %}
+
+{% capture query %}
+  query {
+    inventoryLevel(id: {{ inventory_level.admin_graphql_api_id | json }}) {
+      item {
+        id
+        variant {
+          legacyResourceId
+          product {
+            productType
+          }
+        }
+        inventoryLevels(first: 100) {
+          nodes {
+            id
+            location {
+              id
+            }
+            quantities(names: "available") {
+              quantity
+            }
+          }
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "inventoryLevel": {
+          "item": {
+            "id": "gid://shopify/InventoryItem/1234567890",
+            "variant": {
+              "legacyResourceId": "1234567890",
+              "product": {
+                "productType": {{ filter_by_these_product_types.first | json }}
+              }
+            },
+            "inventoryLevels": {
+              "nodes": [
+                {
+                  "id": "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890",
+                  "location": {
+                    "id": "gid://shopify/Location/1234567890"
+                  },
+                  "quantities": [
+                    {
+                      "quantity": 1
+                    }
+                  ]
+                },
+                {
+                  "id": "gid://shopify/InventoryLevel/2345678901?inventory_item_id=1234567890",
+                  "location": {
+                    "id": "gid://shopify/Location/2345678901"
+                  },
+                  "quantities": [
+                    {
+                      "quantity": 0
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% assign inventory_item = result.data.inventoryLevel.item %}
+{% assign product = inventory_item.variant.product %}
+{% assign inventory_levels = inventory_item.inventoryLevels.nodes %}
+
+{% comment %}
+  -- if product types are configured in the task, make sure this inventory level update belongs to a product with one of the configured types
+{% endcomment %}
+
+{% if filter_by_these_product_types != blank %}
+  {% unless filter_by_these_product_types contains product.productType %}
+    {% log
+      message: "Product type is not in the configured product types; skipping.",
+      variant: variant,
+      filter_by_these_product_types: filter_by_these_product_types
+    %}
+    {% break %}
+  {% endunless %}
+{% endif %}
+
+{% if inventory_levels.size < 2 %}
+  {% log
+    message: "This variant is only stocked at a single location; no inventory sync needed.",
+    variant: variant
+  %}
+  {% break %}
+{% endif %}
+
+{% comment %}
+  -- get the "available" quantity for the inventory level that caused the update event
+{% endcomment %}
+
+{% assign source_inventory_level
+  = inventory_levels
+  | where: "id", inventory_level.admin_graphql_api_id
+  | first
+%}
+
+{% assign source_quantity = source_inventory_level.quantities.first.quantity %}
+
+{% comment %}
+  -- check to see if a cached value exists, and set this inventory level to that value if they are not the same
+{% endcomment %}
+
+{% assign cache_key = "variant-inventory-level-" | append: inventory_item.variant.legacyResourceId %}
+{% assign cached_value = cache[cache_key] %}
+
+{% if cached_value != blank %}
+  {% log
+    message: "Cached variant inventory level value already exists, which means an update was made in the last minute. Revert this inventory level if mismatched.",
+    cached_value: cached_value,
+    source_quantity: source_quantity
+  %}
+
+  {% if cached_value != source_quantity %}
+    {% action "shopify" %}
+      mutation {
+        inventoryAdjustQuantities(
+          input: {
+            name: "available"
+            reason: "correction"
+            changes: [
+              {
+                inventoryItemId: {{ inventory_item.id | json }}
+                locationId: {{ source_inventory_level.location.id | json }}
+                delta: {{ cached_value | minus: source_quantity }}
+              }
+            ]
+          }
+        ) {
+          userErrors {
+            code
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+
+  {% break %}
+{% endif %}
+
+{% comment %}
+  -- no cached value exists, so set it and then adjust "available" quantities across locations, using the source quantity to determine deltas
+{% endcomment %}
+
+{% action "cache", "setex", cache_key, 60, source_quantity %}
+
+{% assign adjustments = array %}
+
+{% for inventory_level in inventory_levels %}
+  {% assign delta = source_quantity | minus: inventory_level.quantities.first.quantity %}
+
+  {% if delta != 0 %}
+    {% assign adjustment = hash %}
+    {% assign adjustment["inventoryItemId"] = inventory_item.id %}
+    {% assign adjustment["locationId"] = inventory_level.location.id %}
+    {% assign adjustment["delta"] = delta %}
+    {% assign adjustments = adjustments | push: adjustment %}
+  {% endif %}
+{% endfor %}
+
+{% if adjustments != blank %}
+  {% action "shopify" %}
+    mutation {
+      inventoryAdjustQuantities(
+        input: {
+          name: "available"
+          reason: "correction"
+          changes: {{ adjustments | graphql_arguments }}
+        }
+      ) {
+        userErrors {
+          code
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}
