@@ -226,6 +226,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Import PayPal transactions as Shopify orders](./import-paypal-transactions-as-shopify-orders)
 * [Keep SKUs up to date with barcodes](./keep-skus-up-to-date-with-barcodes)
 * [Keep inventory levels in sync within products](./keep-inventory-levels-in-sync-within-products)
+* [Keep variant inventory in sync across locations](./keep-variant-inventory-in-sync-across-locations)
 * [Maintain a collection of new products](./maintain-a-collection-of-new-products)
 * [Maintain a collection of recently purchased products](./maintain-a-collection-of-recently-purchased-products)
 * [Maintain a tag for orders processed today](./maintain-a-tag-for-orders-processed-today)
@@ -941,6 +942,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Create a product inventory CSV feed](./create-a-product-inventory-feed)
 * [Email a summary of all products and quantities ordered](./email-a-summary-of-all-products-and-quantities-ordered)
 * [Keep inventory levels in sync within products](./keep-inventory-levels-in-sync-within-products)
+* [Keep variant inventory in sync across locations](./keep-variant-inventory-in-sync-across-locations)
 * [Maintain inventory for a product bundle](./maintain-inventory-for-a-product-bundle)
 * [Manage collection templates by product inventory](./manage-collection-templates-by-product-inventory)
 * [Publish back-in-stock products](./publish-back-in-stock-products)
@@ -992,6 +994,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Add note to new orders with their fulfillment locations](./note-new-orders-with-their-fulfillment-locations)
 * [Auto-tag customers with the location of their purchase](./auto-tag-customers-with-the-location-of-their-purchase)
 * [Auto-tag new orders with their fulfillment locations](./auto-tag-new-orders-with-their-fulfillment-locations)
+* [Keep variant inventory in sync across locations](./keep-variant-inventory-in-sync-across-locations)
 * [Tag products as in- or out-of-stock, by location ID](./tag-products-as-in-or-out-of-stock-by-location-id)
 
 ### Locksmith
@@ -1569,6 +1572,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 * [Auto-copy order notes to the customer's note](./auto-copy-order-notes-to-the-customers-note)
 * [Keep inventory levels in sync within products](./keep-inventory-levels-in-sync-within-products)
+* [Keep variant inventory in sync across locations](./keep-variant-inventory-in-sync-across-locations)
 * [Maintain inventory for a product bundle](./maintain-inventory-for-a-product-bundle)
 * [Sync an inverse customer tag](./sync-an-inverse-customer-tag)
 * [Sync an inverse order tag](./sync-an-inverse-order-tag)
@@ -1691,6 +1695,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Add Option Name as a Variant Metafield for In Stock Variants](./add-option-names-as-variant-metafields-for-in-stock-variants)
 * [Auto-associate variants with a delivery profile, by metafield value](./auto-associate-variants-with-a-delivery-profile-by-metafield-value)
 * [Auto-tag products by largest available size](./auto-tag-products-by-largest-available-size)
+* [Keep variant inventory in sync across locations](./keep-variant-inventory-in-sync-across-locations)
 * [Maintain discount percentage filters in variant metafields](./maintain-discount-percentage-filters-in-variant-metafields)
 * [Send an email when a product's price goes below its cost](./send-an-email-when-a-products-price-goes-below-its-cost)
 * [Set product or variant metafields values in bulk](./set-product-or-variant-metafields-in-bulk)
