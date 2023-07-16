@@ -1,0 +1,76 @@
+{% assign email_recipients = options.email_recipients__array_required %}
+
+{% if event.topic == "shopify/returns/close" %}
+  {% capture query %}
+    query {
+      return(id: {{ return.admin_graphql_api_id | json }}) {
+        name
+        returnLineItems(first: 100) {
+          nodes {
+            quantity
+            returnReason
+            fulfillmentLineItem {
+              lineItem {
+                name
+                sku
+              }
+            }
+          }
+        }
+      }
+    }  
+  {% endcapture %}
+  
+  {% assign result = query | shopify %}
+  
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "return": {
+            "name": "#PREVIEW-R1",
+            "returnLineItems": {
+              "nodes": [
+                {
+                  "quantity": 1,
+                  "returnReason": "STYLE",
+                  "fulfillmentLineItem": {
+                    "lineItem": {
+                      "name": "Widget - Chartreuse",
+                      "sku": "WDGT-CHRTRS"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    {% endcapture %}
+  
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+  
+  {% capture email_subject %}ALERT: New return {{ result.data.return.name }}{% endcapture %}
+
+  {% capture email_body -%}
+    Returned items
+    ==============
+    {% for return_line_item in result.data.return.returnLineItems.nodes %}
+      Title: <strong>{{ return_line_item.fulfillmentLineItem.lineItem.name }}</strong>
+      SKU: <strong>{{ return_line_item.fulfillmentLineItem.lineItem.sku }}</strong>
+      Quantity: <strong>{{ return_line_item.quantity }}</strong>
+      Reason: <strong>{{ return_line_item.returnReason }}</strong>
+    {% endfor %}
+  {% endcapture %}
+
+  {% action "email" %}
+    {
+      "to": {{ email_recipients | json }},
+      "subject": {{ email_subject | json }},
+      "body": {{ email_body | newline_to_br | json }},
+      "reply_to": {{ shop.customer_email | json }},
+      "from_display_name": {{ shop.name | json }}
+    }
+  {% endaction %}
+{% endif %}

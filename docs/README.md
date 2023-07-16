@@ -294,6 +294,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Send an event to Klaviyo when a fulfillment is delayed](./send-an-event-to-klaviyo-when-a-fulfillment-is-delayed)
 * [Send customers a reorder link X days after ordering](./send-customers-a-reorder-link-x-days-after-ordering)
 * [Send email alerts by event topic](./send-email-alerts-by-event-topic)
+* [Send email notification when items are returned](./send-email-notification-when-items-are-returned)
 * [Send email when an order comes in](./send-email-when-an-order-comes-in)
 * [Send email when an order is tagged](./send-email-when-an-order-is-tagged)
 * [Send follow-up emails after sending a draft order invoice](./send-follow-up-emails-after-sending-a-draft-order-invoice)
@@ -398,6 +399,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Send an email alert when a fulfillment is cancelled](./send-an-email-alert-when-a-fulfillment-is-cancelled)
 * [Send an email alert when a variant hits 0 total inventory](./send-an-email-alert-when-a-variant-hits-0-total-inventory)
 * [Send an email alert when an incoming Canadian order has an unsupported FSA](./send-an-email-alert-when-an-incoming-canadian-order-has-an-unsupported-fsa)
+* [Send email notification when items are returned](./send-email-notification-when-items-are-returned)
 * [Send email when an order comes in](./send-email-when-an-order-comes-in)
 
 ### Archive
@@ -828,6 +830,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Send an email when a purchase is made from a certain collection](./send-an-email-when-a-purchase-is-made-from-a-certain-collection)
 * [Send an email when a specific product is shipped](./send-an-email-when-a-specific-product-is-shipped)
 * [Send customers a reorder link X days after ordering](./send-customers-a-reorder-link-x-days-after-ordering)
+* [Send email notification when items are returned](./send-email-notification-when-items-are-returned)
 * [Send email when an order comes in](./send-email-when-an-order-comes-in)
 * [Send email when an order is tagged](./send-email-when-an-order-is-tagged)
 * [Send follow-up emails after sending a draft order invoice](./send-follow-up-emails-after-sending-a-draft-order-invoice)
@@ -1422,6 +1425,10 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Send a welcome email to new customers, in their language](./send-a-welcome-email-to-new-customers-in-their-language)
 * [Send customers a reorder link X days after ordering](./send-customers-a-reorder-link-x-days-after-ordering)
 * [Tag customers by order tier](./tag-customers-by-order-tier)
+
+### Returns
+
+* [Send email notification when items are returned](./send-email-notification-when-items-are-returned)
 
 ### Reviews
 
