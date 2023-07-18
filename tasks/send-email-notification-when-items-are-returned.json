@@ -1,0 +1,16 @@
+{
+  "docs": "Use this task to get an email alert with a list of the returned items whenever a return is marked as closed.\n\nNote: this event will not occur when returns or exchanges are made via a POS terminal.",
+  "halt_action_run_sequence_on_error": false,
+  "name": "Send email notification when items are returned",
+  "online_store_javascript": null,
+  "options": {
+    "email_recipients__array_required": null
+  },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "preview_event_definitions": [],
+  "script": "{% assign email_recipients = options.email_recipients__array_required %}\n\n{% if event.topic == \"shopify/returns/close\" %}\n  {% capture query %}\n    query {\n      return(id: {{ return.admin_graphql_api_id | json }}) {\n        name\n        returnLineItems(first: 100) {\n          nodes {\n            quantity\n            returnReason\n            fulfillmentLineItem {\n              lineItem {\n                name\n                sku\n              }\n            }\n          }\n        }\n      }\n    }  \n  {% endcapture %}\n  \n  {% assign result = query | shopify %}\n  \n  {% if event.preview %}\n    {% capture result_json %}\n      {\n        \"data\": {\n          \"return\": {\n            \"name\": \"#PREVIEW-R1\",\n            \"returnLineItems\": {\n              \"nodes\": [\n                {\n                  \"quantity\": 1,\n                  \"returnReason\": \"STYLE\",\n                  \"fulfillmentLineItem\": {\n                    \"lineItem\": {\n                      \"name\": \"Widget - Chartreuse\",\n                      \"sku\": \"WDGT-CHRTRS\"\n                    }\n                  }\n                }\n              ]\n            }\n          }\n        }\n      }\n    {% endcapture %}\n  \n    {% assign result = result_json | parse_json %}\n  {% endif %}\n  \n  {% capture email_subject %}ALERT: New return {{ result.data.return.name }}{% endcapture %}\n\n  {% capture email_body -%}\n    Returned items\n    ==============\n    {% for return_line_item in result.data.return.returnLineItems.nodes %}\n      Title: <strong>{{ return_line_item.fulfillmentLineItem.lineItem.name }}</strong>\n      SKU: <strong>{{ return_line_item.fulfillmentLineItem.lineItem.sku }}</strong>\n      Quantity: <strong>{{ return_line_item.quantity }}</strong>\n      Reason: <strong>{{ return_line_item.returnReason }}</strong>\n    {% endfor %}\n  {% endcapture %}\n\n  {% action \"email\" %}\n    {\n      \"to\": {{ email_recipients | json }},\n      \"subject\": {{ email_subject | json }},\n      \"body\": {{ email_body | newline_to_br | json }},\n      \"reply_to\": {{ shop.customer_email | json }},\n      \"from_display_name\": {{ shop.name | json }}\n    }\n  {% endaction %}\n{% endif %}",
+  "subscriptions": ["shopify/returns/close"],
+  "subscriptions_template": "shopify/returns/close",
+  "tags": ["Alert", "Email", "Returns"]
+}
