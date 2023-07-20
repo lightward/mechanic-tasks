@@ -26,7 +26,7 @@
 
 {% assign recent_error_count = cache[error_count_cache_key] | default: 0 %}
 
-{% assign event_url = "https://admin.shopify.com/store/" | append: shop.domain | replace: ".myshopify.com", "/apps/mechanic/events/" | append: error.event.id %}
+{% assign event_url = "https://admin.shopify.com/store/" | append: shop.myshopify_domain | replace: ".myshopify.com", "/apps/mechanic/events/" | append: error.event.id %}
 
 {% capture email_subject -%}
   {{ event.topic }} on {{ shop.name }}
