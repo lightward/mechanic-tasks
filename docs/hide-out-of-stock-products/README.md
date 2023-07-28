@@ -1,8 +1,8 @@
 # Hide out-of-stock products
 
-Tags: Out of Stock, Products, Unpublish
+Tags: Inventory, Location, Out of Stock, Products, Unpublish
 
-This task monitors inventory updates, and pulls the product from the configured sales channels whenever a product's total inventory meets your "out of stock" threshold. Optionally, it'll send you an email when it does so. You may also choose whether to further refine the products being considered by this task by configuring inclusion or exclusion tags  (Note: exclusion tags will always take precedence over inclusion tags).
+This task monitors inventory updates, and pulls the product from the configured sales channels whenever a product's total inventory meets your "out of stock" threshold. Optionally, it'll send you an email when it does so. You may also choose whether to further refine the products being considered by this task by configuring inclusion or exclusion tags (note: exclusion tags will always take precedence over inclusion tags).
 
 * View in the task library: [tasks.mechanic.dev/hide-out-of-stock-products](https://tasks.mechanic.dev/hide-out-of-stock-products)
 * Task JSON, for direct import: [task.json](../../tasks/hide-out-of-stock-products.json)
@@ -18,6 +18,7 @@ This task monitors inventory updates, and pulls the product from the configured 
   ],
   "only_include_products_with_any_of_these_tags__array": null,
   "always_exclude_products_with_any_of_these_tags__array": null,
+  "only_include_inventory_from_these_location_names__array": null,
   "email_notification_recipient__email": null
 }
 ```
@@ -35,11 +36,11 @@ shopify/inventory_levels/update
 
 ## Documentation
 
-This task monitors inventory updates, and pulls the product from the configured sales channels whenever a product's total inventory meets your "out of stock" threshold. Optionally, it'll send you an email when it does so. You may also choose whether to further refine the products being considered by this task by configuring inclusion or exclusion tags  (Note: exclusion tags will always take precedence over inclusion tags).
+This task monitors inventory updates, and pulls the product from the configured sales channels whenever a product's total inventory meets your "out of stock" threshold. Optionally, it'll send you an email when it does so. You may also choose whether to further refine the products being considered by this task by configuring inclusion or exclusion tags (note: exclusion tags will always take precedence over inclusion tags).
+
+If you'd like for the task to only count inventory from specific locations, then add the _exact_ location names into the task configuration. This feature can be combined with the tag options for unique unpublishing scenarios.
 
 This task can also be run manually, to scan all products in the shop.
-
-If you'd like to wait until the product has been out of stock for several days, use this task instead: [Unpublish products that have been out of stock for x days](https://tasks.mechanic.dev/unpublish-products-that-have-been-out-of-stock-for-x-days).
 
 ## Installing this task
 

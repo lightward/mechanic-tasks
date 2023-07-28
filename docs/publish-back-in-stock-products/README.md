@@ -1,8 +1,8 @@
 # Publish back-in-stock products
 
-Tags: Inventory, Products, Publish
+Tags: In stock, Inventory, Location, Products, Publish
 
-Whenever inventory for a product is updated, this task compares its available inventory against your "back in stock" threshold. If the product is to be considered back in stock, this task will make sure it's published to the sales channels of your choice. Optionally, it'll send you an email when it publishes your product.
+This task monitors inventory updates, and publishes the product to the configured sales channels whenever a product's total inventory meets your "back in stock" threshold. Optionally, it'll send you an email when it does so. You may also choose whether to further refine the products being considered by this task by configuring inclusion or exclusion tags (note: exclusion tags will always take precedence over inclusion tags).
 
 * View in the task library: [tasks.mechanic.dev/publish-back-in-stock-products](https://tasks.mechanic.dev/publish-back-in-stock-products)
 * Task JSON, for direct import: [task.json](../../tasks/publish-back-in-stock-products.json)
@@ -12,8 +12,14 @@ Whenever inventory for a product is updated, this task compares its available in
 
 ```json
 {
-  "sales_channel_names__required_array": null,
-  "email_notification_recipient__email": ""
+  "back_in_stock_inventory_quantity__number_required": "1",
+  "sales_channel_names__required_array": [
+    "Online Store"
+  ],
+  "only_include_products_with_any_of_these_tags__array": null,
+  "always_exclude_products_with_any_of_these_tags__array": null,
+  "only_include_inventory_from_these_location_names__array": null,
+  "email_notification_recipient__email": null
 }
 ```
 
@@ -23,13 +29,18 @@ Whenever inventory for a product is updated, this task compares its available in
 
 ```liquid
 shopify/inventory_levels/update
+mechanic/user/trigger
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
-Whenever inventory for a product is updated, this task compares its available inventory against your "back in stock" threshold. If the product is to be considered back in stock, this task will make sure it's published to the sales channels of your choice. Optionally, it'll send you an email when it publishes your product.
+This task monitors inventory updates, and publishes the product to the configured sales channels whenever a product's total inventory meets your "back in stock" threshold. Optionally, it'll send you an email when it does so. You may also choose whether to further refine the products being considered by this task by configuring inclusion or exclusion tags (note: exclusion tags will always take precedence over inclusion tags).
+
+If you'd like for the task to only count inventory from specific locations, then add the _exact_ location names into the task configuration. This feature can be combined with the tag options for unique publishing scenarios.
+
+This task can also be run manually, to scan all products in the shop.
 
 ## Installing this task
 

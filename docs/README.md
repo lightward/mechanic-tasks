@@ -925,6 +925,7 @@ This directory is built automatically. Each task's documentation is generated fr
 ### In stock
 
 * [Add Option Name as a Variant Metafield for In Stock Variants](./add-option-names-as-variant-metafields-for-in-stock-variants)
+* [Publish back-in-stock products](./publish-back-in-stock-products)
 * [Tag products as in- or out-of-stock, by location ID](./tag-products-as-in-or-out-of-stock-by-location-id)
 * [Tag products as in- or out-of-stock](./tag-products-as-in-or-out-of-stock)
 
@@ -944,6 +945,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag products with incoming inventory](./auto-tag-products-with-incoming-inventory)
 * [Create a product inventory CSV feed](./create-a-product-inventory-feed)
 * [Email a summary of all products and quantities ordered](./email-a-summary-of-all-products-and-quantities-ordered)
+* [Hide out-of-stock products](./hide-out-of-stock-products)
 * [Keep inventory levels in sync within products](./keep-inventory-levels-in-sync-within-products)
 * [Keep variant inventory in sync across locations](./keep-variant-inventory-in-sync-across-locations)
 * [Maintain inventory for a product bundle](./maintain-inventory-for-a-product-bundle)
@@ -997,7 +999,9 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Add note to new orders with their fulfillment locations](./note-new-orders-with-their-fulfillment-locations)
 * [Auto-tag customers with the location of their purchase](./auto-tag-customers-with-the-location-of-their-purchase)
 * [Auto-tag new orders with their fulfillment locations](./auto-tag-new-orders-with-their-fulfillment-locations)
+* [Hide out-of-stock products](./hide-out-of-stock-products)
 * [Keep variant inventory in sync across locations](./keep-variant-inventory-in-sync-across-locations)
+* [Publish back-in-stock products](./publish-back-in-stock-products)
 * [Tag products as in- or out-of-stock, by location ID](./tag-products-as-in-or-out-of-stock-by-location-id)
 
 ### Locksmith
