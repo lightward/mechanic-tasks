@@ -1,6 +1,6 @@
 # Hide out-of-stock products
 
-Tags: Location, Out of Stock, Products, Unpublish
+Tags: Inventory, Location, Out of Stock, Products, Unpublish
 
 This task monitors inventory updates, and pulls the product from the configured sales channels whenever a product's total inventory meets your "out of stock" threshold. Optionally, it'll send you an email when it does so. You may also choose whether to further refine the products being considered by this task by configuring inclusion or exclusion tags (note: exclusion tags will always take precedence over inclusion tags).
 
