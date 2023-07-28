@@ -997,6 +997,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Add note to new orders with their fulfillment locations](./note-new-orders-with-their-fulfillment-locations)
 * [Auto-tag customers with the location of their purchase](./auto-tag-customers-with-the-location-of-their-purchase)
 * [Auto-tag new orders with their fulfillment locations](./auto-tag-new-orders-with-their-fulfillment-locations)
+* [Hide out-of-stock products](./hide-out-of-stock-products)
 * [Keep variant inventory in sync across locations](./keep-variant-inventory-in-sync-across-locations)
 * [Tag products as in- or out-of-stock, by location ID](./tag-products-as-in-or-out-of-stock-by-location-id)
 
