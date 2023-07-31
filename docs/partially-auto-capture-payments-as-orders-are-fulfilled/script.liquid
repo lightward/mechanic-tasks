@@ -17,6 +17,7 @@
   {% capture query %}
     query {
       order(id: {{ order.admin_graphql_api_id | json }}) {
+        id
         paymentGatewayNames
         transactions(capturable: true) {
           id
