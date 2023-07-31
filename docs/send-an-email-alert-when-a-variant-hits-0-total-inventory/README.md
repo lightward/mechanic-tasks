@@ -16,7 +16,7 @@ Use this task to receive an immediate email alert, whenever a variant's total in
   "must_be_published_to_publication_id": "",
   "email_subject__required": "\"VARIANT_TITLE\" has hit 0 inventory",
   "email_body__multiline_required": "Hello,\n\nThe variant \"VARIANT_TITLE\" is now at 0 inventory, totaled across all locations.\n\n<a href=\"VARIANT_ADMIN_URL\">Manage this variant in Shopify</a>\n\nThanks,\nMechanic, for  {{ shop.name }}",
-  "email_recipient__email_required": "matt@lightward.com"
+  "email_recipient__email_required": ""
 }
 ```
 
