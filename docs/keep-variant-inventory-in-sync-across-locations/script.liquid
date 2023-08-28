@@ -82,6 +82,7 @@
 {% endif %}
 
 {% assign inventory_item = result.data.inventoryLevel.item %}
+{% assign variant = inventory_item.variant %}
 {% assign product = inventory_item.variant.product %}
 {% assign inventory_levels = inventory_item.inventoryLevels.nodes %}
 
