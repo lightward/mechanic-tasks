@@ -1,4 +1,4 @@
-# Delete non-purchased Neon Sign Customiser app generated products older then X days
+# Delete non-purchased Neon Sign Customiser app generated products older than X days
 
 Tags: Delete, Products
 

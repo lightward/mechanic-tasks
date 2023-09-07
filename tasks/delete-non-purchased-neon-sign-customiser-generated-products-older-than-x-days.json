@@ -1,7 +1,7 @@
 {
   "docs": "Use this task to automatically delete non-purchased products created by [Neon Sign Customiser](https://apps.shopify.com/neon-product-customiser). Set the number of days old products should be before Mechanic deletes a product.\n\nTick the \"Test mode\" checkbox to verify which products will be deleted: after saving, use the \"Run task\" button to run the product scan, and you'll receive a list of products that Mechanic would have deleted in live mode. \n\nOnce you're ready, uncheck the \"Test mode\" box and check the \"Live mode\" box, save the task, then use \"Run task\" to permanently delete all matching products.\n\nCheck the run daily option to have the task run at 12AM daily.\n",
   "halt_action_run_sequence_on_error": false,
-  "name": "Delete non-purchased Neon Sign Customiser app generated products older then X days",
+  "name": "Delete non-purchased Neon Sign Customiser app generated products older than X days",
   "online_store_javascript": null,
   "options": {
     "products_must_be_x_number_of_days_old__number__required": "7",
