@@ -1,0 +1,109 @@
+{% comment %}
+  Options ordering:
+  {{ options.products_must_be_x_number_of_days_old__number__required }} 
+  {{ options.test_mode__boolean }}
+  {{ options.live_mode__boolean }}  
+{% endcomment %}
+
+{% assign products_must_be_x_number_of_seconds_old = options.products_must_be_x_number_of_days_old__number__required | times: 24 | times: 60 | times: 60 %}
+
+{% assign products_age_threshold_s = "now" | date: "%s" | minus: products_must_be_x_number_of_seconds_old %}
+
+{% assign products_age_threshold_human = products_age_threshold_s | date: "%Y-%m-%d %H:%M %:z" %}
+
+{% assign products_age_threshold_date = products_age_threshold_s | date: "%Y-%m-%d" %}
+
+{% log %}{{ "Threshold for deleteing products: " | append: products_age_threshold_human | json }}{% endlog %}
+
+{% assign product_ids_and_titles = hash %}
+
+{% capture product_query -%}
+  -tag:npc_ordered product_type:'Custom Neon' created_at:<{{ products_age_threshold_date }}
+{% endcapture %}
+
+{% assign cursor = nil %}
+{% for n in (0..100) %}
+  {% capture query %}
+    query {
+      products(
+        first: 250
+        after: {{ cursor | json }}
+        sortKey: TITLE
+        query: {{ product_query | json }}
+      ) {
+        pageInfo {
+          hasNextPage
+        }
+        edges {
+          cursor
+          node {
+            id
+            title
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "products": {
+            "pageInfo": {
+              "hasNextPage": false
+            },
+            "edges": [
+              {
+                "node": {
+                  "id": "gid://shopify/Product/1234567890",
+                  "title": "[sample product]"
+                }
+              }
+            ]
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% for product_edge in result.data.products.edges %}
+    {% assign product_ids_and_titles[product_edge.node.id] = product_edge.node.title %}
+  {% endfor %}
+
+  {% if result.data.products.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.products.edges.last.cursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% if options.test_mode__boolean and options.live_mode__boolean %}
+  {% error "Please choose either test mode or live mode." %}
+{% elsif options.test_mode__boolean == false and options.live_mode__boolean == false %}
+  {% error "Please choose either test mode or live mode." %}
+{% elsif options.test_mode__boolean %}
+  {% log products_found_count: product_ids_and_titles.size, products_found: product_ids_and_titles %}
+{% elsif options.live_mode__boolean %}
+  {% for keyval in product_ids_and_titles %}
+    {% action "shopify" %}
+      mutation {
+        productDelete(
+          input: {
+            id: {{ keyval[0] | json }}
+          }
+        ) {
+          deletedProductId
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endfor %}
+{% endif %}
