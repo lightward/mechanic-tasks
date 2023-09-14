@@ -15,7 +15,7 @@
     "husky": "8.0.3",
     "prettier": "3.0.3",
     "sort-json": "2.0.1",
-    "lint-staged": "13.2.3"
+    "lint-staged": "13.3.0"
   },
   "scripts": {
     "test": "node ./lib/test.js",
