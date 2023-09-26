@@ -153,6 +153,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-verify customer email addresses](./auto-verify-customer-email-addresses)
 * [Automatically cancel high-risk orders](./automatically-cancel-high-risk-orders)
 * [Automatically cancel orders with certain risk indicators](./automatically-cancel-orders-with-certain-risk-indicators)
+* [Automatically mark new orders as ready for pickup](./automatically-mark-new-orders-as-ready-for-pickup)
 * [Automatically publish and unpublish on a monthly cycle](./automatically-publish-and-unpublish-on-a-monthly-cycle)
 * [Automatically send account invite to new customers](./automatically-send-account-invite-to-new-customers)
 * [Backup inventory to SFTP in Shopify CSV format](./backup-scheduled-inventory-exports-in-shopifys-csv-format)
@@ -901,6 +902,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag fulfilled orders by carrier](./auto-tag-fulfilled-orders-by-carrier)
 * [Auto-tag fulfilled orders with their carriers](./auto-tag-fulfilled-orders-with-their-carriers)
 * [Auto-tag new orders with their fulfillment locations](./auto-tag-new-orders-with-their-fulfillment-locations)
+* [Automatically mark new orders as ready for pickup](./automatically-mark-new-orders-as-ready-for-pickup)
 * [Cancel fulfillments when an order is fully refunded](./cancel-fulfillments-when-an-order-is-fully-refunded)
 * [Capture order payment upon fulfillment](./capture-order-payment-upon-fulfillment)
 * [Flag orders that aren't fulfilled after several days](./flag-orders-that-arent-fulfilled-after-two-days)
@@ -1177,6 +1179,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag orders with their tracking numbers](./auto-tag-orders-with-their-tracking-numbers)
 * [Automatically cancel high-risk orders](./automatically-cancel-high-risk-orders)
 * [Automatically cancel orders with certain risk indicators](./automatically-cancel-orders-with-certain-risk-indicators)
+* [Automatically mark new orders as ready for pickup](./automatically-mark-new-orders-as-ready-for-pickup)
 * [Bulk capture orders by order number](./bulk-capture-by-order-number)
 * [Calculate total quantities purchased by SKU](./calculate-total-quantities-purchased-by-sku)
 * [Cancel and close unpaid orders after x hours/days](./cancel-and-close-unpaid-orders-after-two-days)
@@ -1266,6 +1269,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Pick-up
 
+* [Automatically mark new orders as ready for pickup](./automatically-mark-new-orders-as-ready-for-pickup)
 * [Email a report of pick-up orders for the next x days](./email-a-report-of-pick-up-orders-for-the-next-x-days)
 
 ### Price

@@ -1,0 +1,54 @@
+{% if event.preview %}
+  {% capture order %}
+    {
+      "fulfillment_orders": [
+        {
+          "id": 1,
+          "assigned_location": {
+            "name": {{ options.pickup_locations__array_required.first | json}}
+          }
+        },
+        {
+          "id": 2,
+          "assigned_location": {
+            "name": "Third Party Service"
+          }
+        }
+      ]
+    }
+  {% endcapture %}
+
+  {% assign order = order | parse_json %}
+{% endif %}
+
+{% assign pickup_locations = options.pickup_locations__array_required %}
+
+{% for fulfillment_order in order.fulfillment_orders %}
+  {% if pickup_locations contains fulfillment_order.assigned_location.name %}
+    {% assign fulfillment_order_id = fulfillment_order.id %}
+    {% assign fulfillment_order_graphql_id = "gid://shopify/FulfillmentOrder/" | append: fulfillment_order_id %}
+
+    {% capture query %}
+      mutation {
+        fulfillmentOrderLineItemsPreparedForPickup(
+          input: {
+            lineItemsByFulfillmentOrder: [
+              {
+                fulfillmentOrderId: {{ fulfillment_order_graphql_id | json }}
+              }
+            ]
+          }
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% action "shopify" %}
+      {{ query | json }}
+    {% endaction %}
+  {% endif %}
+{% endfor %}

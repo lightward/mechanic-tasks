@@ -1,0 +1,16 @@
+{
+  "docs": "This task makes it easy for you to automatically mark new orders as 'Ready For Pickup' as soon as they come in. Ideal for stores that always have products in stock and want to speed up the pickup process.\n\nThis makes use of the [fulfillmentOrderLineItemsPreparedForPickup GraphQL mutation.](https://shopify.dev/docs/api/admin-graphql/2023-07/mutations/fulfillmentOrderLineItemsPreparedForPickup)\n\nThis task was written with the help of ChatGPT-4, check out the [conversation here](https://chat.openai.com/share/e42b5476-6ec0-4ac8-8738-263858150ec4).",
+  "halt_action_run_sequence_on_error": false,
+  "name": "Automatically mark new orders as ready for pickup",
+  "online_store_javascript": null,
+  "options": {
+    "pickup_locations__array_required": ["Your location name here"]
+  },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "preview_event_definitions": [],
+  "script": "{% if event.preview %}\n  {% capture order %}\n    {\n      \"fulfillment_orders\": [\n        {\n          \"id\": 1,\n          \"assigned_location\": {\n            \"name\": {{ options.pickup_locations__array_required.first | json}}\n          }\n        },\n        {\n          \"id\": 2,\n          \"assigned_location\": {\n            \"name\": \"Third Party Service\"\n          }\n        }\n      ]\n    }\n  {% endcapture %}\n\n  {% assign order = order | parse_json %}\n{% endif %}\n\n{% assign pickup_locations = options.pickup_locations__array_required %}\n\n{% for fulfillment_order in order.fulfillment_orders %}\n  {% if pickup_locations contains fulfillment_order.assigned_location.name %}\n    {% assign fulfillment_order_id = fulfillment_order.id %}\n    {% assign fulfillment_order_graphql_id = \"gid://shopify/FulfillmentOrder/\" | append: fulfillment_order_id %}\n\n    {% capture query %}\n      mutation {\n        fulfillmentOrderLineItemsPreparedForPickup(\n          input: {\n            lineItemsByFulfillmentOrder: [\n              {\n                fulfillmentOrderId: {{ fulfillment_order_graphql_id | json }}\n              }\n            ]\n          }\n        ) {\n          userErrors {\n            field\n            message\n          }\n        }\n      }\n    {% endcapture %}\n\n    {% action \"shopify\" %}\n      {{ query | json }}\n    {% endaction %}\n  {% endif %}\n{% endfor %}",
+  "subscriptions": ["shopify/orders/create"],
+  "subscriptions_template": "shopify/orders/create",
+  "tags": ["Fulfillment", "Orders", "Pick-up"]
+}
