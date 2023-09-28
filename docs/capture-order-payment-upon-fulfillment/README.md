@@ -20,6 +20,8 @@ shopify/orders/fulfilled
 
 Upon the fulfillment of an authorized or partially paid order, this task attempts to capture all open authorized payments for that order. (Multiple authorizations can exist on edited orders or with post-purchase upsells.)
 
+If any items are removed from the order before fulfillment, then this task will reduce the amount captured by the subtotal of the removed line items (including their discounts and taxes, as calculated by Shopify). It will  **not** reduce any shipping costs on the order.
+
 For expected results, be sure to enable "Manually capture payment for orders" in Shopify, [using this guide](https://help.shopify.com/en/manual/payments/payment-authorization#set-up-manual-capture-of-credit-card-payments).
 
 __Please note__: You are responsible for ensuring that fulfillment occurs within the order payment's authorization period.
