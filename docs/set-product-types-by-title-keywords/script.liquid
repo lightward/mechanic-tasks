@@ -1,0 +1,135 @@
+{% assign product_types_and_keywords = options.product_types_and_keywords__keyval_multiline_required %}
+
+{% comment %}
+  -- set preview values for the configuration field that will work with the preview query data
+{% endcomment %}
+
+{% if event.preview %}
+  {% capture product_types_and_keywords_json %}
+    {
+      "Shoes": "shoe\nshoes"
+    }
+  {% endcapture %}
+
+  {% assign product_types_and_keywords = product_types_and_keywords_json | parse_json %}
+{% endif %}
+
+{% assign cursor = nil %}
+
+{% comment %}
+  -- query for all products in the shop (if > 25K products, the "100" loop value can be adjusted upward)
+{% endcomment %}
+
+{% for n in (1..100) %}
+  {% capture query %}
+    query {
+      products(
+        first: 250
+        after: {{ cursor | json }}
+      ) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          id
+          title
+          productType
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "products": {
+            "nodes": [
+              {
+                "id": "gid://shopify/Product/1234567890",
+                "title": "Alpha Shoe",
+                "productType": "Shirts"
+              }
+            ]
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% comment %}
+    -- process each product in this result before querying for more products
+  {% endcomment %}
+
+  {% for product in result.data.products.nodes %}
+    {% comment %}
+      -- use downcase on product title and configured keywords since the "contains" operator is case-sensitive
+    {% endcomment %}
+
+    {% assign product_title_downcase = product.title | downcase %}
+    {% assign product_type_to_set = nil %}
+
+    {% for keyval in product_types_and_keywords %}
+      {% assign product_type = keyval.first %}
+      {% assign keywords = keyval.last | split: newline %}
+
+      {% for keyword in keywords %}
+        {% if keyword == blank or keyword == "" %}
+          {% comment %}
+            -- protect against accidental empty keyword lines in the task config
+          {% endcomment %}
+
+          {% continue %}
+        {% endif %}
+
+        {% assign keyword_downcase = keyword | downcase %}
+
+        {% if product_title_downcase contains keyword_downcase %}
+          {% assign product_type_to_set = product_type %}
+          {% break %}
+        {% endif %}
+      {% endfor %}
+
+      {% if product_type_to_set != blank %}
+        {% break %}
+      {% endif %}      
+    {% endfor %}
+
+    {% comment %}
+      -- set a new product type if a keyword match was made and the product does not already have that type
+    {% endcomment %}
+
+    {% if product_type_to_set != blank and product_type_to_set != product.productType %}
+      {% action "shopify" %}
+        mutation {
+          productUpdate(
+            input: {
+              id: {{ product.id | json }}
+              productType: {{ product_type_to_set | json }}
+            }
+          ) {
+            product {
+              title
+              productType
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}   
+    {% endif %}      
+  {% endfor %}
+
+  {% if result.data.products.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.products.pageInfo.endCursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
