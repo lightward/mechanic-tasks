@@ -4,6 +4,11 @@
       id
       name
       displayFinancialStatus
+      currentTotalPriceSet {
+        presentmentMoney {
+          amount
+        }
+      }
       transactions(capturable: true) {
         id
         kind
@@ -28,13 +33,28 @@
           "id": "gid://shopify/Order/1234567890",
           "name": "#SAMPLE",
           "displayFinancialStatus": "AUTHORIZED",
+          "currentTotalPriceSet": {
+            "presentmentMoney": {
+              "amount": "23.45"
+            }
+          },
           "transactions": [
             {
               "id": "gid://shopify/OrderTransaction/1234567890",
               "kind": "AUTHORIZATION",
               "totalUnsettledSet": {
                 "presentmentMoney": {
-                  "amount": "12.34",
+                  "amount": "20.00",
+                  "currencyCode": "USD"
+                }
+              }
+            },
+            {
+              "id": "gid://shopify/OrderTransaction/2345678901",
+              "kind": "AUTHORIZATION",
+              "totalUnsettledSet": {
+                "presentmentMoney": {
+                  "amount": "10.00",
                   "currencyCode": "USD"
                 }
               }
@@ -49,21 +69,25 @@
 {% endif %}
 
 {% assign order = result.data.order %}
+{% assign left_to_capture = order.currentTotalPriceSet.presentmentMoney.amount | times: 1.0 %}
 
 {% if order.displayFinancialStatus == "AUTHORIZED" or order.displayFinancialStatus == "PARTIALLY_PAID" %}
   {% assign authorized_transactions = order.transactions | where: "kind", "AUTHORIZATION" %}
 
   {% for transaction in authorized_transactions %}
     {% assign unsettled_amount = transaction.totalUnsettledSet.presentmentMoney.amount | times: 1.0 %}
+    {% assign amount_to_capture = unsettled_amount | at_most: left_to_capture %}
 
-    {% if unsettled_amount > 0 %}
+    {% if amount_to_capture > 0 %}
+      {% assign left_to_capture = left_to_capture | minus: amount_to_capture %}
+      
       {% action "shopify" %}
         mutation {
           orderCapture(
             input: {
               id: {{ order.id | json }}
               parentTransactionId: {{ transaction.id | json }}
-              amount: {{ unsettled_amount | json }}
+              amount: {{ amount_to_capture | json }}
               currency: {{ transaction.totalUnsettledSet.presentmentMoney.currencyCode }}
             }
           ) {
