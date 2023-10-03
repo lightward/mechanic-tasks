@@ -13,7 +13,7 @@ Use this task to quickly reset product types in bulk based on product titles. Wh
 ```json
 {
   "product_types_and_keywords__keyval_multiline_required": {
-    "Shirts": "shirt\nt-shirt\ntee"
+    "Shirts": "shirt\nshirts\nt-shirt\nt-shirts\ntee\ntees"
   }
 }
 ```

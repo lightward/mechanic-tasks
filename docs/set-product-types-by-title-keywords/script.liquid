@@ -7,7 +7,7 @@
 {% if event.preview %}
   {% capture product_types_and_keywords_json %}
     {
-      "Shoes": "shoe\nshoes"
+      "Shirts": "shirt\nshirts\nt-shirt\nt-shirts\ntee\ntees"
     }
   {% endcapture %}
 
@@ -50,8 +50,8 @@
             "nodes": [
               {
                 "id": "gid://shopify/Product/1234567890",
-                "title": "Alpha Shoe",
-                "productType": "Shirts"
+                "title": "Super soft tees",
+                "productType": "Shoes"
               }
             ]
           }
@@ -69,9 +69,14 @@
   {% for product in result.data.products.nodes %}
     {% comment %}
       -- use downcase on product title and configured keywords since the "contains" operator is case-sensitive
+      -- split on spaces in title to create an array of words to be compared to keywords
     {% endcomment %}
 
-    {% assign product_title_downcase = product.title | downcase %}
+    {% assign product_title_words_downcase
+      = product.title
+      | downcase
+      | split: " "
+    %}
     {% assign product_type_to_set = nil %}
 
     {% for keyval in product_types_and_keywords %}
@@ -89,7 +94,7 @@
 
         {% assign keyword_downcase = keyword | downcase %}
 
-        {% if product_title_downcase contains keyword_downcase %}
+        {% if product_title_words_downcase contains keyword_downcase %}
           {% assign product_type_to_set = product_type %}
           {% break %}
         {% endif %}
@@ -97,7 +102,7 @@
 
       {% if product_type_to_set != blank %}
         {% break %}
-      {% endif %}      
+      {% endif %}
     {% endfor %}
 
     {% comment %}
@@ -123,8 +128,8 @@
             }
           }
         }
-      {% endaction %}   
-    {% endif %}      
+      {% endaction %}
+    {% endif %}
   {% endfor %}
 
   {% if result.data.products.pageInfo.hasNextPage %}
