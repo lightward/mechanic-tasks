@@ -1,0 +1,53 @@
+{% assign tax_id = options.tax_id__required %}
+{% assign order_inclusion_tags = options.only_include_orders_with_any_of_these_tags__array %}
+{% assign cc_shop = options.send_cc_email_to_shop__boolean %}
+{% assign email_subject = options.email_subject__required %}
+{% assign email_body = options.email_body__multiline_required %}
+{% assign donation_receipt_filename = options.donation_receipt_filename__required %}
+{% assign donation_reciept_html_template = options.donation_reciept_html_template__code_multiline_required %}
+
+{% if event.topic == "shopify/orders/paid" or event.topic == "mechanic/user/order" %}
+  {% comment %}
+    -- NOTE: if this order was sent directly via an admin link, then neither the "paid" financial status nor any configured inclusion tags will be checked (on purpose, to allow for merchant flexibility on manual sends)
+  {% endcomment %}
+
+  {% if order.email == blank %}
+    {% log "This order does not have an email associated with it." %}
+    {% break %}
+  {% endif %}
+
+  {% if order_inclusion_tags != blank %}
+    {% assign has_inclusion_tag = nil %}
+    {% assign order_tags = order.tags | split: ", " %}
+
+    {% for order_tag in order_tags %}
+      {% if order_inclusion_tags contains order_tag %}
+        {% assign has_inclusion_tag = true %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+
+    {% unless has_inclusion_tag or event.preview %}
+      {% break %}
+    {% endunless %}
+  {% endif %}
+
+  {% action "email" %}
+    {
+      "to": {{ order.email | json }},
+      "subject": {{ email_subject | json }},
+      "body": {{ email_body | newline_to_br | json }},
+      {% if cc_shop %}"cc": {{ shop.customer_email | json }},{% endif %}
+      "reply_to": {{ shop.customer_email | json }},
+      "from_display_name": {{ shop.name | json }},
+      "attachments": {
+        {{ donation_receipt_filename | remove: "#" | json }}: {
+          "pdf": {
+            "html": {{ donation_reciept_html_template | replace: "[TAX_ID]", tax_id | json }},
+            "__force_pdfcrowd": true
+          }
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}

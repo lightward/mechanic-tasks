@@ -302,6 +302,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Send follow-up emails after sending a draft order invoice](./send-follow-up-emails-after-sending-a-draft-order-invoice)
 * [Send new customer signups to IFTTT](./send-new-customer-signups-to-ifttt)
 * [Send recurring reminders about unpaid orders](./unpaid-order-reminders)
+* [Send tax receipts for donations](./send-tax-receipts-for-donations)
 * [Send your customers reorder reminders](./send-your-customers-reorder-reminders)
 * [Set a default tracking number for new fulfillments](./set-a-default-tracking-number-for-new-fulfillments)
 * [Set product or variant metafields values in bulk](./set-product-or-variant-metafields-in-bulk)
@@ -1680,6 +1681,7 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Uncategorized
 
 * [Mechanic tour task](./mechanic-tour-task)
+* [Send tax receipts for donations](./send-tax-receipts-for-donations)
 
 ### Unpaid
 
