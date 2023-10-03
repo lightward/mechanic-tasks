@@ -7,16 +7,16 @@
 {% assign donation_reciept_html_template = options.donation_reciept_html_template__code_multiline_required %}
 
 {% if event.topic == "shopify/orders/paid" or event.topic == "mechanic/user/order" %}
-  {% comment %}
-    -- NOTE: if this order was sent directly via an admin link, then neither the "paid" financial status nor any configured inclusion tags will be checked (on purpose, to allow for merchant flexibility on manual sends)
-  {% endcomment %}
-
   {% if order.email == blank %}
     {% log "This order does not have an email associated with it." %}
     {% break %}
   {% endif %}
 
-  {% if order_inclusion_tags != blank %}
+  {% comment %}
+    -- NOTE: if this order was sent directly via an admin link, then neither the "paid" financial status nor any configured inclusion tags will be checked (on purpose, to allow for merchant flexibility on manual sends)
+  {% endcomment %}
+
+  {% if event.topic == "shopify/orders/paid" and order_inclusion_tags != blank  %}
     {% assign has_inclusion_tag = nil %}
     {% assign order_tags = order.tags | split: ", " %}
 
@@ -31,6 +31,10 @@
       {% break %}
     {% endunless %}
   {% endif %}
+
+  {% comment %}
+    -- generate tax receipt as a PDF and attach to email to donor; optionally cc the shop email address
+  {% endcomment %}
 
   {% action "email" %}
     {
