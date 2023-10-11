@@ -1,0 +1,128 @@
+{% assign tax_id = options.tax_id__required %}
+{% assign donation_product_tags = options.identify_donation_products_with_any_of_these_tags__array_required %}
+{% assign send_cc_to_shop_email = options.send_cc_to_shop_email__boolean %}
+{% assign email_subject = options.email_subject__required %}
+{% assign email_body = options.email_body__multiline_required %}
+{% assign donation_receipt_filename = options.donation_receipt_filename__required %}
+{% assign donation_reciept_html_template = options.donation_reciept_html_template__code_multiline_required %}
+
+{% if event.topic == "shopify/orders/paid" or event.topic == "mechanic/user/order" %}
+  {% comment %}
+    -- NOTE: if this order was sent directly via an admin link, then the "paid" financial status will not be checked to allow for flexibility on manual sends
+  {% endcomment %}
+
+  {% if order.email == blank %}
+    {% log "This order does not have an email associated with it." %}
+    {% break %}
+  {% endif %}
+
+  {% comment %}
+    -- get the order data to see if there are any donation products on this order, by product tag
+  {% endcomment %}
+
+  {% capture query %}
+    query {
+      order(id: {{ order.admin_graphql_api_id | json }}) {
+        id
+        presentmentCurrencyCode
+        lineItems(first: 100) {
+          nodes {
+            product {
+              tags
+            }
+            originalTotalSet {
+              presentmentMoney {
+                amount
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "order": {
+            "presentmentCurrencyCode": "USD",
+            "lineItems": {
+              "nodes": [
+                {
+                  "product": {
+                    "tags": {{ donation_product_tags.first | json }}
+                  },
+                  "originalTotalSet": {
+                    "presentmentMoney": {
+                      "amount": "100.0"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% comment %}
+    -- for any donation products, add the non-discounted total for that line item to the runnning donation amount
+  {% endcomment %}
+
+  {% assign donation_amount = 0 %}
+
+  {% for line_item in result.data.order.lineItems.nodes %}
+    {% for donation_product_tag in donation_product_tags %}
+      {% if line_item.product.tags contains donation_product_tag %}
+        {% assign donation_amount = donation_amount | plus: line_item.originalTotalSet.presentmentMoney.amount %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+
+  {% unless donation_amount > 0 %}
+    {% log "This order has no donation products on it; skipping" %}
+    {% break %}
+  {% endunless %}
+
+  {% assign donation_with_currency = donation_amount | currency: result.data.order.presentmentCurrencyCode %}
+
+  {% comment %}
+    -- replace variables in the HTML template for the configured tax ID and the calculated donation amount
+  {% endcomment %}
+
+  {% assign donation_html
+    = donation_reciept_html_template
+    | replace: "[TAX_ID]", tax_id
+    | replace: "[DONATION_AMOUNT]", donation_with_currency
+  %}
+
+  {% comment %}
+    -- generate tax receipt as a PDF and attach to email to donor; optionally cc the shop email address
+  {% endcomment %}
+
+  {% action "email" %}
+    {
+      "to": {{ order.email | json }},
+      "subject": {{ email_subject | json }},
+      "body": {{ email_body | newline_to_br | json }},
+      {% if send_cc_to_shop_email %}"cc": {{ shop.customer_email | json }},{% endif %}
+      "reply_to": {{ shop.customer_email | json }},
+      "from_display_name": {{ shop.name | json }},
+      "attachments": {
+        {{ donation_receipt_filename | remove: "#" | json }}: {
+          "pdf": {
+            "html": {{ donation_html | json }},
+            "__force_pdfcrowd": true
+          }
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}

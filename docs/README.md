@@ -302,6 +302,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Send follow-up emails after sending a draft order invoice](./send-follow-up-emails-after-sending-a-draft-order-invoice)
 * [Send new customer signups to IFTTT](./send-new-customer-signups-to-ifttt)
 * [Send recurring reminders about unpaid orders](./unpaid-order-reminders)
+* [Send tax receipts for donations](./send-tax-receipts-for-donations)
 * [Send your customers reorder reminders](./send-your-customers-reorder-reminders)
 * [Set a default tracking number for new fulfillments](./set-a-default-tracking-number-for-new-fulfillments)
 * [Set product or variant metafields values in bulk](./set-product-or-variant-metafields-in-bulk)
@@ -1220,6 +1221,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Send email when an order comes in](./send-email-when-an-order-comes-in)
 * [Send email when an order is tagged](./send-email-when-an-order-is-tagged)
 * [Send recurring reminders about unpaid orders](./unpaid-order-reminders)
+* [Send tax receipts for donations](./send-tax-receipts-for-donations)
 * [Sync an inverse order tag](./sync-an-inverse-order-tag)
 * [Sync order timeline comments to the customer note](./sync-order-timeline-comments-to-the-customer-note)
 * [Tag online orders by ?ls= Locksmith secret link used](./tag-orders-by-locksmith-secret-link)
@@ -1250,6 +1252,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Report Toaster: Deliver report PDF via email or Slack](./report-toaster-deliver-report-pdf-via-email-or-slack)
 * [Send a PDF invoice when an order is created](./send-a-pdf-invoice-when-an-order-is-created)
 * [Send a PDF when an order is sent to Mechanic](./send-a-pdf-when-an-order-is-sent-to-mechanic)
+* [Send tax receipts for donations](./send-tax-receipts-for-donations)
 
 ### Payment
 
@@ -1390,6 +1393,10 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Publish a certain collection, daily](./publish-a-certain-collection-daily)
 * [Publish back-in-stock products](./publish-back-in-stock-products)
 * [Scheduled theme publishing](./scheduled-theme-publishing)
+
+### Receipts
+
+* [Send tax receipts for donations](./send-tax-receipts-for-donations)
 
 ### Recurring
 
@@ -1643,6 +1650,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Tax
 
+* [Send tax receipts for donations](./send-tax-receipts-for-donations)
 * [Temporarily enable tax-exempt status when a customer is tagged](./temporarily-enable-tax-exempt-status-when-a-customer-is-tagged)
 
 ### Template
