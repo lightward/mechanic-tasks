@@ -4,13 +4,21 @@
   "name": "Automatically mark new orders as ready for pickup",
   "online_store_javascript": null,
   "options": {
-    "pickup_locations__array_required": ["Your location name here"]
+    "pickup_locations__array_required": [
+      "Your location name here"
+    ]
   },
   "order_status_javascript": null,
   "perform_action_runs_in_sequence": false,
   "preview_event_definitions": [],
   "script": "{% if event.preview %}\n  {% capture order %}\n    {\n      \"fulfillment_orders\": [\n        {\n          \"id\": 1,\n          \"assigned_location\": {\n            \"name\": {{ options.pickup_locations__array_required.first | json}}\n          }\n        },\n        {\n          \"id\": 2,\n          \"assigned_location\": {\n            \"name\": \"Third Party Service\"\n          }\n        }\n      ]\n    }\n  {% endcapture %}\n\n  {% assign order = order | parse_json %}\n{% endif %}\n\n{% assign pickup_locations = options.pickup_locations__array_required %}\n\n{% for fulfillment_order in order.fulfillment_orders %}\n  {% if pickup_locations contains fulfillment_order.assigned_location.name %}\n    {% assign fulfillment_order_id = fulfillment_order.id %}\n    {% assign fulfillment_order_graphql_id = \"gid://shopify/FulfillmentOrder/\" | append: fulfillment_order_id %}\n\n    {% capture query %}\n      mutation {\n        fulfillmentOrderLineItemsPreparedForPickup(\n          input: {\n            lineItemsByFulfillmentOrder: [\n              {\n                fulfillmentOrderId: {{ fulfillment_order_graphql_id | json }}\n              }\n            ]\n          }\n        ) {\n          userErrors {\n            field\n            message\n          }\n        }\n      }\n    {% endcapture %}\n\n    {% action \"shopify\" %}\n      {{ query | json }}\n    {% endaction %}\n  {% endif %}\n{% endfor %}",
-  "subscriptions": ["shopify/orders/create"],
+  "subscriptions": [
+    "shopify/orders/create"
+  ],
   "subscriptions_template": "shopify/orders/create",
-  "tags": ["Fulfillment", "Orders", "Pick-up"]
+  "tags": [
+    "Fulfillment",
+    "Orders",
+    "Pick-up"
+  ]
 }

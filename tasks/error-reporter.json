@@ -53,5 +53,8 @@
     "mechanic/errors/action"
   ],
   "subscriptions_template": "mechanic/errors/event\nmechanic/errors/task\nmechanic/errors/action",
-  "tags": ["Alert", "Error"]
+  "tags": [
+    "Alert",
+    "Error"
+  ]
 }
