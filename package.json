@@ -26,6 +26,5 @@
     "*.{js,json}": [
       "prettier --write"
     ]
-  },
-  "prettier": "@shopify/prettier-config"
+  }
 }
