@@ -1,0 +1,44 @@
+{
+  "docs": "This task script demonstrates using the \"http\" action to retrieve data from a shared Google sheet, using a GET request. It also includes a basic alert email that will be sent to the configured recipients if Mechanic is unable to access the shared sheet as a CSV.\n\nReview the [tutorial for this task](https://learn.mechanic.dev/resources/tutorials/fetching-data-from-a-shared-google-sheet) in the Mechanic docs to see the steps to share your own Google sheet.\n\nOnce the data has been successfully retrieved, it will be available in the **mechanic/actions/perform** event topic as an array of hashes, with the CSV column headers as the keys for each entry in the hash.\n\n**Sample Google sheet data:**\n```\n| SKU    | Quantity |\n|--------|----------|\n| ABC123 |       10 |\n| DEF456 |        0 |\n```\n\n**Sample retrieved data:**\n```\n[\n  {\n    \"SKU\": \"ABC123\",\n    \"Quantity\": \"10\"\n  },\n  {\n    \"SKU\": \"DEF456\",\n    \"Quantity\": \"0\"\n  }\n]\n```",
+  "halt_action_run_sequence_on_error": false,
+  "name": "Demonstration, Tutorial: Fetch data from a shared Google sheet",
+  "online_store_javascript": null,
+  "options": {
+    "gsheet_url__required": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFPR2f9l-w5dSTlcl_ld-mpyqmikI9mupNuc96YLJfmfVqK2c_CJe2_hJkSUVRS-u7jqh8T1jUk-OI/pub?gid=0&single=true&output=csv",
+    "alert_email_recipients__array_required": [
+      "sample@example.com"
+    ]
+  },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "preview_event_definitions": [
+    {
+      "description": "Sample response with sheet data",
+      "event_attributes": {
+        "topic": "mechanic/actions/perform",
+        "data": {
+          "type": "http",
+          "run": {
+            "result": {
+              "status": 200,
+              "body": "SKU,Quantity\r\nABC123,10\r\nDEF456,0"
+            },
+            "ok": true
+          }
+        }
+      }
+    }
+  ],
+  "script": "{% assign gsheet_url = options.gsheet_url__required %}\n{% assign alert_email_recipients = options.alert_email_recipients__array_required %}\n\n{% if event.topic == \"mechanic/user/trigger\" %}\n  {% comment %}\n    -- begin by fetching data from the configured gSheet\n  {% endcomment %}\n\n  {% action \"http\" %}\n    {\n      \"method\": \"get\",\n      \"url\": {{ gsheet_url | json }},\n      \"verify\": \"true\",\n      \"error_on_5xx\": \"true\"\n    }\n  {% endaction %}\n\n  {% break %}\n\n{% elsif event.topic == \"mechanic/actions/perform\" %}\n  {% comment %}\n    -- only respond to http actions\n  {% endcomment %}\n\n  {% unless action.type == \"http\" %}\n    {% break %}\n  {% endunless %}\n\n  {% unless action.run.ok and action.run.result.status == 200 %}\n    {% comment %}\n      -- send alert email if there is an issue accessing the gsheet\n    {% endcomment %}\n\n    {% action \"email\" %}\n      {\n        \"to\": {{ alert_email_recipients | json }},\n        \"subject\": \"ALERT: Mechanic could not access the shared gSheet\",\n        \"body\": \"Check the task run log and confirm the gSheet still exists and is shared properly.\",\n        \"reply_to\": {{ shop.customer_email | json }},\n        \"from_display_name\": {{ shop.name | json }}\n      }\n    {% endaction %}\n\n    {% break %}\n  {% endunless %}\n\n  {% assign gsheet_data = action.run.result.body | parse_csv: headers: true %}\n\n  {% log gsheet_data %}\n\n  {% comment %}\n    -- add processing of the gsheet data below\n  {% endcomment %}\n{% endif %}",
+  "subscriptions": [
+    "mechanic/user/trigger",
+    "mechanic/actions/perform"
+  ],
+  "subscriptions_template": "mechanic/user/trigger\nmechanic/actions/perform",
+  "tags": [
+    "CSV",
+    "Demonstration",
+    "HTTP",
+    "Tutorial"
+  ]
+}

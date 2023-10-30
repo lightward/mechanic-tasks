@@ -1,0 +1,54 @@
+{% assign gsheet_url = options.gsheet_url__required %}
+{% assign alert_email_recipients = options.alert_email_recipients__array_required %}
+
+{% if event.topic == "mechanic/user/trigger" %}
+  {% comment %}
+    -- begin by fetching data from the configured gSheet
+  {% endcomment %}
+
+  {% action "http" %}
+    {
+      "method": "get",
+      "url": {{ gsheet_url | json }},
+      "verify": "true",
+      "error_on_5xx": "true"
+    }
+  {% endaction %}
+
+  {% break %}
+
+{% elsif event.topic == "mechanic/actions/perform" %}
+  {% comment %}
+    -- only respond to http actions
+  {% endcomment %}
+
+  {% unless action.type == "http" %}
+    {% break %}
+  {% endunless %}
+
+  {% unless action.run.ok and action.run.result.status == 200 %}
+    {% comment %}
+      -- send alert email if there is an issue accessing the gsheet
+    {% endcomment %}
+
+    {% action "email" %}
+      {
+        "to": {{ alert_email_recipients | json }},
+        "subject": "ALERT: Mechanic could not access the shared gSheet",
+        "body": "Check the task run log and confirm the gSheet still exists and is shared properly.",
+        "reply_to": {{ shop.customer_email | json }},
+        "from_display_name": {{ shop.name | json }}
+      }
+    {% endaction %}
+
+    {% break %}
+  {% endunless %}
+
+  {% assign gsheet_data = action.run.result.body | parse_csv: headers: true %}
+
+  {% log gsheet_data %}
+
+  {% comment %}
+    -- add processing of the gsheet data below
+  {% endcomment %}
+{% endif %}

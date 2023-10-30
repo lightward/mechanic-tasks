@@ -182,6 +182,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Delete product or product variant metafields in bulk](./delete-product-or-product-variant-metafields-in-bulk)
 * [Delete the oldest x products from a specific collection](./delete-the-oldest-x-products-from-a-specific-collection)
 * [Delete variants having a metafield date that has passed](./delete-variants-having-a-metafield-date-that-has-passed)
+* [Demonstration, Tutorial: Fetch data from a shared Google sheet](./demonstration-fetch-data-from-a-shared-google-sheet)
 * [Demonstration: Auto-tag new orders, with scheduled reconciliation](./demonstration-auto-tag-new-orders-with-reconciliation)
 * [Demonstration: Fetch an external configuration file](./demonstration-fetch-an-external-configuration-file)
 * [Demonstration: Generate product sales report PDF with pie chart](./demonstration-generate-product-sales-report-pdf-with-pie-chart)
@@ -563,6 +564,7 @@ This directory is built automatically. Each task's documentation is generated fr
 ### CSV
 
 * [Backup inventory to SFTP in Shopify CSV format](./backup-scheduled-inventory-exports-in-shopifys-csv-format)
+* [Demonstration, Tutorial: Fetch data from a shared Google sheet](./demonstration-fetch-data-from-a-shared-google-sheet)
 * [Email a CSV export of orders](./email-a-csv-export-of-orders)
 * [Email a CSV export of products](./email-a-csv-export-of-products)
 * [Export a CSV of order shipping addresses](./export-a-csv-of-order-shipping-addresses)
@@ -735,6 +737,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Demonstration
 
+* [Demonstration, Tutorial: Fetch data from a shared Google sheet](./demonstration-fetch-data-from-a-shared-google-sheet)
 * [Demonstration: Auto-tag new orders, with scheduled reconciliation](./demonstration-auto-tag-new-orders-with-reconciliation)
 * [Demonstration: Fetch an external configuration file](./demonstration-fetch-an-external-configuration-file)
 * [Demonstration: Generate product sales report PDF with pie chart](./demonstration-generate-product-sales-report-pdf-with-pie-chart)
@@ -915,6 +918,10 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Send an email alert when a fulfillment is cancelled](./send-an-email-alert-when-a-fulfillment-is-cancelled)
 * [Send an event to Klaviyo when a fulfillment is delayed](./send-an-event-to-klaviyo-when-a-fulfillment-is-delayed)
 * [Set a default tracking number for new fulfillments](./set-a-default-tracking-number-for-new-fulfillments)
+
+### HTTP
+
+* [Demonstration, Tutorial: Fetch data from a shared Google sheet](./demonstration-fetch-data-from-a-shared-google-sheet)
 
 ### IFTTT
 
@@ -1679,6 +1686,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Tutorial
 
+* [Demonstration, Tutorial: Fetch data from a shared Google sheet](./demonstration-fetch-data-from-a-shared-google-sheet)
 * [Tutorial: Trigger a task from a contact form, using webhooks](./tutorial-trigger-a-task-from-a-contact-form-using-webhooks)
 
 ### UK
