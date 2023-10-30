@@ -9,7 +9,7 @@
   {% if options.save_data_to_cache__boolean %}
     {% comment %}
       For details on reading from the cache, see
-      https://docs.usemechanic.com/article/370-the-cache-object
+      https://learn.mechanic.dev/platform/liquid/objects/cache
     {% endcomment %}
 
     {% log cached_config: cache.demonstration_config %}
@@ -18,7 +18,7 @@
   {% if event.preview %}
     {% comment %}
       For details on this technique, see
-      https://docs.usemechanic.com/article/335-preview-actions
+      https://learn.mechanic.dev/core/tasks/previews
     {% endcomment %}
 
     {% capture action_json %}
