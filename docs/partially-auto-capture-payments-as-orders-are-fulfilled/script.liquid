@@ -1,9 +1,5 @@
 {% assign payment_gateway_names = options.payment_gateway_names__array_required %}
 
-{% if payment_gateway_names contains "shopify_payments" %}
-  {% error "Shopify payments does not support multiple partial captures on a single authorization. Verify that any configured payment gateways support multiple captures." %}
-{% endif %}
-
 {% if event.preview %}
   {% assign order = hash %}
   {% assign order["admin_graphql_api_id"] = "gid://shopify/Order/1234567890" %}
@@ -128,7 +124,7 @@
     {% log
       message: "This order did not use one of the configured gateways or there are multiple gateways on the order; skipping.",
       configured_payment_gateway_names: payment_gateway_names,
-      order: result.data.order
+      order: order
     %}
     {% break %}
   {% endunless %}
@@ -192,6 +188,4 @@
       }
     {% endaction %}
   {% endif %}
-
-  {% log order %}
 {% endif %}
