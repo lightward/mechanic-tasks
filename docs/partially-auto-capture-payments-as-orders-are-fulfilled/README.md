@@ -30,7 +30,7 @@ shopify/orders/updated
 
 Running when an order is updated, this task captures payment in proportion to the order value that has been fulfilled. For example, for an order with a subtotal of $10 and a total of $15 with shipping/taxes/discounts, this task will capture $7.50 when $5 of the order's value has been fulfilled.
 
-This task only works with payment gateways that support multiple captures against an authorization, which does not include Shopify Payments. This task also will not process orders that use multiple payment gateways *on the same order*.
+This task only works with payment gateways that support multiple captures against an authorization, which includes Shopify Payments. However, this task will not process orders that use multiple payment gateways *on the same order*.
 
 Note: To find the payment gateway names, you will need to check the **payment_gateway_names** field on any order that uses the gateway(s) you wish to configure in this task. One method of doing this is to add **.json** to the end of the order admin page address, and searching for *payment_gateway_names* (e.g. "https[]()://admin.shopify.com/store/my-shop/orders/1234567890.json").
 
