@@ -1,4 +1,13 @@
+{% assign back_in_stock_inventory_level = options.back_in_stock_inventory_level__number_required %}
+{% assign product_tags_and_maximum_age_in_days = options.product_tags_and_maximum_age_in_days__keyval_number_required %}
+
+{% assign now_s = "now" | date: "%s"%}
+
 {% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler" %}
+  {% comment %}
+    -- run bulk op query for all products in the shop, to get inventory, tags, and metafield values
+  {% endcomment %}
+
   {% capture bulk_operation_query %}
     query {
       products {
@@ -6,11 +15,18 @@
           node {
             __typename
             id
+            title
             tags
             totalInventory
-            metafield(
+            back_in_stock_metafield: metafield(
               namespace: "mechanic"
               key: "back_in_stock_s"
+            ) {
+              value
+            }
+            back_in_stock_first_seen_metafield: metafield(
+              namespace: "mechanic"
+              key: "back_in_stock_first_seen_s"
             ) {
               value
             }
@@ -36,62 +52,82 @@
       }
     }
   {% endaction %}
+
 {% elsif event.topic == "mechanic/shopify/bulk_operation" %}
   {% if event.preview %}
+    {% capture bulkOperation_objects_jsonl %}
+      {"id":"gid:\/\/shopify\/Product\/1234567890","back_in_stock_metafield":{"value": {{ now_s | json }}},"back_in_stock_first_seen_metafield":{"value": "1"}}
+      {"id":"gid:\/\/shopify\/Product\/2345678901","tags":[{{ product_tags_and_maximum_age_in_days.first.first | json }}],"back_in_stock_first_seen_metafield":{"value": "1"}}
+      {"id":"gid:\/\/shopify\/Product\/3456789012","tags":[{{ product_tags_and_maximum_age_in_days.first.first | json }}]}
+    {% endcapture %}
+
     {% assign bulkOperation = hash %}
-    {% assign bulkOperation["objects"] = array %}
-
-    {% assign bulkOperation["objects"][0] = hash %}
-    {% assign bulkOperation["objects"][0]["id"] = "gid://shopify/Product/1234567890" %}
-    {% assign bulkOperation["objects"][0]["totalInventory"] = options.back_in_stock_inventory_level__number_required | plus: 10 %}
-    {% assign bulkOperation["objects"][0]["tags"] = array %}
-    {% assign bulkOperation["objects"][0]["metafield"] = hash %}
-    {% assign bulkOperation["objects"][0]["metafield"]["value"] = "now" | date: "%s" | minus: 1000 %}
-
-    {% assign bulkOperation["objects"][1] = hash %}
-    {% assign bulkOperation["objects"][1]["id"] = "gid://shopify/Product/2345678901" %}
-    {% assign bulkOperation["objects"][1]["totalInventory"] = options.back_in_stock_inventory_level__number_required | minus: 10 %}
-    {% assign bulkOperation["objects"][1]["tags"] = array %}
-    {% assign bulkOperation["objects"][1]["tags"][0] = options.product_tags_and_maximum_age_in_days__keyval_number_required.first.first %}
-    {% assign bulkOperation["objects"][1]["metafield"] = nil %}
+    {% assign bulkOperation["objects"] = bulkOperation_objects_jsonl | parse_jsonl %}
   {% endif %}
 
-  {% assign now_s = "now" | date: "%s" | times: 1 %}
+  {% comment %}
+    -- loop through products and decide which tags should be added/removed based only on metafield values; inventory is not checked here
+  {% endcomment %}
 
-  {% for object in bulkOperation.objects %}
-    {% assign product_timestamp_s = object.metafield.value | times: 1 %}
+  {% assign first_seen_product_ids = array %}
+
+  {% for product in bulkOperation.objects %}
+    {% comment %}
+      -- check if this product has been seen by this task before; if not, save the ID and move to next product
+    {% endcomment %}
+
+    {% if product.back_in_stock_first_seen_metafield == blank %}
+      {% assign first_seen_product_ids = first_seen_product_ids | push: product.id %}
+      {% continue %}
+    {% endif %}
+
+    {% assign back_in_stock_s = product.back_in_stock_metafield.value | times: 1 %}
+    {% assign back_in_stock_first_seen_s = product.back_in_stock_first_seen_metafield.value | times: 1 %}
+
+    {% assign do_not_add_tags = nil %}
+
+    {% comment %}
+      -- don't add tags unless the back in stock timestamp value is newer than the first seen timestamp
+    {% endcomment %}
+
+    {% unless back_in_stock_s > back_in_stock_first_seen_s %}
+      {% assign do_not_add_tags = true %}
+    {% endunless %}
+
+    {% comment %}
+      -- check the threshold times for each tag
+    {% endcomment %}
 
     {% assign tags_to_add = array %}
     {% assign tags_to_remove = array %}
 
-    {% for keyval in options.product_tags_and_maximum_age_in_days__keyval_number_required %}
+    {% for keyval in product_tags_and_maximum_age_in_days %}
       {% assign tag = keyval[0] %}
-      {% assign maximum_age_d = keyval[1] %}
-      {% assign maximum_age_s = maximum_age_d | times: 24 | times: 60 | times: 60 %}
-
+      {% assign maximum_age_s = keyval[1] | times: 86400 %}
       {% assign threshold_timestamp_s = now_s | minus: maximum_age_s %}
 
-      {% comment %}
-        0 happens when we didn't have a valid datetime string to begin with. Happens
-        when there's no published_at value.
-      {% endcomment %}
-      {% if product_timestamp_s != 0 and product_timestamp_s > threshold_timestamp_s %}
-        {% unless object.tags contains tag %}
+      {% if back_in_stock_s >= threshold_timestamp_s %}
+        {% unless product.tags contains tag or do_not_add_tags %}
           {% assign tags_to_add[tags_to_add.size] = tag %}
         {% endunless %}
+
       {% else %}
-        {% if object.tags contains tag %}
+        {% comment %}
+          -- back in stock metafield doesn't exist or the value doesn't exceed the threshold; remove tag if it is present
+        {% endcomment %}
+
+        {% if product.tags contains tag %}
           {% assign tags_to_remove[tags_to_remove.size] = tag %}
         {% endif %}
       {% endif %}
     {% endfor %}
 
-    {% if tags_to_add != empty or tags_to_remove != empty %}
+    {% if tags_to_add != blank or tags_to_remove != blank %}
       {% action "shopify" %}
         mutation {
-          {% if tags_to_add != empty %}
+          {% if tags_to_add != blank %}
             tagsAdd(
-              id: {{ object.id | json }}
+              id: {{ product.id | json }}
               tags: {{ tags_to_add | json }}
             ) {
               userErrors {
@@ -101,9 +137,9 @@
             }
           {% endif %}
 
-          {% if tags_to_remove != empty %}
+          {% if tags_to_remove != blank %}
             tagsRemove(
-              id: {{ object.id | json }}
+              id: {{ product.id | json }}
               tags: {{ tags_to_remove | json }}
             ) {
               userErrors {
@@ -116,7 +152,51 @@
       {% endaction %}
     {% endif %}
   {% endfor %}
+
+  {% comment %}
+    -- set a metafield timestamp value of "now" on any products that were first seen on this run
+  {% endcomment %}
+
+  {% if first_seen_product_ids != blank %}
+    {% log
+      message: "Products first seen on this task run, which will have a first seen metafield set, but will not have new tags added.",
+      first_seen_product_ids: first_seen_product_ids
+    %}
+
+    {% assign groups_of_product_ids = first_seen_product_ids | in_groups_of: 25, fill_with: false %}
+
+    {% for group_of_product_ids in groups_of_product_ids %}
+      {% action "shopify" %}
+        mutation {
+          metafieldsSet(
+            metafields: [
+              {% for product_id in group_of_product_ids %}
+                {
+                  ownerId: {{ product_id | json }}
+                  namespace: "mechanic"
+                  key: "back_in_stock_first_seen_s"
+                  type: "number_integer"
+                  value: {{ now_s | json }}
+                }
+              {% endfor %}
+            ]
+          ) {
+            userErrors {
+              code
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endfor %}
+  {% endif %}
+
 {% elsif event.topic contains "shopify/inventory_levels/" %}
+  {% comment %}
+    -- on inventory level changes, check the total inventory and set metafields as needed; no tagging decisions occur here
+  {% endcomment %}
+
   {% capture query %}
     query {
       inventoryLevel(id: {{ inventory_level.admin_graphql_api_id | json }}) {
@@ -125,9 +205,16 @@
             product {
               id
               totalInventory
-              metafield(
+              back_in_stock_metafield: metafield(
                 namespace: "mechanic"
                 key: "back_in_stock_s"
+              ) {
+                id
+                value
+              }
+              back_in_stock_first_seen_metafield: metafield(
+                namespace: "mechanic"
+                key: "back_in_stock_first_seen_s"
               ) {
                 id
                 value
@@ -150,8 +237,7 @@
               "variant": {
                 "product": {
                   "id": "gid://shopify/Product/1234567890",
-                  "totalInventory": {{ options.back_in_stock_inventory_level__number_required | plus: 1 }},
-                  "metafield": null
+                  "totalInventory": {{ back_in_stock_inventory_level }}
                 }
               }
             }
@@ -163,39 +249,49 @@
     {% assign result = result_json | parse_json %}
   {% endif %}
 
-  {% assign productNode = result.data.inventoryLevel.item.variant.product %}
+  {% assign product = result.data.inventoryLevel.item.variant.product %}
 
-  {% log product: productNode, back_in_stock_inventory_level: options.back_in_stock_inventory_level__number_required %}
+  {% log product: product, back_in_stock_inventory_level: back_in_stock_inventory_level %}
 
-  {% if productNode.metafield == nil and productNode.totalInventory >= options.back_in_stock_inventory_level__number_required %}
-    {% action "shopify" %}
-      mutation {
-        productUpdate(
-          input: {
-            id: {{ productNode.id | json }}
-            metafields: [
-              {
-                namespace: "mechanic"
-                key: "back_in_stock_s"
-                type: "number_integer"
-                value: {{ "now" | date: "%s" | json }}
-              }
-            ]
-          }
-        ) {
-          userErrors {
-            field
-            message
-          }
-        }
-      }
-    {% endaction %}
-  {% elsif productNode.metafield != nil and productNode.totalInventory < options.back_in_stock_inventory_level__number_required %}
+  {% assign metafield_inputs = array %}
+
+  {% comment %}
+    -- save the first seen time in a metafield if it doesn't already exist
+  {% endcomment %}
+
+  {% if product.back_in_stock_first_seen_metafield == blank %}
+    {% assign metafield_input = hash %}
+    {% assign metafield_input["namespace"] = "mechanic" %}
+    {% assign metafield_input["key"] = "back_in_stock_first_seen_s" %}
+    {% assign metafield_input["type"] = "number_integer" %}
+    {% assign metafield_input["value"] = now_s %}
+    {% assign metafield_inputs = metafield_inputs | push: metafield_input %}
+  {% endif %}
+
+  {% if product.totalInventory >= back_in_stock_inventory_level %}
+    {% comment %}
+      -- product inventory meets the back in stock threshold; save the time in the metafield IF a value does not already exist
+    {% endcomment %}
+
+    {% if product.back_in_stock_metafield == blank %}
+      {% assign metafield_input = hash %}
+      {% assign metafield_input["namespace"] = "mechanic" %}
+      {% assign metafield_input["key"] = "back_in_stock_s" %}
+      {% assign metafield_input["type"] = "number_integer" %}
+      {% assign metafield_input["value"] = now_s %}
+      {% assign metafield_inputs = metafield_inputs | push: metafield_input %}
+    {% endif %}
+
+  {% elsif product.back_in_stock_metafield != blank  %}
+    {% comment %}
+      -- product inventory is less than the back in stock threshold and the back in stock metafield exists; delete it
+    {% endcomment %}
+
     {% action "shopify" %}
       mutation {
         metafieldDelete(
           input: {
-            id: {{ productNode.metafield.id | json }}
+            id: {{ product.back_in_stock_metafield.id | json }}
           }
         ) {
           userErrors {
@@ -206,4 +302,49 @@
       }
     {% endaction %}
   {% endif %}
+
+  {% if metafield_inputs != blank %}
+    {% action "shopify" %}
+      mutation {
+        productUpdate(
+          input: {
+            id: {{ product.id | json }}
+            metafields: {{ metafield_inputs | graphql_arguments }}
+          }
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+
+{% elsif event.topic contains "shopify/products/create" %}
+  {% comment %}
+    -- for new products, set the first seen metafield value using the product created date
+  {% endcomment %}
+
+  {% action "shopify" %}
+    mutation {
+      metafieldsSet(
+        metafields: [
+          {
+            ownerId: {{ product.admin_graphql_api_id | json }}
+            namespace: "mechanic"
+            key: "back_in_stock_first_seen_s"
+            type: "number_integer"
+            value: {{ product.created_at | date: "%s" | json }}
+          }
+        ]
+      ) {
+        userErrors {
+          code
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
 {% endif %}
