@@ -938,6 +938,7 @@ This directory is built automatically. Each task's documentation is generated fr
 ### In stock
 
 * [Add Option Name as a Variant Metafield for In Stock Variants](./add-option-names-as-variant-metafields-for-in-stock-variants)
+* [Auto-tag new products by "back in stock" age](./auto-tag-new-products-by-back-in-stock-age)
 * [Publish back-in-stock products](./publish-back-in-stock-products)
 * [Tag products as in- or out-of-stock, by location ID](./tag-products-as-in-or-out-of-stock-by-location-id)
 * [Tag products as in- or out-of-stock](./tag-products-as-in-or-out-of-stock)
@@ -1063,7 +1064,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Add Option Name as a Variant Metafield for In Stock Variants](./add-option-names-as-variant-metafields-for-in-stock-variants)
 * [Auto-associate variants with a delivery profile, by metafield value](./auto-associate-variants-with-a-delivery-profile-by-metafield-value)
 * [Auto-copy customer metafields to new orders](./auto-copy-customer-metafields-to-new-orders)
-* [Auto-tag new products by "back in stock" age](./auto-tag-new-products-by-back-in-stock-age)
 * [Copy draft order metafields to orders](./copy-draft-order-metafields-to-orders)
 * [Copy prefixed tags to metafields](./copy-prefixed-tags-to-metafields)
 * [Copy product metafields to each product's tags](./copy-product-metafields-to-each-products-tags)
