@@ -2,7 +2,7 @@
 
 Tags: Orders, PDF, Receipts, Tax
 
-Use this task to email donation receipts to donors as PDF attachments, with an option to cc the shop email. It runs  on new, paid orders, and it will sum the donation amount from all line items that have a configured product donation tag.
+Use this task to email donation receipts to donors as PDF attachments, with an option to cc the shop email. It runs on new, paid orders, or optionally on order creation. The task will sum the donation amount from all line items that have either one of the configured product donation tags, or one of the configured product titles.
 
 * View in the task library: [tasks.mechanic.dev/send-tax-receipts-for-donations](https://tasks.mechanic.dev/send-tax-receipts-for-donations)
 * Task JSON, for direct import: [task.json](../../tasks/send-tax-receipts-for-donations.json)
@@ -13,9 +13,11 @@ Use this task to email donation receipts to donors as PDF attachments, with an o
 ```json
 {
   "tax_id__required": null,
+  "run_on_order_creation_instead_of_paid__boolean": false,
   "identify_donation_products_with_any_of_these_tags__array_required": [
     "donation"
   ],
+  "identify_donation_products_with_any_of_these_titles__array": null,
   "send_cc_to_shop_email__boolean": false,
   "email_subject__required": "Receipt {{ order.name }} for donation to {{ shop.name }}",
   "email_body__multiline_required": "Thank you for your recent donation!\n\nAttached you will find your official donation receipt.",
@@ -29,7 +31,11 @@ Use this task to email donation receipts to donors as PDF attachments, with an o
 ## Subscriptions
 
 ```liquid
-shopify/orders/paid
+{% if options.run_on_order_creation_instead_of_paid__boolean %}
+  shopify/orders/create
+{% else %}
+  shopify/orders/paid
+{% endif %}
 mechanic/user/order
 ```
 
@@ -37,15 +43,16 @@ mechanic/user/order
 
 ## Documentation
 
-Use this task to email donation receipts to donors as PDF attachments, with an option to cc the shop email. It runs  on new, paid orders, and it will sum the donation amount from all line items that have a configured product donation tag.
+Use this task to email donation receipts to donors as PDF attachments, with an option to cc the shop email. It runs on new, paid orders, or optionally on order creation. The task will sum the donation amount from all line items that have either one of the configured product donation tags, or one of the configured product titles.
 
-This task can also receive orders sent directly via [admin action links](https://learn.mechanic.dev/core/shopify/admin-action-links#link-usage). When doing so, the task will **not** check that the order is paid to allow for flexibility when sending donation receipts manually.
+This task can also receive individual orders sent directly via [admin action links](https://learn.mechanic.dev/core/shopify/admin-action-links#link-usage).
 
 **Notes:**
 
 - The task comes with a sample donation tag, email subject, email body, donation receipt filename, and donation receipt HTML template. The HTML template is used by the PDF file generator, so care must be taken to provide valid HTML if this field is customized.
 - The *[TAX_ID]* and *[DONATION_AMOUNT]* variables need to be present in the HTML template in order for those values to be included in the PDF donation receipt.
-- Orders with no donation products will be ignored.
+- The task will identify donation products either by tag or title. Only one of these option fields can be configured for use.
+- Orders with no donation products will be ignored by this task.
 
 ## Installing this task
 
