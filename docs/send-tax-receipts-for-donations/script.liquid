@@ -1,23 +1,28 @@
 {% assign tax_id = options.tax_id__required %}
-{% assign donation_product_tags = options.identify_donation_products_with_any_of_these_tags__array_required %}
+{% comment %}{{ options.run_on_order_creation_instead_of_paid__boolean }}{% endcomment %}
+{% assign donation_product_tags = options.identify_donation_products_with_any_of_these_tags__array %}
+{% assign donation_product_titles = options.identify_donation_products_with_any_of_these_titles__array %}
 {% assign send_cc_to_shop_email = options.send_cc_to_shop_email__boolean %}
 {% assign email_subject = options.email_subject__required %}
 {% assign email_body = options.email_body__multiline_required %}
 {% assign donation_receipt_filename = options.donation_receipt_filename__required %}
 {% assign donation_reciept_html_template = options.donation_reciept_html_template__code_multiline_required %}
 
-{% if event.topic == "shopify/orders/paid" or event.topic == "mechanic/user/order" %}
-  {% comment %}
-    -- NOTE: if this order was sent directly via an admin link, then the "paid" financial status will not be checked to allow for flexibility on manual sends
-  {% endcomment %}
+{% if donation_product_tags == blank and donation_product_titles == blank %}
+  {% error "Enter at least one product tag or title to filter on." %}
+{% endif %}
 
+{% if event.topic == "shopify/orders/paid"
+  or event.topic == "shopify/orders/create"
+  or event.topic == "mechanic/user/order"
+%}
   {% if order.email == blank %}
     {% log "This order does not have an email associated with it." %}
     {% break %}
   {% endif %}
 
   {% comment %}
-    -- get the order data to see if there are any donation products on this order, by product tag
+    -- get the order data to see if there are any donation products on this order, by product tag or title
   {% endcomment %}
 
   {% capture query %}
@@ -29,6 +34,7 @@
           nodes {
             product {
               tags
+              title
             }
             originalTotalSet {
               presentmentMoney {
@@ -53,7 +59,8 @@
               "nodes": [
                 {
                   "product": {
-                    "tags": {{ donation_product_tags.first | json }}
+                    "tags": {{ donation_product_tags.first | json }},
+                    "title": {{ donation_product_titles.first | json }}
                   },
                   "originalTotalSet": {
                     "presentmentMoney": {
@@ -78,12 +85,25 @@
   {% assign donation_amount = 0 %}
 
   {% for line_item in result.data.order.lineItems.nodes %}
+    {% assign is_donation_product = nil %}
+
     {% for donation_product_tag in donation_product_tags %}
       {% if line_item.product.tags contains donation_product_tag %}
-        {% assign donation_amount = donation_amount | plus: line_item.originalTotalSet.presentmentMoney.amount %}
+        {% assign is_donation_product = true %}
         {% break %}
       {% endif %}
     {% endfor %}
+
+    {% for donation_product_title in donation_product_titles %}
+      {% if line_item.product.title == donation_product_title %}
+        {% assign is_donation_product = true %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+
+    {% if is_donation_product %}
+      {% assign donation_amount = donation_amount | plus: line_item.originalTotalSet.presentmentMoney.amount %}
+    {% endif %}
   {% endfor %}
 
   {% unless donation_amount > 0 %}
