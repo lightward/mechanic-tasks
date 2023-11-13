@@ -8,10 +8,8 @@
 {% assign donation_receipt_filename = options.donation_receipt_filename__required %}
 {% assign donation_reciept_html_template = options.donation_reciept_html_template__code_multiline_required %}
 
-{% if donation_product_tags != blank and donation_product_titles != blank %}
-  {% error "Enter either product tags to filter on, or product titles, but not both." %}
-{% elsif donation_product_tags == blank and donation_product_titles == blank %}
-  {% error "You must enter either product tags or titles to filter on." %}
+{% if donation_product_tags == blank and donation_product_titles == blank %}
+  {% error "Enter at least one product tag or title to filter on." %}
 {% endif %}
 
 {% if event.topic == "shopify/orders/paid"
@@ -87,21 +85,24 @@
   {% assign donation_amount = 0 %}
 
   {% for line_item in result.data.order.lineItems.nodes %}
-    {% if donation_product_tags != blank %}
-      {% for donation_product_tag in donation_product_tags %}
-        {% if line_item.product.tags contains donation_product_tag %}
-          {% assign donation_amount = donation_amount | plus: line_item.originalTotalSet.presentmentMoney.amount %}
-          {% break %}
-        {% endif %}
-      {% endfor %}
+    {% assign is_donation_product = nil %}
 
-    {% elsif donation_product_titles != blank %}
-      {% for donation_product_title in donation_product_titles %}
-        {% if line_item.product.title == donation_product_title %}
-          {% assign donation_amount = donation_amount | plus: line_item.originalTotalSet.presentmentMoney.amount %}
-          {% break %}
-        {% endif %}
-      {% endfor %}
+    {% for donation_product_tag in donation_product_tags %}
+      {% if line_item.product.tags contains donation_product_tag %}
+        {% assign is_donation_product = true %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+
+    {% for donation_product_title in donation_product_titles %}
+      {% if line_item.product.title == donation_product_title %}
+        {% assign is_donation_product = true %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+
+    {% if is_donation_product %}
+      {% assign donation_amount = donation_amount | plus: line_item.originalTotalSet.presentmentMoney.amount %}
     {% endif %}
   {% endfor %}
 
