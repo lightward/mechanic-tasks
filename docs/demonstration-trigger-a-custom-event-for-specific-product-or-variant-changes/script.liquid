@@ -1,0 +1,227 @@
+{% assign custom_event_topic = options.custom_event_topic__required %}
+{% assign product_attributes = options.product_attributes_to_monitor__array %}
+{% assign variant_attributes = options.variant_attributes_to_monitor__array %}
+
+{% comment %}
+  -- chck to see if the custom event topic is in the right form, and that at least one attribute is configured to be monitored
+{% endcomment %}
+
+{% assign custom_event_topic_parts = custom_event_topic | split: "/" %}
+
+{% if custom_event_topic_parts[0] != "user" %}
+  {% error "The custom event topic must start with 'user/'" %}
+{% endif %}
+
+{% if custom_event_topic_parts.size != 3 %}
+  {% error "The custom event topic should be in the form of 'user/[subject]/[verb]'" %}
+{% endif %}
+
+{% if product_attributes == blank and variant_attributes == blank %}
+  {% error "Enter at least one product attribute or variant attribute to monitor" %}
+{% endif %}
+
+{% comment %}
+  -- sort the configured attributes, join them together in a string, and then hash them to use as part of the cache key
+{% endcomment %}
+
+{% assign sorted_product_attributes = product_attributes | sort %}
+{% assign sorted_variant_attributes = variant_attributes | sort %}
+{% assign cache_snapshot_id
+  = sorted_product_attributes
+  | concat: sorted_variant_attributes
+  | join: ""
+  | sha256
+%}
+
+{% log
+  config: "for this task run",
+  custom_event_topic: custom_event_topic,
+  product_attributes_to_monitor: sorted_product_attributes,
+  variant_attributes_to_monitor: sorted_variant_attributes,
+  cache_snapshot_id: cache_snapshot_id
+%}
+
+{% assign products = array %}
+
+{% if event.topic == "shopify/products/update" or event.topic == "shopify/products/create" %}
+  {% comment %}
+    -- get product data from GraphLQ instead of the product webhook/REST
+  {% endcomment %}
+
+  {% capture query %}
+    query {
+      product(id: {{ product.admin_graphql_api_id | json }}) {
+        id
+        legacyResourceId
+        {{ product_attributes | join: newline }}
+        {% if variant_attributes != blank -%}
+          variants(first: 100) {
+            nodes {
+              id
+              {{ variant_attributes | join: newline }}
+            }
+          }
+        {%- endif %}
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% comment %}
+    -- remove the variants / nodes structure from the product if it exists
+  {% endcomment %}
+
+  {% assign products[0]
+    = result.data.product
+    | default: hash
+    | except: "variants"
+  %}
+
+  {% comment %}
+    -- if variant attributes are being monitored, then reattach the array at the product level (i.e. no nodes)
+  {% endcomment %}
+
+  {% if variant_attributes != blank %}
+    {% assign products[0]["variants"] = result.data.product.variants.nodes | default: array %}
+  {% endif %}
+
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% comment %}
+    -- get all products in the shop first; if being monitored, variants are queried by product later to avoid exceeding query cost limit
+  {% endcomment %}
+
+  {% assign cursor = nil %}
+
+  {% for n in (1..100) %}
+    {% capture query %}
+      query {
+        products(
+          first: 250
+          after: {{ cursor | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            legacyResourceId
+            {{ product_attributes | join: newline }}
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% assign products_batch = result.data.products.nodes %}
+
+    {% if variant_attributes == blank %}
+      {% comment %}
+        -- if there are no variant attribute lookups configured, then just concatenate the products from this result
+      {% endcomment %}
+
+      {% assign products = products | concat: products_batch %}
+
+    {% else %}
+      {% comment %}
+        -- loop through the products in this batch and query the variant attributes for each
+      {% endcomment %}
+
+      {% for product in products_batch %}
+        {% capture variants_query %}
+          query {
+            product(id: {{ product.id | json }}) {
+              variants(first: 100) {
+                nodes {
+                  id
+                  {{ variant_attributes | join: newline }}
+                }
+              }
+            }
+          }
+        {% endcapture %}
+
+        {% assign variants_result = variants_query | shopify %}
+
+        {% assign product_data = product %}
+        {% assign product_data["variants"] = variants_result.data.product.variants.nodes %}
+
+        {% assign products = products | push: product_data %}
+      {% endfor %}
+    {% endif %}
+
+    {% if result.data.products.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.products.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+{% comment %}
+  -- use a simple product for event previews, since we don't know what attributes will be configured
+{% endcomment %}
+
+{% if event.preview %}
+  {% assign products[0] = hash %}
+  {% assign products[0]["legacyResourceId"] = "1234567890" %}
+{% endif %}
+
+{% comment %}
+  -- loop through the products(s) queried above, to check for updates to the configured attributes
+{% endcomment %}
+
+{% for product in products %}
+  {% comment %}
+    -- generate the product specific cache key in combination with the configured attributes
+  {% endcomment %}
+
+  {% assign cache_key
+    = "product_"
+    | append: product.legacyResourceId
+    | append: "_snapshot_"
+    | append: cache_snapshot_id
+  %}
+
+  {% assign cache_value = cache[cache_key] %}
+  {% assign expected_cache_value = product | json | sha256 %}
+
+  {% comment %}
+    -- check if a cache value exists and is the same as the expected value; if so, move to next product
+  {% endcomment %}
+
+  {% if cache_value == expected_cache_value %}
+    {% log
+      message: "Product has no changes to the configured attributes.",
+      product_id: product.id
+    %}
+    {% continue %}
+  {% endif %}
+
+  {% comment %}
+    -- fire the configured custom event if a different cache value exists
+  {% endcomment %}
+
+  {% if cache_value != blank or event.preview %}
+    {% action "event" %}
+      {
+        "topic": {{ custom_event_topic | json }},
+        "data": {{ product | json }}
+      }
+    {% endaction %}
+
+  {% else %}
+    {% log
+      message: "Product does not have a cached snapshot for this combination of product and/or variant attributes; setting it now, but will not trigger the custom event on this task run.",
+      product: product
+    %}
+  {% endif %}
+
+  {% comment %}
+    -- save a hash of the product data in the cache with default expiration of 60 days
+  {% endcomment %}
+
+  {% action "cache", "set", cache_key, expected_cache_value %}
+{% endfor %}
