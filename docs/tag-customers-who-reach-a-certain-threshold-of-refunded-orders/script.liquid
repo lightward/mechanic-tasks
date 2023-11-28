@@ -1,0 +1,237 @@
+{% assign refunded_orders_count_threshold_for_tagging = options.refunded_orders_count_threshold_for_tagging__number_required %}
+{% assign customer_tag_to_apply = options.customer_tag_to_apply__required %}
+{% assign refunded_orders_count_metafield_namespace_dot_key = options.refunded_orders_count_metafield_namespace_dot_key__required %}
+
+{% if event.preview %}
+  {% comment %}
+    -- use minimal threshold for preview data
+  {% endcomment %}
+
+  {% assign refunded_orders_count_threshold_for_tagging = 1 %}
+{% endif %}
+
+{% assign customers = array %}
+
+{% if event.topic == "shopify/refunds/create" %}
+  {% comment %}
+    -- get historical refunded orders for this customer
+  {% endcomment %}
+
+  {% capture query %}
+    query {
+      customer(id: {{ refund.order.customer.admin_graphql_api_id | json }}) {
+        id
+        tags
+        metafield(key: {{ refunded_orders_count_metafield_namespace_dot_key | json }}) {
+          value
+        }
+        orders(
+          first: 250
+          query: "financial_status:refunded,partially_refunded"
+        ) {
+          nodes {
+            id
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "customer": {
+            "id": "gid://shopify/Customer/1234567890",
+            "orders": {
+              "nodes": [
+                {
+                  "id": "gid://shopify/Order/1234567890"
+                }
+              ]
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% comment %}
+    -- add the count of refunded orders to a cloned customer object
+  {% endcomment %}
+
+  {% assign customers[0] = result.data.customer | except: "orders" | json | parse_json %}
+  {% assign customers[0]["refunded_orders_count"] = result.data.customer.orders.nodes.size %}
+
+
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% comment %}
+    -- get all customers who have placed an order and the ID's of their orders that have been refunded or partially refunded (if any)
+  {% endcomment %}
+
+  {% capture bulk_operation_query %}
+    query {
+      customers(
+        query: "orders_count:>0"
+      ) {
+        edges {
+          node {
+            __typename
+            id
+            tags
+            metafield(key: {{ refunded_orders_count_metafield_namespace_dot_key | json }}) {
+              value
+            }
+            orders(
+              query: "financial_status:refunded,partially_refunded"
+            ) {
+              edges {
+                node {
+                  __typename
+                  id
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture bulkOperation_objects_jsonl %}
+      {"__typename":"Customer","id":"gid:\/\/shopify\/Customer\/1234567890"}
+      {"__typename":"Order","id":"gid:\/\/shopify\/Order\/1234567890","__parentId":"gid:\/\/shopify\/Customer\/1234567890"}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = bulkOperation_objects_jsonl | parse_jsonl %}
+  {% endif %}
+
+  {% assign bulk_customers = bulkOperation.objects | where: "__typename", "Customer" %}
+  {% assign bulk_orders = bulkOperation.objects | where: "__typename", "Order" %}
+
+  {% for bulk_customer in bulk_customers %}
+    {% assign refunded_orders = bulk_orders | where: "__parentId", bulk_customer.id %}
+
+    {% if refunded_orders == blank %}
+      {% continue %}
+    {% endif %}
+
+    {% comment %}
+      -- clone the customer object and add the count of refunded orders to it
+    {% endcomment %}
+
+    {% assign customer = bulk_customer | json | parse_json  %}
+    {% assign customer["refunded_orders_count"] = refunded_orders.size %}
+    {% assign customers = customers | push: customer %}
+  {% endfor %}
+{% endif %}
+
+{% comment %}
+  -- loop through all customers with refunds to check threshold and set metafields
+{% endcomment %}
+
+{% assign metafield_inputs = array %}
+
+{% for customer in customers %}
+  {% comment %}
+    -- set metafield as needed (irrespective of configured threshold for tagging)
+  {% endcomment %}
+
+  {% assign metafield_value = customer.metafield.value | times: 1 %}
+
+  {% if metafield_value != customer.refunded_orders_count %}
+    {% assign metafield_input = hash %}
+    {% assign metafield_input["ownerId"] = customer.id %}
+    {% assign metafield_input["namespace"] = refunded_orders_count_metafield_namespace_dot_key | split: "." | first %}
+    {% assign metafield_input["key"] = refunded_orders_count_metafield_namespace_dot_key | split: "." | last %}
+    {% assign metafield_input["type"] = "number_integer" %}
+    {% assign metafield_input["value"] = customer.refunded_orders_count | append: "" %}
+
+    {% assign metafield_inputs = metafield_inputs | push: metafield_input %}
+  {% endif %}
+
+  {% comment %}
+    -- add/remove customer tag based on refunded orders threshold
+  {% endcomment %}
+
+  {% if customer.refunded_orders_count >= refunded_orders_count_threshold_for_tagging %}
+    {% unless customer.tags contains customer_tag_to_apply %}
+      {% action "shopify" %}
+        mutation {
+          tagsAdd(
+            id: {{ customer.id | json }}
+            tags: {{ customer_tag_to_apply | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endunless %}
+
+  {% else %}
+    {% if customer.tags contains customer_tag_to_apply %}
+      {% action "shopify" %}
+        mutation {
+          tagsRemove(
+            id: {{ customer.id | json }}
+            tags: {{ customer_tag_to_apply | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endif %}
+  {% endif %}
+{% endfor %}
+
+{% comment %}
+  -- set metafields for all customers with count of refunded orders
+{% endcomment %}
+
+{% assign groups_of_metafield_inputs = metafield_inputs | in_groups_of: 25, fill_with: false %}
+
+{% for group_of_metafield_inputs in groups_of_metafield_inputs %}
+  {% action "shopify" %}
+    mutation {
+      metafieldsSet(
+        metafields: {{ group_of_metafield_inputs | graphql_arguments }}
+      ) {
+        userErrors {
+          code
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endfor %}

@@ -325,6 +325,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Tag customers in bulk by email address](./tag-customers-in-bulk-by-email-address)
 * [Tag customers on the anniversary of their first order](./tag-customers-on-the-anniversary-of-their-first-order)
 * [Tag customers when their last order is before/after x days ago](./tag-customers-when-their-last-order-is-before-after-x-days-ago)
+* [Tag customers who reach a certain threshold of refunded orders](./tag-customers-who-reach-a-certain-threshold-of-refunded-orders)
 * [Tag online orders by ?ls= Locksmith secret link used](./tag-orders-by-locksmith-secret-link)
 * [Tag online orders by their ?ref= referral codes](./tag-orders-by-url-referrer)
 * [Tag orders in bulk by order name](./tag-orders-in-bulk-by-order-name)
@@ -714,6 +715,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Tag customers in bulk by email address](./tag-customers-in-bulk-by-email-address)
 * [Tag customers on the anniversary of their first order](./tag-customers-on-the-anniversary-of-their-first-order)
 * [Tag customers when their last order is before/after x days ago](./tag-customers-when-their-last-order-is-before-after-x-days-ago)
+* [Tag customers who reach a certain threshold of refunded orders](./tag-customers-who-reach-a-certain-threshold-of-refunded-orders)
 * [Temporarily enable tax-exempt status when a customer is tagged](./temporarily-enable-tax-exempt-status-when-a-customer-is-tagged)
 * [Update empty customer data from addresses](./update-empty-customer-data-from-addresses)
 
@@ -1079,6 +1081,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Send an email when a product's price goes below its cost](./send-an-email-when-a-products-price-goes-below-its-cost)
 * [Set product or variant metafields values in bulk](./set-product-or-variant-metafields-in-bulk)
 * [Sync inventory levels to variant metafields](./sync-inventory-levels-to-variant-metafields)
+* [Tag customers who reach a certain threshold of refunded orders](./tag-customers-who-reach-a-certain-threshold-of-refunded-orders)
 * [Track incoming donations in a store metafield](./track-incoming-donations-in-a-store-metafield)
 
 ### Multi-Location
@@ -1424,6 +1427,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 * [Auto-untag customers when a certain product is refunded](./auto-untag-customers-when-a-certain-product-is-refunded)
 * [Cancel fulfillments when an order is fully refunded](./cancel-fulfillments-when-an-order-is-fully-refunded)
+* [Tag customers who reach a certain threshold of refunded orders](./tag-customers-who-reach-a-certain-threshold-of-refunded-orders)
 
 ### Reminder
 
@@ -1653,6 +1657,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Tag customers by order tier](./tag-customers-by-order-tier)
 * [Tag customers in bulk by email address](./tag-customers-in-bulk-by-email-address)
 * [Tag customers on the anniversary of their first order](./tag-customers-on-the-anniversary-of-their-first-order)
+* [Tag customers who reach a certain threshold of refunded orders](./tag-customers-who-reach-a-certain-threshold-of-refunded-orders)
 * [Tag products with no images](./tag-products-with-no-images)
 * [Temporarily enable tax-exempt status when a customer is tagged](./temporarily-enable-tax-exempt-status-when-a-customer-is-tagged)
 * [Trigger order emails with a tag](./trigger-order-emails-with-a-tag)
