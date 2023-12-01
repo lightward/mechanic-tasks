@@ -12,8 +12,9 @@ Useful for digital products, memberships, or anything else that needs to be fulf
 
 ```json
 {
-  "wait_until_any_other_shippable_items_are_fulfilled__boolean": null,
-  "ignore_products_with_this_tag": null
+  "include_products_with_any_of_these_tags__array": null,
+  "exclude_products_with_any_of_these_tags__array": null,
+  "wait_until_any_other_shippable_items_are_fulfilled__boolean": false
 }
 ```
 
@@ -27,6 +28,7 @@ shopify/orders/paid
   shopify/orders/partially_fulfilled
   shopify/orders/fulfilled
 {% endif %}
+mechanic/user/order
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
@@ -35,7 +37,9 @@ shopify/orders/paid
 
 Useful for digital products, memberships, or anything else that needs to be fulfilled instantly. This task watches for paid orders, and auto-fulfills all line items that don't require shipping.
 
-Optionally, choose to ignore products with a specific tag, and wait until other shippable items are fulfilled, if any.
+Optionally, choose to include or exclude products by tag, and wait until other shippable items are fulfilled, if any.
+
+Note: exclusion tags on a product will take priority over inclusion tags.
 
 ## Installing this task
 
