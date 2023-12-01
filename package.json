@@ -4,8 +4,8 @@
   "repository": "git@github.com:lightward/mechanic-tasks.git",
   "homepage": "https://tasks.mechanic.dev/",
   "engines": {
-    "node": ">=18 <19",
-    "npm": ">=9 <11"
+    "node": ">=18 <18.19",
+    "npm": ">=9 <10"
   },
   "dependencies": {
     "@shopify/prettier-config": "1.1.2",
