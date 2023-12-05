@@ -1,0 +1,142 @@
+{% assign tag_to_watch_for = options.tag_to_watch_for__required %}
+{% assign amount_of_days_to_reserve = options.amount_of_days_to_reserve__number_required %}
+{% assign preserve_reservation_date = options.preserve_the_initial_reservation_date_if_line_items_change__boolean %}
+
+{% if amount_of_days_to_reserve < 1 %}
+  {% error "The amount of days to reserve must be a positive number" %}
+{% endif %}
+
+{% if event.topic == "shopify/draft_orders/create" or event.topic == "shopify/draft_orders/update" %}
+  {% comment %}
+    -- get draft order data
+  {% endcomment %}
+
+  {% capture query %}
+    query {
+      draftOrder(id: {{ draft_order.admin_graphql_api_id | json }}) {
+        id
+        reserveInventoryUntil
+        status
+        tags
+        lineItems(first: 250) {
+          nodes {
+            id
+            quantity
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "draftOrder": {
+            "id": "gid://shopify/DraftOrder/1234567890",
+            "tags": {{ tag_to_watch_for | json }},
+            "lineItems": {
+              "nodes": [
+                {
+                  "id": "gid://shopify/LineItem/1234567890",
+                  "quantity": 1
+                }
+              ]
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign draft_order = result.data.draftOrder %}
+  {% assign cache_key = draft_order.id %}
+  {% assign draft_order_snapshot = cache[cache_key] %}
+
+  {% comment %}
+    -- if draft order does not have the tag to watch for, has no line items, or has been completed, then skip it
+  {% endcomment %}
+
+  {% unless draft_order.tags contains tag_to_watch_for
+    and draft_order.lineItems != blank
+    and draft_order.status != "COMPLETED"
+  %}
+    {% break %}
+  {% endunless %}
+
+  {% comment %}
+    -- create hash of draft order line items to be saved to cache
+  {% endcomment %}
+
+  {% assign draft_order_hash = draft_order.lineItems.nodes | json | sha256 %}
+
+  {% comment %}
+    -- if the draft order already has a reserve date AND there is no change in the line items from the cache snapshot, then exit
+  {% endcomment %}
+
+  {% if draft_order.reserveInventoryUntil != blank and draft_order_hash == draft_order_snapshot %}
+    {% log "Draft order already has a reservation date set, however no line items have changed since the last update; skipping" %}
+    {% break %}
+  {% endif %}
+
+  {% comment %}
+    -- calculate the reserve date to be midnight (local shop time) of the day following the future date
+  {% endcomment %}
+
+  {% assign reserve_duration_s
+    = amount_of_days_to_reserve
+    | plus: 1
+    | times: 86400
+  %}
+  {% assign reserve_date
+    = "now"
+    | date: "%s"
+    | plus: reserve_duration_s
+    | date: "%F"
+    | date: "%FT%TZ", tz: "UTC"
+  %}
+
+  {% comment %}
+    -- re-apply an existing reservation date if the preserve option has been checked
+  {% endcomment %}
+
+  {% if preserve_reservation_date and draft_order.reserveInventoryUntil != blank %}
+    {% log "Draft order line items have changed since they were saved in the cache. The 'Preserve reservation date' option is checked, so the existing reservation date wil be re-applied to the draft order to make sure that all line items are properly reserved" %}
+
+    {% assign reserve_date = draft_order.reserveInventoryUntil %}
+  {% endif %}
+
+  {% comment %}
+    -- set the cache value so the draft order update event that fires will have the new hash value to check
+  {% endcomment %}
+
+  {% action "cache", "set", cache_key, draft_order_hash %}
+
+  {% comment %}
+    -- update the draft order with the reserve date
+  {% endcomment %}
+
+  {% action "shopify" %}
+    mutation {
+      draftOrderUpdate(
+        id: {{ draft_order.id | json }}
+        input: {
+          reserveInventoryUntil: {{ reserve_date | json }}
+        }
+      ) {
+        userErrors {
+          field
+          message
+        }
+        draftOrder {
+          name
+          reserveInventoryUntil
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}

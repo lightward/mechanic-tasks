@@ -58,6 +58,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-remove a customer tag x days after it's added](./auto-remove-a-customer-tag-x-days-after-its-added)
 * [Auto-remove a product tag x days after it's added](./auto-remove-a-product-tag-x-days-after-its-added)
 * [Auto-remove attributes on new orders after X minutes](./auto-remove-attributes-on-new-orders-after-x-minutes)
+* [Auto-reserve draft order items for X days](./auto-reserve-draft-order-items-for-x-days)
 * [Auto-sort collections by inventory levels](./auto-sort-collections-by-inventory-levels)
 * [Auto-sort collections by product properties](./auto-sort-collections-by-product-properties)
 * [Auto-tag a customer's first order](./auto-tag-a-customers-first-order)
@@ -774,6 +775,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-add the draft order to a new order's attributes](./auto-add-the-draft-order-id-to-an-orders-attributes)
 * [Auto-complete new draft orders](./auto-complete-new-draft-orders)
 * [Auto-recurring draft orders](./auto-recurring-draft-orders)
+* [Auto-reserve draft order items for X days](./auto-reserve-draft-order-items-for-x-days)
 * [Auto-tag draft orders by originating staff member](./auto-tag-draft-orders-by-originating-staff-member)
 * [Auto-tag new draft orders](./auto-tag-new-draft-orders)
 * [Auto-tag orders created from drafts](./auto-tag-orders-created-from-drafts)
@@ -1309,6 +1311,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-price products based on their compare-at prices](./auto-price-products-based-on-their-compare-at-prices)
 * [Auto-publish new products](./auto-publish-new-products)
 * [Auto-publish products tagged with the current day](./auto-publish-products-tagged-with-the-current-day)
+* [Auto-reserve draft order items for X days](./auto-reserve-draft-order-items-for-x-days)
 * [Auto-sort collections by product properties](./auto-sort-collections-by-product-properties)
 * [Auto-tag customers when they purchase a matching product](./auto-tag-customers-upon-product-purchase)
 * [Auto-tag customers who purchase an item on sale](./auto-tag-customers-who-purchase-an-item-on-sale)
@@ -1448,6 +1451,10 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Report Toaster: Deliver report PDF via email or Slack](./report-toaster-deliver-report-pdf-via-email-or-slack)
 * [Report Toaster: Pirate Ship Integration](./report-toaster-pirateship-integration)
 * [Report Toaster: ShipStation Integration](./report-toaster-shipstation-integration)
+
+### Reserve
+
+* [Auto-reserve draft order items for X days](./auto-reserve-draft-order-items-for-x-days)
 
 ### Retention
 
