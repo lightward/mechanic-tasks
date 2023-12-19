@@ -342,7 +342,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Trigger order emails with a tag](./trigger-order-emails-with-a-tag)
 * [Tutorial: Trigger a task from a contact form, using webhooks](./tutorial-trigger-a-task-from-a-contact-form-using-webhooks)
 * [Unpublish a certain collection, daily](./unpublish-a-certain-collection-daily)
-* [Unpublish products from markets when locations are out of stock](./unpublish-products-from-markets-when-locations-are-out-of-stock)
+* [Unpublish products from markets when locations are out of stock](./manage-product-market-access-by-location-stock-status)
 * [Unpublish products that fall below a rolling sales threshold](./unpublish-products-that-fall-below-a-rolling-sales-threshold)
 * [Unpublish products that have been out of stock for x days](./unpublish-products-that-have-been-out-of-stock-for-x-days)
 * [Unpublish products when tagged](./unpublish-products-when-tagged)
@@ -552,7 +552,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Send account invites to all customers in bulk](./send-account-invites-to-all-customers-in-bulk)
 * [Set product or variant metafields values in bulk](./set-product-or-variant-metafields-in-bulk)
 * [Tag orders in bulk by order name](./tag-orders-in-bulk-by-order-name)
-* [Unpublish products from markets when locations are out of stock](./unpublish-products-from-markets-when-locations-are-out-of-stock)
+* [Unpublish products from markets when locations are out of stock](./manage-product-market-access-by-location-stock-status)
 
 ### Bulk Action Link
 
@@ -1053,7 +1053,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Markets
 
-* [Unpublish products from markets when locations are out of stock](./unpublish-products-from-markets-when-locations-are-out-of-stock)
+* [Unpublish products from markets when locations are out of stock](./manage-product-market-access-by-location-stock-status)
 
 ### Max Orders
 
@@ -1255,7 +1255,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Send an email alert when a variant hits 0 total inventory](./send-an-email-alert-when-a-variant-hits-0-total-inventory)
 * [Tag products as in- or out-of-stock, by location ID](./tag-products-as-in-or-out-of-stock-by-location-id)
 * [Tag products as in- or out-of-stock](./tag-products-as-in-or-out-of-stock)
-* [Unpublish products from markets when locations are out of stock](./unpublish-products-from-markets-when-locations-are-out-of-stock)
+* [Unpublish products from markets when locations are out of stock](./manage-product-market-access-by-location-stock-status)
 
 ### PDF
 
@@ -1391,7 +1391,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Tag products by their price ranges](./tag-products-by-their-price-ranges)
 * [Tag products with no images](./tag-products-with-no-images)
 * [Track incoming donations in a store metafield](./track-incoming-donations-in-a-store-metafield)
-* [Unpublish products from markets when locations are out of stock](./unpublish-products-from-markets-when-locations-are-out-of-stock)
+* [Unpublish products from markets when locations are out of stock](./manage-product-market-access-by-location-stock-status)
 * [Unpublish products that fall below a rolling sales threshold](./unpublish-products-that-fall-below-a-rolling-sales-threshold)
 * [Unpublish products that have been out of stock for x days](./unpublish-products-that-have-been-out-of-stock-for-x-days)
 * [Unpublish products when tagged](./unpublish-products-when-tagged)
@@ -1727,7 +1727,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Hide out-of-stock products](./hide-out-of-stock-products)
 * [Make products unavailable, after the date/time stored in product metafields](./make-products-unavailable-after-the-date-time-stored-in-product-metafields)
 * [Unpublish a certain collection, daily](./unpublish-a-certain-collection-daily)
-* [Unpublish products from markets when locations are out of stock](./unpublish-products-from-markets-when-locations-are-out-of-stock)
+* [Unpublish products from markets when locations are out of stock](./manage-product-market-access-by-location-stock-status)
 * [Unpublish products that fall below a rolling sales threshold](./unpublish-products-that-fall-below-a-rolling-sales-threshold)
 * [Unpublish products that have been out of stock for x days](./unpublish-products-that-have-been-out-of-stock-for-x-days)
 * [Unpublish products when tagged](./unpublish-products-when-tagged)
