@@ -1,4 +1,4 @@
-# Auto-tag new products by "back in stock" age
+# Auto-tag products by "back in stock" age
 
 Tags: Auto-Tag, In stock, Products, Watch
 
@@ -27,7 +27,9 @@ This task monitors changes to inventory level, records the time at which a produ
 ## Subscriptions
 
 ```liquid
-shopify/products/create
+{% if options.include_new_products__boolean %}
+  shopify/products/create
+{% endif %}
 shopify/inventory_levels/update
 {% if options.run_hourly__boolean %}
   mechanic/scheduler/hourly
@@ -52,7 +54,7 @@ Phase two occurs when you run this task manually, or when it is run daily or hou
 
 Configure "Product tags and maximum age in days" with product tags on the left, and the maximum product age to consider on the right. For example, a product tag of "new-5" with a maximum age in days of "5" will be maintained on all products that have a "back in stock: time within the last 5 days. Once a product ages beyond that threshold, this task will remove that tag during the next "phase two" run.
 
-**Note:** when this task first encounters a product on either an inventory level change or a bulk scan, the task will record the current time as the "first seen time". No tags will be added to a product until a "back in stock" time is recorded that is *newer* than the "first seen time". For newly created products, the "first seen time" will instead be set to the product creation date, which will ensure that the product's initial "back in stock" time will always be newer.
+**Note:** when this task first encounters a product on either an inventory level change or a bulk scan, the task will record the current time as the "first seen time". No tags will be added to a product until a "back in stock" time is recorded that is *newer* than the "first seen time". Optionally, choosing to "Include new products" means that their "first seen time" will instead be set as their product creation date, and they will be tagged as soon as they have inventory that meets the configured threshold.
 
 ## Installing this task
 
