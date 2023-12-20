@@ -1,8 +1,8 @@
-# Unpublish products from markets when locations are out of stock
+# Manage product market access by location stock status
 
-Tags: Bulk, Markets, Out of Stock, Products, Unpublish
+Tags: Bulk, In stock, Markets, Out of Stock, Products, Publish, Unpublish
 
-This task will remove products from markets when they go out of stock at specific locations. It runs on inventory level changes, checking the "available" inventory across all variants for that product and location, and if they are all out of stock it will unpublish the product from the market's publication, thus denying the product from online sale in that market. 
+This task runs on inventory level changes, checking the stock status across all variants for that specific product and location, and if they are all out of stock it will unpublish the product from the market's publication, thus denying the product from online sale in that market. On the flipside, it will publish a product to the location's market publications if any of its variants are in stock at that location.
 
 * View in the task library: [tasks.mechanic.dev/manage-product-market-access-by-location-stock-status](https://tasks.mechanic.dev/manage-product-market-access-by-location-stock-status)
 * Task JSON, for direct import: [task.json](../../tasks/manage-product-market-access-by-location-stock-status.json)
@@ -12,7 +12,9 @@ This task will remove products from markets when they go out of stock at specifi
 
 ```json
 {
-  "locations_and_market_names__keyval_multiline_required": null
+  "locations_and_market_names__keyval_multiline_required": null,
+  "ignore_variants_that_do_not_track_inventory__boolean": false,
+  "ignore_variants_that_are_configured_for_overselling__boolean": false
 }
 ```
 
@@ -30,11 +32,19 @@ mechanic/shopify/bulk_operation
 
 ## Documentation
 
-This task will remove products from markets when they go out of stock at specific locations. It runs on inventory level changes, checking the "available" inventory across all variants for that product and location, and if they are all out of stock it will unpublish the product from the market's publication, thus denying the product from online sale in that market. 
+This task runs on inventory level changes, checking the stock status across all variants for that specific product and location, and if they are all out of stock it will unpublish the product from the market's publication, thus denying the product from online sale in that market. On the flipside, it will publish a product to the location's market publications if any of its variants are in stock at that location.
 
-Configure the task with the location names on the left and the paired market names on the right. Multiple market names for a location should be entered on separate lines.
+The task may also be run manually to query for all active products in the shop, and process each of them for each configured location.
 
-When the task is run manually it will query for all products in the shop with at least one variant out of stock at any location, and the process each of them as per above excepting that each configured location will be checked for each product.
+Configure the task with the location names on the left and the paired market names on the right. Multiple market names for a location should be entered on separate lines. Market names may be shared between locations, and only a single location needs to be in stock for a product to be published to that market.
+
+**Note**: In this task, a product is considered in stock at a location if ANY of the variants stocked at that location:
+
+- have inventory tracking disabled **OR**
+- have overselling enabled **OR**
+- have > 0 "available" inventory
+
+Optionally, the checks for inventory tracking and overselling can each be ignored through task options; meaning the task will skip the variants which meet that criteria.
 
 ## Installing this task
 
