@@ -13,6 +13,7 @@ This task runs on inventory level changes, checking the stock status across all 
 ```json
 {
   "locations_and_market_names__keyval_multiline_required": null,
+  "ignore_products_with_any_of_these_tags__array": null,
   "ignore_variants_that_do_not_track_inventory__boolean": false,
   "ignore_variants_that_are_configured_for_overselling__boolean": false
 }
@@ -34,7 +35,7 @@ mechanic/shopify/bulk_operation
 
 This task runs on inventory level changes, checking the stock status across all variants for that specific product and location, and if they are all out of stock it will unpublish the product from the market's publication, thus denying the product from online sale in that market. On the flipside, it will publish a product to the location's market publications if any of its variants are in stock at that location.
 
-The task may also be run manually to query for all active products in the shop, and process each of them for each configured location.
+The task may also be run manually to query for all active products in the shop, and process each of them for each configured location. Optionally, enter tags for products that should be ignored completely by this task.
 
 Configure the task with the location names on the left and the paired market names on the right. Multiple market names for a location should be entered on separate lines. Market names may be shared between locations, and only a single location needs to be in stock for a product to be published to that market.
 
@@ -44,7 +45,7 @@ Configure the task with the location names on the left and the paired market nam
 - have overselling enabled **OR**
 - have > 0 "available" inventory
 
-Optionally, the checks for inventory tracking and overselling can each be ignored through task options; meaning the task will skip the variants which meet that criteria.
+The logic checks for inventory tracking and overselling can each be ignored through their respective task options; meaning the task will skip the variants which meet that criteria.
 
 ## Installing this task
 
