@@ -3,6 +3,7 @@
 {% endcomment %}
 
 {% assign locations_and_market_names = options.locations_and_market_names__keyval_multiline_required %}
+{% assign ignore_products_with_any_of_these_tags = options.ignore_products_with_any_of_these_tags__array %}
 {% assign ignore_variants_that_do_not_track_inventory = options.ignore_variants_that_do_not_track_inventory__boolean %}
 {% assign ignore_variants_that_are_configured_for_overselling = options.ignore_variants_that_are_configured_for_overselling__boolean %}
 
@@ -206,6 +207,7 @@
               id
               title
               status
+              tags
               {{ published_inputs | join: newline }}
               variants(first: 100) {
                 nodes {
@@ -276,6 +278,27 @@
   {% assign product = result.data.inventoryLevel.item.variant.product %}
 
   {% comment %}
+    -- stop processing if this product has any of the configured ignore tags
+  {% endcomment %}
+
+  {% assign has_ignore_tag = nil %}
+
+  {% for ignore_tag in ignore_products_with_any_of_these_tags %}
+    {% if product.tags contains ignore_tag %}
+      {% assign has_ignore_tag = true %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% if has_ignore_tag %}
+    {% log
+      message: "Product has one of the configured ignore tags and will be skipped.",
+      product: product
+    %}
+    {% break %}
+  {% endif %}
+
+  {% comment %}
     -- stop processing if this location isn't configured in the task or if the product is not active
   {% endcomment %}
 
@@ -297,10 +320,21 @@
     -- NOTE: bulk operation queries require edges and ids for each node, and __typename should be included for filtering returned data
   {% endcomment %}
 
+  {% assign search_query = "status:active" %}
+
+  {% for ignore_tag in ignore_products_with_any_of_these_tags %}
+    {% assign search_query
+      = ignore_tag
+      | json
+      | prepend: " tag_not:"
+      | prepend: search_query
+    %}
+  {% endfor %}
+
   {% capture bulk_operation_query %}
     query {
       products(
-        query: "status:active"
+        query: {{ search_query | json }}
       ) {
         edges {
           node {
