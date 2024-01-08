@@ -1,70 +1,162 @@
-{% if event.preview %}
+{% assign product_property_lookups = options.product_property_lookups__array_required %}
+{% assign only_sort_these_collections = options.only_sort_these_collections__array %}
+{% assign reverse_sort = options.reverse_sort__boolean %}
+
+{% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
   {% comment %}
-    Populate some preview/test data. Handling our preview this way allows
-    us to use the preview state *as a test stage* - which is perfect! The
-    entire task is exercised, every time a preview occurs.
+    -- get IDs for all manually sorted collections, optionally restricted to specific collections by ID or title
   {% endcomment %}
 
-  {% assign product_ids = array %}
-  {% assign product_ids[0] = 1234567890 %}
-  {% assign product_ids[1] = 3456789012 %}
-  {% assign product_ids[2] = 2345678901 %}
-  {% assign products = array %}
+  {% assign collection_ids_to_sort = array %}
+  {% assign cursor = nil %}
 
-  {% for product_id in product_ids %}
-    {% assign product = hash %}
+  {% for n in (1..50) %}
+    {% capture query %}
+      query {
+        collections(
+          first: 250
+          after: {{ cursor | json }}
+          query: {{ search_query | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            legacyResourceId
+            sortOrder
+            title
+          }
+        }
+      }
+    {% endcapture %}
 
-    {% for lookup in options.product_property_lookups__array_required reversed %}
-      {% if forloop.first %}
-        {% assign product[lookup] = product_id %}
-      {% else %}
-        {% assign temp = product %}
-        {% assign product = hash %}
-        {% assign product[lookup] = temp %}
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "collections": {
+              "nodes": [
+                {
+                  "legacyResourceId": "1234567890",
+                  "sortOrder": "MANUAL"
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% for collection in result.data.collections.nodes %}
+      {% if only_sort_these_collections != blank %}
+        {% unless only_sort_these_collections contains collection.legacyResourceId
+          or only_sort_these_collections contains collection.title
+          or event.preview
+        %}
+          {% continue %}
+        {% endunless %}
       {% endif %}
+
+      {% if collection.sortOrder != "MANUAL" %}
+        {% log
+          message: "Collection is not configured for manual sorting; skipping.",
+          collection: collection
+        %}
+        {% continue %}
+      {% endif %}
+
+      {% assign collection_ids_to_sort = collection_ids_to_sort | push: collection.legacyResourceId %}
     {% endfor %}
 
-    {% assign product["id"] = product_id %}
-    {% assign product["admin_graphql_api_id"] = "gid://shopify/Product/" | append: product_id %}
-    {% assign products[products.size] = product %}
-  {% endfor %}
-
-  {% capture shop_json %}
-    {
-      "collections": [
-        {
-          "title": {{ options.only_sort_these_collections__array[0] | default: "Some collection" | json }},
-          "admin_graphql_api_id": "gid://shopify/Collection/1234567890",
-          "sort_order": "manual",
-          "products": {{ products | json }}
-        }
-      ]
-    }
-  {% endcapture %}
-
-  {% assign shop = shop_json | parse_json %}
-{% endif %}
-
-{% if options.only_sort_these_collections__array != blank %}
-  {% assign collections = array %}
-
-  {% for some_collection in shop.collections %}
-    {% assign some_collection_id_string = "" | append: some_collection.id %}
-    {% if options.only_sort_these_collections__array contains some_collection_id_string or options.only_sort_these_collections__array contains some_collection.title %}
-      {% assign collections[collections.size] = some_collection %}
+    {% if result.data.collections.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.collections.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
     {% endif %}
   {% endfor %}
-{% else %}
-  {% assign collections = shop.collections %}
-{% endif %}
 
-{% for collection in collections %}
-  {% if collection.sort_order != "manual" %}
-    {% log %}
-      {{ collection.title | json | append: " is not configured for manual sorting. Set this collection to be manually sorted, and try again." | json }}
-    {% endlog %}
-    {% continue %}
+  {% if collection_ids_to_sort == blank %}
+    {% log "No collections qualified to be sorted on this task run." %}
+    {% break %}
   {% endif %}
+
+  {% comment %}
+    -- save the qualified collection IDs to the cache for lookup in later child events
+    -- NOTE: using event ID instead of task ID in case one instance of this task runs concurrent with another
+  {% endcomment %}
+
+  {% assign cache_key = event.id | prepend: "collection_ids_to_sort_" %}
+  {% action "cache", "set", cache_key, collection_ids_to_sort %}
+
+  {% log
+    message: "Begin processing collections loop using sequential child events.",
+    total_collections_to_sort: collection_ids_to_sort.size
+  %}
+
+  {% action "event" %}
+    {
+      "topic": "user/collection_sort/process",
+      "task_id": {{ task.id | json }},
+      "data": {
+        "cache_key": {{ cache_key | json }},
+        "cache_index": 0
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic == "user/collection_sort/process" %}
+  {% assign cache_key = event.data.cache_key %}
+  {% assign cache_index = event.data.cache_index %}
+  {% assign collection_ids_to_sort = cache[cache_key] %}
+  {% assign collection_id = collection_ids_to_sort[cache_index] %}
+  {% assign collection = shop.collections[collection_id] %}
+
+  {% if event.preview %}
+    {% comment %}
+      -- use stub data instead of a preview event to incorporate the configured product properties
+    {% endcomment %}
+
+    {% assign product_ids = array | push: "1234567890", "3456789012", "2345678901" %}
+    {% assign products = array %}
+
+    {% for product_id in product_ids %}
+      {% assign product = hash %}
+
+      {% for lookup in product_property_lookups reversed %}
+        {% if forloop.first %}
+          {% assign product[lookup] = product_id %}
+
+        {% else %}
+          {% assign temp = product %}
+          {% assign product = hash %}
+          {% assign product[lookup] = temp %}
+        {% endif %}
+      {% endfor %}
+
+      {% assign product["id"] = product_id %}
+      {% assign product["admin_graphql_api_id"] = "gid://shopify/Product/" | append: product_id %}
+      {% assign products[products.size] = product %}
+    {% endfor %}
+
+    {% capture collection_json %}
+      {
+        "title": {{ only_sort_these_collections[0] | default: "Some collection" | json }},
+        "admin_graphql_api_id": "gid://shopify/Collection/1234567890",
+        "products": {{ products | json }}
+      }
+    {% endcapture %}
+
+    {% assign collection = collection_json | parse_json %}
+  {% endif %}
+
+  {% comment %}
+    -- process products using REST resources to align with configured product properties
+  {% endcomment %}
 
   {% assign moves = array %}
   {% assign product_ids_and_positions = hash %}
@@ -77,10 +169,12 @@
     {% assign product_id_and_value["id"] = product.admin_graphql_api_id %}
 
     {% assign value = product %}
+
     {% for lookup in options.product_property_lookups__array_required %}
       {% comment %}
-        Command methods can only be invoked via dot notation.
+        -- NOTE: command methods (size, first, last) can only be invoked via dot notation
       {% endcomment %}
+
       {% case lookup %}
         {% when "size" %}
           {% assign value = value.size %}
@@ -94,8 +188,9 @@
     {% endfor %}
 
     {% comment %}
-      Make sure this is always a serializable/sortable object, defaulting to nil in the case of an empty string so that SKU values which are *either* nil or an empty string always end up at the end of the list.
+      -- make sure this is always a serializable/sortable object, defaulting to nil in the case of an empty string so that SKU values which are *either* nil or an empty string always end up at the end of the list.
     {% endcomment %}
+
     {% assign product_id_and_value["value"] = value | json | parse_json | default: nil %}
 
     {% assign product_ids_and_values[product_ids_and_values.size] = product_id_and_value %}
@@ -103,9 +198,14 @@
 
   {% assign sorted_product_values = product_ids_and_values | sort: "value" %}
   {% assign sorted_product_ids = product_ids_and_values | sort: "value" | map: "id" %}
-  {% if options.reverse_sort__boolean %}
+
+  {% if reverse_sort %}
     {% assign sorted_product_ids = sorted_product_ids | reverse %}
   {% endif %}
+
+  {% comment %}
+    -- determine the moves necessary to place products in their sorted positions
+  {% endcomment %}
 
   {% for sorted_product_id in sorted_product_ids %}
     {% if forloop.index0 != product_ids_and_positions[sorted_product_id] %}
@@ -116,12 +216,20 @@
     {% endif %}
   {% endfor %}
 
-  {% if moves == empty %}
-    {% log %}
-      {{ "No moves necessary for " | append: collection.title | append: " - everything is already in its appropriate sort order." | json }}
-    {% endlog %}
+  {% if moves == blank %}
+    {% log
+      message: "No moves necessary for this collection, everything is already in its appropriate sort order.",
+      collection: collection.title
+    %}
+
   {% else %}
+    {% log
+      message: "Collection requires sorting.",
+      collection: collection.title
+    %}
+
     {% assign moves_in_groups = moves | in_groups_of: 250, fill_with: false %}
+
     {% for move_group in moves_in_groups %}
       {% action "shopify" %}
         mutation {
@@ -138,4 +246,55 @@
       {% endaction %}
     {% endfor %}
   {% endif %}
-{% endfor %}
+
+  {% assign new_cache_index = cache_index | plus: 1 %}
+
+  {% log
+    collections_seen: new_cache_index,
+    total_collections_to_sort: collection_ids_to_sort.size
+  %}
+
+  {% comment %}
+    -- process next collection in the cache if there is one
+  {% endcomment %}
+
+  {% if new_cache_index < collection_ids_to_sort.size %}
+    {% action "event" %}
+      {
+        "topic": "user/collection_sort/process",
+        "task_id": {{ task.id | json }},
+        "data": {
+          "cache_key": {{ cache_key | json }},
+          "cache_index": {{ new_cache_index }}
+        }
+      }
+    {% endaction %}
+
+  {% else %}
+    {% comment %}
+      -- use a distinct user event to indicate the entire task run is complete, so it can be filtered in the event log
+    {% endcomment %}
+
+    {% action "event" %}
+      {
+        "topic": "user/collection_sort/complete",
+        "task_id": {{ task.id | json }},
+        "data": {
+          "cache_key": {{ cache_key | json }},
+          "cache_index": {{ new_cache_index }}
+        }
+      }
+    {% endaction %}
+  {% endif %}
+
+{% elsif event.topic == "user/collection_sort/complete" %}
+  {% assign cache_key = event.data.cache_key %}
+  {% assign cache_index = event.data.cache_index %}
+
+  {% log
+    message: "Collection sorting complete. Deleting cached collection IDs.",
+    collections_seen: cache_index
+  %}
+
+  {% action "cache", "del", cache_key %}
+{% endif %}
