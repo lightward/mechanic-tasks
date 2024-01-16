@@ -118,54 +118,34 @@
   | where: "id", inventory_level.admin_graphql_api_id
   | first
 %}
-
 {% assign source_quantity = source_inventory_level.quantities.first.quantity %}
 
 {% comment %}
-  -- check to see if a cached value exists, and set this inventory level to that value if they are not the same
+  -- since this task updates ALL inventory levels of a variant in bulk, then a source quantity that doesn't equal the cached value for this variant indicates the change was likely not made via a prior run of this task
 {% endcomment %}
 
 {% assign cache_key = "variant-inventory-level-" | append: inventory_item.variant.legacyResourceId %}
 {% assign cached_value = cache[cache_key] %}
 
 {% if cached_value != blank %}
+  {% if cached_value == source_quantity %}
+    {% log
+      message: "The 'available' inventory level of this variant at this location (i.e. source quantity) matches the cached value for this variant; no updates to make.",
+      cached_value: cached_value,
+      source_quantity: source_quantity
+    %}
+    {% break %}
+  {% endif %}
+
   {% log
-    message: "Cached variant inventory level value already exists, which means an update was made in the last minute. Revert this inventory level if mismatched.",
+    message: "The 'available' inventory level of this variant at this location (i.e. source quantity) does not match the cached value for this variant; update the cache and adjust the other levels as needed.",
     cached_value: cached_value,
     source_quantity: source_quantity
   %}
-
-  {% if cached_value != source_quantity %}
-    {% action "shopify" %}
-      mutation {
-        inventoryAdjustQuantities(
-          input: {
-            name: "available"
-            reason: "correction"
-            changes: [
-              {
-                inventoryItemId: {{ inventory_item.id | json }}
-                locationId: {{ source_inventory_level.location.id | json }}
-                delta: {{ cached_value | minus: source_quantity }}
-              }
-            ]
-          }
-        ) {
-          userErrors {
-            code
-            field
-            message
-          }
-        }
-      }
-    {% endaction %}
-  {% endif %}
-
-  {% break %}
 {% endif %}
 
 {% comment %}
-  -- no cached value exists, so set it and then adjust "available" quantities across locations, using the source quantity to determine deltas
+  -- no cached value exists OR this new value does not match it, so set it and then adjust "available" quantities across locations, using the source quantity to determine deltas
 {% endcomment %}
 
 {% action "cache", "setex", cache_key, 60, source_quantity %}
