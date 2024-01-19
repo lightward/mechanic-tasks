@@ -30,9 +30,7 @@ shopify/inventory_levels/update
 
 When an inventory level is updated, this task will adjust the "available" inventory for all other locations of the **same** variant to be the same quantity. Optionally, configure this task to filter for specific product types. Leaving this option blank means the task will monitor and update inventory for all products in the shop.
 
-**Limitations**
-
-Changes to multiple inventory levels for a single variant, within the span of 60 seconds, will result in only the first inventory change being applied.
+**CAUTION**: This task might not make accurate adjustments in certain high-volume scenarios. For example, an inventory import that sets mismatched inventory levels for a variant monitored by this task will cause a cascading effect of reapplying the deltas between each incorrect inventory level.
 
 ## Installing this task
 
