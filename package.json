@@ -13,7 +13,7 @@
     "dir-compare": "4.2.0",
     "glob": "10.3.10",
     "husky": "8.0.3",
-    "prettier": "3.1.1",
+    "prettier": "3.2.4",
     "sort-json": "2.0.1",
     "lint-staged": "15.2.0"
   },
