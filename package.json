@@ -12,15 +12,15 @@
     "ajv": "8.12.0",
     "dir-compare": "4.2.0",
     "glob": "10.3.10",
-    "husky": "8.0.3",
+    "husky": "^9.0.7",
+    "lint-staged": "15.2.0",
     "prettier": "3.2.4",
-    "sort-json": "2.0.1",
-    "lint-staged": "15.2.0"
+    "sort-json": "2.0.1"
   },
   "scripts": {
     "test": "node ./lib/test.js",
     "build": "node ./lib/build.js",
-    "prepare": "husky install"
+    "prepare": "husky"
   },
   "lint-staged": {
     "*.{js,json}": [
