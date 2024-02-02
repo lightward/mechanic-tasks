@@ -1,0 +1,24 @@
+{
+  "docs": "Does exactly as it says. :)",
+  "halt_action_run_sequence_on_error": false,
+  "name": "Remove a product tag when another tag is added",
+  "online_store_javascript": null,
+  "options": {
+    "product_tag_to_watch_for__required": null,
+    "product_tag_to_remove__required": null,
+    "ignore_tag_case__boolean": true
+  },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "preview_event_definitions": [],
+  "script": "{% if event.preview %}\n  {% assign product = hash %}\n  {% assign product[\"admin_graphql_api_id\"] = \"gid://shopify/Product/1234567890\" %}\n  {% assign product[\"tags\"] = options.product_tag_to_watch_for__required | append: \", \" | append: options.product_tag_to_remove__required %}\n{% endif %}\n\n{% assign product_tags = product.tags | split: \", \" %}\n{% assign tag_to_match = options.product_tag_to_watch_for__required %}\n{% assign tag_to_remove = options.product_tag_to_remove__required %}\n\n{% if options.ignore_tag_case__boolean %}\n  {% assign product_tags = product.tags | downcase | split: \", \" %}\n  {% assign tag_to_match = options.product_tag_to_watch_for__required | downcase %}\n  {% assign tag_to_remove = options.product_tag_to_remove__required | downcase %}\n{% endif %}\n\n{% if product_tags contains tag_to_match and product_tags contains tag_to_remove %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsRemove(\n        id: {{ product.admin_graphql_api_id | json }}\n        tags: {{ options.product_tag_to_remove__required | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}",
+  "subscriptions": [
+    "shopify/products/update"
+  ],
+  "subscriptions_template": "shopify/products/update",
+  "tags": [
+    "Products",
+    "Untag",
+    "Watch"
+  ]
+}

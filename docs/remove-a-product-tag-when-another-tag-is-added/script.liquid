@@ -1,0 +1,31 @@
+{% if event.preview %}
+  {% assign product = hash %}
+  {% assign product["admin_graphql_api_id"] = "gid://shopify/Product/1234567890" %}
+  {% assign product["tags"] = options.product_tag_to_watch_for__required | append: ", " | append: options.product_tag_to_remove__required %}
+{% endif %}
+
+{% assign product_tags = product.tags | split: ", " %}
+{% assign tag_to_match = options.product_tag_to_watch_for__required %}
+{% assign tag_to_remove = options.product_tag_to_remove__required %}
+
+{% if options.ignore_tag_case__boolean %}
+  {% assign product_tags = product.tags | downcase | split: ", " %}
+  {% assign tag_to_match = options.product_tag_to_watch_for__required | downcase %}
+  {% assign tag_to_remove = options.product_tag_to_remove__required | downcase %}
+{% endif %}
+
+{% if product_tags contains tag_to_match and product_tags contains tag_to_remove %}
+  {% action "shopify" %}
+    mutation {
+      tagsRemove(
+        id: {{ product.admin_graphql_api_id | json }}
+        tags: {{ options.product_tag_to_remove__required | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}
