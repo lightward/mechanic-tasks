@@ -145,6 +145,10 @@
     -- this user event is called from the scheduler event, to process any products without a cache entry
   {% endcomment %}
 
+  {% if event.data.products_missing_cache == blank %}
+    {% error "No products with missing cache were passed to this event." %}
+  {% endif %}
+
   {% assign variants_by_product = event.data.products_missing_cache %}
 {% endif %}
 
@@ -305,7 +309,7 @@
         "topic": "user/sync_variant_inventory/set_cache",
         "task_id": {{ task.id | json }},
         "data": {
-          "products_missing_cache": "products_missing_cache"
+          "products_missing_cache": {{ products_missing_cache | json }}
         }
       }
     {% endaction %}
