@@ -195,7 +195,7 @@
 
 {% elsif event.topic contains "mechanic/scheduler/" %}
   {% assign inventory_adjustments = array %}
-  {% assign products_missing_cache = array %}
+  {% assign products_missing_cache = hash %}
 
   {% for pair in variants_by_product %}
     {% assign product_id = pair[0] %}
@@ -213,7 +213,7 @@
         -- if no cache has been set for this product yet, then save it for later processing and move to next product
       {% endcomment %}
 
-      {% assign products_missing_cache = products_missing_cache | push: pair %}
+      {% assign products_missing_cache[product_id] = variants %}
       {% continue %}
     {% endif %}
 
@@ -231,12 +231,13 @@
     {% if inventory_new == inventory_old %}
       {% log
         message: "No inventory adjustments needed for this product.",
-        product_id: product_id,
+        product_id: product_id
       %}
       {% continue %}
     {% endif %}
 
     {% log
+      message: "Adjusting inventory for this product.",
       inventory_old: inventory_old,
       inventory_total_old: inventory_total_old,
       inventory_total_new: inventory_total_new,
