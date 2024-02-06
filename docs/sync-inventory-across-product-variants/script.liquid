@@ -1,126 +1,160 @@
-{% assign product_types = options.product_types_to_monitor__array_required %}
+{% assign product_tags = options.product_tags_to_monitor__array %}
+{% assign product_types = options.product_types_to_monitor__array %}
 {% assign only_sync_active_products = options.only_sync_active_products__boolean %}
 
 {% assign primary_location = shop.locations[shop.primary_location_id] %}
 
-{% assign variants_by_product = hash %}
-{% assign cursor = nil %}
-{% assign search_query_parts = array %}
+{% if product_tags == blank and product_types == blank %}
+  {% error "You must choose to monitor products either by tags or types." %}
+{% elsif product_tags != blank and product_types != blank %}
+  {% error "Choose to monitor products either by tags or types, but not both." %}
+{% endif %}
 
-{% for product_type in product_types %}
-  {% assign search_query_parts[search_query_parts.size] = product_type | json | prepend: "product_type:" %}
-{% endfor %}
+{% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% comment %}
+    -- run query for all variants matched by product tags or types
+  {% endcomment %}
 
-{% capture search_query -%}
-  location_id:{{ shop.primary_location_id }} ({{ search_query_parts | join: " OR " }}) managed:true
-{%- endcapture %}
+  {% assign variants_by_product = hash %}
+  {% assign cursor = nil %}
+  {% assign search_query_parts = array %}
 
-{% for n in (0..200) %}
-  {% capture query %}
-    query {
-      productVariants(
-        first: 150
-        query: {{ search_query | json }}
-        after: {{ cursor | json }}
-      ) {
-        pageInfo {
-          hasNextPage
-          endCursor
-        }
-        nodes {
-          id
-          inventoryItem {
+  {% for product_type in product_types %}
+    {% assign search_query_parts[search_query_parts.size] = product_type | json | prepend: "product_type:" %}
+  {% endfor %}
+
+  {% for product_tag in product_tags %}
+    {% assign search_query_parts[search_query_parts.size] = product_tag | json | prepend: "tag:" %}
+  {% endfor %}
+
+  {% capture search_query -%}
+    location_id:{{ shop.primary_location_id }} ({{ search_query_parts | join: " OR " }}) managed:true
+  {%- endcapture %}
+
+  {% if only_sync_active_products %}
+    {% assign search_query = search_query | append: " product_status:active" %}
+  {% endif %}
+
+  {% for n in (0..200) %}
+    {% capture query %}
+      query {
+        productVariants(
+          first: 150
+          query: {{ search_query | json }}
+          after: {{ cursor | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
             id
-            inventoryLevel(locationId: {{ primary_location.admin_graphql_api_id | json }}) {
-              quantities(names: "available") {
-                name
-                quantity
+            inventoryItem {
+              id
+              inventoryLevel(locationId: {{ primary_location.admin_graphql_api_id | json }}) {
+                quantities(names: "available") {
+                  name
+                  quantity
+                }
               }
             }
-          }
-          product {
-            id
-          }
-        }
-      }
-    }
-  {% endcapture %}
-
-  {% assign result = query | shopify %}
-
-  {% if event.preview %}
-    {% capture result_json %}
-      {
-        "data": {
-          "productVariants": {
-            "nodes": [
-              {
-                "id": "gid://shopify/ProductVariant/1234567890",
-                "inventoryItem": {
-                  "id": "gid://shopify/InventoryItem/1234567890",
-                  "inventoryLevel": {
-                    "quantities": [
-                      {
-                        "name": "available",
-                        "quantity": 30
-                      }
-                    ]
-                  }
-                },
-                "product": {
-                  "id": "gid://shopify/Product/1234567890"
-                }
-              },
-              {
-                "id": "gid://shopify/ProductVariant/2345678901",
-                "inventoryItem": {
-                  "id": "gid://shopify/InventoryItem/2345678901",
-                  "inventoryLevel": {
-                    "quantities": [
-                      {
-                        "name": "available",
-                        "quantity": {% if event.topic == "mechanic/user/trigger" %}30{% else %}31{% endif %}
-                      }
-                    ]
-                  }
-                },
-                "product": {
-                  "id": "gid://shopify/Product/1234567890"
-                }
-              }
-            ]
+            product {
+              id
+            }
           }
         }
       }
     {% endcapture %}
 
-    {% assign result = result_json | parse_json %}
-  {% endif %}
+    {% assign result = query | shopify %}
 
-  {% for variant in result.data.productVariants.nodes %}
-    {% assign variants_by_product[variant.product.id]
-      = variants_by_product[variant.product.id]
-      | default: array
-      | push: variant
-    %}
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "productVariants": {
+              "nodes": [
+                {
+                  "id": "gid://shopify/ProductVariant/1234567890",
+                  "inventoryItem": {
+                    "id": "gid://shopify/InventoryItem/1234567890",
+                    "inventoryLevel": {
+                      "quantities": [
+                        {
+                          "name": "available",
+                          "quantity": 30
+                        }
+                      ]
+                    }
+                  },
+                  "product": {
+                    "id": "gid://shopify/Product/1234567890"
+                  }
+                },
+                {
+                  "id": "gid://shopify/ProductVariant/2345678901",
+                  "inventoryItem": {
+                    "id": "gid://shopify/InventoryItem/2345678901",
+                    "inventoryLevel": {
+                      "quantities": [
+                        {
+                          "name": "available",
+                          "quantity": {% if event.topic == "mechanic/user/trigger" %}30{% else %}31{% endif %}
+                        }
+                      ]
+                    }
+                  },
+                  "product": {
+                    "id": "gid://shopify/Product/1234567890"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% for variant in result.data.productVariants.nodes %}
+      {% assign variants_by_product[variant.product.id]
+        = variants_by_product[variant.product.id]
+        | default: array
+        | push: variant
+      %}
+    {% endfor %}
+
+    {% if result.data.productVariants.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.productVariants.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
   {% endfor %}
 
-  {% if result.data.productVariants.pageInfo.hasNextPage %}
-    {% assign cursor = result.data.productVariants.pageInfo.endCursor %}
-  {% else %}
+  {% if variants_by_product == blank %}
+    {% error
+      message: "No matching product variants found! Check your product tag or type settings for this task.",
+      search_query: search_query
+    %}
     {% break %}
   {% endif %}
-{% endfor %}
 
-{% if variants_by_product == blank %}
-  {% log
-    message: "No matching product variants found! Check your product type settings for this task.",
-    search_query: search_query
-  %}
-  {% break %}
+{% elsif event.topic == "user/sync_variant_inventory/set_cache" %}
+  {% comment %}
+    -- this user event is called from the scheduler event, to process any products without a cache entry
+  {% endcomment %}
+
+  {% assign variants_by_product = event.data.products_missing_cache %}
 {% endif %}
 
-{% if event.topic == "mechanic/user/trigger" %}
+{% if event.topic == "mechanic/user/trigger" or event.topic == "user/sync_variant_inventory/set_cache" %}
+  {% comment %}
+    -- this event is run manually for initial setup, but will also be triggered via a custom event to handle any products that don't yet have a cache setting (typically new products, but can be existing ones if their cache expires or if the task configuration is changed)
+  {% endcomment %}
+
+  {% assign products_out_of_sync = array %}
+
   {% for pair in variants_by_product %}
     {% assign product_id = pair[0] %}
     {% assign variants = pair[1] %}
@@ -135,13 +169,12 @@
     {% assign expected_inventory_total = available_quantites.first | times: available_quantites.size %}
 
     {% if inventory_total != expected_inventory_total %}
-      {% error
-        message: "Product variant inventory levels are not in sync. Manually ensure everything is at the same level, then try again.",
-        product_id: product_id,
-        expected_inventory_total: expected_inventory_total,
-        inventory_total: inventory_total,
-        available_quantites: available_quantites
-      %}
+      {% assign product_out_of_sync = hash %}
+      {% assign product_out_of_sync["product_id"] = product_id %}
+      {% assign product_out_of_sync["expected_inventory_total"] = expected_inventory_total %}
+      {% assign product_out_of_sync["current_inventory_total"] = inventory_total %}
+      {% assign product_out_of_sync["available_quantites"] = available_quantites %}
+      {% assign products_out_of_sync = products_out_of_sync | push: product_out_of_sync %}
 
     {% else %}
       {% assign cache_key = "inventory_by_product:" | append: product_id %}
@@ -149,8 +182,16 @@
     {% endif %}
   {% endfor %}
 
+  {% if products_out_of_sync != blank %}
+    {% action "echo"
+      __error: "Variant inventory levels are not in sync for these products. Manually ensure everything is at the same level so they may be managed by this task.",
+      products_out_of_sync: products_out_of_sync
+    %}
+  {% endif %}
+
 {% elsif event.topic contains "mechanic/scheduler/" %}
   {% assign inventory_adjustments = array %}
+  {% assign products_missing_cache = array %}
 
   {% for pair in variants_by_product %}
     {% assign product_id = pair[0] %}
@@ -164,10 +205,12 @@
     {% endif %}
 
     {% if inventory_old == blank %}
-      {% error
-        message: "The inventory for this product has not yet been cached. Manually synchronize the inventory for this product and run this task manually per steps 2 and 3 in the task instructions.",
-        product_id: product_id
-      %}
+      {% comment %}
+        -- if no cache has been set for this product yet, then save it for later processing and move to next product
+      {% endcomment %}
+
+      {% assign products_missing_cache = products_missing_cache | push: pair %}
+      {% continue %}
     {% endif %}
 
     {% assign available_quantites = array %}
@@ -181,6 +224,14 @@
     {% assign inventory_total_diff = inventory_total_new | minus: inventory_total_old %}
     {% assign inventory_new = inventory_old | plus: inventory_total_diff %}
 
+    {% if inventory_new == inventory_old %}
+      {% log
+        message: "No inventory adjustments needed for this product.",
+        product_id: product_id,
+      %}
+      {% continue %}
+    {% endif %}
+
     {% log
       inventory_old: inventory_old,
       inventory_total_old: inventory_total_old,
@@ -188,14 +239,8 @@
       inventory_total_diff: inventory_total_diff,
       inventory_new: inventory_new,
       product_id: product_id,
-      variants_count: variants.size,
-      variants: variants
+      variants_count: variants.size
     %}
-
-    {% if inventory_new == inventory_old %}
-      {% log "No inventory adjustments needed for this product." %}
-      {% continue %}
-    {% endif %}
 
     {% action "cache", "set", cache_key, inventory_new %}
 
@@ -245,5 +290,24 @@
         }
       {% endaction %}
     {% endfor %}
+  {% endif %}
+
+  {% if products_missing_cache != blank %}
+    {% assign product_ids = products_missing_cache | keys %}
+
+    {% log
+      message: "Found these products without cache entries. Sending them to custom event to set caches if possible.",
+      product_ids: product_ids
+    %}
+
+    {% action "event" %}
+      {
+        "topic": "user/sync_variant_inventory/set_cache",
+        "task_id": {{ task.id | json }},
+        "data": {
+          "products_missing_cache": "products_missing_cache"
+        }
+      }
+    {% endaction %}
   {% endif %}
 {% endif %}
