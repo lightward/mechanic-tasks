@@ -1,0 +1,366 @@
+{% assign email_recipients = options.email_receipients__array_required %}
+{% assign app_names_to_monitor = options.app_names_to_monitor__array %}
+
+{% if event.topic == "shopify/discounts/create" or event.topic == "shopify/discounts/update" %}
+  {% comment %}
+    -- data from the webhook is sparse, so query additional discount data to be included in the notification
+  {% endcomment %}
+
+  {% capture query %}
+    query {
+      discountNode(id: {{ discount.admin_graphql_api_id | json }}) {
+        id
+        events(
+          first: 1
+          query: "verb:create"
+        ) {
+          nodes {
+            id
+            appTitle
+          }
+        }
+        discount {
+          __typename
+          ... on DiscountAutomaticBasic {
+            combinesWith {
+              productDiscounts
+              orderDiscounts
+              shippingDiscounts
+            }
+            createdAt
+            discountClass
+            endsAt
+            startsAt
+            status
+            summary
+            title
+          }
+          ... on DiscountCodeBasic {
+            combinesWith {
+              productDiscounts
+              orderDiscounts
+              shippingDiscounts
+            }
+            createdAt
+            discountClass
+            endsAt
+            startsAt
+            status
+            summary
+            title
+            usageLimit
+          }
+          ... on DiscountAutomaticBxgy {
+            combinesWith {
+              productDiscounts
+              orderDiscounts
+              shippingDiscounts
+            }
+            createdAt
+            customerBuys {
+              items {
+                __typename
+              }
+            }
+            customerGets {
+              items {
+                __typename
+              }
+            }
+            endsAt
+            startsAt
+            status
+            summary
+            title
+          }
+          ... on DiscountCodeBxgy {
+            combinesWith {
+              productDiscounts
+              orderDiscounts
+              shippingDiscounts
+            }
+            createdAt
+            customerBuys {
+              items {
+                __typename
+              }
+            }
+            customerGets {
+              items {
+                __typename
+              }
+            }
+            endsAt
+            startsAt
+            status
+            summary
+            title
+            usageLimit
+          }
+          ... on DiscountAutomaticFreeShipping {
+            combinesWith {
+              productDiscounts
+              orderDiscounts
+              shippingDiscounts
+            }
+            createdAt
+            endsAt
+            startsAt
+            status
+            summary
+            title
+          }
+          ... on DiscountCodeFreeShipping {
+            combinesWith {
+              productDiscounts
+              orderDiscounts
+              shippingDiscounts
+            }
+            createdAt
+            endsAt
+            startsAt
+            status
+            summary
+            title
+            usageLimit
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "discountNode": {
+            "id": "gid://shopify/DiscountNode/1234567890",
+            "events": {
+              "nodes": [
+                {
+                  "appTitle": {{ app_names_to_monitor.first | json }}
+                }
+              ]
+            },
+            "discount": {
+              "__typename": "DiscountCodeBasic",
+              "combinesWith": {
+                "productDiscounts": false,
+                "orderDiscounts": false,
+                "shippingDiscounts": true
+              },
+              "discountClass": "PRODUCT",
+              "endsAt": "2024-10-31T07:59:59Z",
+              "startsAt": "2024-10-01T08:00:00Z",
+              "summary": "30% off Widget • Minimum quantity of 3 • Applies once per order",
+              "title": "PREVIEW-CODE",
+              "usageLimit": 100
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% unless event.preview %}
+    {% log discount_node: result.data.discountNode %}
+  {% endunless %}
+
+  {% assign discount = result.data.discountNode.discount %}
+  {% assign app_title = result.data.discountNode.events.nodes.first.appTitle %}
+  {% assign discount_type = discount.__typename %}
+
+  {% comment %}
+    -- ignore custom discount types and filter by app names if configured
+  {% endcomment %}
+
+  {% if discount_type == "DiscountAutomaticApp" or discount_type == "DiscountCodeApp" %}
+    {% log
+      message: "This task does not support app-generated, custom discount types.",
+      discount_type: discount_type,
+      app_title: app_title
+    %}
+    {% break %}
+
+  {% elsif app_names_to_monitor != blank %}
+    {% unless app_names_to_monitor contains app_title %}
+      {% log
+        message: "This discount was created by an app that is not in the 'App names to monitor' list.",
+        app_title: app_title,
+        app_names_to_monitor: app_names_to_monitor
+      %}
+      {% break %}
+    {% endunless %}
+  {% endif %}
+
+  {% comment %}
+    -- create human-readable output from various field types and values
+  {% endcomment %}
+
+  {% if discount_type contains "Automatic" %}
+    {% assign discount_method = "Automatic" %}
+
+  {% elsif discount_type contains "Code" %}
+    {% assign discount_method = "Code" %}
+
+    {% comment %}
+      -- customer limits are included in the summary field, so only handle total usage limits here
+    {% endcomment %}
+
+    {% if discount.usageLimit %}
+      {%- capture maximum_discount_uses -%}
+        Limit of {{ discount.usageLimit }} total use{% if discount.usageLimit > 1 %}s{% endif %}
+      {%- endcapture -%}
+    {% else %}
+      {% assign maximum_discount_uses = "No total usage limits" %}
+    {% endif %}
+  {% endif %}
+
+  {% case discount_type %}
+    {% when "DiscountAutomaticBasic" or "DiscountCodeBasic" %}
+      {% assign discount_type_output = discount.discountClass | capitalize %}
+
+    {% when "DiscountAutomaticBxgy" or "DiscountCodeBxgy" %}
+      {% assign discount_type_output = "Buy X Get Y" %}
+
+    {% when "DiscountAutomaticFreeShipping" or "DiscountCodeFreeShipping" %}
+      {% assign discount_type_output = "Free Shipping" %}
+  {% endcase %}
+
+  {% comment %}
+    -- all discount types support combining with other discounts
+  {% endcomment %}
+
+  {% assign combines_with = array %}
+
+  {% if discount.combinesWith.productDiscounts %}
+    {% assign combines_with = combines_with | push: "product" %}
+  {% endif %}
+
+  {% if discount.combinesWith.orderDiscounts %}
+    {% assign combines_with = combines_with | push: "order" %}
+  {% endif %}
+
+  {% if discount.combinesWith.shippingDiscounts %}
+    {% assign combines_with = combines_with | push: "shipping" %}
+  {% endif %}
+
+  {% if combines_with == blank %}
+    {% assign combines_with_output = "Can’t combine with other discounts" %}
+
+  {% else %}
+    {% if combines_with.size == 3 %}
+      {% capture combines_with_output -%}
+        Combines with {{ combines_with[0] }}, {{ combines_with[1] }}, and {{ combines_with[2] }} discounts
+      {%- endcapture %}
+
+    {% elsif combines_with.size == 2 %}
+      {% capture combines_with_output -%}
+        Combines with {{ combines_with[0] }} and {{ combines_with[1] }} discounts
+      {%- endcapture %}
+
+    {% else %}
+      {% capture combines_with_output -%}
+        Combines with {{ combines_with[0] }} discounts
+      {%- endcapture %}
+    {% endif %}
+  {% endif %}
+
+  {% capture active_dates -%}
+    Active from {{ discount.startsAt | date: "%b %e" }}{% if discount.endsAt %} to {{ discount.endsAt | date: "%b %e" }}{% endif %}
+  {%- endcapture %}
+
+  {% comment %}
+    -- details will vary by discount type, method, and configuration; start with shared details
+  {% endcomment %}
+
+  {% assign details = array | push: combines_with_output, active_dates %}
+
+  {% if discount_method == "Code" %}
+    {% assign details = details | unshift: maximum_discount_uses  %}
+  {% endif %}
+
+  {% if discount_type contains "Bxgy" %}
+    {% case discount.customerBuys.items.__typename %}
+      {% when "AllDiscountItems" %}
+        {% assign customer_buys = "Can buy any product" %}
+
+      {% when "DiscountCollections" %}
+        {% assign customer_buys = "Must buy products from specific collections" %}
+
+      {% when "DiscountProducts" %}
+        {% assign customer_buys = "Must buy specific products" %}
+    {% endcase %}
+
+    {% case discount.customerGets.items.__typename %}
+      {% when "AllDiscountItems" %}
+        {% assign customer_gets = "Applies to all items" %}
+
+      {% when "DiscountCollections" %}
+        {% assign customer_gets = "Applies to products from specific collections" %}
+
+      {% when "DiscountProducts" %}
+        {% assign customer_gets = "Applies to specific products" %}
+    {% endcase %}
+
+    {% assign details = details | unshift: customer_buys, customer_gets  %}
+  {% endif %}
+
+  {% comment %}
+    -- the discount summary only includes some of the details; concatenate with the details determined through logic above
+  {% endcomment %}
+
+  {% assign details = discount.summary | split: " • " | concat: details %}
+
+  {% unless event.preview %}
+    {% log
+      title: discount.title,
+      app_title: app_title,
+      details: details,
+      summary: discount.summary,
+      discount_class: discount.discountClass,
+      discount_type: discount_type,
+      customer_buys: customer_buys,
+      customer_gets: customer_gets,
+      maximum_discount_uses: maximum_discount_uses,
+      combines_with: combines_with
+    %}
+  {% endunless %}
+
+  {% capture email_subject %}
+    {{ discount_type_output }} discount created - {{ discount.title }}
+  {% endcapture %}
+
+  {% capture email_body %}
+    <strong>Title:</strong> {{ discount.title }}
+    <br/>
+    <strong>Method:</strong> {{ discount_method }}
+    {% if app_title != blank and app_title != "Shopify Web" %}
+      <br/>
+      <strong>Created by:</strong> {{ app_title }}
+    {% endif %}
+    <br/>
+    <strong>Details:</strong>
+    <ul>
+      {% for detail in details %}
+        <li>{{ detail }}</li>
+      {% endfor %}
+    </ul>
+    <br/><br/>
+    <a href='https://admin.shopify.com/store/{{ shop.myshopify_domain | remove: ".myshopify.com" }}/discounts/{{ discount.admin_graphql_api_id | remove: "gid://shopify/Discount/" }}'>See the full discount configuration in Shopify admin</a>
+  {% endcapture %}
+
+  {% action "email" %}
+    {
+      "to": {{ email_recipients | json }},
+      "subject": {{ email_subject | json }},
+      "body": {{ email_body | json }},
+      "reply_to": {{ shop.customer_email | json }},
+      "from_display_name": {{ shop.name | json }}
+    }
+  {% endaction %}
+{% endif %}
