@@ -302,6 +302,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Send customers a reorder link X days after ordering](./send-customers-a-reorder-link-x-days-after-ordering)
 * [Send email alerts by event topic](./send-email-alerts-by-event-topic)
 * [Send email notification when items are returned](./send-email-notification-when-items-are-returned)
+* [Send email when a discount is created](./send-email-when-a-discount-is-created)
 * [Send email when an order comes in](./send-email-when-an-order-comes-in)
 * [Send email when an order is tagged](./send-email-when-an-order-is-tagged)
 * [Send follow-up emails after sending a draft order invoice](./send-follow-up-emails-after-sending-a-draft-order-invoice)
@@ -766,6 +767,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Generate a product discount when a voucher product is purchased](./generate-a-product-discount-when-a-voucher-product-is-purchased)
 * [Maintain discount percentage filters in variant metafields](./maintain-discount-percentage-filters-in-variant-metafields)
 * [Reissue single-use discount codes after order cancellation](./reissue-single-use-discount-codes-after-order-cancellation)
+* [Send email when a discount is created](./send-email-when-a-discount-is-created)
 
 ### Download
 
@@ -846,6 +848,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Send an email when a specific product is shipped](./send-an-email-when-a-specific-product-is-shipped)
 * [Send customers a reorder link X days after ordering](./send-customers-a-reorder-link-x-days-after-ordering)
 * [Send email notification when items are returned](./send-email-notification-when-items-are-returned)
+* [Send email when a discount is created](./send-email-when-a-discount-is-created)
 * [Send email when an order comes in](./send-email-when-an-order-comes-in)
 * [Send email when an order is tagged](./send-email-when-an-order-is-tagged)
 * [Send follow-up emails after sending a draft order invoice](./send-follow-up-emails-after-sending-a-draft-order-invoice)
