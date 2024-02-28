@@ -2,7 +2,7 @@
 
 Tags: Bulk, Products, Sales Channel
 
-Does exactly as it says: this task will publish all products to the sales channel(s) of your choice, on demand. Optionally, filter products by a search query, or choose to have this task hourly or daily.
+Does exactly as it says: this task will publish all products to the sales channel(s) of your choice, on demand. Optionally, filter products by a search query, or choose to have this task run hourly or daily.
 
 * View in the task library: [tasks.mechanic.dev/add-all-products-to-a-certain-sales-channel](https://tasks.mechanic.dev/add-all-products-to-a-certain-sales-channel)
 * Task JSON, for direct import: [task.json](../../tasks/add-all-products-to-a-certain-sales-channel.json)
@@ -29,15 +29,20 @@ Does exactly as it says: this task will publish all products to the sales channe
 ```liquid
 mechanic/user/trigger
 mechanic/shopify/bulk_operation
-{% if options.run_hourly__boolean  %}mechanic/scheduler/hourly{% endif %}
-{% if options.run_daily__boolean  %}mechanic/scheduler/daily{% endif %}
+{% if options.run_hourly__boolean %}
+  mechanic/scheduler/hourly
+{% elsif options.run_daily__boolean %}
+  mechanic/scheduler/daily
+{% endif %}
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
-Does exactly as it says: this task will publish all products to the sales channel(s) of your choice, on demand. Optionally, filter products by a search query, or choose to have this task hourly or daily.
+Does exactly as it says: this task will publish all products to the sales channel(s) of your choice, on demand. Optionally, filter products by a search query, or choose to have this task run hourly or daily.
+
+Note: this task comes with a "test mode", which is enabled by default. Run the task at least once in this mode to make sure it would publish the products you expect, and then disbale the test mode.
 
 ## Installing this task
 
