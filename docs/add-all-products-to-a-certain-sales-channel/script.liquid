@@ -1,36 +1,49 @@
-{% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+{% assign sales_channel_names = options.sales_channel_names__required_array %}
+{% assign products_query = options.only_publish_products_matching_this_query %}
+{% assign test_mode = options.test_mode__boolean %}
 
-  {% capture query %}
-    query {
-      publications(first: 250) {
-        edges {
-          node {
-            id
-            name
-          }
-        }
+{% capture query %}
+  query {
+    publications(first: 250) {
+      nodes {
+        id
+        name
       }
     }
-  {% endcapture %}
+  }
+{% endcapture %}
 
-  {% assign result = query | shopify %}
+{% assign result = query | shopify %}
 
-  {% assign publications = array %}
+{% assign publications = array %}
 
-  {% for publication_edge in result.data.publications.edges %}
-    {% if options.sales_channel_names__required_array contains publication_edge.node.name %}
-      {% assign publications[publications.size] = publication_edge.node %}
-    {% endif %}
-  {% endfor%}
+{% for publication in result.data.publications.nodes %}
+  {% if sales_channel_names contains publication.name %}
+    {% assign publications[publications.size] = publication %}
+  {% endif %}
+{% endfor%}
 
-  {% if event.preview != true and publications.size != options.sales_channel_names__required_array.size %}
-    {% log publications_named: options.sales_channel_names__required_array, publications_available: result.data.publications.edges,  publications_matched: publications %}
-    {% error "Unable to find all named publications. Double-check your task configuration." %}
-  {% endif %}  
+{% if event.preview %}
+  {% assign publications[0] = hash %}
+  {% assign publications[0]["id"] = "gid://shopify/Publication/1234567890" %}
+  {% assign publications[0]["name"] = sales_channel_names.first %}
+{% endif %}
 
+{% if publications.size != sales_channel_names.size %}
+  {% log
+    publications_named: sales_channel_names,
+    publications_available: result.data.publications.nodes,
+    publications_matched: publications
+  %}
+  {% error "Unable to find all configured publications. Double-check your task configuration." %}
+{% endif %}
+
+{% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
   {% capture bulk_operation_query %}
     query {
-      products (query: {{ options.only_publish_products_matching_this_query | json }}) {
+      products (
+        query: {{ products_query | json }}
+      ) {
         edges {
           node {
             __typename
@@ -64,29 +77,14 @@
   {% endaction %}
 
 {% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture jsonl_string %}
+      {"__typename":"Product","id":"gid://shopify/Product/1234567890"}
+    {% endcapture %}
 
-  {% capture query %}
-    query {
-      publications(first: 250) {
-        edges {
-          node {
-            id
-            name
-          }
-        }
-      }
-    }
-  {% endcapture %}
-
-  {% assign result = query | shopify %}
-
-  {% assign publications = array %}
-
-  {% for publication_edge in result.data.publications.edges %}
-    {% if options.sales_channel_names__required_array contains publication_edge.node.name %}
-      {% assign publications[publications.size] = publication_edge.node %}
-    {% endif %}
-  {% endfor%}
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = jsonl_string | parse_jsonl %}
+  {% endif %}
 
   {% assign products = bulkOperation.objects | where: "__typename", "Product" %}
   {% assign product_ids_and_publication_ids = array %}
@@ -94,36 +92,31 @@
   {% for product in products %}
     {% for publication in publications %}
       {% assign published_key = "publishedOnPublication" | append: forloop.index %}
+
       {% unless product[published_key] %}
         {% assign pair = array %}
         {% assign pair[0] = product.id %}
         {% assign pair[1] = publication.id %}
         {% assign product_ids_and_publication_ids[product_ids_and_publication_ids.size] = pair %}
       {% endunless %}
-    {% endfor %}    
+    {% endfor %}
   {% endfor %}
 
-  {% if event.preview %}
-    {% assign product_ids_and_publication_ids[0] = array %}
-    {% assign product_ids_and_publication_ids[0] = "gid://shopify/Product/1234567890" %}
-    {% assign product_ids_and_publication_ids[0] = "gid://shopify/Publication/1234567890" %}
-  {% endif %}
+  {% if test_mode %}
+    {% log
+      message: "Test mode: publishing actions logged only.",
+      publishing_actions_count: product_ids_and_publication_ids.size,
+      product_ids_and_publication_ids: product_ids_and_publication_ids
+    %}
 
-  {% if options.test_mode__boolean and event.preview == false %}
-    {% action "echo" %}
-      {
-        "message": "Found {{ product_ids_and_publication_ids.size }} publishing actions",
-        "product_ids_and_publication_ids": {{ product_ids_and_publication_ids | json }}
-      }
-    {% endaction %}
   {% else %}
-    {% for product_id_and_publication_id in product_ids_and_publication_ids %}
+    {% for keyval in product_ids_and_publication_ids %}
       {% action "shopify" %}
         mutation {
           publishablePublish(
-            id: {{ product_id_and_publication_id[0] | json }}
+            id: {{ keyval[0] | json }}
             input: {
-              publicationId: {{ product_id_and_publication_id[1] | json }}
+              publicationId: {{ keyval[1] | json }}
             }
           ) {
             userErrors {
@@ -135,5 +128,4 @@
       {% endaction %}
     {% endfor %}
   {% endif %}
-  
 {% endif %}
