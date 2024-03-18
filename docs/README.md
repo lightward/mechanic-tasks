@@ -549,6 +549,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Bulk capture orders by order number](./bulk-capture-by-order-number)
 * [Delete customer metafields in bulk](./delete-customer-metafields-in-bulk)
 * [Delete product or product variant metafields in bulk](./delete-product-or-product-variant-metafields-in-bulk)
+* [Keep SKUs up to date with barcodes](./keep-skus-up-to-date-with-barcodes)
 * [Maintain collections by product metafield values](./maintain-collections-by-product-metafield-values)
 * [Manage product market access by location stock status](./manage-product-market-access-by-location-stock-status)
 * [Reset negative inventory levels to zero in bulk](./reset-negative-inventory-levels-to-zero-in-bulk)

@@ -1,39 +1,137 @@
-{% if event.preview %}
-  {% capture product_json %}
-    {
-      "variants": [
-        {
-          "admin_graphql_api_id": "gid://shopify/ProductVariant/1234567890",
-          "barcode": "ABC123",
-          "sku": ""
+{% if event.topic == "shopify/products/create" or event.topic == "shopify/products/update" %}
+  {% if event.preview %}
+    {% capture product_json %}
+      {
+        "variants": [
+          {
+            "admin_graphql_api_id": "gid://shopify/ProductVariant/1234567890",
+            "barcode": "ABC123",
+            "sku": ""
+          }
+        ]
+      }
+    {% endcapture %}
+
+    {% assign product = product_json | parse_json %}
+  {% endif %}
+
+  {% for variant in product.variants %}
+    {% if variant.barcode != blank and variant.sku != variant.barcode %}
+      {% action "shopify" %}
+        mutation {
+          productVariantUpdate(
+            input: {
+              id: {{ variant.admin_graphql_api_id | json }}
+              sku: {{ variant.barcode | json }}
+            }
+          ) {
+            productVariant {
+              barcode
+              sku
+            }
+            userErrors {
+              field
+              message
+            }
+          }
         }
-      ]
-    }
-  {% endcapture %}
+      {% endaction %}
+    {% endif %}
+  {% endfor %}
 
-  {% assign product = product_json | parse_json %}
-{% endif %}
-
-{% for variant in product.variants %}
-  {% if variant.barcode != blank and variant.sku != variant.barcode %}
-    {% action "shopify" %}
-      mutation {
-        productVariantUpdate(
-          input: {
-            id: {{ variant.admin_graphql_api_id | json }}
-            sku: {{ variant.barcode | json }}
-          }
-        ) {
-          productVariant {
-            barcode
-            sku
-          }
-          userErrors {
-            field
-            message
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% capture bulk_operation_query %}
+    query {
+      products {
+        edges {
+          node {
+            __typename
+            id
+            variants {
+              edges {
+                node {
+                  __typename
+                  id
+                  barcode
+                  sku
+                }
+              }
+            }
           }
         }
       }
-    {% endaction %}
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture jsonl_string %}
+      {"__typename":"Product","id":"gid:\/\/shopify\/Product\/1234567890"}
+      {"__typename":"ProductVariant","id":"gid:\/\/shopify\/ProductVariant\/1234567890","barcode":"123ABC","__parentId":"gid:\/\/shopify\/Product\/1234567890"}
+      {"__typename":"ProductVariant","id":"gid:\/\/shopify\/ProductVariant\/2345678901","barcode":"456DEF","__parentId":"gid:\/\/shopify\/Product\/1234567890"}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = jsonl_string | parse_jsonl %}
   {% endif %}
-{% endfor %}
+
+  {% assign products = bulkOperation.objects | where: "__typename", "Product" %}
+  {% assign bulk_variants = bulkOperation.objects | where: "__typename", "ProductVariant" %}
+
+  {% for product in products %}
+    {% assign variants = bulk_variants | where: "__parentId", product.id %}
+
+    {% assign variant_inputs = array %}
+
+    {% for variant in variants %}
+      {% if variant.barcode != blank and variant.barcode != variant.sku %}
+        {% assign variant_input = hash %}
+        {% assign variant_input["id"] = variant.id %}
+        {% assign variant_input["sku"] = variant.barcode %}
+        {% assign variant_inputs = variant_inputs | push: variant_input %}
+      {% endif %}
+    {% endfor %}
+
+    {% if variant_inputs != blank %}
+      {% action "shopify" %}
+        mutation {
+          productVariantsBulkUpdate(
+            allowPartialUpdates: true
+            productId: {{ product.id | json }}
+            variants: {{ variant_inputs | graphql_arguments }}
+          ) {
+            product {
+              title
+            }
+            productVariants {
+              displayName
+              barcode
+              sku
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endif %}
+  {% endfor %}
+{% endif %}

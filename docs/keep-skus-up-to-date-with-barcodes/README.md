@@ -1,8 +1,8 @@
 # Keep SKUs up to date with barcodes
 
-Tags: Barcodes, SKU
+Tags: Barcodes, Bulk, SKU
 
-Included as a good example of keeping one attribute synced up with another, this task copies new barcode values over to the variant SKU, whenever a barcode is found and the SKU is out of date.
+This task watches for new and updated products, copying variant barcodes over to the variant SKU. This occurs whenever a barcode is found, and the related variant's SKU does not already have that value.
 
 * View in the task library: [tasks.mechanic.dev/keep-skus-up-to-date-with-barcodes](https://tasks.mechanic.dev/keep-skus-up-to-date-with-barcodes)
 * Task JSON, for direct import: [task.json](../../tasks/keep-skus-up-to-date-with-barcodes.json)
@@ -12,16 +12,18 @@ Included as a good example of keeping one attribute synced up with another, this
 
 ```liquid
 shopify/products/create
-shopify/products/update
+shopify/products/delete
+mechanic/user/trigger
+mechanic/shopify/bulk_operation
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
-Included as a good example of keeping one attribute synced up with another, this task copies new barcode values over to the variant SKU, whenever a barcode is found and the SKU is out of date.
-
 This task watches for new and updated products, copying variant barcodes over to the variant SKU. This occurs whenever a barcode is found, and the related variant's SKU does not already have that value.
+
+The task may also be run manually to scan all products and variants in the shop, updating the unmatched SKUs as needed.
 
 ## Installing this task
 
