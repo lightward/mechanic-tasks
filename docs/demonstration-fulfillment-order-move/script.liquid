@@ -1,0 +1,215 @@
+{% assign skus_to_move = options.skus_to_move__array_required %}
+{% assign move_to_location_name = options.move_to_location_name__required %}
+
+{% if event.topic == "shopify/orders/create" or event.topic == "mechanic/user/order" %}
+  {% comment %}
+    --validate that the configured location exists and is active
+  {% endcomment %}
+
+  {% capture query %}
+    query {
+      locations(
+        first: 1
+        query: {{ move_to_location_name | json | prepend: "name:" | json }}
+      ) {
+        nodes {
+          id
+          isActive
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "locations": {
+            "nodes": [
+              {
+                "id": "gid://shopify/Location/1234567890",
+                "isActive": true
+              }
+            ]
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign move_to_location = result.data.locations.nodes.first %}
+
+  {% if move_to_location == blank %}
+    {% error "The configured location name does not match a location in the shop." %}
+    {% break %}
+
+  {% elsif move_to_location.isActive == false %}
+    {% error "The configured location is not active." %}
+    {% break %}
+  {% endif %}
+
+  {% comment %}
+    -- get all "displayble" (i.e. not closed) fulfillment orders and filter by the line items that can move to the configured location
+  {% endcomment %}
+
+  {% capture query %}
+    query {
+      order(id: {{ order.admin_graphql_api_id | json }}) {
+        id
+        name
+        fulfillmentOrders(
+          displayable: true
+          first: 10
+        ) {
+          nodes {
+            id
+            status
+            locationsForMove(
+              first: 1
+              locationIds: [
+                {{ move_to_location.id | json }}
+              ]
+            ) {
+              nodes {
+                location {
+                  name
+                }
+                availableLineItems(first: 100) {
+                  nodes {
+                    id
+                    remainingQuantity
+                    sku
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "order": {
+            "id": "gid://shopify/Order/1234567890",
+            "name": "#PREVIEW",
+            "fulfillmentOrders": {
+              "nodes": [
+                {
+                  "id": "gid://shopify/FulfillmentOrder/1234567890",
+                  "status": "OPEN",
+                  "locationsForMove": {
+                    "nodes": [
+                      {
+                        "availableLineItems": {
+                          "nodes": [
+                            {
+                              "id": "gid://shopify/FulfillmentOrderLineItem/1234567890",
+                              "remainingQuantity": 1,
+                              "sku": {{ skus_to_move.first | json }}
+                            },
+                            {
+                              "id": "gid://shopify/FulfillmentOrderLineItem/9876543210",
+                              "remainingQuantity": 2,
+                              "sku": "NOT-GONNA-MOVE"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "id": "gid://shopify/FulfillmentOrder/2345678901",
+                  "status": "OPEN",
+                  "locationsForMove": {
+                    "nodes": [
+                      {
+                        "availableLineItems": {
+                          "nodes": [
+                            {
+                              "id": "gid://shopify/FulfillmentOrderLineItem/2345678901",
+                              "remainingQuantity": 3,
+                              "sku": {{ skus_to_move.first | json }}
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign order = result.data.order %}
+
+  {% assign fulfillment_order_ids_and_line_items_to_move = hash %}
+
+  {% for fulfillment_order in order.fulfillmentOrders.nodes %}
+    {% comment %}
+      -- check the line items that are available to move for any of the configured SKUs
+      -- Note: locationsForMove has already been filtered for the location to move to in the orders query above, so can just use "first" array item
+    {% endcomment %}
+
+    {% assign line_items_to_move = array %}
+
+    {% for line_item in fulfillment_order.locationsForMove.nodes.first.availableLineItems.nodes %}
+      {% if skus_to_move contains line_item.sku and line_item.remainingQuantity > 0 %}
+        {% assign line_item_to_move = hash %}
+        {% assign line_item_to_move["id"] = line_item.id %}
+        {% assign line_item_to_move["quantity"] = line_item.remainingQuantity %}
+        {% assign line_items_to_move = line_items_to_move | push: line_item_to_move %}
+      {% endif %}
+    {% endfor %}
+
+    {% if line_items_to_move != blank %}
+      {% assign fulfillment_order_ids_and_line_items_to_move[fulfillment_order.id] = line_items_to_move %}
+    {% endif %}
+  {% endfor %}
+
+  {% comment %}
+    -- make the moves if any line items qualify!
+  {% endcomment %}
+
+  {% for keyval in fulfillment_order_ids_and_line_items_to_move %}
+    {% action "shopify" %}
+      mutation {
+        fulfillmentOrderMove(
+          id: {{ keyval[0] | json }}
+          newLocationId: {{ move_to_location.id | json }}
+          fulfillmentOrderLineItems: {{ keyval[1] | graphql_arguments }}
+        ) {
+          movedFulfillmentOrder {
+            id
+            assignedLocation {
+              name
+            }
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+
+  {% else %}
+    {% log "No fulfillment order/item moves necessary on this order." %}
+  {% endfor %}
+{% endif %}
