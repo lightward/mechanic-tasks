@@ -1,12 +1,9 @@
-{% comment %}
-  Options ordering:
-  {{ options.customer_tag_to_add__required }}
-  {{ options.only_tag_confirmed_opt_ins__boolean }}
-  {{ options.tag_both_single_and_confirmed_opt_ins__boolean }}
-{% endcomment %}
+{% assign customer_tag_to_add = options.customer_tag_to_add__required %}
+{% assign only_tag_confirmed_opt_ins = options.only_tag_confirmed_opt_ins__boolean %}
+{% assign tag_both_single_and_confirmed_opt_ins = options.tag_both_single_and_confirmed_opt_ins__boolean %}
 
-{% if options.only_tag_confirmed_opt_ins__boolean and options.tag_both_single_and_confirmed_opt_ins__boolean %}
-  {% error "Choose either 'Only tag confirmed opt-ins' and 'Tag single and confirmed opt-ins', or neither, but not both" %}
+{% if only_tag_confirmed_opt_ins and tag_both_single_and_confirmed_opt_ins %}
+  {% error "Choose either 'Only tag confirmed opt-ins' or 'Tag both single and confirmed opt-ins', or neither, but not both" %}
 {% endif %}
 
 {% assign customers = array %}
@@ -85,7 +82,7 @@
       },
       {
         "id": "gid://shopify/Customer/2345678901",
-        "tags": [{{ options.customer_tag_to_add__required | json }}],
+        "tags": [{{ customer_tag_to_add | json }}],
         "emailMarketingConsent": {
           "marketingState": "NOT_SUBSCRIBED",
           "marketingOptInLevel": null
@@ -93,7 +90,7 @@
       },
       {
         "id": "gid://shopify/Customer/3456789012",
-        "tags": [{{ options.customer_tag_to_add__required | json }}],
+        "tags": [{{ customer_tag_to_add | json }}],
         "emailMarketingConsent": {
           "marketingState": "SUBSCRIBED",
           "marketingOptInLevel": "SINGLE_OPT_IN"
@@ -114,16 +111,20 @@
 {% endif %}
 
 {% for customer in customers %}
-  {% assign qualifies_for_tag = false %}
+  {% assign qualifies_for_tag = nil %}
 
-  {% if options.only_tag_confirmed_opt_ins__boolean %}
+  {% if only_tag_confirmed_opt_ins %}
     {% if customer.emailMarketingConsent.marketingOptInLevel == "CONFIRMED_OPT_IN" %}
-      {% assign qualifies_for_tag = true %}
+      {% if customer.emailMarketingConsent.marketingState == "SUBSCRIBED" %}
+        {% assign qualifies_for_tag = true %}
+      {% endif %}
     {% endif %}
 
-  {% elsif options.tag_both_single_and_confirmed_opt_ins__boolean %}
+  {% elsif tag_both_single_and_confirmed_opt_ins %}
     {% if customer.emailMarketingConsent.marketingOptInLevel == "CONFIRMED_OPT_IN" or customer.emailMarketingConsent.marketingOptInLevel == "SINGLE_OPT_IN" %}
-      {% assign qualifies_for_tag = true %}
+      {% if customer.emailMarketingConsent.marketingState == "SUBSCRIBED" %}
+        {% assign qualifies_for_tag = true %}
+      {% endif %}
     {% endif %}
 
   {% elsif customer.emailMarketingConsent.marketingState == "SUBSCRIBED" %}
@@ -131,12 +132,12 @@
   {% endif %}
 
   {% if qualifies_for_tag %}
-    {% unless customer.tags contains options.customer_tag_to_add__required %}
+    {% unless customer.tags contains customer_tag_to_add %}
       {% action "shopify" %}
         mutation {
           tagsAdd(
             id: {{ customer.id | json }}
-            tags: {{ options.customer_tag_to_add__required | json }}
+            tags: {{ customer_tag_to_add | json }}
           ) {
             node {
               ... on Customer {
@@ -158,12 +159,12 @@
       {% endaction %}
     {% endunless %}
 
-  {% elsif customer.tags contains options.customer_tag_to_add__required %}
+  {% elsif customer.tags contains customer_tag_to_add %}
     {% action "shopify" %}
       mutation {
         tagsRemove(
           id: {{ customer.id | json }}
-          tags: {{ options.customer_tag_to_add__required | json }}
+          tags: {{ customer_tag_to_add | json }}
         ) {
           node {
             ... on Customer {
