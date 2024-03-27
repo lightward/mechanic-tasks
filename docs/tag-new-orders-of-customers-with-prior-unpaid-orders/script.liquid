@@ -1,0 +1,161 @@
+{% assign order_tag_to_apply = options.order_tag_to_apply__required %}
+{% assign exclude_company_purchases = options.exclude_company_purchases__boolean %}
+
+{% if event.topic == "shopify/orders/create" %}
+  {% comment %}
+    -- query customer's unpaid orders
+  {% endcomment %}
+
+  {% capture query %}
+    query {
+      order(id: {{ order.admin_graphql_api_id | json }}) {
+        id
+        name
+        displayFinancialStatus
+        purchasingEntity {
+          __typename
+        }
+        customer {
+          id
+          displayName
+          unpaid_orders: orders(
+            first: 100
+            reverse: true
+            query: "financial_status:unpaid"
+          ) {
+            nodes {
+              id
+              name
+              displayFinancialStatus
+              purchasingEntity {
+                __typename
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "order": {
+            "id": "gid://shopify/Order/987654321",
+            "name": "#NEW",
+            "displayFinancialStatus": "PENDING",
+            "purchasingEntity": {
+              "__typename": "Customer"
+            },
+            "customer": {
+              "id": "gid://shopify/Customer/1234567890",
+              "displayName": "Jean Deaux",
+              "unpaid_orders": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/Order/987654321",
+                    "name": "#NEW",
+                    "displayFinancialStatus": "PENDING",
+                    "purchasingEntity": {
+                      "__typename": "Customer"
+                    }
+                  },
+                  {
+                    "id": "gid://shopify/Order/1234567890",
+                    "name": "#OLD-1",
+                    "displayFinancialStatus": "PARTIALLY_PAID",
+                    "purchasingEntity": {
+                      "__typename": "PurchasingCompany"
+                    }
+                  },
+                  {
+                    "id": "gid://shopify/Order/2345678901",
+                    "name": "#OLD-2",
+                    "displayFinancialStatus": "PARTIALLY_PAID",
+                    "purchasingEntity": {
+                      "__typename": "Customer"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign order = result.data.order %}
+
+  {% if order.customer == blank %}
+    {% break %}
+  {% endif %}
+
+  {% if exclude_company_purchases and order.purchasingEntity.__typename == "PurchasingCompany" %}
+    {% log
+      message: "This order is a company purchase and the option to exclude them has been checked; skipping.",
+      order_and_customer_data: order
+    %}
+    {% break %}
+  {% endif %}
+
+  {% assign has_unpaid_order = nil %}
+
+  {% comment %}
+    -- since new order may also be unpaid, set flag and break when any unpaid order is found that is not the new order
+    -- exclude company purchases if that option is checked
+  {% endcomment %}
+
+  {% for unpaid_order in order.customer.unpaid_orders.nodes %}
+    {% if unpaid_order.id == order.id %}
+      {% continue %}
+    {% elsif exclude_company_purchases and order.purchasingEntity.__typename == "PurchasingCompany" %}
+      {% continue %}
+    {% endif %}
+
+    {% comment %}
+      -- this unpaid order is not the new order and hasn't been excluded by the optional company check; set flag and exit loop
+    {% endcomment %}
+
+    {% assign has_unpaid_order = true %}
+    {% break %}
+  {% endfor %}
+
+  {% if has_unpaid_order %}
+    {% log
+      message: "This customer has at least one prior unpaid order.",
+      order_and_customer_data: order
+    %}
+
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {{ order.id | json }}
+          tags: {{ order_tag_to_apply | json }}
+        ) {
+          node {
+            ... on Order {
+              name
+              tags
+            }
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+
+  {% else %}
+    {% log
+      message: "No prior unpaid orders found for this customer",
+      order_and_customer_data: order
+    %}
+  {% endif %}
+{% endif %}
