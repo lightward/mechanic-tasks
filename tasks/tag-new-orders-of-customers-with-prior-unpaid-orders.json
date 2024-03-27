@@ -1,5 +1,5 @@
 {
-  "docs": "Use this task to easily keep track of orders placed by customers that already have at least one unpaid order. When new orders are created and the customer has any existing authorized, partially paid, or pending payment orders, then the new order will get the configured tag.\n\nOptionally, choose to exclude company purchases from tagging and consideration.",
+  "docs": "Use this task to easily keep track of orders placed by customers that already have at least one unpaid order. When new orders are created and the customer has any existing authorized, partially paid, or pending payment orders, then the new order will get the configured tag.\n\nOptionally, choose to exclude company purchases from tagging and consideration.\n\nNote: By default, Mechanic only scans the last 60 days of order history. To change this, [enable the option in Mehanic's settings](https://learn.mechanic.dev/platform/shopify/read-all-orders#configuration).",
   "halt_action_run_sequence_on_error": false,
   "name": "Tag new orders of customers with prior unpaid orders",
   "online_store_javascript": null,

@@ -33,6 +33,8 @@ Use this task to easily keep track of orders placed by customers that already ha
 
 Optionally, choose to exclude company purchases from tagging and consideration.
 
+Note: By default, Mechanic only scans the last 60 days of order history. To change this, [enable the option in Mehanic's settings](https://learn.mechanic.dev/platform/shopify/read-all-orders#configuration).
+
 ## Installing this task
 
 Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/tag-new-orders-of-customers-with-prior-unpaid-orders), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/tag-new-orders-of-customers-with-prior-unpaid-orders.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
