@@ -331,6 +331,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Tag customers on the anniversary of their first order](./tag-customers-on-the-anniversary-of-their-first-order)
 * [Tag customers when their last order is before/after x days ago](./tag-customers-when-their-last-order-is-before-after-x-days-ago)
 * [Tag customers who reach a certain threshold of refunded orders](./tag-customers-who-reach-a-certain-threshold-of-refunded-orders)
+* [Tag new orders of customers with prior unpaid orders](./tag-new-orders-of-customers-with-prior-unpaid-orders)
 * [Tag online orders by ?ls= Locksmith secret link used](./tag-orders-by-locksmith-secret-link)
 * [Tag online orders by their ?ref= referral codes](./tag-orders-by-url-referrer)
 * [Tag orders in bulk by order name](./tag-orders-in-bulk-by-order-name)
@@ -1248,6 +1249,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Send tax receipts for donations](./send-tax-receipts-for-donations)
 * [Sync an inverse order tag](./sync-an-inverse-order-tag)
 * [Sync order timeline comments to the customer note](./sync-order-timeline-comments-to-the-customer-note)
+* [Tag new orders of customers with prior unpaid orders](./tag-new-orders-of-customers-with-prior-unpaid-orders)
 * [Tag online orders by ?ls= Locksmith secret link used](./tag-orders-by-locksmith-secret-link)
 * [Tag online orders by their ?ref= referral codes](./tag-orders-by-url-referrer)
 * [Tag orders in bulk by order name](./tag-orders-in-bulk-by-order-name)
@@ -1678,6 +1680,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Tag customers in bulk by email address](./tag-customers-in-bulk-by-email-address)
 * [Tag customers on the anniversary of their first order](./tag-customers-on-the-anniversary-of-their-first-order)
 * [Tag customers who reach a certain threshold of refunded orders](./tag-customers-who-reach-a-certain-threshold-of-refunded-orders)
+* [Tag new orders of customers with prior unpaid orders](./tag-new-orders-of-customers-with-prior-unpaid-orders)
 * [Tag products with no images](./tag-products-with-no-images)
 * [Temporarily enable tax-exempt status when a customer is tagged](./temporarily-enable-tax-exempt-status-when-a-customer-is-tagged)
 * [Trigger order emails with a tag](./trigger-order-emails-with-a-tag)
@@ -1731,6 +1734,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Generate a report of orders that still require payment](./generate-a-report-of-orders-that-still-require-payment)
 * [Remind customers after x days about unpaid orders](./remind-customers-after-x-days-about-unpaid-orders)
 * [Send recurring reminders about unpaid orders](./unpaid-order-reminders)
+* [Tag new orders of customers with prior unpaid orders](./tag-new-orders-of-customers-with-prior-unpaid-orders)
 
 ### Unpublish
 
