@@ -1,132 +1,175 @@
-{% if event.preview %}
-  {% capture order_json %}
-    {
-      "id": 1234567890,
-      "admin_graphql_api_id": "gid://shopify/Order/1234567890",
-      "cancelled_at": null,
-      "financial_status": "paid",
-      "risks": [
-        {% for message in options.required_risk_indicator_messages__array_required %}
-          {
-            "message": {{ message | json }}
-          }{% unless forloop.last %},{% endunless %}
-        {% endfor %}
-      ]
-    }
-  {% endcapture %}
+{% assign required_risk_assessment_facts = options.required_risk_assessment_facts__array_required %}
+{% assign cancellation_reason = options.cancellation_reason_to_set | default: "other" %}
+{% assign ignore_unpaid_orders = options.ignore_unpaid_orders__boolean %}
+{% assign refund_payment = options.refund_payment_for_cancelled_orders__boolean %}
+{% assign restock_inventory = options.restock_inventory_for_cancelled_orders__boolean %}
+{% assign notify_customer = options.email_customer_when_cancelling__boolean %}
+{% assign staff_note = options.staff_note_for_timeline %}
+{% assign order_tag_to_apply = options.add_this_order_tag_when_cancelling %}
 
-  {% assign order = order_json | parse_json %}
-{% endif %}
+{% comment %}
+  -- check that a valid cancellation reason has been configured; it will default to 'other' if left blank
+{% endcomment %}
 
-{% assign cancellation_reason = options.cancellation_reason | default: "other" %}
-{% assign valid_cancellation_reasons = "customer,inventory,fraud,declined,other" | split: "," %}
+{% assign valid_cancellation_reasons = "customer,declined,fraud,inventory,other,staff" | split: "," %}
+
 {% unless valid_cancellation_reasons contains cancellation_reason %}
   {% error %}
-    {{ "Cancellation reason " | append: cancellation_reason | append: " - must be one of 'customer', 'inventory', 'fraud', 'declined', or 'other'." | json }}
+    {{ "Cancellation reason " | append: cancellation_reason | append: " - must be one of 'customer', 'declined', 'fraud', 'inventory', 'other', or 'staff'." | json }}
   {% enderror %}
 {% endunless %}
 
-{% assign order_qualifies = true %}
+{% comment %}
+  -- get the order statuses and risk assessments
+{% endcomment %}
 
-{% if order.cancelled_at != blank %}
-  {% assign order_qualifies = false %}
-{% elsif options.ignore_unpaid_orders__boolean and order.financial_status == "pending" %}
-   {% assign order_qualifies = false %}
-{% else %}
-  {% assign found_risk_messages = order.risks | map: "message" | sort %}
-  {% assign required_risk_messages = options.required_risk_indicator_messages__array_required | sort %}
-
-  {% for message in required_risk_messages %}
-    {% unless found_risk_messages contains message %}
-      {% assign order_qualifies = false %}
-      {% break %}
-    {% endunless %}
-  {% endfor %}
-
-  {% if found_risk_messages == empty %}
-    {% log "This order had no risks. Skipping." %}
-  {% elsif order_qualifies == false and found_risk_messages != empty %}
-    {% log message: "Found some risk messages, but not all the ones that are required. Skipping.", found_risk_messages: found_risk_messages, required_risk_messages: required_risk_messages %}
-  {% endif %}
-{% endif %}
-
-{% if order.fulfillment_status == "fulfilled" or order.fulfillment_status == "partial" %}
-  {% assign order_qualifies = false %}
-{% endif %}
-
-{% if order_qualifies %}
-  {% if options.attempt_to_void_or_refund_payment_for_cancelled_orders__boolean %}
-    {% capture query %}
-      query {
-        order(id: {{ order.admin_graphql_api_id | json }}) {
-          suggestedRefund(suggestFullRefund: true, refundShipping: true) {
-            amountSet {
-              shopMoney {
-                amount
-                currencyCode
-              }
-            }
+{% capture query %}
+  query {
+    order(id: {{ order.admin_graphql_api_id | json }}) {
+      id
+      name
+      cancelledAt
+      displayFinancialStatus
+      displayFulfillmentStatus
+      risk {
+        assessments {
+          facts {
+            description
           }
         }
       }
-    {% endcapture %}
+    }
+  }
+{% endcapture %}
 
-    {% assign result = query | shopify %}
+{% assign result = query | shopify %}
 
-    {% if event.preview %}
-      {% capture result_json %}
-        {
-          "data": {
-            "order": {
-              "suggestedRefund": {
-                "amountSet": {
-                  "shopMoney": {
-                    "amount": "12.34",
-                    "currencyCode": "USD"
-                  }
-                }
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "order": {
+          "id": "gid://shopify/Order/1234567890",
+          "displayFinancialStatus": "PAID",
+          "displayFulfillmentStatus": "UNFULFILLED",
+          "risk": {
+            "assessments": [
+              {
+                "facts": [
+                  {% for required_risk_assessment_fact in required_risk_assessment_facts %}
+                    {
+                      "description": {{ required_risk_assessment_fact | json }}
+                    }{% unless forloop.last %},{% endunless %}
+                  {% endfor %}
+                ]
               }
-            }
+            ]
           }
         }
-      {% endcapture %}
+      }
+    }
+  {% endcapture %}
 
-      {% assign result = result_json | parse_json %}
-    {% endif %}
+  {% assign result = result_json | parse_json %}
+{% endif %}
 
-    {% assign suggested_refund = result.data.order.suggestedRefund.amountSet.shopMoney %}
-  {% else %}
-    {% assign suggested_refund = nil %}
+{% assign order = result.data.order %}
+
+{% log order: order %}
+
+{% if order.cancelledAt %}
+  {% log "This order has already been cancelled." %}
+  {% break %}
+{% endif %}
+
+{% if ignore_unpaid_orders and order.displayFinancialStatus != "PAID" %}
+  {% log "This order has not been paid and the ignore unpaid orders option is enabled." %}
+  {% break %}
+{% endif %}
+
+{% comment %}
+  -- get the description from each fact in each risk assessment, and look for matches of all configured risk assessment facts
+{% endcomment %}
+
+{% assign order_risk_assessment_facts
+  = order.risk.assessments
+  | map: "facts"
+  | map: "description"
+%}
+
+{% assign matched_risk_assessment_facts = array %}
+
+{% for order_risk_assessment_fact in order_risk_assessment_facts %}
+  {% if required_risk_assessment_facts contains order_risk_assessment_fact %}
+    {% assign matched_risk_assessment_facts
+      = matched_risk_assessment_facts
+      | push: order_risk_assessment_fact
+      | uniq
+    %}
   {% endif %}
+{% endfor %}
 
+{% if matched_risk_assessment_facts.size != required_risk_assessment_facts.size %}
+  {% log
+    message: "Did not match all the risk assessment facts that are required.",
+    matched_risk_assessment_facts: matched_risk_assessment_facts,
+    order_risk_assessment_facts: order_risk_assessment_facts,
+    required_risk_assessment_facts: required_risk_assessment_facts
+  %}
+  {% break %}
+{% endif %}
+
+{% comment %}
+  -- all of the configured risk assessment facts have been matched; check to make sure order is unfulfilled to avoid cancellation error
+{% endcomment %}
+
+{% if order.displayFinancialStatus == "FULFILLED" or order.displayFulfillmentStatus == "PARTIALLY_FULFILLED" %}
+  {% log "This order has already been fulfilled or partially fulfilled and cannot be cancelled." %}
+  {% break %}
+{% endif %}
+
+{% comment %}
+  -- cancel the order with configured options
+{% endcomment %}
+
+{% action "shopify" %}
+  mutation {
+    orderCancel(
+      orderId: {{ order.id | json }}
+      notifyCustomer: {{ notify_customer | json }}
+      reason: {{ cancellation_reason | upcase }}
+      refund: {{ refund_payment | json }}
+      restock: {{ restock_inventory | json }}
+      staffNote: {{ staff_note | json }}
+    ) {
+      job {
+        id
+      }
+      orderCancelUserErrors {
+        code
+        field
+        message
+      }
+    }
+  }
+{% endaction %}
+
+{% comment %}
+  -- tag the order if there is a tag configured to aplly on cancellation
+{% endcomment %}
+
+{% if order_tag_to_apply != blank %}
   {% action "shopify" %}
-    [
-      "post",
-      "/admin/orders/{{ order.id | json }}/cancel.json",
-      {
-        {% if suggested_refund %}
-          "amount": {{ suggested_refund.amount | json }},
-          "currency": {{ suggested_refund.currencyCode | json }},
-        {% endif %}
-        "reason": {{ cancellation_reason | json }},
-        "email": {{ options.email_customer_when_cancelling__boolean | json }}
-      }
-    ]
-  {% endaction %}
-
-  {% if options.add_this_order_tag_when_cancelling != blank %}
-    {% action "shopify" %}
-      mutation {
-        tagsAdd(
-          id: {{ order.admin_graphql_api_id | json }}
-          tags: {{ options.add_this_order_tag_when_cancelling | json }}
-        ) {
-          userErrors {
-            field
-            message
-          }
+    mutation {
+      tagsAdd(
+        id: {{ order.id | json }}
+        tags: {{ order_tag_to_apply | json }}
+      ) {
+        userErrors {
+          field
+          message
         }
       }
-    {% endaction %}
-  {% endif %}
+    }
+  {% endaction %}
 {% endif %}

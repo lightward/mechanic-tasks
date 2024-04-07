@@ -2,7 +2,7 @@
 
 Tags: Cancel, Orders, Risk
 
-This task auto-cancels incoming orders when it finds all of a certain set of risk indicator messages. Risk messages must match exactly, so double-check your configuration!
+This task auto-cancels incoming orders when it finds all of a certain set of risk assessment facts. Risk assessment facts must match exactly, so double-check your configuration!
 
 * View in the task library: [tasks.mechanic.dev/automatically-cancel-orders-with-certain-risk-indicators](https://tasks.mechanic.dev/automatically-cancel-orders-with-certain-risk-indicators)
 * Task JSON, for direct import: [task.json](../../tasks/automatically-cancel-orders-with-certain-risk-indicators.json)
@@ -12,11 +12,13 @@ This task auto-cancels incoming orders when it finds all of a certain set of ris
 
 ```json
 {
-  "required_risk_indicator_messages__array_required": [],
-  "cancellation_reason": null,
+  "required_risk_assessment_facts__array_required": null,
+  "cancellation_reason_to_set": null,
   "ignore_unpaid_orders__boolean": null,
-  "attempt_to_void_or_refund_payment_for_cancelled_orders__boolean": null,
+  "refund_payment_for_cancelled_orders__boolean": null,
+  "restock_inventory_for_cancelled_orders__boolean": null,
   "email_customer_when_cancelling__boolean": null,
+  "staff_note_for_timeline": null,
   "add_this_order_tag_when_cancelling": null
 }
 ```
@@ -33,7 +35,7 @@ shopify/orders/updated
 
 ## Documentation
 
-This task auto-cancels incoming orders when it finds all of a certain set of risk indicator messages. Risk messages must match exactly, so double-check your configuration!
+This task auto-cancels incoming orders when it finds all of a certain set of risk assessment facts. Risk assessment facts must match exactly, so double-check your configuration!
 
 ## Installing this task
 
