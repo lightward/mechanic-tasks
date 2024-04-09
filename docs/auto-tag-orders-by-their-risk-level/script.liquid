@@ -1,91 +1,165 @@
-{% assign valid_risk_level_keys = "Low,Medium,High" | split: "," %}
-{% for keyval in options.risk_levels_and_tags__keyval_required %}
-  {% assign some_risk_level_key = keyval[0] | capitalize %}
-  {% unless some_risk_level_key == blank or valid_risk_level_keys contains some_risk_level_key %}
-    {"error": {{ keyval[0] | json | prepend: "Unknown risk level " | append: ". Valid risk level values: low, medium, high" | json }}}
+{% assign risk_levels_and_tags = options.risk_levels_and_tags__keyval_required %}
+{% assign risk_levels = risk_levels_and_tags | keys %}
+{% assign risk_tags = risk_levels_and_tags | values %}
+
+{% comment %}
+  -- check that only valid risk levels have been configured
+{% endcomment %}
+
+{% assign valid_risk_levels = "HIGH,MEDIUM,LOW" | split: "," %}
+
+{% for risk_level in risk_levels %}
+  {% unless valid_risk_levels contains risk_level %}
+    {% error %}
+      {{ risk_level | json | prepend: "Unknown risk level " | append: ". Valid risk level values: HIGH, MEDIUM, LOW" | json }}
+    {% enderror %}
   {% endunless %}
 {% endfor %}
 
-{% assign order_nodes = array %}
-
-{% if event.preview %}
-  {% assign order_nodes[0] = '{"id":"gid://shopify/Order/1234567890","tags":[]}' | parse_json %}
-  {% assign order_nodes[0]["riskLevel"] = options.risk_levels_and_tags__keyval_required.first[0] | upcase %}
-{% elsif event.topic == "shopify/orders/updated" %}
+{% if event.topic == "shopify/orders/updated" %}
   {% capture query %}
     query {
       order(id: {{ order.admin_graphql_api_id | json }}) {
         id
+        closed
         tags
-        riskLevel
+        risk {
+          assessments {
+            riskLevel
+          }
+        }
       }
     }
   {% endcapture %}
 
   {% assign result = query | shopify %}
-  {% assign order_nodes[0] = result.data.order %}
-{% elsif event.topic == "mechanic/user/trigger" %}
-  {% assign cursor = nil %}
 
-  {% for n in (0..100) %}
-    {% capture query %}
-      query {
-        orders(
-          first: 250
-          after: {{ cursor | json }}
-        ) {
-          pageInfo {
-            hasNextPage
-          }
-          edges {
-            cursor
-            node {
-              id
-              tags
-              riskLevel
+  {% comment %}
+    -- don't make tagging updates to closed orders
+  {% endcomment %}
+
+  {% if order.closed %}
+    {% break %}
+  {% endif %}
+
+  {% assign orders = array | push: result.data.order %}
+
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% comment %}
+    -- get all open orders
+  {% endcomment %}
+
+  {% capture bulk_operation_query %}
+    query {
+      orders(
+        query: "status:open"
+      ) {
+        edges {
+          node {
+            __typename
+            id
+            tags
+            risk {
+              assessments {
+                riskLevel
+              }
             }
           }
         }
       }
-    {% endcapture %}
+    }
+  {% endcapture %}
 
-    {% assign result = query | shopify %}
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
 
-    {% assign order_nodes = result.data.orders.edges | map: "node" | concat: order_nodes %}
-
-    {% if result.data.orders.pageInfo.hasNextPage %}
-      {% assign cursor = result.data.orders.edges.last.cursor %}
-    {% else %}
-      {% break %}
-    {% endif %}
-  {% endfor %}
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% assign orders = bulkOperation.objects | where: "__typename", "Order" %}
 {% endif %}
 
-{% for order_node in order_nodes %}
+{% if event.preview %}
+  {% capture orders_json %}
+    [
+      {
+        "id": "gid://shopify/Order/1234567890",
+        "risk": {
+          "assessments": [
+            {
+              "riskLevel": {{ valid_risk_levels.first | json }}
+            }
+          ]
+        }
+      }
+    ]
+  {% endcapture %}
+
+  {% assign orders = orders_json | parse_json %}
+{% endif %}
+
+{% for order in orders %}
+  {% assign tag_should_have = nil %}
   {% assign tag_to_add = nil %}
   {% assign tags_to_remove = array %}
 
-  {% assign risk_level_key = order_node.riskLevel | capitalize %}
-  {% for keyval in options.risk_levels_and_tags__keyval_required %}
-    {% assign some_risk_level_key = keyval[0] | capitalize %}
+  {% comment %}
+    -- get the risk level from each risk assessment
+  {% endcomment %}
 
-    {% if risk_level_key == some_risk_level_key %}
-      {% if order_node.tags contains keyval[1] %}
-        {"log": {{ order_node.id | prepend: "Order " | append: " is already appropriately tagged " | append: keyval[1] | json }}}
-      {% else %}
-        {% assign tag_to_add = keyval[1] %}
+  {% assign order_risk_levels = order.risk.assessments | map: "riskLevel" %}
+
+  {% comment %}
+    -- check risk levels, highest to lowest, so the order only gets tagged with the most severe level configured
+  {% endcomment %}
+
+  {% for valid_risk_level in valid_risk_levels %}
+    {% if order_risk_levels contains valid_risk_level %}
+      {% if risk_levels contains valid_risk_level  %}
+        {% assign tag_should_have = risk_levels_and_tags[valid_risk_level] %}
+        {% break %}
       {% endif %}
-    {% elsif order_node.tags contains keyval[1] %}
-      {% assign tags_to_remove[tags_to_remove.size] = keyval[1] %}
     {% endif %}
   {% endfor %}
 
-  {% if tag_to_add != blank or tags_to_remove != empty %}
+  {% unless order.tags contains tag_should_have %}
+    {% assign tag_to_add = tag_should_have %}
+  {% endunless %}
+
+  {% comment %}
+    -- check if the order has any tags to remove
+  {% endcomment %}
+
+  {% for risk_tag in risk_tags %}
+    {% unless risk_tag == tag_should_have %}
+      {% if order.tags contains risk_tag %}
+        {% assign tags_to_remove = tags_to_remove | push: risk_tag %}
+      {% endif %}
+    {% endunless %}
+  {% endfor %}
+
+  {% comment %}
+    -- update tags as needed
+  {% endcomment %}
+
+  {% if tag_to_add != blank or tags_to_remove != blank %}
     {% action "shopify" %}
       mutation {
         {% if tag_to_add != blank %}
           tagsAdd(
-            id: {{ order_node.id | json }}
+            id: {{ order.id | json }}
             tags: {{ tag_to_add | json }}
           ) {
             userErrors {
@@ -94,10 +168,9 @@
             }
           }
         {% endif %}
-
-        {% if tags_to_remove != empty %}
+        {% if tags_to_remove != blank %}
           tagsRemove(
-            id: {{ order_node.id | json }}
+            id: {{ order.id | json }}
             tags: {{ tags_to_remove | json }}
           ) {
             userErrors {
