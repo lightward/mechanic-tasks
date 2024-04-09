@@ -1,5 +1,5 @@
 {
-  "docs": "This task auto-cancels incoming orders when it finds all of a certain set of risk assessment facts. Risk assessment facts must match exactly, so double-check your configuration!",
+  "docs": "This task auto-cancels incoming orders when it finds all of a certain set of risk assessment facts. Risk assessment facts must match exactly, so double-check your configuration! Optionally, this task can also auto-tag the order, email the customer, restock the inventory, and/or refund payment.\n\nValid cancellation reasons to set:\n\n* customer: The customer wanted to cancel the order.\n* declined: Payment was declined.\n* fraud: The order was fraudulent.\n* inventory: There was insufficient inventory.\n* staff: Staff made an error.\n* other: The order was canceled for an unlisted reason.\n\n__NOTE:__ This task will not cancel orders that have been partially or fully fulfilled",
   "halt_action_run_sequence_on_error": false,
   "name": "Automatically cancel orders with certain risk indicators",
   "online_store_javascript": null,

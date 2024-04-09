@@ -2,7 +2,7 @@
 
 Tags: Cancel, Orders, Risk
 
-This task auto-cancels incoming orders when it finds all of a certain set of risk assessment facts. Risk assessment facts must match exactly, so double-check your configuration!
+This task auto-cancels incoming orders when it finds all of a certain set of risk assessment facts. Risk assessment facts must match exactly, so double-check your configuration! Optionally, this task can also auto-tag the order, email the customer, restock the inventory, and/or refund payment.
 
 * View in the task library: [tasks.mechanic.dev/automatically-cancel-orders-with-certain-risk-indicators](https://tasks.mechanic.dev/automatically-cancel-orders-with-certain-risk-indicators)
 * Task JSON, for direct import: [task.json](../../tasks/automatically-cancel-orders-with-certain-risk-indicators.json)
@@ -35,7 +35,18 @@ shopify/orders/updated
 
 ## Documentation
 
-This task auto-cancels incoming orders when it finds all of a certain set of risk assessment facts. Risk assessment facts must match exactly, so double-check your configuration!
+This task auto-cancels incoming orders when it finds all of a certain set of risk assessment facts. Risk assessment facts must match exactly, so double-check your configuration! Optionally, this task can also auto-tag the order, email the customer, restock the inventory, and/or refund payment.
+
+Valid cancellation reasons to set:
+
+* customer: The customer wanted to cancel the order.
+* declined: Payment was declined.
+* fraud: The order was fraudulent.
+* inventory: There was insufficient inventory.
+* staff: Staff made an error.
+* other: The order was canceled for an unlisted reason.
+
+__NOTE:__ This task will not cancel orders that have been partially or fully fulfilled
 
 ## Installing this task
 
