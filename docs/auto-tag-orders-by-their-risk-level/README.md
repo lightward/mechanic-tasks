@@ -2,7 +2,7 @@
 
 Tags: Auto-Tag, Orders, Risk
 
-This task applies the tag of your choice to incoming orders, based on the risk level determined for the order. Run this task manually to tag all orders in your store's records, according to their respective risk levels. Combine this task with an email task, to email customers when their order is flagged.
+This task applies the tag of your choice to orders, based on the highest risk level for each order. Run this task manually to tag all open orders in your shop, according to their respective risk levels.
 
 * View in the task library: [tasks.mechanic.dev/auto-tag-orders-by-their-risk-level](https://tasks.mechanic.dev/auto-tag-orders-by-their-risk-level)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-orders-by-their-risk-level.json)
@@ -27,19 +27,16 @@ This task applies the tag of your choice to incoming orders, based on the risk l
 ```liquid
 shopify/orders/updated
 mechanic/user/trigger
+mechanic/shopify/bulk_operation
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
-This task applies the tag of your choice to incoming orders, based on the risk level determined for the order. Run this task manually to tag all orders in your store's records, according to their respective risk levels. Combine this task with an email task, to email customers when their order is flagged.
+This task applies the tag of your choice to orders, based on the highest risk level for each order. Run this task manually to tag all open orders in your shop, according to their respective risk levels.
 
-This task applies the tag of your choice to incoming orders, based on the risk level determined for the order.
-
-Run this task manually to tag all orders in your store's records, according to their respective risk levels.
-
-Combine this task with ["Email customers when their order is tagged"](https://usemechanic.com/task/email-customer-when-order-tagged) to alert customers when their order is flagged.
+Valid risk levels: LOW, MEDIUM, HIGH.
 
 Feel free to remove a tag from this task's options, if you don't need it. :)
 

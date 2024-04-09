@@ -4,6 +4,21 @@
 {% assign capture_orders_with_a_medium_risk_level = options.capture_orders_with_a_medium_risk_level__boolean %}
 {% assign capture_orders_with_a_low_risk_level = options.capture_orders_with_a_low_risk_level__boolean %}
 
+{% comment %}
+  -- make sure that are least one risk level option is chosen
+{% endcomment %}
+
+{% unless capture_orders_with_a_high_risk_level
+  or capture_orders_with_a_medium_risk_level
+  or capture_orders_with_a_low_risk_level
+%}
+  {% error "Choose at least one risk level to capture for!" %}
+{% endunless %}
+
+{% comment %}
+  -- get the order statuses, risk assessments, and capturable transactions
+{% endcomment %}
+
 {% capture query %}
   query {
     order(id: {{ order.admin_graphql_api_id | json }}) {
@@ -11,7 +26,11 @@
       name
       displayFinancialStatus
       tags
-      riskLevel
+      risk {
+        assessments {
+          riskLevel
+        }
+      }
       transactions(capturable: true) {
         id
         kind
@@ -27,6 +46,10 @@
 {% endcapture %}
 
 {% assign result = query | shopify %}
+
+{% comment %}
+  -- set up a useful preview regardless of which combinations of risk levels are checked
+{% endcomment %}
 
 {% if event.preview %}
   {% if capture_orders_with_a_high_risk_level %}
@@ -45,7 +68,13 @@
           "displayFinancialStatus": "AUTHORIZED",
           "tags": [{{ filter_orders_by_this_tag | json }}],
           "capturable": true,
-          "riskLevel": {{ preview_risk_level | json }},
+          "risk": {
+            "assessments": [
+              {
+                "riskLevel": {{ preview_risk_level | json }}
+              }
+            ]
+          },
           "transactions": [
             {
               "id": "gid://shopify/OrderTransaction/1234567890",
@@ -69,29 +98,50 @@
 
 {% assign order = result.data.order %}
 
+{% comment %}
+  -- can only capture authorized or partially paid orders; exit otherwise
+{% endcomment %}
+
 {% unless order.displayFinancialStatus == "AUTHORIZED" or order.displayFinancialStatus == "PARTIALLY_PAID" %}
   {% break %}
 {% endunless %}
 
-{% assign do_capture = false %}
-
-{% if order.riskLevel == "HIGH" and capture_orders_with_a_high_risk_level %}
-  {% assign do_capture = true %}
-{% elsif order.riskLevel == "MEDIUM" and capture_orders_with_a_medium_risk_level %}
-  {% assign do_capture = true %}
-{% elsif order.riskLevel == "LOW" and capture_orders_with_a_low_risk_level %}
-  {% assign do_capture = true %}
-{% else %}
-  {% error "Choose at least one risk level to capture for!" %}
-{% endif %}
+{% comment %}
+  -- if an order tag filter is enabled, make sure the order has it to proceed
+{% endcomment %}
 
 {% if filter_orders_by_this_tag != blank %}
   {% unless order.tags contains filter_orders_by_this_tag %}
-    {% assign do_capture = false %}
+    {% break %}
   {% endunless %}
 {% endif %}
 
+{% comment %}
+  -- check risk levels in order of severity, capturing if that level is enabled and there is at least one found across all the risk assesments
+{% endcomment %}
+
+{% assign order_risk_levels = order.risk.assessments | map: "riskLevel" %}
+
+{% assign do_capture = false %}
+
+{% if order_risk_levels contains "HIGH" and capture_orders_with_a_high_risk_level %}
+  {% assign do_capture = true %}
+{% elsif order_risk_levels contains "MEDIUM" and capture_orders_with_a_medium_risk_level %}
+  {% assign do_capture = true %}
+{% elsif order_risk_levels contains "LOW" and capture_orders_with_a_low_risk_level %}
+  {% assign do_capture = true %}
+{% else %}
+  {% log
+    message: "This order does not have any risk assessments with the configured risk level(s) to capture.",
+    order_risk_levels: order_risk_levels
+  %}
+{% endif %}
+
 {% if do_capture %}
+  {% comment %}
+    -- capture any authorized transaction with a positive unsettled amount
+  {% endcomment %}
+
   {% assign authorized_transactions = order.transactions | where: "kind", "AUTHORIZATION" %}
 
   {% for transaction in authorized_transactions %}

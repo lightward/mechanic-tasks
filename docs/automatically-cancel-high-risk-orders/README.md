@@ -2,7 +2,7 @@
 
 Tags: Cancel, Orders, Risk
 
-This task immediately cancels orders as soon as Shopify (or another risk-analysis app) determines it to be high risk. Optionally, this task can also auto-tag the order, email the customer, and attempt to void or refund payment.
+This task cancels orders as soon as Shopify (or another risk-analysis app) determines it to be high risk. Optionally, this task can also auto-tag the order, email the customer, restock the inventory, and/or refund payment.
 
 * View in the task library: [tasks.mechanic.dev/automatically-cancel-high-risk-orders](https://tasks.mechanic.dev/automatically-cancel-high-risk-orders)
 * Task JSON, for direct import: [task.json](../../tasks/automatically-cancel-high-risk-orders.json)
@@ -12,10 +12,12 @@ This task immediately cancels orders as soon as Shopify (or another risk-analysi
 
 ```json
 {
-  "cancellation_reason": "customer",
-  "ignore_unpaid_orders__boolean": false,
-  "attempt_to_void_or_refund_payment_for_cancelled_orders__boolean": false,
-  "email_customer_when_cancelling__boolean": false,
+  "cancellation_reason_to_set": null,
+  "ignore_unpaid_orders__boolean": null,
+  "refund_payment_for_cancelled_orders__boolean": null,
+  "restock_inventory_for_cancelled_orders__boolean": null,
+  "email_customer_when_cancelling__boolean": null,
+  "staff_note_for_timeline": null,
   "add_this_order_tag_when_cancelling": ""
 }
 ```
@@ -32,15 +34,16 @@ shopify/orders/updated
 
 ## Documentation
 
-This task immediately cancels orders as soon as Shopify (or another risk-analysis app) determines it to be high risk. Optionally, this task can also auto-tag the order, email the customer, and attempt to void or refund payment.
+This task cancels orders as soon as Shopify (or another risk-analysis app) determines it to be high risk. Optionally, this task can also auto-tag the order, email the customer, restock the inventory, and/or refund payment.
 
-Valid cancellation reasons:
+Valid cancellation reasons to set:
 
-* customer: The customer canceled the order.
+* customer: The customer wanted to cancel the order.
+* declined: Payment was declined.
 * fraud: The order was fraudulent.
-* inventory: Items in the order were not in inventory.
-* declined: The payment was declined.
-* other: A reason not in this list.
+* inventory: There was insufficient inventory.
+* staff: Staff made an error.
+* other: The order was canceled for an unlisted reason.
 
 __NOTE:__ This task will not cancel orders that have been partially or fully fulfilled
 

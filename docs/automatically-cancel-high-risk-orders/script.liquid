@@ -1,150 +1,142 @@
-{% assign cancellation_reason = options.cancellation_reason | default: "other" %}
-{% assign valid_cancellation_reasons = "customer,inventory,fraud,declined,other" | split: "," %}
+{% assign cancellation_reason = options.cancellation_reason_to_set | default: "other" %}
+{% assign ignore_unpaid_orders = options.ignore_unpaid_orders__boolean %}
+{% assign refund_payment = options.refund_payment_for_cancelled_orders__boolean %}
+{% assign restock_inventory = options.restock_inventory_for_cancelled_orders__boolean %}
+{% assign notify_customer = options.email_customer_when_cancelling__boolean %}
+{% assign staff_note = options.staff_note_for_timeline %}
+{% assign order_tag_to_apply = options.add_this_order_tag_when_cancelling %}
+
+{% comment %}
+  -- check that a valid cancellation reason has been configured; it will default to 'other' if left blank
+{% endcomment %}
+
+{% assign valid_cancellation_reasons = "customer,declined,fraud,inventory,other,staff" | split: "," %}
 
 {% unless valid_cancellation_reasons contains cancellation_reason %}
   {% error %}
-    {{ "Cancellation reason " | append: cancellation_reason | append: " - must be one of 'customer', 'inventory', 'fraud', 'declined', or 'other'." | json }}
+    {{ "Cancellation reason " | append: cancellation_reason | append: " - must be one of 'customer', 'declined', 'fraud', 'inventory', 'other', or 'staff'." | json }}
   {% enderror %}
 {% endunless %}
 
-
-{% unless event.preview %}
-  {% assign cancel_risk = order.risks | where: "recommendation", "cancel" | first %}
-
-  {% unless cancel_risk %}
-    {% break %}
-  {% endunless %}
-
-  {% if order.fulfillment_status %}
-    {% log "This order has already been partially or fully fulfilled; no cancellation (nor refund if that option is checked) will be made." %}
-    {% break %}  
-  {% endif %}
-
-  {% if order.cancelled_at  %}
-    {% log "This order has already been cancelled." %}
-    {% break %}  
-  {% endif %}
-
-  {% if options.ignore_unpaid_orders__boolean and order.financial_status == "pending" %}
-    {% log "This order has not been paid, and the ignore unpaid orders option is checked; no cancellation will be made." %}
-    {% break %}  
-  {% endif %}  
-{% endunless %}
-
 {% comment %}
-  -- NOTE: refunds via API must occur before cancellation, otherwise the refund will fail
+  -- get the order statuses and risk assessments
 {% endcomment %}
 
-{% if options.attempt_to_void_or_refund_payment_for_cancelled_orders__boolean %}
-  {% capture order_refund_query %}
-    query {
-      order(id: {{ order.admin_graphql_api_id | json }}) {
-        suggestedRefund(suggestFullRefund: true, refundShipping: true) {
-          amountSet {
-            shopMoney {
-              amount
-            }
-          }
+{% capture query %}
+  query {
+    order(id: {{ order.admin_graphql_api_id | json }}) {
+      id
+      name
+      cancelledAt
+      displayFinancialStatus
+      displayFulfillmentStatus
+      risk {
+        assessments {
+          riskLevel
         }
-        transactions {
-          id
-          gateway
-          kind
-          status
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "order": {
+          "id": "gid://shopify/Order/1234567890",
+          "displayFinancialStatus": "PAID",
+          "displayFulfillmentStatus": "UNFULFILLED",
+          "risk": {
+            "assessments": [
+              {
+                "riskLevel": "NONE"
+              },
+              {
+                "riskLevel": "HIGH"
+              }
+            ]
+          }
         }
       }
     }
   {% endcapture %}
 
-  {% assign order_refund_result = order_refund_query | shopify %}
-
-  {% if event.preview %}
-    {% capture order_refund_result_json %}
-      {
-        "data": {
-          "order": {
-            "suggestedRefund": {
-              "amountSet": {
-                "shopMoney": {
-                  "amount": "123.0"
-                }
-              }
-            },
-            "transactions": [
-              {
-                "id": "gid://shopify/OrderTransaction/1234567890",
-                "gateway": "bogus",
-                "kind": "CAPTURE",
-                "status": "SUCCESS"
-              }
-            ]
-          }
-        }
-      }
-    {% endcapture %}
-
-    {% assign order_refund_result = order_refund_result_json | parse_json %}
-  {% endif %}
-
-  {% assign suggested_refund = order_refund_result.data.order.suggestedRefund.amountSet.shopMoney.amount %}
-
-  {% assign successful_transactions = order_refund_result.data.order.transactions | where: "status", "SUCCESS" %}
-
-  {% for transaction in successful_transactions %}
-    {% if transaction.kind == "CAPTURE" or transaction.kind == "SALE" %}
-      {% assign sale_or_capture_transaction = transaction %}
-      {% break %}
-    {% endif %}
-  {% endfor %}
-
-  {% comment %}
-    -- NOTE: this task only refunds the first successful capture or sale transaction, the theory being that risk analyses would run before any order edits or upsells would likely occur
-  {% endcomment %}
-
-  {% if sale_or_capture_transaction != blank %}
-    {% action "shopify" %}
-      mutation {
-        refundCreate(input: {
-          orderId: {{ order.admin_graphql_api_id | json }}
-            transactions: [
-              {
-                amount: {{ suggested_refund | json }}
-                gateway: {{ sale_or_capture_transaction.gateway | json }}
-                kind: VOID
-                orderId: {{ order.admin_graphql_api_id | json }}
-                parentId: {{ sale_or_capture_transaction.id | json }}
-              }
-            ]
-          notify: false
-          note: {{ task.name | json }}
-        }) {
-          userErrors {
-            field
-            message
-          }
-        }
-      }
-    {% endaction %}
-  {% endif %}
+  {% assign result = result_json | parse_json %}
 {% endif %}
 
+{% assign order = result.data.order %}
+
+{% log order: order %}
+
+{% if order.cancelledAt %}
+  {% log "This order has already been cancelled." %}
+  {% break %}
+{% endif %}
+
+{% if ignore_unpaid_orders and order.displayFinancialStatus != "PAID" %}
+  {% log "This order has not been paid and the ignore unpaid orders option is enabled." %}
+  {% break %}
+{% endif %}
+
+{% comment %}
+  -- get the risk level from each risk assessment
+{% endcomment %}
+
+{% assign order_risk_levels = order.risk.assessments | map: "riskLevel" %}
+
+{% unless order_risk_levels contains "HIGH" %}
+  {% log "The current risk assessments for this order do not contain a HIGH risk level." %}
+  {% break %}
+{% endunless %}
+
+{% comment %}
+  -- check to make sure order is unfulfilled to avoid cancellation error
+{% endcomment %}
+
+{% if order.displayFinancialStatus == "FULFILLED" or order.displayFulfillmentStatus == "PARTIALLY_FULFILLED" %}
+  {% log "This order has already been fulfilled or partially fulfilled and cannot be cancelled." %}
+  {% break %}
+{% endif %}
+
+{% comment %}
+  -- cancel the order with configured options
+{% endcomment %}
+
 {% action "shopify" %}
-  [
-    "post",
-    "/admin/orders/{{ order.id | json }}/cancel.json",
-    {
-      "reason": {{ cancellation_reason | json }},
-      "email": {{ options.email_customer_when_cancelling__boolean | json }}
+  mutation {
+    orderCancel(
+      orderId: {{ order.id | json }}
+      notifyCustomer: {{ notify_customer | json }}
+      reason: {{ cancellation_reason | upcase }}
+      refund: {{ refund_payment | json }}
+      restock: {{ restock_inventory | json }}
+      staffNote: {{ staff_note | json }}
+    ) {
+      job {
+        id
+      }
+      orderCancelUserErrors {
+        code
+        field
+        message
+      }
     }
-  ]
+  }
 {% endaction %}
 
-{% if options.add_this_order_tag_when_cancelling != blank %}
+{% comment %}
+  -- tag the order if there is a tag configured to apply on cancellation
+{% endcomment %}
+
+{% if order_tag_to_apply != blank %}
   {% action "shopify" %}
     mutation {
       tagsAdd(
-        id: {{ order.admin_graphql_api_id | json }}
-        tags: {{ options.add_this_order_tag_when_cancelling | json }}
+        id: {{ order.id | json }}
+        tags: {{ order_tag_to_apply | json }}
       ) {
         userErrors {
           field
