@@ -34,7 +34,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-cancel orders with too many of a certain SKU](./auto-cancel-orders-with-too-many-of-a-certain-sku)
 * [Auto-capture order payment after x days](./auto-capture-order-payment-after-x-days)
 * [Auto-capture order payment based on shipping method](./auto-capture-order-payment-based-on-shipping-method)
-* [Auto-capture order payments based on Kount risk assessments](./auto-capture-order-payments-based-on-kount-risk-assessments)
 * [Auto-capture payments when an order is created](./auto-capture-payments-when-an-order-is-created)
 * [Auto-complete new draft orders](./auto-complete-new-draft-orders)
 * [Auto-connect new products to all locations](./auto-connect-new-products-to-all-locations)
@@ -1012,10 +1011,6 @@ This directory is built automatically. Each task's documentation is generated fr
 
 * [Record Judge.me customer review counts](./record-judge-me-customer-review-counts)
 
-### Kount
-
-* [Auto-capture order payments based on Kount risk assessments](./auto-capture-order-payments-based-on-kount-risk-assessments)
-
 ### Line Item Properties
 
 * [Auto-tag orders with their line item properties](./auto-tag-orders-with-their-line-item-properties)
@@ -1284,7 +1279,6 @@ This directory is built automatically. Each task's documentation is generated fr
 
 * [Auto-capture order payment after x days](./auto-capture-order-payment-after-x-days)
 * [Auto-capture order payment based on shipping method](./auto-capture-order-payment-based-on-shipping-method)
-* [Auto-capture order payments based on Kount risk assessments](./auto-capture-order-payments-based-on-kount-risk-assessments)
 * [Auto-capture payments when an order is created](./auto-capture-payments-when-an-order-is-created)
 * [Auto-complete new draft orders](./auto-complete-new-draft-orders)
 * [Auto-pay orders from customers with a certain tag](./auto-pay-orders-from-customers-with-a-certain-tag)
@@ -1493,7 +1487,6 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Risk
 
-* [Auto-capture order payments based on Kount risk assessments](./auto-capture-order-payments-based-on-kount-risk-assessments)
 * [Auto-capture payments when an order is created](./auto-capture-payments-when-an-order-is-created)
 * [Auto-tag orders by their risk level](./auto-tag-orders-by-their-risk-level)
 * [Auto-tag orders from recurring client IP addresses](./auto-tag-orders-from-recurring-client-ip-addresses)
