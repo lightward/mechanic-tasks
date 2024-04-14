@@ -262,7 +262,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Remove a customer tag when another tag is added](./remove-a-customer-tag-when-another-tag-is-added)
 * [Remove a product tag when another tag is added](./remove-a-product-tag-when-another-tag-is-added)
 * [Remove an order tag when another tag is added](./remove-a-order-tag-when-another-tag-is-added)
-* [Remove tag from all products](./remove-specified-tags-from-all-products)
+* [Remove matched tags from all products](./remove-specified-tags-from-all-products)
 * [Report Toaster: Deliver report PDF via email or Slack](./report-toaster-deliver-report-pdf-via-email-or-slack)
 * [Report Toaster: Pirate Ship Integration](./report-toaster-pirateship-integration)
 * [Report Toaster: ShipStation Integration](./report-toaster-shipstation-integration)
@@ -1379,7 +1379,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Publish back-in-stock products](./publish-back-in-stock-products)
 * [Raise the price of a product after every sale](./raise-the-price-of-a-product-after-every-sale)
 * [Remove a product tag when another tag is added](./remove-a-product-tag-when-another-tag-is-added)
-* [Remove tag from all products](./remove-specified-tags-from-all-products)
+* [Remove matched tags from all products](./remove-specified-tags-from-all-products)
 * [Rotate products through a featured collection](./rotate-products-through-a-featured-collection)
 * [Schedule product status to active](./schedule-product-status-to-active)
 * [Schedule product tags by date](./schedule-product-tags-by-date)
@@ -1665,7 +1665,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Email vendors when an order is tagged](./email-vendors-when-an-order-is-tagged)
 * [Manage fulfillment shipment status using order tags](./manage-fulfillment-status-using-order-tags)
 * [Manage tagging for a time-limited membership product](./manage-tagging-for-a-time-limited-membership-product)
-* [Remove tag from all products](./remove-specified-tags-from-all-products)
 * [Send email when an order is tagged](./send-email-when-an-order-is-tagged)
 * [Set product templates based on product tags](./set-product-templates-based-on-product-tags)
 * [Tag and segment customers by days since last order](./tag-and-segment-customers-by-days-since-last-order)
@@ -1750,6 +1749,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Remove a customer tag when another tag is added](./remove-a-customer-tag-when-another-tag-is-added)
 * [Remove a product tag when another tag is added](./remove-a-product-tag-when-another-tag-is-added)
 * [Remove an order tag when another tag is added](./remove-a-order-tag-when-another-tag-is-added)
+* [Remove matched tags from all products](./remove-specified-tags-from-all-products)
 * [Untag orders when paid](./untag-orders-when-paid)
 
 ### Variants

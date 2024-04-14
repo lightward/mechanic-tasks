@@ -1,12 +1,40 @@
-{% assign tags_list = options.tags_to_remove__required_array %}
-{% assign tagged_product_ids = array %}
-{% assign tags_query = array %} 
-{% for tag in tags_list %} 
-  {% assign tags_query[tags_query.size] = tag | json | prepend: "tag:" %} 
-{% endfor %} 
+{% assign tags_list = options.tags_list__required_array %}
+{% assign remove_partial_tag_matches = options.remove_partial_tag_matches__boolean %}
+{% assign test_mode = options.test_mode__boolean %}
+
+{% comment %}
+  -- tag searches are case-insensitive, but Liquid comparisons are not, so downcase the list for later use in products loop
+{% endcomment %}
+
+{% assign tags_list_downcase
+  = tags_list
+  | join: "|||"
+  | downcase
+  | split: "|||"
+%}
+
+{% comment %}
+  -- build the tag filter for use in the products query
+{% endcomment %}
+
+{% assign tags_query = array %}
+
+{% for tag in tags_list %}
+  {% assign tags_query[tags_query.size] = tag | json | prepend: "tag:" %}
+{% endfor %}
+
 {% assign tags_query = tags_query | join: " OR " %}
 
-{% for n in (0..100) %}
+{% log tags_query: tags_query %}
+
+{% comment %}
+  -- use paginated query to get up to 25K partial tag matches (this is by API design, no way around this)
+{% endcomment %}
+
+{% assign products = array %}
+{% assign cursor = nil %}
+
+{% for n in (1..100) %}
   {% capture query %}
     query {
       products(
@@ -16,12 +44,12 @@
       ) {
         pageInfo {
           hasNextPage
+          endCursor
         }
-        edges {
-          cursor
-          node {
-            id
-          }
+        nodes {
+          id
+          title
+          tags
         }
       }
     }
@@ -34,16 +62,11 @@
       {
         "data": {
           "products": {
-            "edges": [
+            "nodes": [
               {
-                "node": {
-                  "id": "gid://shopify/Product/1234567890"
-                }
-              },
-              {
-                "node": {
-                  "id": "gid://shopify/Product/9876543210"
-                }
+                "id": "gid://shopify/Product/1234567890",
+                "title": "ACME Widget",
+                "tags": {{ tags_list.first | json }}
               }
             ]
           }
@@ -54,33 +77,91 @@
     {% assign result = result_json | parse_json %}
   {% endif %}
 
-  {% assign products_result = result.data.products.edges | map: "node" | map: "id" %}
-  {% assign tagged_product_ids = tagged_product_ids | concat: products_result %}
+  {% assign products = products | concat: result.data.products.nodes %}
 
   {% if result.data.products.pageInfo.hasNextPage %}
-    {% assign cursor = result.data.products.edges.last.cursor %}
+    {% assign cursor = result.data.products.pageInfo.endCursor %}
   {% else %}
     {% break %}
   {% endif %}
 {% endfor %}
 
-{% for tagged_product_id in tagged_product_ids %}
-  {% action "shopify" %}
-    mutation {
-      tagsRemove(
-        id: {{ tagged_product_id | json }}
-        tags: {{ tags_list | json }}
-      ) {
-        node {
-          ... on Product {
-            tags
+{% comment %}
+  -- find tag matches, partial or exact based on task configuration
+{% endcomment %}
+
+{% assign products_and_matched_tags = array %}
+
+{% for product in products %}
+  {% assign matched_tags = array %}
+
+  {% comment %}
+    -- tag searches are case-insensitive, but Liquid comparisons are not, so use downcase
+    -- don't break out of any of these loops after a match, in case partial matching is enabled
+  {% endcomment %}
+
+  {% for product_tag in product.tags %}
+    {% assign product_tag_downcase = product_tag | downcase %}
+
+    {% for tag in tags_list %}
+      {% assign tag_downcase = tag | downcase %}
+
+      {% if remove_partial_tag_matches %}
+        {% if product_tag_downcase contains tag_downcase %}
+          {% assign matched_tags = matched_tags | push: product_tag %}
+        {% endif %}
+
+      {% elsif product_tag_downcase == tag_downcase %}
+        {% assign matched_tags = matched_tags | push: product_tag %}
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+
+  {% if matched_tags != blank %}
+    {% assign product_data = hash %}
+    {% assign product_data["id"] = product.id %}
+    {% assign product_data["title"] = product.title %}
+    {% assign product_data["matched_tags"] = matched_tags | uniq %}
+    {% assign products_and_matched_tags = products_and_matched_tags | push: product_data %}
+  {% endif %}
+{% endfor %}
+
+{% if remove_partial_tag_matches %}
+  {% log count_of_products_with_partial_tag_matches: products_and_matched_tags.size %}
+{% else %}
+  {% log count_of_products_with_exact_tag_matches: products_and_matched_tags.size %}
+{% endif %}
+
+{% log
+  message: "Found these products with matched tags to remove",
+  remove_partial_tag_matches: remove_partial_tag_matches,
+  products_and_matched_tags: products_and_matched_tags
+%}
+
+{% comment %}
+  -- rmeove the tags unless test mode is enabled
+{% endcomment %}
+
+{% unless test_mode %}
+  {% for product_data in products_and_matched_tags %}
+    {% action "shopify" %}
+      mutation {
+        tagsRemove(
+          id: {{ product_data.id | json }}
+          tags: {{ product_data.matched_tags | json }}
+        ) {
+          node {
+            ... on Product {
+              title
+              tags
+            }
+          }
+          userErrors {
+            field
+            message
           }
         }
-        userErrors {
-          field
-          message
-        }
       }
-    }
-  {% endaction %}
-{% endfor %}
+    {% endaction %}
+  {% endfor %}
+{% endunless %}

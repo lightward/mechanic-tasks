@@ -1,8 +1,8 @@
-# Remove tag from all products
+# Remove matched tags from all products
 
-Tags: Products, Tag
+Tags: Products, Untag
 
-Removes the specified tags from all of your products, effectively deleting that tag from your store. Add multiple tags in a comma separated list. For example: sale,out of stock,promotion.
+This task removes the matched tags from all products in your shop. Optionally, choose to remove partial tag matches as well (e.g. configured tag: "sale", matched tags: "sale", "sale 10", "on sale", etc.).
 
 * View in the task library: [tasks.mechanic.dev/remove-specified-tags-from-all-products](https://tasks.mechanic.dev/remove-specified-tags-from-all-products)
 * Task JSON, for direct import: [task.json](../../tasks/remove-specified-tags-from-all-products.json)
@@ -12,9 +12,9 @@ Removes the specified tags from all of your products, effectively deleting that 
 
 ```json
 {
-  "tags_to_remove__required_array": [
-    "example_tag"
-  ]
+  "tags_list__required_array": null,
+  "remove_partial_tag_matches__boolean": null,
+  "test_mode__boolean": true
 }
 ```
 
@@ -30,7 +30,9 @@ mechanic/user/trigger
 
 ## Documentation
 
-Removes the specified tags from all of your products, effectively deleting that tag from your store. Add multiple tags in a comma separated list. For example: sale,out of stock,promotion.
+This task removes the matched tags from all products in your shop. Optionally, choose to remove partial tag matches as well (e.g. configured tag: "sale", matched tags: "sale", "sale 10", "on sale", etc.).
+
+**Important!** - First run this task with "Test mode" enabled, and it will only log out the products and matched tags that it will delete, without making actual tag updates. This is especially important when choosing to remove partal tag matches.
 
 ## Installing this task
 
