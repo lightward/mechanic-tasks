@@ -1,0 +1,253 @@
+{% assign variant_id = options.variant_id__number_required %}
+{% assign inventory_quantity_to_set = options.inventory_quantity_to_set__number_required %}
+{% assign location_name = options.location_name__required %}
+{% assign hours_offset = options.hours_offset_from_midnight__number__required %}
+{% assign minutes_offset = options.minutes_offset_from_the_hour__number_required %}
+
+{% if inventory_quantity_to_set < 0 %}
+  {% error "Choose an inventory quantity to set greater than zero." %}
+{% endif %}
+
+{% if hours_offset < 0 or hours_offset > 23 %}
+  {% error "Choose an hours offset from midnight between 0 and 23. An empty value will be considered as zero." %}
+{% endif %}
+
+{% if minutes_offset < 0 or minutes_offset > 59 %}
+  {% error "Choose an minutes offset from the hour between 0 and 59. An empty value will be considered as zero." %}
+{% endif %}
+
+{% comment %}
+  -- set up "run days" and "run_time" for logging output
+{% endcomment %}
+
+{% if hours_offset == 0 and minutes_offset == 0 %}
+  {% assign run_time = "midnight" %}
+
+{% elsif hours_offset == 0 %}
+  {%- capture run_time -%}
+    {{ minutes_offset }} minute{% if minutes_offset > 1 %}s{% endif %} past midnight
+  {%- endcapture -%}
+
+{% else %}
+  {%- capture run_time -%}
+    {{ hours_offset }} hour{% if hours_offset > 1 %}s{% endif %}{% if minutes_offset > 0 %} and {{ minutes_offset }} minute{% if minutes_offset > 1 %}s{% endif %}{% endif %} past midnight
+  {%- endcapture -%}
+{% endif %}
+
+{% if options.run_daily__boolean %}
+  {% assign run_days = "daily" %}
+{% else %}
+  {% assign run_days = array %}
+
+  {% if options.run_on_mondays__boolean %}
+    {% assign run_days = run_days | push: "Monday" %}
+  {% endif %}
+  {% if options.run_on_tuesdays__boolean %}
+    {% assign run_days = run_days | push: "Tuesday" %}
+  {% endif %}
+  {% if options.run_on_wednesdays__boolean %}
+    {% assign run_days = run_days | push: "Wednesday" %}
+  {% endif %}
+  {% if options.run_on_thursdays__boolean %}
+    {% assign run_days = run_days | push: "Thursday" %}
+  {% endif %}
+  {% if options.run_on_fridays__boolean %}
+    {% assign run_days = run_days | push: "Friday" %}
+  {% endif %}
+  {% if options.run_on_saturdays__boolean %}
+    {% assign run_days = run_days | push: "Saturday" %}
+  {% endif %}
+  {% if options.run_on_sundays__boolean %}
+    {% assign run_days = run_days | push: "Sunday" %}
+  {% endif %}
+
+  {% if run_days.size == 1 %}
+    {% capture run_days -%}
+      every {{ run_days.first }}
+    {%- endcapture %}
+
+  {% elsif run_days.size == 2 %}
+    {% capture run_days -%}
+      every {{ run_days | join: " and " }}
+    {%- endcapture %}
+
+  {% elsif run_days.size > 2 %}
+    {% capture run_days -%}
+      every {{ run_days | join: ", " | replace_last: ", ", ", and " }}
+    {%- endcapture %}
+  {% endif %}
+{% endif %}
+
+{% if run_days == blank %}
+  {% error "Choose at least one run day option." %}
+{% endif %}
+
+{% comment %}
+  -- get location if it exists
+{% endcomment %}
+
+{% capture query %}
+  query {
+    locations(
+      first: 1
+      query: {{ location_name | json | prepend: "name:" | json }}
+    ) {
+      nodes {
+        id
+        name
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "locations": {
+          "nodes": [
+            {
+              "id": "gid://shopify/Location/1234567890",
+              "name": {{ location_name | json }}
+            }
+          ]
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% assign location = result.data.locations.nodes.first %}
+
+{% if location == blank %}
+  {% error "Location name configured in task does not match a location in this shop." %}
+  {% break %}
+{% endif %}
+
+{% comment %}
+  -- check to see if variant exists and get its inventory item ID and available quantitiy at the configured location
+{% endcomment %}
+
+{% capture query %}
+  query {
+    productVariant(id: {{ variant_id | json | prepend: "gid://shopify/ProductVariant/" | json }}) {
+      id
+      displayName
+      inventoryItem {
+        id
+        inventoryLevel(locationId: {{ location.id | json }} ) {
+          quantities(names: "available") {
+            quantity
+          }
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "productVariant": {
+          "id": "gid://shopify/ProductVariant/1234567890",
+          "displayName": "ACME Widget - Onyx",
+          "inventoryItem": {
+            "id": "gid://shopify/InventoryItem/1234567890",
+            "inventoryLevel": {
+              "quantities": [
+                {
+                  "quantity": 0
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% assign variant = result.data.productVariant %}
+{% assign inventory_level = variant.inventoryItem.inventoryLevel %}
+{% assign available = inventory_level.quantities.first.quantity %}
+
+{% if variant == blank %}
+  {% error "Variant ID configured in task does not match a variant in this shop." %}
+  {% break %}
+{% endif %}
+
+{% if inventory_level == blank %}
+  {% error "Variant ID configured in task does not stock inventory at the configured location." %}
+  {% break %}
+{% endif %}
+
+{% if event.topic == "mechanic/user/trigger" %}
+  {% comment %}
+    -- this event is purely to log out the task config and related product, variant, inventory item, and location data
+  {% endcomment %}
+
+  {% capture output %}
+    This task is configured to run {{ run_days }} at {{ run_time }} local shop time.
+
+    It will set the available inventory for the {{ variant.displayName }} to {{ inventory_quantity_to_set }} at {{ location_name }}.
+  {% endcapture %}
+
+  {% log output %}
+
+{% elsif event.topic contains "mechanic/scheduler/" %}
+  {% comment %}
+    -- adjust the quantity of the configured variant's inventory item at the configured location
+  {% endcomment %}
+
+  {% if inventory_quantity_to_set == available %}
+    {% log "Available inventory for this variant is already set to the configured quantity." %}
+    {% break %}
+  {% endif %}
+
+  {% action "shopify" %}
+    mutation {
+      inventoryAdjustQuantities(
+        input: {
+          reason: "correction"
+          name: "available"
+          changes: [
+            {
+              inventoryItemId: {{ variant.inventoryItem.id | json }}
+              locationId: {{ location.id | json }}
+              delta: {{ inventory_quantity_to_set | minus: available }}
+            }
+          ]
+        }
+      ) {
+        inventoryAdjustmentGroup {
+          reason
+          changes {
+            name
+            delta
+            item {
+              id
+              sku
+            }
+            location {
+              name
+            }
+          }
+        }
+        userErrors {
+          code
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}
