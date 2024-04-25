@@ -41,6 +41,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-copy notes from customers to their orders](./auto-copy-notes-from-customers-to-their-orders)
 * [Auto-copy order notes to the customer's note](./auto-copy-order-notes-to-the-customers-note)
 * [Auto-create collections by product type or vendor](./auto-create-collections-by-product-type-or-vendor)
+* [Auto-delete customer metafields older than X days](./auto-delete-customer-metafields-older-than-x-days)
 * [Auto-delete customers that are created without orders](./auto-delete-customers-that-are-created-without-orders)
 * [Auto-fulfill items that don't require shipping](./auto-fulfill-items-that-dont-require-shipping)
 * [Auto-fulfill orders when tagged](./auto-fulfill-orders-when-tagged)
@@ -657,6 +658,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-add phone numbers to unfulfilled orders, when the customer is updated](./auto-add-phone-numbers-to-unfulfilled-orders-when-the-customer-is-updated)
 * [Auto-copy customer metafields to new orders](./auto-copy-customer-metafields-to-new-orders)
 * [Auto-copy notes from customers to their orders](./auto-copy-notes-from-customers-to-their-orders)
+* [Auto-delete customer metafields older than X days](./auto-delete-customer-metafields-older-than-x-days)
 * [Auto-delete customers that are created without orders](./auto-delete-customers-that-are-created-without-orders)
 * [Auto-tag a customer's first order](./auto-tag-a-customers-first-order)
 * [Auto-tag customers based on discount codes used](./auto-tag-customers-based-on-discount-codes-used)
@@ -727,6 +729,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Delete
 
+* [Auto-delete customer metafields older than X days](./auto-delete-customer-metafields-older-than-x-days)
 * [Auto-delete customers that are created without orders](./auto-delete-customers-that-are-created-without-orders)
 * [Delete all products](./delete-all-products)
 * [Delete cancelled orders after 48 hours](./delete-cancelled-orders-after-48-hours)
@@ -1078,6 +1081,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Add Option Name as a Variant Metafield for In Stock Variants](./add-option-names-as-variant-metafields-for-in-stock-variants)
 * [Auto-associate variants with a delivery profile, by metafield value](./auto-associate-variants-with-a-delivery-profile-by-metafield-value)
 * [Auto-copy customer metafields to new orders](./auto-copy-customer-metafields-to-new-orders)
+* [Auto-delete customer metafields older than X days](./auto-delete-customer-metafields-older-than-x-days)
 * [Copy draft order metafields to orders](./copy-draft-order-metafields-to-orders)
 * [Copy prefixed tags to metafields](./copy-prefixed-tags-to-metafields)
 * [Copy product metafields to each product's tags](./copy-product-metafields-to-each-products-tags)
