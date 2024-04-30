@@ -1,0 +1,177 @@
+{% assign product_metafields_to_monitor = options.product_metafields_to_monitor__array_required %}
+{% assign minimum_age_in_days_before_deletion = options.minimum_age_in_days_before_deletion__number_required | at_least: 0 %}
+{% assign test_mode = options.test_mode__boolean %}
+
+{% comment %}
+  -- use midnight local shop time as the base, so cutoff date will provide X full calendar days (excepting clock changes)
+{% endcomment %}
+
+{% assign metafield_delete_interval_s = minimum_age_in_days_before_deletion | times: 86400 %}
+{% assign last_midnight_s = "now" | date: "%F" | date: "%s" | times: 1 %}
+{% assign cutoff_date_s = last_midnight_s | minus: metafield_delete_interval_s %}
+{% assign cutoff_date = cutoff_date_s | date: "%FT%T" %}
+
+{% log
+  cutoff_date: cutoff_date,
+  task_options: task.options
+%}
+
+{% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% comment %}
+    -- query up to 25K products [higher amounts will likely require a bulk operation query]
+    -- no filter query available to only include products which have values for any of the configured metafields
+  {% endcomment %}
+
+  {% assign cursor = nil %}
+  {% assign metafield_inputs = array %}
+
+  {% for n in (1..100) %}
+    {% capture query %}
+      query {
+        products(
+          first: 250
+          after: {{ cursor | json }}
+          query: {{ search_query | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            metafields(
+              first: {{ product_metafields_to_monitor.size }}
+              keys: {{ product_metafields_to_monitor | graphql_arguments }}
+            ) {
+              nodes {
+                id
+                createdAt
+                key
+                namespace
+                type
+                value
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "products": {
+              "nodes": [
+                {
+                  "id": "gid://shopify/Product/1234567890",
+                  "metafields": {
+                    "nodes": [
+                      {
+                        "id": "gid://shopify/Metafield/1234567890",
+                        "createdAt": {{ cutoff_date_s | minus: 1 | json }},
+                        "key": {{ product_metafields_to_monitor.first | split: "." | first | json }},
+                        "namespace": {{ product_metafields_to_monitor.first | split: "." | last | json }}
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% for product in result.data.products.nodes %}
+      {% comment %}
+        -- the keys filter in the metafields query should mean only the configured metafields are returned if present on a product
+      {% endcomment %}
+
+      {% for metafield in product.metafields.nodes %}
+        {% assign metafield_created_at_s = metafield.createdAt | date: "%s" | times: 1 %}
+
+        {% if metafield_created_at_s < cutoff_date_s %}
+          {% log
+            message: "Found metafield that qualifies for deletion.",
+            product_id: product.id,
+            metafield: metafield
+          %}
+
+          {% assign metafield_input = hash %}
+          {% assign metafield_input["ownerId"] = product.id %}
+          {% assign metafield_input["namespace"] = metafield.namespace %}
+          {% assign metafield_input["key"] = metafield.key %}
+          {% assign metafield_inputs = metafield_inputs | push: metafield_input %}
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+
+    {% if result.data.products.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.products.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% comment %}
+    -- temporary preview action to force product write permissions (placed here because there are break tags below)
+  {% endcomment %}
+
+  {% action "shopify" %}
+    mutation {
+      productCreate(
+        input: {
+          title: "Preview only"
+        }
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+  {% if metafield_inputs == blank %}
+    {% log "No metafields qualified to be deleted on this task run." %}
+    {% break %}
+  {% endif %}
+
+  {% if test_mode %}
+    {% log %}
+      "Found {{ metafield_inputs.size }} metafields which qualified to be deleted. This task has the test mode enabled, so the deletion will be skipped."
+    {% endlog %}
+    {% break %}
+  {% endif %}
+
+  {% comment %}
+    -- bulk metafield deletion supports 250 metafields per mutation
+  {% endcomment %}
+
+  {% assign groups_of_metafield_inputs = metafield_inputs | in_groups_of: 250, fill_with: false %}
+
+  {% for group_of_metafield_inputs in groups_of_metafield_inputs %}
+    {% action "shopify" %}
+      mutation {
+        metafieldsDelete(
+          metafields: {{ group_of_metafield_inputs | graphql_arguments }}
+        ) {
+          deletedMetafields {
+            ownerId
+            namespace
+            key
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endfor %}
+{% endif %}
