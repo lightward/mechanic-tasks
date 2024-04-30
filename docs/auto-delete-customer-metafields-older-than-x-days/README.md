@@ -2,7 +2,7 @@
 
 Tags: Customers, Delete, Metafields
 
-Use this task to auto-delete customer metafields that are older than the configured minimum age in days. Enter one or more metafields using *namespace.key* format (e.g. "custom.recent_purchase" ), and on the daily task run it will find and delete any matching customer metafield which was **created at** prior to the cutoff date.
+Use this task to auto-delete customer metafields that are older than the configured minimum age in days. Useful for removing transient metafields a certain number of days after they have been created.
 
 * View in the task library: [tasks.mechanic.dev/auto-delete-customer-metafields-older-than-x-days](https://tasks.mechanic.dev/auto-delete-customer-metafields-older-than-x-days)
 * Task JSON, for direct import: [task.json](../../tasks/auto-delete-customer-metafields-older-than-x-days.json)
@@ -31,14 +31,14 @@ mechanic/user/trigger
 
 ## Documentation
 
-Use this task to auto-delete customer metafields that are older than the configured minimum age in days. Enter one or more metafields using *namespace.key* format (e.g. "custom.recent_purchase" ), and on the daily task run it will find and delete any matching customer metafield which was **created at** prior to the cutoff date.
+Use this task to auto-delete customer metafields that are older than the configured minimum age in days. Useful for removing transient metafields a certain number of days after they have been created.
 
-It is highly recommended to first run this task using the *Test mode* option, so it can log out which metafields have qualified for deletion without actually deleting them. Pair this with running the task manually to avoid waiting for the next schedueld task run to see the test mode logging.
+Enter one or more metafields using *namespace.key* format (e.g. "custom.recent_purchase" ), and on the daily task run it will find and delete any matching customer metafield which was **created at** prior to the cutoff date.
+
+It is highly recommended to first run this task using the *Test mode* option, so it can log out which metafields have qualified for deletion without actually deleting them. Pair this with running the task manually to avoid waiting for the next scheduled task run to see the test mode logging.
 
 **Note:**
-The "cutoff date" uses the beginning of the tsak run day (i.e. midnight local shop time) as the start time to count backwards the configured minimum age in days.
-
-
+The "cutoff date" uses the beginning of the task run day (i.e. midnight local shop time) as the start time to count backwards the configured minimum age in days.
 
 ## Installing this task
 

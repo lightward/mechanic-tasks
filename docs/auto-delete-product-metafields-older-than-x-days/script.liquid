@@ -1,4 +1,4 @@
-{% assign customer_metafields_to_monitor = options.customer_metafields_to_monitor__array_required %}
+{% assign product_metafields_to_monitor = options.product_metafields_to_monitor__array_required %}
 {% assign minimum_age_in_days_before_deletion = options.minimum_age_in_days_before_deletion__number_required | at_least: 0 %}
 {% assign test_mode = options.test_mode__boolean %}
 
@@ -18,8 +18,8 @@
 
 {% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
   {% comment %}
-    -- query up to 25K customers [higher amounts will likely require a bulk operation query]
-    -- no filter query available to only include customers who have values for any of the configured metafields
+    -- query up to 25K products [higher amounts will likely require a bulk operation query]
+    -- no filter query available to only include products which have values for any of the configured metafields
   {% endcomment %}
 
   {% assign cursor = nil %}
@@ -28,7 +28,7 @@
   {% for n in (1..100) %}
     {% capture query %}
       query {
-        customers(
+        products(
           first: 250
           after: {{ cursor | json }}
           query: {{ search_query | json }}
@@ -40,8 +40,8 @@
           nodes {
             id
             metafields(
-              first: {{ customer_metafields_to_monitor.size }}
-              keys: {{ customer_metafields_to_monitor | graphql_arguments }}
+              first: {{ product_metafields_to_monitor.size }}
+              keys: {{ product_metafields_to_monitor | graphql_arguments }}
             ) {
               nodes {
                 id
@@ -63,17 +63,17 @@
       {% capture result_json %}
         {
           "data": {
-            "customers": {
+            "products": {
               "nodes": [
                 {
-                  "id": "gid://shopify/Customer/1234567890",
+                  "id": "gid://shopify/Product/1234567890",
                   "metafields": {
                     "nodes": [
                       {
                         "id": "gid://shopify/Metafield/1234567890",
                         "createdAt": {{ cutoff_date_s | minus: 1 | json }},
-                        "key": {{ customer_metafields_to_monitor.first | split: "." | first | json }},
-                        "namespace": {{ customer_metafields_to_monitor.first | split: "." | last | json }}
+                        "key": {{ product_metafields_to_monitor.first | split: "." | first | json }},
+                        "namespace": {{ product_metafields_to_monitor.first | split: "." | last | json }}
                       }
                     ]
                   }
@@ -87,23 +87,23 @@
       {% assign result = result_json | parse_json %}
     {% endif %}
 
-    {% for customer in result.data.customers.nodes %}
+    {% for product in result.data.products.nodes %}
       {% comment %}
-        -- the keys filter in the metafields query should mean only the configured metafields are returned if present on a customer
+        -- the keys filter in the metafields query should mean only the configured metafields are returned if present on a product
       {% endcomment %}
 
-      {% for metafield in customer.metafields.nodes %}
+      {% for metafield in product.metafields.nodes %}
         {% assign metafield_created_at_s = metafield.createdAt | date: "%s" | times: 1 %}
 
         {% if metafield_created_at_s < cutoff_date_s %}
           {% log
             message: "Found metafield that qualifies for deletion.",
-            customer_id: customer.id,
+            product_id: product.id,
             metafield: metafield
           %}
 
           {% assign metafield_input = hash %}
-          {% assign metafield_input["ownerId"] = customer.id %}
+          {% assign metafield_input["ownerId"] = product.id %}
           {% assign metafield_input["namespace"] = metafield.namespace %}
           {% assign metafield_input["key"] = metafield.key %}
           {% assign metafield_inputs = metafield_inputs | push: metafield_input %}
@@ -111,22 +111,22 @@
       {% endfor %}
     {% endfor %}
 
-    {% if result.data.customers.pageInfo.hasNextPage %}
-      {% assign cursor = result.data.customers.pageInfo.endCursor %}
+    {% if result.data.products.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.products.pageInfo.endCursor %}
     {% else %}
       {% break %}
     {% endif %}
   {% endfor %}
 
   {% comment %}
-    -- temporary preview action to force customer write permissions (placed here because there are break tags below)
+    -- temporary preview action to force product write permissions (placed here because there are break tags below)
   {% endcomment %}
 
   {% action "shopify" %}
     mutation {
-      customerCreate(
+      productCreate(
         input: {
-          email: "preview@example.com"
+          title: "Preview only"
         }
       ) {
         userErrors {
