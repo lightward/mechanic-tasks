@@ -80,12 +80,10 @@
     {% assign product = product_json | parse_json %}
   {% endif %}
 
-  {% assign previous_variant_ids_and_values = product.metafields.mechanic[metafield_key] %}
+  {% assign previous_variant_ids_and_values = product.metafields.mechanic[metafield_key].value %}
 
-  {% if previous_variant_ids_and_values == nil %}
-    {% error %}
-      "Mechanic has not had an opportunty to store this product's previous variant values. Use the \"Run task\" button to re-scan your products. :)"
-    {% enderror %}
+  {% if previous_variant_ids_and_values == blank %}
+    {% error "Mechanic has not had an opportunity to store this product's previous variant values. Use the 'Run task' button to re-scan your products. :)" %}
   {% endif %}
 
   {% assign product_qualifies = false %}
