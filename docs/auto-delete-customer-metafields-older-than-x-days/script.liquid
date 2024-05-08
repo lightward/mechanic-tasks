@@ -122,20 +122,22 @@
     -- temporary preview action to force customer write permissions (placed here because there are break tags below)
   {% endcomment %}
 
-  {% action "shopify" %}
-    mutation {
-      customerCreate(
-        input: {
-          email: "preview@example.com"
-        }
-      ) {
-        userErrors {
-          field
-          message
+  {% if event.preview %}
+    {% action "shopify" %}
+      mutation {
+        customerCreate(
+          input: {
+            email: "preview@example.com"
+          }
+        ) {
+          userErrors {
+            field
+            message
+          }
         }
       }
-    }
-  {% endaction %}
+    {% endaction %}
+  {% endif %}
 
   {% if metafield_inputs == blank %}
     {% log "No metafields qualified to be deleted on this task run." %}
