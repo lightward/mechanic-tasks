@@ -5,9 +5,7 @@
 {% assign metafield_key = metafield_namespace_and_key.named_captures.key %}
 
 {% if metafield_namespace == blank or metafield_key == blank %}
-  {% error %}
-    "The metafield key and namespace must each be at least 3 characters long and separated only by a '.'.\n\nValid characters are a-z, A-Z, 0-9, underscores, and dashes."
-  {% enderror %}
+  {% error "The metafield key and namespace must each be at least 3 characters long and separated only by a '.'.\n\nValid characters are a-z, A-Z, 0-9, underscores, and dashes." %}
   {% break %}
 {% endif %}
 
@@ -33,10 +31,8 @@
             price
             compareAtPrice
             metafield(
-              namespace: {{ metafield_namespace | json }}
-              key: {{ metafield_key | json }}
+              key: {{ metafield_namespace_and_key | json }}
             ) {
-              id
               value
             }
           }
@@ -70,10 +66,8 @@
             price
             compareAtPrice
             metafield(
-              namespace: {{ metafield_namespace | json }}
-              key: {{ metafield_key | json }}
+              key: {{ metafield_namespace_and_key | json }}
             ) {
-              id
               value
             }
           }
@@ -111,17 +105,26 @@
 
   {% assign price = variant.price | times: 1.0 %}
   {% assign compare_at_price = variant.compareAtPrice | times: 1.0 %}
+  {% assign metafield_value
+    = variant.metafield.value
+    | default: "[]"
+    | parse_json
+  %}
 
   {% comment %}
     Note: converting to floats above will handle cases where compareAtPrice is empty or "0.00", as it will become 0.0 in either case
   {% endcomment %}
 
   {% if compare_at_price <= price %}
-    {% if variant.metafield != blank %}
-      {% assign metafields_to_delete = metafields_to_delete | push: variant.metafield %}
+    {% if metafield_value != blank %}
+      {% assign metafield_to_delete = hash %}
+      {% assign metafield_to_delete["ownerId"] = variant.id %}
+      {% assign metafield_to_delete["namespace"] = metafield_namespace %}
+      {% assign metafield_to_delete["key"] = metafield_key %}
+      {% assign metafields_to_delete = metafields_to_delete | push: metafield_to_delete %}
     {% endif %}
 
-    {% assign variant_log["message"] = "Variant is not discounted; skipping." %}
+    {% assign variant_log["message"] = "Variant is not discounted; removing metafield if it exists." %}
     {% assign variant_logs = variant_logs | push: variant_log %}
 
     {% continue %}
@@ -149,35 +152,33 @@
   {% assign variant_log["discount_filters_should_have"] = discount_filters_should_have %}
 
   {% if discount_filters_should_have == blank %}
-    {% if variant.metafield != blank %}
-      {% assign metafields_to_delete = metafields_to_delete | push: variant.metafield %}
+    {% if metafield_value != blank %}
+      {% assign metafield_to_delete = hash %}
+      {% assign metafield_to_delete["ownerId"] = variant.id %}
+      {% assign metafield_to_delete["namespace"] = metafield_namespace %}
+      {% assign metafield_to_delete["key"] = metafield_key %}
+      {% assign metafields_to_delete = metafields_to_delete | push: metafield_to_delete %}
     {% endif %}
 
-    {% assign variant_log["message"] = "Variant is discounted, but it does not meet any of the configured percentage thresholds; skipping." %}
+    {% assign variant_log["message"] = "Variant is discounted, but it does not meet any of the configured percentage thresholds; removing metafield if it exists." %}
     {% assign variant_logs = variant_logs | push: variant_log %}
 
     {% continue %}
   {% endif %}
 
-  {% assign discount_filters_should_have_json = discount_filters_should_have | json %}
-
-  {% if variant.metafield.value == discount_filters_should_have_json %}
+  {% if metafield_value == discount_filters_should_have %}
     {% continue %}
   {% endif %}
 
   {% assign variant_log["message"] = "Variant is discounted and metafield does not match the discount filters it should have; updating." %}
   {% assign variant_logs = variant_logs | push: variant_log %}
 
-  {% capture metafield_to_set %}
-    {
-      ownerId: {{ variant.id | json }}
-      namespace: {{ metafield_namespace | json }}
-      key: {{ metafield_key | json }}
-      value: {{ discount_filters_should_have_json | json }}
-      type: "list.single_line_text_field"
-    }
-  {% endcapture %}
-
+  {% assign metafield_to_set = hash %}
+  {% assign metafield_to_set["ownerId"] = variant.id %}
+  {% assign metafield_to_set["namespace"] = metafield_namespace %}
+  {% assign metafield_to_set["key"] = metafield_key %}
+  {% assign metafield_to_set["type"] = "list.single_line_text_field" %}
+  {% assign metafield_to_set["value"] = discount_filters_should_have | json %}
   {% assign metafields_to_set = metafields_to_set | push: metafield_to_set %}
 {% endfor %}
 
@@ -190,9 +191,7 @@
     {% action "shopify" %}
       mutation {
         metafieldsSet(
-          metafields: [
-            {{ group_of_metafields_to_set | join: newline }}
-          ]
+          metafields: {{ group_of_metafields_to_set | graphql_arguments }}
         ) {
           metafields {
             id
@@ -218,20 +217,26 @@
   {% endfor %}
 {% endif %}
 
-{% for metafield_to_delete in metafields_to_delete %}
-  {% action "shopify" %}
-    mutation {
-      metafieldDelete(
-        input: {
-          id: {{ metafield_to_delete.id | json }}
-        }
-      ) {
-        deletedId
-        userErrors {
-          field
-          message
+{% if metafields_to_delete != blank %}
+  {% assign groups_of_metafields_to_delete = metafields_to_delete | in_groups_of: 250, fill_with: false %}
+
+  {% for group_of_metafields_to_delete in groups_of_metafields_to_delete %}
+    {% action "shopify" %}
+      mutation {
+        metafieldsDelete(
+          metafields: {{ group_of_metafields_to_delete | graphql_arguments }}
+        ) {
+          deletedMetafields {
+            ownerId
+            namespace
+            key
+          }
+          userErrors {
+            field
+            message
+          }
         }
       }
-    }
-  {% endaction %}
-{% endfor %}
+    {% endaction %}
+  {% endfor %}
+{% endif %}
