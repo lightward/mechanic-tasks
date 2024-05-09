@@ -118,27 +118,6 @@
     {% endif %}
   {% endfor %}
 
-  {% comment %}
-    -- temporary preview action to force product write permissions (placed here because there are break tags below)
-  {% endcomment %}
-
-  {% if event.preview %}
-    {% action "shopify" %}
-      mutation {
-        productCreate(
-          input: {
-            title: "Preview only"
-          }
-        ) {
-          userErrors {
-            field
-            message
-          }
-        }
-      }
-    {% endaction %}
-  {% endif %}
-
   {% if metafield_inputs == blank %}
     {% log "No metafields qualified to be deleted on this task run." %}
     {% break %}
@@ -146,7 +125,7 @@
 
   {% if test_mode %}
     {% log %}
-      "Found {{ metafield_inputs.size }} metafields which qualified to be deleted. This task has the test mode enabled, so the deletion will be skipped."
+      "Found {{ metafield_inputs.size }} metafields which qualified to be deleted. This task has test mode enabled, so the deletion will be skipped."
     {% endlog %}
     {% break %}
   {% endif %}
