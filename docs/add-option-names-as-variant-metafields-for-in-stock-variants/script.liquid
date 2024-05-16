@@ -111,6 +111,10 @@
   {% assign variants = variants_json | parse_json %}
 {% endif %}
 
+{% comment %}
+  -- save mutation inputs for setting and deleting metafields
+{% endcomment %}
+
 {% assign metafields_to_set = array %}
 {% assign metafields_to_delete = array %}
 
@@ -146,20 +150,20 @@
           {% endif %}
 
         {% else %}
-          {% assign metafields_to_delete = metafields_to_delete | push: metafield.id %}
+          {% assign metafield_to_delete = hash %}
+          {% assign metafield_to_delete["ownerId"] = variant.id %}
+          {% assign metafield_to_delete["namespace"] = metafield_namespace %}
+          {% assign metafield_to_delete["key"] = metafield_key %}
+          {% assign metafields_to_delete = metafields_to_delete | push: metafield_to_delete %}
         {% endif %}
 
         {% if set_metafield %}
-          {% capture metafield_to_set %}
-            {
-              ownerId: {{ variant.id | json }}
-              namespace: {{ metafield_namespace | json }}
-              key: {{ metafield_key | json }}
-              type: "single_line_text_field"
-              value: {{ selected_option.value | append: "" | json }}
-            }
-          {% endcapture %}
-
+          {% assign metafield_to_set = hash %}
+          {% assign metafield_to_set["ownerId"] = variant.id %}
+          {% assign metafield_to_set["namespace"] = metafield_namespace %}
+          {% assign metafield_to_set["key"] = metafield_key %}
+          {% assign metafield_to_set["type"] = "single_line_text_field" %}
+          {% assign metafield_to_set["value"] = selected_option.value | append: "" %}
           {% assign metafields_to_set = metafields_to_set | push: metafield_to_set %}
         {% endif %}
       {% endif %}
@@ -167,56 +171,73 @@
   {% endfor %}
 {% endfor %}
 
-{% log
-  total_metafields_being_set: metafields_to_set.size,
-  total_metafields_being_deleted: metafields_to_delete.size
-%}
+{% unless event.topic == "mechanic/shopify/bulk_operation" %}
+  {% log
+    total_metafields_being_set: metafields_to_set.size,
+    total_metafields_being_deleted: metafields_to_delete.size
+  %}
+{% endunless %}
 
-{% assign groups_of_metafields_to_set = metafields_to_set | in_groups_of: 25, fill_with: false %}
+{% comment %}
+  -- metafields may be set 25 at a time
+{% endcomment %}
 
-{% for group_of_metafields_to_set in groups_of_metafields_to_set %}
-  {% action "shopify" %}
-    mutation {
-      metafieldsSet(
-        metafields: [
-          {{ group_of_metafields_to_set | join: newline }}
-        ]
-      ) {
-        metafields {
-          id
-          namespace
-          key
-          type
-          value
-          owner {
-            ... on ProductVariant {
-              id
+{% if metafields_to_set != blank %}
+  {% assign groups_of_metafields_to_set = metafields_to_set | in_groups_of: 25, fill_with: false %}
+
+  {% for group_of_metafields_to_set in groups_of_metafields_to_set %}
+    {% action "shopify" %}
+      mutation {
+        metafieldsSet(
+          metafields: {{ group_of_metafields_to_set | graphql_arguments }}
+        ) {
+          metafields {
+            id
+            namespace
+            key
+            type
+            value
+            owner {
+              ... on ProductVariant {
+                id
+              }
             }
           }
-        }
-        userErrors {
-          code
-          field
-          message
+          userErrors {
+            code
+            field
+            message
+          }
         }
       }
-    }
-  {% endaction %}
-{% endfor %}
+    {% endaction %}
+  {% endfor %}
+{% endif %}
 
-{% for metafield_id in metafields_to_delete %}
-  {% action "shopify" %}
-    mutation {
-      metafieldDelete(
-        input: {
-          id: {{ metafield_id | json }}
-        }
-      ) {
-        userErrors {
-          field
-          message
+{% comment %}
+  -- metafields may be deleted in batches of 250
+{% endcomment %}
+
+{% if metafields_to_delete != blank %}
+  {% assign groups_of_metafields_to_delete = metafields_to_delete | in_groups_of: 250, fill_with: false %}
+
+  {% for group_of_metafields_to_delete in groups_of_metafields_to_delete %}
+    {% action "shopify" %}
+      mutation {
+        metafieldsDelete(
+          metafields: {{ group_of_metafields_to_delete | graphql_arguments }}
+        ) {
+          deletedMetafields {
+            ownerId
+            namespace
+            key
+          }
+          userErrors {
+            field
+            message
+          }
         }
       }
-    }
-  {% endaction %}
-{% endfor %}
+    {% endaction %}
+  {% endfor %}
+{% endif %}

@@ -35,7 +35,7 @@ This task populates variant metafields with your desired variant options for use
 
 Configure it with a single metafield namespace (e.g. "my_fields") and one or more variant options (e.g. "Size") paired with their respective metafield key (e.g. "size_in_stock").
 
-__Important:__ To use OS 2.0 collection and search filtering, you must configure variant metafield definitions __prior__ to configuring and enabling this task. Read Shopify's documenation on how to [Add storefront filtering](https://help.shopify.com/en/manual/online-store/themes/customizing-themes/storefront-filters) for more info.
+__Important:__ To use OS 2.0 collection and search filtering, you must configure variant metafield definitions for each metafield key configured in this task. Read Shopify's documenation on [adding metafield definitions](https://help.shopify.com/en/manual/custom-data/metafields/metafield-definitions) for more info.
 
 ## Installing this task
 
