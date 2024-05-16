@@ -35,8 +35,6 @@ mechanic/user/trigger
 
 Use this task to keep you and your team updated when products go out of stock - and, optionally, when they go back in stock. Filter with a simple product search to only track products you care about. Choose a custom stock threshold to get a heads up before the stock level reaches zero.
 
-Configure this task to receive email alerts when products go out of stock, for the threshold of your choice, optionally applying a specific product search.
-
 Run this task manually to scan all products up front. While this task normally remembers which products were out (or in) stock, running this task manually will always result in an email summary of out of stock products.
 
 ## Installing this task
