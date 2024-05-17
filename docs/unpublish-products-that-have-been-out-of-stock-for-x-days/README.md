@@ -2,7 +2,7 @@
 
 Tags: Inventory, Products, Unpublish
 
-This task monitors for inventory changes, and records the time when a product's inventory falls to 0 or less. Then, on an hourly basis, the task will unpublish any products with a recorded out-of-stock time of at least x days ago.
+This task watches for inventory updates. When a product's total inventory becomes 0 or less, the current time will be recorded for that product. Then, on an hourly basis, this task will unpublish any products with a recorded out-of-stock time of at least x days ago.
 
 * View in the task library: [tasks.mechanic.dev/unpublish-products-that-have-been-out-of-stock-for-x-days](https://tasks.mechanic.dev/unpublish-products-that-have-been-out-of-stock-for-x-days)
 * Task JSON, for direct import: [task.json](../../tasks/unpublish-products-that-have-been-out-of-stock-for-x-days.json)
@@ -16,8 +16,8 @@ This task monitors for inventory changes, and records the time when a product's 
   "sales_channel_names__required_array": [
     "Online Store"
   ],
-  "test_mode__boolean": true,
-  "only_include_products_matching_this_search_query": null
+  "only_include_products_matching_this_search_query": null,
+  "test_mode__boolean": true
 }
 ```
 
@@ -28,13 +28,12 @@ This task monitors for inventory changes, and records the time when a product's 
 ```liquid
 shopify/inventory_levels/update
 mechanic/scheduler/hourly
+mechanic/user/trigger
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
-
-This task monitors for inventory changes, and records the time when a product's inventory falls to 0 or less. Then, on an hourly basis, the task will unpublish any products with a recorded out-of-stock time of at least x days ago.
 
 This task watches for inventory updates. When a product's total inventory becomes 0 or less, the current time will be recorded for that product. Then, on an hourly basis, this task will unpublish any products with a recorded out-of-stock time of at least x days ago.
 
