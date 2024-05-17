@@ -1,31 +1,42 @@
-{% if options.delete_product_metafields__boolean and options.delete_product_variant_metafields__boolean %}
-  {% error "You can only choose one option to target, either product metafields or product variant metafields, not both at the same time." %}
+{% assign delete_product_metafields = options.delete_product_metafields__boolean %}
+{% assign delete_variant_metafields = options.delete_variant_metafields__boolean %}
+{% assign metafield_namespace = options.metafield_namespace %}
+{% assign metafield_key = options.metafield_key %}
+{% assign test_mode = options.test_mode__boolean %}
+
+{% if delete_product_metafields and delete_variant_metafields %}
+  {% error "You can only choose one option to target, either product metafields or variant metafields, not both at the same time." %}
 {% endif %}
 
-{% if options.delete_product_metafields__boolean == false and options.delete_product_variant_metafields__boolean == false %}
-  {% error "You must choose one option to target, either product metafields or product variant metafields." %}
-{% endif %}
+{% unless delete_product_metafields or delete_variant_metafields %}
+  {% error "You must choose one option to target, either product metafields or variant metafields." %}
+{% endunless %}
 
-{% if options.metafield_namespace == blank and options.metafield_key != blank %}
+{% if metafield_namespace == blank and metafield_key != blank %}
   {% error "If you provide a metafield key, you must also provide a metafield namespace." %}
+{% endif %}
+
+{% if delete_product_metafields %}
+  {% assign object_type = "Product" %}
+  {% assign query_type = "products" %}
+
+{% elsif delete_variant_metafields %}
+  {% assign object_type = "ProductVariant" %}
+  {% assign query_type = "productVariants" %}
 {% endif %}
 
 {% if event.topic == "mechanic/user/trigger" %}
   {% capture bulk_operation_query %}
       query {
-        {% if options.delete_product_metafields__boolean %}
-          products {
-        {% elsif options.delete_product_variant_metafields__boolean %}
-          productVariants {
-        {% endif %}
+        {{ query_type }} {
           edges {
             node {
               __typename
               id
-              {% if options.metafield_key != blank %}
+              {% if metafield_key != blank %}
                 metafield(
-                  namespace: {{ options.metafield_namespace | json }}
-                  key: {{ options.metafield_key | json }}
+                  namespace: {{ metafield_namespace | json }}
+                  key: {{ metafield_key | json }}
                 ) {
                   __typename
                   id
@@ -37,10 +48,8 @@
                 }
               {% else %}
                 metafields
-                  {% if options.metafield_namespace != blank %}
-                    (
-                    namespace: {{ options.metafield_namespace | json }}
-                    ) 
+                  {% if metafield_namespace != blank %}
+                    (namespace: {{ metafield_namespace | json }})
                   {% endif %}
                   {
                   edges {
@@ -81,64 +90,79 @@
 
 {% elsif event.topic == "mechanic/shopify/bulk_operation" %}
   {% if event.preview %}
-    {% if options.delete_product_metafields__boolean %}
-      {% capture objects_jsonl %}
-        {% if options.metafield_key != blank %}
-          {"__typename":"Product","id":"gid:\/\/shopify\/Product\/1234567890","metafield":{"__typename":"Metafield","id":"gid:\/\/shopify\/Metafield\/1234567890"}}
-        {% else %}
-          {"__typename":"Metafield","id":"gid:\/\/shopify\/Metafield\/0987654321","__parentId":"gid:\/\/shopify\/Product\/0987654321"}
-        {% endif %}
-      {% endcapture %}    
-    {% elsif options.delete_product_variant_metafields__boolean %}
-      {% capture objects_jsonl %}
-        {% if options.metafield_key != blank %}
-          {"__typename":"ProductVariant","id":"gid:\/\/shopify\/ProductVariant\/1234567890","metafield":{"__typename":"Metafield","id":"gid:\/\/shopify\/Metafield\/1234567890"}}
-        {% else %}
-          {"__typename":"Metafield","id":"gid:\/\/shopify\/Metafield\/0987654321","__parentId":"gid:\/\/shopify\/ProductVariant\/0987654321"}
-        {% endif %}
-      {% endcapture %}        
-    {% endif %}
+    {% capture objects_jsonl %}
+      {"__typename":"{{ object_type }}","id":"gid:\/\/shopify\/Product\/1234567890","metafield":{"__typename":"Metafield","id":"gid:\/\/shopify\/Metafield\/1234567890"}}
+      {"__typename":"Metafield","id":"gid:\/\/shopify\/Metafield\/2345678901","__parentId":"gid:\/\/shopify\/{{ object_type }}\/1234567890"}
+    {% endcapture %}
 
     {% assign bulkOperation = hash %}
     {% assign bulkOperation["objects"] = objects_jsonl | parse_jsonl %}
-
   {% endif %}
 
-  
-  {% assign metafield_ids = bulkOperation.objects | where: "__typename", "Metafield" | map: "id" %}
-  
-  {% if options.delete_product_metafields__boolean %}
-    {% assign metafield_ids = bulkOperation.objects | where: "__typename", "Product" | where: "metafield" | map: "metafield" | map: "id" | concat: metafield_ids %}
-    {% assign product_ids = bulkOperation.objects | where: "__typename", "Metafield" | map: "__parentId" | uniq %}
-    {% assign product_ids = bulkOperation.objects | where: "__typename", "Product" | where: "metafield" | map: "id" | concat: product_ids %}
-  {% elsif options.delete_product_variant_metafields__boolean %}
-    {% assign metafield_ids = bulkOperation.objects | where: "__typename", "ProductVariant" | where: "metafield" | map: "metafield" | map: "id" | concat: metafield_ids %}
-    {% assign product_variant_ids = bulkOperation.objects | where: "__typename", "Metafield" | map: "__parentId" | uniq %}
-    {% assign product_variant_ids = bulkOperation.objects | where: "__typename", "ProductVariant" | where: "metafield" | map: "id" | concat: product_variant_ids %}
-  {% endif %}
+  {% assign metafields_to_delete = array %}
 
-  {% if options.test_mode__boolean %}
-    {% if options.delete_product_metafields__boolean %}
-      {% action "echo" metafields_found: metafield_ids.size, products_with_metafields_found: product_ids.size, metafield_ids: metafield_ids, product_with_metafields_ids: product_ids %}
-    {% elsif options.delete_product_variant_metafields__boolean %}
-      {% action "echo" metafields_found: metafield_ids.size, product_variants_with_metafields_found: product_variant_ids.size, metafield_ids: metafield_ids, product_variant_with_metafields_ids: product_variant_ids %}
-    {% endif %}    
+  {% if metafield_key != blank %}
+    {% comment %}
+      -- metafield key was configured, thus the metafields will only be on the product or variant objects in the returned bulk objects
+    {% endcomment %}
+
+    {% assign objects_with_metafield
+      = bulkOperation.objects
+      | where: "__typename", object_type
+      | where: "metafield"
+    %}
+
+    {% for object in objects_with_metafield %}
+      {% assign metafield_to_delete = hash %}
+      {% assign metafield_to_delete["ownerId"] = object.id %}
+      {% assign metafield_to_delete["namespace"] = metafield_namespace %}
+      {% assign metafield_to_delete["key"] = metafield_key %}
+      {% assign metafields_to_delete = metafields_to_delete | push: metafield_to_delete %}
+    {% endfor %}
 
   {% else %}
-    {% if options.delete_product_metafields__boolean %}
-      {% log metafields_found: metafield_ids.size, products_with_metafields_found: product_ids.size, metafield_ids: metafield_ids, product_with_metafields_ids: product_ids %}
-    {% elsif options.delete_product_variant_metafields__boolean %}
-      {% log metafields_found: metafield_ids.size, product_variants_with_metafields_found: product_variant_ids.size, metafield_ids: metafield_ids, product_variant_with_metafields_ids: product_variant_ids %}
-    {% endif %}        
+    {% comment %}
+      -- metafield key was not configured, thus the metafields will be separated in the returned bulk objects
+    {% endcomment %}
 
-    {% for metafield_id in metafield_ids %}
+    {% assign metafields = bulkOperation.objects | where: "__typename", "Metafield" %}
+
+    {% for metafield in metafields %}
+      {% assign metafield_to_delete = hash %}
+      {% assign metafield_to_delete["ownerId"] = metafield.__parentId %}
+      {% assign metafield_to_delete["namespace"] = metafield.namespace %}
+      {% assign metafield_to_delete["key"] = metafield.key %}
+      {% assign metafields_to_delete = metafields_to_delete | push: metafield_to_delete %}
+    {% endfor %}
+  {% endif %}
+
+  {% log %}
+    "Found {{ metafields_to_delete.size }} metafields to delete."
+  {% endlog %}
+
+  {% if metafields_to_delete != blank %}
+    {% if test_mode %}
+      {% log "Task has test mode enabled. No metafields will be deleted on this task run." %}
+      {% break %}
+    {% endif %}
+
+    {% comment %}
+      -- metafields may be deleted in batches of 250
+    {% endcomment %}
+
+    {% assign groups_of_metafields_to_delete = metafields_to_delete | in_groups_of: 250, fill_with: false %}
+
+    {% for group_of_metafields_to_delete in groups_of_metafields_to_delete %}
       {% action "shopify" %}
         mutation {
-          metafieldDelete(
-            input: {
-              id: {{ metafield_id | json }}
-            }
+          metafieldsDelete(
+            metafields: {{ group_of_metafields_to_delete | graphql_arguments }}
           ) {
+            deletedMetafields {
+              ownerId
+              namespace
+              key
+            }
             userErrors {
               field
               message
@@ -147,28 +171,5 @@
         }
       {% endaction %}
     {% endfor %}
-
-    {% if event.preview %}
-      {% comment %}
-        As a rule, preview events should render realistic
-        action definitions. However, because Mechanic derives
-        a task's required permissions from these definitions,
-        and because a metafieldDelete mutation doesn't include
-        anything indicating what kind of resource the
-        metafield belongs to, we have to render an additional
-        spurious preview-only mutation to nudge Mechanic into
-        giving us write access to products.
-      {% endcomment %}
-
-      {% action "shopify" %}
-        mutation {
-          productUpdate(
-            id: "gid://requesting/write_products"
-          ) {
-            thisMutationWillNotRunForLiveEvents
-          }
-        }
-      {% endaction %}
-    {% endif %}
   {% endif %}
 {% endif %}

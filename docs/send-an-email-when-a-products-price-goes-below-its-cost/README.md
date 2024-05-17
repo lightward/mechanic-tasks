@@ -2,7 +2,7 @@
 
 Tags: Costs, Email, Metafields, Price, Products, Variants
 
-This task watches for product updates, and sends an email (to the recipient of your choice) for each variant that's found to have a unit cost that's greater than the variant's for-sale price.
+This task watches for product and inventory item updates, and sends an email to the configured recipients for each variant that's found to have a unit cost that's greater than the variant's for-sale price.
 
 * View in the task library: [tasks.mechanic.dev/send-an-email-when-a-products-price-goes-below-its-cost](https://tasks.mechanic.dev/send-an-email-when-a-products-price-goes-below-its-cost)
 * Task JSON, for direct import: [task.json](../../tasks/send-an-email-when-a-products-price-goes-below-its-cost.json)
@@ -12,7 +12,7 @@ This task watches for product updates, and sends an email (to the recipient of y
 
 ```json
 {
-  "recipient_email__email_required": null
+  "recipient_emails__array_required": null
 }
 ```
 
@@ -22,17 +22,20 @@ This task watches for product updates, and sends an email (to the recipient of y
 
 ```liquid
 shopify/products/update
+shopify/inventory_items/update+15.seconds
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
-This task watches for product updates, and sends an email (to the recipient of your choice) for each variant that's found to have a unit cost that's greater than the variant's for-sale price.
+This task watches for product and inventory item updates, and sends an email to the configured recipients for each variant that's found to have a unit cost that's greater than the variant's for-sale price.
 
-If a product is updated that the task hasn't had a chance to previously observe, emails will be sent immediately for any variants that have a unit cost greater than their price.
+This task stores the known price and cost for each variant in a metafield, so subsequent updates to a product or inventory item will only fire this notification if those values change.
 
-[YouTube: Watch the development video!](https://youtu.be/LrFu6bV1f1o)
+Note: the invetory item update subscription is purposely delayed by 15 seconds to prevent sending a duplicate email when both a variant's price and cost are updated at the same time.
+
+[YouTube: Watch the development vide for the original task](https://youtu.be/LrFu6bV1f1o)
 
 ## Installing this task
 

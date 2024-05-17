@@ -1,8 +1,8 @@
 # Delete product or product variant metafields in bulk
 
-Tags: Bulk, Metafields, Products
+Tags: Bulk, Delete, Metafields, Products, Variants
 
-Use this task to delete all of your product or product variant metafields, optionally filtering by namespace or by namespace and key. This task will then delete all metafields found. This task comes with a test mode – use this first to make sure you're deleting the right things.
+With no configuration, this task will delete all product or variant metafields. Configure it with a metafield namespace to only delete metafields with that namespace, or add both a namespace and key to get even more specific. Run this task with the test mode option enabled, the first time, to make sure you're deleting the right material.
 
 * View in the task library: [tasks.mechanic.dev/delete-product-or-product-variant-metafields-in-bulk](https://tasks.mechanic.dev/delete-product-or-product-variant-metafields-in-bulk)
 * Task JSON, for direct import: [task.json](../../tasks/delete-product-or-product-variant-metafields-in-bulk.json)
@@ -14,8 +14,8 @@ Use this task to delete all of your product or product variant metafields, optio
 {
   "delete_product_metafields__boolean": true,
   "delete_product_variant_metafields__boolean": false,
-  "metafield_namespace": "",
-  "metafield_key": "",
+  "metafield_namespace": null,
+  "metafield_key": null,
   "test_mode__boolean": true
 }
 ```
@@ -33,9 +33,7 @@ mechanic/shopify/bulk_operation
 
 ## Documentation
 
-Use this task to delete all of your product or product variant metafields, optionally filtering by namespace or by namespace and key. This task will then delete all metafields found. This task comes with a test mode – use this first to make sure you're deleting the right things.
-
-With no configuration, this task will delete all product or product variant metafields. Configure it with a metafield namespace to only delete metafields with that namespace, or add both a namespace and key to get even more specific. Run this task with the test mode option enabled, the first time, to make sure you're deleting the right material.
+With no configuration, this task will delete all product or variant metafields. Configure it with a metafield namespace to only delete metafields with that namespace, or add both a namespace and key to get even more specific. Run this task with the test mode option enabled, the first time, to make sure you're deleting the right material.
 
 ## Installing this task
 
