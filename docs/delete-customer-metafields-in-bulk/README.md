@@ -1,6 +1,6 @@
 # Delete customer metafields in bulk
 
-Tags: Bulk, Customers, Metafields
+Tags: Bulk, Customers, Delete, Metafields
 
 With no configuration, this task will delete all customer metafields in bulk. Configure it with a metafield namespace to only delete metafields with that namespace, or add both a namespace and key to get even more specific. Run this task with the test mode option enabled, the first time, to make sure you're deleting the right material.
 
@@ -12,8 +12,8 @@ With no configuration, this task will delete all customer metafields in bulk. Co
 
 ```json
 {
-  "metafield_namespace": "",
-  "metafield_key": "",
+  "metafield_namespace": null,
+  "metafield_key": null,
   "test_mode__boolean": true
 }
 ```
