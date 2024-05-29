@@ -96,6 +96,9 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag new orders using Liquid](./auto-tag-new-orders-using-liquid)
 * [Auto-tag new orders using the customer's tags](./auto-tag-orders-using-the-customers-tags)
 * [Auto-tag new orders with a value from the customer note](./auto-tag-new-orders-with-a-value-from-the-customer-note)
+* [Auto-tag new orders with company metafield values](./auto-tag-new-orders-with-company-metafield-values)
+* [Auto-tag new orders with customer metafield values](./auto-tag-new-orders-with-customer-metafield-values)
+* [Auto-tag new orders with order metafield values](./auto-tag-new-orders-with-order-metafield-values)
 * [Auto-tag new orders with product SKUs](./auto-tag-new-orders-with-product-skus)
 * [Auto-tag new orders with their fulfillment locations](./auto-tag-new-orders-with-their-fulfillment-locations)
 * [Auto-tag new orders](./auto-tag-new-orders)
@@ -459,6 +462,9 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag new orders using Liquid](./auto-tag-new-orders-using-liquid)
 * [Auto-tag new orders using the customer's tags](./auto-tag-orders-using-the-customers-tags)
 * [Auto-tag new orders with a value from the customer note](./auto-tag-new-orders-with-a-value-from-the-customer-note)
+* [Auto-tag new orders with company metafield values](./auto-tag-new-orders-with-company-metafield-values)
+* [Auto-tag new orders with customer metafield values](./auto-tag-new-orders-with-customer-metafield-values)
+* [Auto-tag new orders with order metafield values](./auto-tag-new-orders-with-order-metafield-values)
 * [Auto-tag new orders with product SKUs](./auto-tag-new-orders-with-product-skus)
 * [Auto-tag new orders with their fulfillment locations](./auto-tag-new-orders-with-their-fulfillment-locations)
 * [Auto-tag new orders](./auto-tag-new-orders)
@@ -632,6 +638,10 @@ This directory is built automatically. Each task's documentation is generated fr
 
 * [Sync order timeline comments to the customer note](./sync-order-timeline-comments-to-the-customer-note)
 
+### Companies
+
+* [Auto-tag new orders with company metafield values](./auto-tag-new-orders-with-company-metafield-values)
+
 ### Compare at
 
 * [Auto-tag products that have a "compare at" price](./auto-tag-products-that-have-a-compare-at-price)
@@ -684,6 +694,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag new customers](./auto-tag-new-customers)
 * [Auto-tag new orders using the customer's tags](./auto-tag-orders-using-the-customers-tags)
 * [Auto-tag new orders with a value from the customer note](./auto-tag-new-orders-with-a-value-from-the-customer-note)
+* [Auto-tag new orders with customer metafield values](./auto-tag-new-orders-with-customer-metafield-values)
 * [Auto-tag orders based on customer account tags](./auto-tag-orders-based-on-customer-account-tags)
 * [Auto-tag orders with customer tags when new customer tags are added](./tag-orders-with-customer-tags-when-customer-is-tagged)
 * [Auto-untag customers when a certain product is refunded](./auto-untag-customers-when-a-certain-product-is-refunded)
@@ -1087,6 +1098,9 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-copy customer metafields to new orders](./auto-copy-customer-metafields-to-new-orders)
 * [Auto-delete customer metafields older than X days](./auto-delete-customer-metafields-older-than-x-days)
 * [Auto-delete product metafields older than X days](./auto-delete-product-metafields-older-than-x-days)
+* [Auto-tag new orders with company metafield values](./auto-tag-new-orders-with-company-metafield-values)
+* [Auto-tag new orders with customer metafield values](./auto-tag-new-orders-with-customer-metafield-values)
+* [Auto-tag new orders with order metafield values](./auto-tag-new-orders-with-order-metafield-values)
 * [Copy draft order metafields to orders](./copy-draft-order-metafields-to-orders)
 * [Copy prefixed tags to metafields](./copy-prefixed-tags-to-metafields)
 * [Copy product metafields to each product's tags](./copy-product-metafields-to-each-products-tags)
@@ -1175,6 +1189,9 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag new orders using Liquid](./auto-tag-new-orders-using-liquid)
 * [Auto-tag new orders using the customer's tags](./auto-tag-orders-using-the-customers-tags)
 * [Auto-tag new orders with a value from the customer note](./auto-tag-new-orders-with-a-value-from-the-customer-note)
+* [Auto-tag new orders with company metafield values](./auto-tag-new-orders-with-company-metafield-values)
+* [Auto-tag new orders with customer metafield values](./auto-tag-new-orders-with-customer-metafield-values)
+* [Auto-tag new orders with order metafield values](./auto-tag-new-orders-with-order-metafield-values)
 * [Auto-tag new orders with product SKUs](./auto-tag-new-orders-with-product-skus)
 * [Auto-tag new orders with their fulfillment locations](./auto-tag-new-orders-with-their-fulfillment-locations)
 * [Auto-tag new orders](./auto-tag-new-orders)

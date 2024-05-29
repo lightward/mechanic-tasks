@@ -1,0 +1,161 @@
+{% assign metafields_and_tag_prefixes = options.metafields_and_tag_prefixes__keyval_required %}
+{% assign truncate_long_tags = options.truncate_long_tags__boolean %}
+
+{% assign metafields = metafields_and_tag_prefixes | keys %}
+{% assign supported_metafield_types
+  = array
+  | push:
+    "boolean",
+    "date",
+    "date_time",
+    "number_decimal",
+    "number_integer",
+    "single_line_text_field"
+%}
+
+{% if event.topic == "shopify/orders/create" or event.topic == "mechanic/user/order" %}
+  {% capture query %}
+    query {
+      order(id: {{ order.admin_graphql_api_id | json }}) {
+        id
+        name
+        tags
+        metafields(
+          first: 250
+          keys: {{ metafields | graphql_arguments }}
+        ) {
+          nodes {
+            key
+            type
+            value
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "order": {
+            "id": "gid://shopify/Order/1234567890",
+            "name": "#PREVIEW",
+            "metafields": {
+              "nodes": [
+                {
+                  "key": {{ metafields.first | json }},
+                  "type": "list.single_line_text_field",
+                  "value": "[\"Preview value\"]"
+                }
+              ]
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign order = result.data.order %}
+
+  {% comment %}
+    -- loop through any of the configured metafields that were found on this order
+  {% endcomment %}
+
+  {% assign tags_to_add = array %}
+
+  {% for metafield in order.metafields.nodes %}
+    {% assign tag_prefix = metafields_and_tag_prefixes[metafield.key] %}
+    {% assign metafield_type = metafield.type | remove: "list." %}
+
+    {% unless supported_metafield_types contains metafield_type %}
+      {% log
+        message: "Unsupported metafield type for this task.",
+        metafield: metafield,
+        supported_metafield_types: supported_metafield_types
+      %}
+      {% continue %}
+    {% endunless %}
+
+    {% comment %}
+      -- convert all values to an array so list metafield types can more easily be supported
+    {% endcomment %}
+
+    {% if metafield.type contains "list." %}
+      {% assign metafield_values = metafield.value | parse_json %}
+    {% else %}
+      {% assign metafield_values = array | push: metafield.value %}
+    {% endif %}
+
+    {% comment %}
+      -- determine tags by metafield value, if there is a prefix tag configured, and length
+    {% endcomment %}
+
+    {% for metafield_value in metafield_values %}
+      {% assign tag = metafield_value | prepend: tag_prefix  %}
+
+      {% if tag.size > 40 %}
+        {% comment %}
+          -- order tags only support 40 characters max
+        {% endcomment %}
+
+        {% if truncate_long_tags %}
+          {% assign truncated_tag = tag | slice: 0, 40 %}
+
+          {% log
+            message: "Tag is too long to be set on the order, and tag truncation is enabled; applying to this tag.",
+            original_tag: tag,
+            truncated_tag: truncated_tag
+          %}
+
+          {% assign tag = truncated_tag %}
+
+        {% else %}
+          {% log
+            message: "Tag is too long to be set on the order, and tag truncation is not enabled; skipping this tag,",
+            tag: tag,
+            tag_length: tag.size
+          %}
+          {% continue %}
+        {% endif %}
+      {% endif %}
+
+      {% unless order.tags contains tag %}
+        {% assign tags_to_add = tags_to_add | push: tag %}
+      {% endunless %}
+    {% endfor %}
+  {% endfor %}
+
+  {% comment %}
+    -- add tags to the order as needed
+  {% endcomment %}
+
+  {% if tags_to_add != blank %}
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {{ order.id | json }}
+          tags: {{ tags_to_add | json }}
+        ) {
+          node {
+            ... on Order {
+              name
+              tags
+            }
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+
+  {% else %}
+    {% log "No tagging operations needed for this order." %}
+  {% endif %}
+{% endif %}
