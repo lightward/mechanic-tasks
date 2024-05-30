@@ -305,7 +305,12 @@
     {% endif %}
   {% endfor %}
 
-  {% assign move_groups = moves | in_groups_of: 250, fill_with: false %}
+  {% comment %}
+    -- using reverse filter below due to a bug in the collectionReorderProducts mutation
+    -- this filter will NOT affect the sort order determined above
+  {% endcomment %}
+
+  {% assign move_groups = moves | reverse | in_groups_of: 250, fill_with: false %}
 
   {% for move_group in move_groups %}
     {% action "shopify" %}
