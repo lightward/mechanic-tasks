@@ -228,7 +228,12 @@
       collection: collection.title
     %}
 
-    {% assign moves_in_groups = moves | in_groups_of: 250, fill_with: false %}
+    {% comment %}
+      -- using reverse filter below due to a bug in the collectionReorderProducts mutation
+      -- this filter will NOT affect the sort order determined above
+    {% endcomment %}
+
+    {% assign moves_in_groups = moves | reverse | in_groups_of: 250, fill_with: false %}
 
     {% for move_group in moves_in_groups %}
       {% action "shopify" %}
