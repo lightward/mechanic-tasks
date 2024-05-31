@@ -1,72 +1,151 @@
-{% comment %}
-  An opinion about option order:
+{% assign skus_and_quantity_cancellation_thresholds = options.skus_and_quantity_cancellation_thresholds__keyval_number_required %}
+{% assign notify_customer = options.email_customer_when_cancelling__boolean %}
+{% assign refund_payment = options.refund_payment_for_cancelled_orders__boolean %}
+{% assign restock_inventory = options.restock_inventory_for_cancelled_orders__boolean %}
+{% assign cancellation_reason = options.cancellation_reason_to_set | default: "other" %}
+{% assign staff_note = options.staff_note_for_timeline %}
 
-  {{ options.skus_to_watch_for__required_array }}
-  {{ options.quantity_threshold_for_cancellation__number_required }}
-  {{ options.send_cancellation_email_to_customer__boolean }}
-  {{ options.attempt_to_refund_or_void_payment_in_full__boolean }}
-  {{ options.reason_for_cancellation__required }}
+{% assign skus_to_monitor = skus_and_quantity_cancellation_thresholds | keys %}
+
+{% comment %}
+  -- check that a valid cancellation reason has been configured; it will default to 'other' if left blank
 {% endcomment %}
 
-{% assign valid_reasons = "customer,inventory,fraud,declined,other" | split: "," %}
-{% if options.reason_for_cancellation__required != blank %}
-  {% unless valid_reasons contains options.reason_for_cancellation__required %}
-    {"error": {{ valid_reasons | json | prepend: "'Reason for cancellation' must be one of " | json }}}
-  {% endunless %}
+{% assign valid_cancellation_reasons = "customer,declined,fraud,inventory,other,staff" | split: "," %}
+
+{% unless valid_cancellation_reasons contains cancellation_reason %}
+  {% error %}
+    {{ "Cancellation reason: " | append: cancellation_reason | append: " - must be one of 'customer', 'declined', 'fraud', 'inventory', 'other', or 'staff'." | json }}
+  {% enderror %}
+{% endunless %}
+
+{% comment %}
+  -- get order details and line items to tally
+{% endcomment %}
+
+{% capture query %}
+  query {
+    order(id: {{ order.admin_graphql_api_id | json }}) {
+      id
+      name
+      cancelledAt
+      displayFulfillmentStatus
+      lineItems(first: 250) {
+        nodes {
+          sku
+          quantity
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "order": {
+          "id": "gid://shopify/Order/1234567890",
+          "name": "#PREVIEW",
+          "displayFulfillmentStatus": "UNFULFILLED",
+          "lineItems": {
+            "nodes": [
+              {
+                "sku": {{ skus_and_quantity_cancellation_thresholds.first.first | json }},
+                "quantity": {{ skus_and_quantity_cancellation_thresholds.first.last | json }}
+              }
+            ]
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
 {% endif %}
 
-{% assign sku_count = 0 %}
+{% assign order = result.data.order %}
 
-{% for line_item in order.line_items %}
-  {% if line_item.sku != blank and options.skus_to_watch_for__required_array contains line_item.sku %}
-    {% assign sku_count = sku_count | plus: line_item.quantity %}
+{% if order.cancelledAt %}
+  {% log "This order has already been cancelled." %}
+  {% break %}
+{% endif %}
+
+{% comment %}
+  -- check to make sure order is unfulfilled to avoid cancellation error
+{% endcomment %}
+
+{% if order.displayFulfillmentStatus == "FULFILLED" or order.displayFulfillmentStatus == "PARTIALLY_FULFILLED" %}
+  {% log "This order has already been fulfilled or partially fulfilled and cannot be cancelled." %}
+  {% break %}
+{% endif %}
+
+{% comment %}
+  -- tally quantities of the configured skus across all line items
+{% endcomment %}
+
+{% assign skus_and_line_item_quantities = hash %}
+
+{% for line_item in order.lineItems.nodes %}
+  {% if line_item.sku == blank %}
+    {% continue %}
+  {% endif %}
+
+  {% if skus_to_monitor contains line_item.sku %}
+    {% assign skus_and_line_item_quantities[line_item.sku]
+      = skus_and_line_item_quantities[line_item.sku]
+      | default: 0
+      | plus: line_item.quantity
+    %}
   {% endif %}
 {% endfor %}
 
-{% if order.fulfillment_status == "fulfilled" or order.fulfillment_status == "partial" %}
-  {% assign order_qualifies = false %}
-{% else %}
+{% assign order_qualifies = nil %}
+
+{% for keyval in skus_and_line_item_quantities %}
+  {% assign sku = keyval[0] %}
+  {% assign count = keyval[1] %}
+
+  {% if count >= skus_and_quantity_cancellation_thresholds[sku] %}
     {% assign order_qualifies = true %}
-{% endif %}
-
-{% if event.preview or sku_count >= options.quantity_threshold_for_cancellation__number_required %}
-  {% if order_qualifies %}
-    {% action "shopify" %}
-      [
-        "post",
-        "/admin/orders/{{ order.id }}/cancel.json",
-        {
-          {% if options.attempt_to_refund_or_void_payment_in_full__boolean %}
-            {% capture refund_query %}
-              query {
-                order(id: {{ order.admin_graphql_api_id | json }}) {
-                  suggestedRefund(suggestFullRefund: true, refundShipping: true) {
-                    amountSet {
-                      shopMoney {
-                        amount
-                        currencyCode
-                      }
-                    }
-                  }
-                }
-              }
-            {% endcapture %}
-            {% assign refund_result = refund_query | shopify %}
-            {% assign refund_money = refund_result.data.order.suggestedRefund.amountSet.shopMoney %}
-
-            {% if event.preview %}
-              {% assign refund_money = hash %}
-              {% assign refund_money["amount"] = order.total_price %}
-              {% assign refund_money["currencyCode"] = order.currency %}
-            {% endif %}
-
-            "amount": {{ refund_money.amount | json }},
-            "currency": {{ refund_money.currencyCode | json }},
-          {% endif %}
-          "email": {{ options.send_cancellation_email_to_customer__boolean | json }},
-          "reason": {{ options.reason_for_cancellation__required | json }}
-        }
-      ]
-    {% endaction %}    
+    {% break %}
   {% endif %}
-{% endif %}
+{% endfor %}
+
+{% unless order_qualifies %}
+  {% break %}
+{% endunless %}
+
+{% log
+  message: "Order qualifies to be cancelled due to having one or more SKUs hit their quantity thresholds.",
+  skus_and_line_item_quantities: skus_and_line_item_quantities,
+  skus_and_quantity_cancellation_thresholds: skus_and_quantity_cancellation_thresholds
+%}
+
+{% comment %}
+  -- cancel the order with configured options
+{% endcomment %}
+
+{% action "shopify" %}
+  mutation {
+    orderCancel(
+      orderId: {{ order.id | json }}
+      notifyCustomer: {{ notify_customer | json }}
+      reason: {{ cancellation_reason | upcase }}
+      refund: {{ refund_payment | json }}
+      restock: {{ restock_inventory | json }}
+      staffNote: {{ staff_note | json }}
+    ) {
+      job {
+        id
+      }
+      orderCancelUserErrors {
+        code
+        field
+        message
+      }
+    }
+  }
+{% endaction %}

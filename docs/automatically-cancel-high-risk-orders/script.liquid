@@ -96,7 +96,7 @@
   -- check to make sure order is unfulfilled to avoid cancellation error
 {% endcomment %}
 
-{% if order.displayFinancialStatus == "FULFILLED" or order.displayFulfillmentStatus == "PARTIALLY_FULFILLED" %}
+{% if order.displayFulfillmentStatus == "FULFILLED" or order.displayFulfillmentStatus == "PARTIALLY_FULFILLED" %}
   {% log "This order has already been fulfilled or partially fulfilled and cannot be cancelled." %}
   {% break %}
 {% endif %}
