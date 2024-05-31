@@ -2,7 +2,7 @@
 
 Tags: Cancel, Orders, Unpaid
 
-This task scans for orders that are more than X days or hours old that have a financial status of "pending", and ensures that they are all closed/archived and cancelled. Orders that are already closed will be cancelled, and orders that are already cancelled will be closed. Optionally, choose to add a tag to such orders.
+This task scans for orders that are more than X days or hours old that have a financial status of "pending", and ensures that they are all closed/archived and cancelled. Pending orders that are already closed will be cancelled, and pending orders that are already cancelled will be closed. Optionally, choose to add a tag to such orders, and whether to restock line items.
 
 * View in the task library: [tasks.mechanic.dev/cancel-and-close-unpaid-orders-after-two-days](https://tasks.mechanic.dev/cancel-and-close-unpaid-orders-after-two-days)
 * Task JSON, for direct import: [task.json](../../tasks/cancel-and-close-unpaid-orders-after-two-days.json)
@@ -15,10 +15,10 @@ This task scans for orders that are more than X days or hours old that have a fi
   "only_process_orders_having_this_tag": null,
   "ignore_orders_having_this_tag": null,
   "period_to_wait_before_checking_each_order__number_required": 1,
-  "period_to_wait_is_in_hours__boolean": null,
+  "period_to_wait_is_in_hours__boolean": false,
   "period_to_wait_is_in_days__boolean": true,
   "tag_to_add_to_the_order": null,
-  "void_payment_when_possible__boolean": null,
+  "cancellation_reason_to_set": "other",
   "restock_line_items__boolean": null,
   "send_cancellation_email_to_customer__boolean": false,
   "test_mode__boolean": true
@@ -35,7 +35,6 @@ This task scans for orders that are more than X days or hours old that have a fi
 {% elsif options.period_to_wait_is_in_days__boolean %}
   mechanic/scheduler/daily
 {% endif %}
-
 mechanic/user/trigger
 ```
 
@@ -43,7 +42,7 @@ mechanic/user/trigger
 
 ## Documentation
 
-This task scans for orders that are more than X days or hours old that have a financial status of "pending", and ensures that they are all closed/archived and cancelled. Orders that are already closed will be cancelled, and orders that are already cancelled will be closed. Optionally, choose to add a tag to such orders.
+This task scans for orders that are more than X days or hours old that have a financial status of "pending", and ensures that they are all closed/archived and cancelled. Pending orders that are already closed will be cancelled, and pending orders that are already cancelled will be closed. Optionally, choose to add a tag to such orders, and whether to restock line items.
 
 If configured with an interval in hours, this task will run hourly. If configured with an interval in days, the task will run every night at midnight, in your store's local timezone. Run this task manually to perform the scan on demand.
 
