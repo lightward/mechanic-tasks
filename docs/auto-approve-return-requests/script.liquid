@@ -1,0 +1,232 @@
+{% assign limit_order_tags = options.limit_to_orders_with_any_of_these_tags__array %}
+{% assign limit_product_tags = options.limit_to_products_with_any_of_these_tags__array %}
+{% assign limit_product_categories_or_types = options.limit_to_these_product_categories_or_types__array %}
+{% assign notification_email_recipients = options.notification_email_recipients__array %}
+
+{% if event.topic == "shopify/returns/request" %}
+  {% comment %}
+    -- get additional return and product data not available in the webhook
+  {% endcomment %}
+
+  {% capture query %}
+    query {
+      return(id: {{ return.admin_graphql_api_id | json }}) {
+        id
+        name
+        status
+        order {
+          name
+          tags
+        }
+        returnLineItems(first: 100) {
+          nodes {
+            fulfillmentLineItem {
+              lineItem {
+                product {
+                  category {
+                    name
+                  }
+                  productType
+                  tags
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "return": {
+            "id": "gid://shopify/Return/1234567890",
+            "name": "#PREVIEW-R1",
+            "status": "REQUESTED",
+            "order": {
+              "name": "#PREVIEW",
+              "tags": {{ limit_order_tags.first | json }}
+            },
+            "returnLineItems": {
+              "nodes": [
+                {
+                  "fulfillmentLineItem": {
+                    "lineItem": {
+                      "product": {
+                        "category": {
+                          "name": {{ limit_product_categories_or_types.first | json }}
+                        },
+                        "productType": {{ limit_product_categories_or_types.first | json }},
+                        "tags": {{ limit_product_tags.first | json }}
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign return = result.data.return %}
+  {% assign order = return.order %}
+  {% assign return_products
+    = return.returnLineItems.nodes
+    | map: "fulfillmentLineItem"
+    | map: "lineItem"
+    | map: "product"
+  %}
+
+  {% if return.status != "REQUESTED" %}
+    {% log "This return request does not have a status of 'REQUESTED' and likely has already been acted on; skipping." %}
+    {% break %}
+  {% endif %}
+
+  {% comment %}
+    -- assume the return request will be approved unless it doesn't meet any configured tag, category, or type limits
+  {% endcomment %}
+
+  {% assign return_qualifies = true %}
+
+  {% if limit_order_tags != blank %}
+    {% comment %}
+      -- make sure the order has one of the configured tags
+    {% endcomment %}
+
+    {% assign has_qualifying_order_tag = nil %}
+
+    {% for limit_order_tag in limit_order_tags %}
+      {% if order.tags contains limit_order_tag %}
+        {% assign has_qualifying_order_tag = true %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+
+    {% unless has_qualifying_order_tag %}
+      {% assign return_qualifies = false %}
+    {% endunless %}
+  {% endif %}
+
+  {% if limit_product_tags != blank %}
+    {% comment %}
+      -- make sure each returned product has one of the configured tags
+    {% endcomment %}
+
+    {% assign all_products_qualify = true %}
+
+    {% for product in return_products %}
+      {% assign product_qualifies = nil %}
+
+      {% for limit_product_tag in limit_product_tags %}
+        {% if product.tags contains limit_product_tag %}
+          {% assign product_qualifies = true %}
+          {% break %}
+        {% endif %}
+      {% endfor %}
+
+      {% unless product_qualifies %}
+        {% assign all_products_qualify = false %}
+        {% break %}
+      {% endunless %}
+    {% endfor %}
+
+    {% unless all_products_qualify %}
+      {% assign return_qualifies = false %}
+    {% endunless %}
+  {% endif %}
+
+  {% if limit_product_categories_or_types != blank %}
+    {% comment %}
+      -- make sure each returned product is one of the configured categories or types
+    {% endcomment %}
+
+    {% assign all_products_qualify = true %}
+
+    {% for product in return_products %}
+      {% assign product_qualifies = nil %}
+
+      {% for limit_product_category_or_type in limit_product_categories_or_types %}
+        {% if product.productType == limit_product_category_or_type or product.category.name == limit_product_category_or_type %}
+          {% assign product_qualifies = true %}
+          {% break %}
+        {% endif %}
+      {% endfor %}
+
+      {% unless product_qualifies %}
+        {% assign all_products_qualify = false %}
+        {% break %}
+      {% endunless %}
+    {% endfor %}
+
+    {% unless all_products_qualify %}
+      {% assign return_qualifies = false %}
+    {% endunless %}
+  {% endif %}
+
+  {% if return_qualifies %}
+    {% action "shopify" %}
+      mutation {
+        returnApproveRequest(input: {id: {{ return.id | json }}}) {
+          return {
+            id
+            name
+            status
+            order {
+              legacyResourceId
+              customer {
+                displayName
+              }
+            }
+          }
+          userErrors {
+            code
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+
+{% elsif event.topic == "mechanic/actions/perform" %}
+  {% unless action.type == "shopify" and action.run.ok and notification_email_recipients != blank %}
+    {% break %}
+  {% endunless %}
+
+  {% comment %}
+    -- if any notification recipients are configured, send them an email when a return request is auto-approved
+  {% endcomment %}
+
+  {% assign return = action.run.result.data.returnApproveRequest.return %}
+
+  {%- capture email_subject -%}
+    Return request {{ return.name }} was auto-approved
+  {%- endcapture -%}
+
+  {%- capture email_body -%}
+    Return request {{ return.name }}, made by {{ return.order.customer.displayName }}, was auto-approved.
+
+    Review the return details and take further action on the <a href="{{ shop.admin_url }}orders/{{ return.order.legacyResourceId }}">order admin page</a>.
+
+    Thanks,
+    - Mechanic, for {{ shop.name }}
+  {%- endcapture -%}
+
+  {% action "email" %}
+    {
+      "to": {{ notification_email_recipients | json }},
+      "subject": {{ email_subject | json }},
+      "body": {{ email_body | newline_to_br | json }},
+      "reply_to": {{ shop.customer_email | json }},
+      "from_display_name": {{ shop.name | json }}
+    }
+  {% endaction %}
+{% endif %}

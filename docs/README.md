@@ -27,6 +27,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-add phone numbers to unfulfilled orders, when the customer is updated](./auto-add-phone-numbers-to-unfulfilled-orders-when-the-customer-is-updated)
 * [Auto-add products to a custom collection when tagged](./auto-add-products-to-a-custom-collection-when-tagged)
 * [Auto-add the draft order to a new order's attributes](./auto-add-the-draft-order-id-to-an-orders-attributes)
+* [Auto-approve return requests](./auto-approve-return-requests)
 * [Auto-archive orders after fulfillment](./auto-archive-orders-after-fulfillment)
 * [Auto-associate products with a delivery profile, by product tag](./auto-associate-products-with-a-delivery-profile-by-product-tag)
 * [Auto-associate variants with a delivery profile, by metafield value](./auto-associate-variants-with-a-delivery-profile-by-metafield-value)
@@ -1507,6 +1508,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Returns
 
+* [Auto-approve return requests](./auto-approve-return-requests)
 * [Send email notification when items are returned](./send-email-notification-when-items-are-returned)
 
 ### Reviews
