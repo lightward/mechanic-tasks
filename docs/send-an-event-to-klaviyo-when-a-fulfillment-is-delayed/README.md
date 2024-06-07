@@ -12,7 +12,6 @@ This task will watch for new order fulfillments, waiting a configurable number o
 
 ```json
 {
-  "test_mode__boolean": null,
   "qualifying_fulfillment_statuses__array_required": [
     "in_transit",
     "failure",
@@ -20,7 +19,8 @@ This task will watch for new order fulfillments, waiting a configurable number o
   ],
   "klaviyo_api_token__required": null,
   "klaviyo_event_name__required": "Fulfillment delayed or failed",
-  "days_to_wait_before_checking__number_required": 5
+  "days_to_wait_before_checking__number_required": 5,
+  "test_mode__boolean": null
 }
 ```
 
@@ -42,9 +42,11 @@ This task will watch for new order fulfillments, waiting a configurable number o
 
 This task will watch for new order fulfillments, waiting a configurable number of days after each one. When the waiting period is over, if the fulfillment's status matches an item in the list, this task will send an event to Klaviyo, allowing you to use Klaviyo to contact the customer appropriately.
 
-Configure the "Qualifying fulfillment statuses" option with values [from Shopify's "shipment_status" documentation](https://help.shopify.com/en/api/reference/shipping-and-fulfillment/fulfillment#shipment-status-property-2019-07).
+Configure the "Qualifying fulfillment statuses" option with values from the **shipment_status** property on Shopify's [Fulfillment resource documentation](https://shopify.dev/docs/api/admin-rest/2024-04/resources/fulfillment).
 
 Enable "Test mode" to make available a "Run task" button - press this button to have Mechanic send a test event to Klaviyo, allowing you to verify that everything's connected properly.
+
+**Note:** This task has been updated to work with a newer Klaviyo API than the v1 and v2 versions being sunset at the end of June 2024. Specifically, it uses revision v2023-06-15.
 
 ## Installing this task
 

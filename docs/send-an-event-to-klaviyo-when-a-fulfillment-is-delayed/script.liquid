@@ -1,15 +1,22 @@
-{% if options.test_mode__boolean or event.preview %}
+{% assign qualifying_fulfillment_statuses = options.qualifying_fulfillment_statuses__array_required %}
+{% assign klaviyo_api_token = options.klaviyo_api_token__required %}
+{% assign klaviyo_event_name = options.klaviyo_event_name__required %}
+{% assign days_to_wait_before_checking = options.days_to_wait_before_checking__number_required %}
+{% assign test_mode = options.test_mode__boolean %}
+
+{% if test_mode or event.preview %}
   {% capture order_json %}
     {
       "name": "#1234",
       "email": "customer@example.com",
       "fulfillments": [
         {
-          "shipment_status": {{ options.qualifying_fulfillment_statuses__array_required[0] | json }}
+          "shipment_status": {{ qualifying_fulfillment_statuses.first | json }}
         }
       ]
     }
   {% endcapture %}
+
   {% assign order = order_json | parse_json %}
 {% else %}
   {% assign order = order.reload %}
@@ -18,24 +25,41 @@
 {% assign fulfillments_qualify = false %}
 
 {% for fulfillment in order.fulfillments %}
-  {% if options.qualifying_fulfillment_statuses__array_required contains fulfillment.shipment_status %}
+  {% if qualifying_fulfillment_statuses contains fulfillment.shipment_status %}
     {% assign fulfillments_qualify = true %}
   {% endif %}
 {% endfor %}
 
-{% if fulfillments_qualify %}
-  {% assign klaviyo_data = hash %}
-  {% assign klaviyo_data["token"] = options.klaviyo_api_token__required %}
-  {% assign klaviyo_data["event"] = options.klaviyo_event_name__required %}
-  {% assign klaviyo_data["customer_properties"] = hash %}
-  {% assign klaviyo_data["customer_properties"]["$email"] = order.email %}
-  {% assign klaviyo_data["properties"] = hash %}
-  {% assign klaviyo_data["properties"]["order_name"] = order.name %}
+{% comment %}
+  -- NOTE: Due to a bug in more recent versions of the Klaviyo API, this task explicitly uses revision v2023-06-15. Klaviyo is using a 2 year API release cycle, so this task will be updated with the latest API revision once the issue is resolved.
+{% endcomment %}
 
+{% if fulfillments_qualify %}
   {% action "http" %}
     {
-      "method": "get",
-      "url": "https://a.klaviyo.com/api/track?data={{ klaviyo_data | json | base64 }}"
+      "method": "post",
+      "url": "https://a.klaviyo.com/client/events/?company_id={{ klaviyo_api_token }}",
+      "headers": {
+        "revision": "2023-06-15"
+      },
+      "body": {
+        "data": {
+          "type": "event",
+          "attributes": {
+            "metric": {
+              "name": {{ klaviyo_event_name | json }}
+            },
+            "profile": {
+              "$email": {{ order.email | json }}
+            },
+            "properties": {
+              "order_name": {{ order.name | json }}
+            }
+          }
+        }
+      },
+      "verify": "true",
+      "error_on_5xx": "true"
     }
   {% endaction %}
 {% endif %}
