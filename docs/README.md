@@ -18,6 +18,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Archive orders when fulfilled](./archive-orders-when-fulfilled)
 * [Archive orders when tagged](./archive-orders-when-tagged)
 * [Ask for reviews a week after order fulfillment](./ask-for-reviews-a-week-after-order-fulfillment)
+* [Auto create collections by metafield values](./auto-create-collections-by-metafield-values)
 * [Auto publish products by tag](./auto-publish-products-by-tag)
 * [Auto-add a note for new orders having a certain tag](./auto-add-order-note-for-new-tagged-orders)
 * [Auto-add an order note for customers having a certain tag](./auto-add-an-order-note-for-customers-having-a-certain-tag)
@@ -617,6 +618,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Collections
 
+* [Auto create collections by metafield values](./auto-create-collections-by-metafield-values)
 * [Auto-add products to a custom collection when tagged](./auto-add-products-to-a-custom-collection-when-tagged)
 * [Auto-create collections by product type or vendor](./auto-create-collections-by-product-type-or-vendor)
 * [Auto-sort collections by inventory levels](./auto-sort-collections-by-inventory-levels)
@@ -1095,6 +1097,7 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Metafields
 
 * [Add Option Name as a Variant Metafield for In Stock Variants](./add-option-names-as-variant-metafields-for-in-stock-variants)
+* [Auto create collections by metafield values](./auto-create-collections-by-metafield-values)
 * [Auto-associate variants with a delivery profile, by metafield value](./auto-associate-variants-with-a-delivery-profile-by-metafield-value)
 * [Auto-copy customer metafields to new orders](./auto-copy-customer-metafields-to-new-orders)
 * [Auto-delete customer metafields older than X days](./auto-delete-customer-metafields-older-than-x-days)
@@ -1338,6 +1341,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 * [Add all products to a certain sales channel](./add-all-products-to-a-certain-sales-channel)
 * [Advanced: Scheduled Price Changes](./advanced-scheduled-price-changes)
+* [Auto create collections by metafield values](./auto-create-collections-by-metafield-values)
 * [Auto publish products by tag](./auto-publish-products-by-tag)
 * [Auto-add products to a custom collection when tagged](./auto-add-products-to-a-custom-collection-when-tagged)
 * [Auto-associate products with a delivery profile, by product tag](./auto-associate-products-with-a-delivery-profile-by-product-tag)
@@ -1437,6 +1441,7 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Publish
 
 * [Advanced: Scheduled section publishing](./advanced-scheduled-section-publishing)
+* [Auto create collections by metafield values](./auto-create-collections-by-metafield-values)
 * [Auto publish products by tag](./auto-publish-products-by-tag)
 * [Auto-create collections by product type or vendor](./auto-create-collections-by-product-type-or-vendor)
 * [Auto-publish new products](./auto-publish-new-products)

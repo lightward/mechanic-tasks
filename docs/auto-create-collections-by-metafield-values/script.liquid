@@ -1,0 +1,481 @@
+{% assign product_metafields_and_collection_title_prefixes = options.product_metafields_and_collection_title_prefixes__keyval_required %}
+{% assign sales_channel_names = options.names_of_sales_channels_to_publish_collections_to__array %}
+{% assign run_daily = options.run_daily__boolean %}
+{% assign run_hourly = options.run_hourly__boolean %}
+{% assign test_mode = options.test_mode__boolean %}
+
+{% if event.preview %}
+  {% assign product_metafields_and_collection_title_prefixes = hash %}
+  {% assign product_metafields_and_collection_title_prefixes["custom.product_colors"] = "Color: " %}
+{% endif %}
+
+{% assign product_metafields = product_metafields_and_collection_title_prefixes | keys %}
+
+{% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% if sales_channel_names != blank %}
+    {% comment %}
+      -- check if the configured sales channels exist in this shop by name; save the publication IDs for lookup later
+    {% endcomment %}
+
+    {% assign publication_ids = array %}
+
+    {% capture query %}
+      query {
+        publications(first: 250) {
+          nodes {
+            id
+            name
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "publications": {
+              "nodes": [
+                {
+                  "id": "gid://shopify/Publication/1234567890",
+                  "name": {{ sales_channel_names[0] | json }}
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign publications = result.data.publications.nodes %}
+    {% assign publication_names = publications | map: "name" | sort %}
+    {% assign publications_indexed_by_name = publications | index_by: "name" %}
+
+    {% for sales_channel_name in sales_channel_names %}
+      {% if publication_names contains sales_channel_name %}
+        {% assign publication_ids = publication_ids | push: publications_indexed_by_name[sales_channel_name].id %}
+
+      {% else %}
+        {% unless event.preview %}
+          {% comment %}
+            -- using action error here so the task will continue with any other configured and matched sales channels
+          {% endcomment %}
+
+          {% action "echo"
+            __error: "A configured sales channel name does not match any of the publication names available in this shop.",
+            sales_channel_name: sales_channel_name,
+            publication_names: publication_names
+          %}
+        {% endunless %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
+  {% comment %}
+    -- loop through all configured metafields to get their metafield definition and validation values to be used as collection conditions
+  {% endcomment %}
+
+  {% assign metafield_definitions = array %}
+
+  {% for product_metafield in product_metafields %}
+    {% capture query %}
+      query {
+        metafieldDefinitions(
+          first: 1
+          ownerType: PRODUCT
+          namespace: {{ product_metafield | split: "." | first | json }}
+          key: {{ product_metafield | split: "." | last | json }}
+        ) {
+          nodes {
+            id
+            name
+            namespace
+            key
+            ownerType
+            type {
+              name
+            }
+            useAsCollectionCondition
+            validations {
+              value
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "metafieldDefinitions": {
+              "nodes": [
+                {
+                  "id": "gid://shopify/MetafieldDefinition/1234567890",
+                  "name": "Product Colors",
+                  "namespace": "custom",
+                  "key": "product_colors",
+                  "ownerType": "PRODUCT",
+                  "type": {
+                    "name": "list.single_line_text_field"
+                  },
+                  "useAsCollectionCondition": true,
+                  "validations": [
+                    {
+                      "value": "[\"Blue\",\"Red\"]"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign metafield_definition = result.data.metafieldDefinitions.nodes.first %}
+    {% assign metafield_values
+      = metafield_definition.validations.first.value
+      | default: "[]"
+      | parse_json
+    %}
+
+    {% comment %}
+      -- validate that the metafield definition exists and is configured correctly
+      -- using action errors for validation so the task will continue running and check all configured metafields
+    {% endcomment %}
+
+    {% if metafield_definition == blank %}
+      {% action "echo"
+        __error: "Metafield definition not found for this configured metafield and owner type (PRODUCT).",
+        product_metafield: product_metafield
+      %}
+      {% continue %}
+    {% endif %}
+
+    {% unless metafield_definition.type.name contains "single_line_text_field" %}
+      {% action "echo"
+        __error: "Metafield definition for this configured metafield must be a type of 'Single line text' or 'Single line text (List)'.",
+        metafield_definition: metafield_definition,
+        product_metafield: product_metafield
+      %}
+      {% continue %}
+    {% endunless %}
+
+    {% unless metafield_definition.useAsCollectionCondition %}
+      {% action "echo"
+        __error: "Metafield definition for this configured metafield must be set for use by 'Automated collections'.",
+        metafield_definition: metafield_definition,
+        product_metafield: product_metafield
+      %}
+      {% continue %}
+    {% endunless %}
+
+    {% if metafield_values == blank %}
+      {% action "echo"
+        __error: "Metafield definition validation values not found for this configured metafield.",
+        metafield_definition: metafield_definition,
+        product_metafield: product_metafield
+      %}
+      {% continue %}
+    {% endif %}
+
+    {% comment %}
+      -- all validation checks passed; extend the metafield definition object to store collection data
+    {% endcomment %}
+
+    {% assign metafield_definition["metafield_values"] = metafield_values %}
+    {% assign metafield_definition["collection_title_prefix"] = product_metafields_and_collection_title_prefixes[product_metafield] %}
+    {% assign metafield_definition["collections_by_value"] = hash %}
+
+    {% for metafield_value in metafield_values %}
+      {% assign metafield_definition["collections_by_value"][metafield_value] = array %}
+    {% endfor %}
+
+    {% assign metafield_definitions = metafield_definitions | push: metafield_definition %}
+  {% endfor %}
+
+  {% if metafield_definitions == blank %}
+    {% log "None of the configured metafields meet all of the necessary conditions for usage by this task." %}
+    {% break %}
+  {% endif %}
+
+  {% comment %}
+    -- query automated collections; save collection details for any that use a metafield configured in this task as a condition
+  {% endcomment %}
+
+  {% assign cursor = nil %}
+
+  {% for n in (1..100) %}
+    {% capture query %}
+      query {
+        collections(
+          first: 250
+          after: {{ cursor | json }}
+          query: "collection_type:smart"
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            title
+            handle
+            templateSuffix
+            sortOrder
+            ruleSet {
+              appliedDisjunctively
+              rules {
+                column
+                relation
+                condition
+                conditionObject {
+                  __typename
+                  ... on CollectionRuleMetafieldCondition {
+                    metafieldDefinition {
+                      id
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "collections": {
+              "nodes": [
+                {
+                  "id": "gid://shopify/Collection/1234567890",
+                  "ruleSet": {
+                    "rules": [
+                      {
+                        "column": "PRODUCT_METAFIELD_DEFINITION",
+                        "relation": "EQUALS",
+                        "condition": "Blue",
+                        "conditionObject": {
+                          "metafieldDefinition": {
+                            "id": "gid://shopify/MetafieldDefinition/1234567890"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "id": "gid://shopify/Collection/2345678901",
+                  "ruleSet": {
+                    "rules": [
+                      {
+                        "column": "PRODUCT_METAFIELD_DEFINITION",
+                        "relation": "EQUALS",
+                        "condition": "Grey",
+                        "conditionObject": {
+                          "metafieldDefinition": {
+                            "id": "gid://shopify/MetafieldDefinition/1234567890"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% for collection in result.data.collections.nodes %}
+      {% if collection.ruleSet == blank %}
+        {% continue %}
+      {% endif %}
+
+      {% for rule in collection.ruleSet.rules %}
+        {% unless rule.column == "PRODUCT_METAFIELD_DEFINITION" and rule.relation == "EQUALS" %}
+          {% continue %}
+        {% endunless %}
+
+        {% assign matched_metafield_definition
+          = metafield_definitions
+          | where: "id", rule.conditionObject.metafieldDefinition.id
+          | first
+        %}
+
+        {% unless matched_metafield_definition %}
+          {% continue %}
+        {% endunless %}
+
+        {% unless matched_metafield_definition.metafield_values contains rule.condition %}
+          {% unless event.preview %}
+            {% log
+              message: "Found collection using outdated metafield value condition for the matched metafield definition.",
+              collection: collection,
+              matched_metafield_definition: matched_metafield_definition
+            %}
+          {% endunless %}
+
+          {% continue %}
+        {% endunless %}
+
+        {% assign matched_metafield_definition["collections_by_value"][rule.condition]
+          = matched_metafield_definition["collections_by_value"][rule.condition]
+          | push: collection.id
+        %}
+      {% endfor %}
+    {% endfor %}
+
+    {% if result.data.collections.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.collections.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% unless event.preview %}
+    {% log metafield_definitions_with_extended_data: metafield_definitions %}
+  {% endunless %}
+
+  {% comment %}
+    -- check all extended metafield definition objects to see if any new collections need to be made on this task run
+  {% endcomment %}
+
+  {% assign collections_to_create = array %}
+
+  {% for metafield_definition in metafield_definitions %}
+    {% for metafield_value in metafield_definition.metafield_values %}
+      {% if metafield_definition.collections_by_value[metafield_value] == blank %}
+        {% assign product_metafield = metafield_definition.namespace | append: "." | append: metafield_definition.key %}
+
+        {% assign collection_to_create = hash %}
+        {% assign collection_to_create["product_metafield"] = product_metafield %}
+        {% assign collection_to_create["collection_title"] = metafield_value | prepend: metafield_definition.collection_title_prefix %}
+        {% assign collection_to_create["metafield_value"] = metafield_value %}
+        {% assign collection_to_create["metafield_definition_id"] = metafield_definition.id %}
+        {% assign collections_to_create = collections_to_create | push: collection_to_create %}
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+
+  {% unless event.preview %}
+    {% log collections_to_create: collections_to_create %}
+  {% endunless %}
+
+  {% if test_mode %}
+    {% log "This task is set for 'Test mode' and no new collections will be created." %}
+    {% break %}
+  {% endif %}
+
+  {% for collection_to_create in collections_to_create %}
+    {% capture mutation %}
+      mutation {
+        collectionCreate(
+          input: {
+            title: {{ collection_to_create.collection_title | json }}
+            ruleSet: {
+              appliedDisjunctively: false
+              rules: [
+                {
+                  column: PRODUCT_METAFIELD_DEFINITION
+                  relation: EQUALS
+                  condition: {{ collection_to_create.metafield_value | json }}
+                  conditionObjectId: {{ collection_to_create.metafield_definition_id | json }}
+                }
+              ]
+            }
+          }
+        ) {
+          collection {
+            id
+            title
+            handle
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% action %}
+      {
+        "type": "shopify",
+        "options": {{ mutation | json }},
+        "meta": {
+          "publication_ids": {{ publication_ids | json }}
+        }
+      }
+    {% endaction %}
+  {% endfor %}
+
+{% elsif event.topic == "mechanic/actions/perform" %}
+  {% comment %}
+    -- only respond to successful creation of collections
+  {% endcomment %}
+
+  {% unless action.type == "shopify" and action.run.ok and action.run.result.data.collectionCreate %}
+    {% break %}
+  {% endunless %}
+
+  {% assign collection_id = action.run.result.data.collectionCreate.collection.id %}
+  {% assign publication_ids = action.meta.publication_ids %}
+
+  {% comment %}
+    -- publish the new collection to all of the valid publications configured in the task
+  {% endcomment %}
+
+  {% assign mutations = array %}
+
+  {% for publication_id in publication_ids %}
+    {% capture mutation %}
+      publishablePublish{{ forloop.index }}: publishablePublish(
+        id: {{ collection_id | json }}
+        input: {
+          publicationId: {{ publication_id | json }}
+        }
+      ) {
+        publishable {
+          ... on Collection {
+            id
+            title
+            handle
+          }
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    {% endcapture %}
+
+    {% assign mutations = mutations | push: mutation %}
+  {% endfor %}
+
+  {% if mutations != blank %}
+    {% action "shopify" %}
+      mutation {
+        {{ mutations | join: newline }}
+      }
+    {% endaction %}
+  {% endif %}
+{% endif %}
