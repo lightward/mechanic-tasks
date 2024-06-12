@@ -17,7 +17,7 @@
 
 {% assign primary_location = shop.locations[shop.primary_location_id] %}
 
-{% assign product_considerations = array %}
+{% assign product_considerations = hash %}
 
 {% if event.topic contains "shopify/orders/" %}
   {% capture query %}
@@ -86,7 +86,12 @@
     {% assign result = result_json | parse_json %}
   {% endif %}
 
+  {% comment %}
+    -- group line items by product, to handle case of multiple pack variants of same product being on the order
+  {% endcomment %}
+
   {% for line_item in result.data.order.lineItems.nodes %}
+    {% assign product_id = line_item.variant.product.id %}
     {% assign pack_size = nil %}
 
     {% if pack_size_mode == "option" %}
@@ -101,13 +106,17 @@
     {% endif %}
 
     {% assign quantity_times_pack_size = line_item.quantity | times: pack_size %}
-    {% assign product_inventory_new = product_inventory_old | minus: quantity_times_pack_size %}
 
-    {% assign product_consideration = hash %}
-    {% assign product_consideration["id"] = line_item.variant.product.id %}
-    {% assign product_consideration["tags"] = line_item.variant.product.tags %}
-    {% assign product_consideration["inventory_difference"] = quantity_times_pack_size %}
-    {% assign product_considerations[product_considerations.size] = product_consideration %}
+    {% if product_considerations[product_id] == blank %}
+      {% assign product_considerations[product_id] = hash %}
+      {% assign product_considerations[product_id]["tags"] = line_item.variant.product.tags %}
+    {% endif %}
+
+    {% assign product_considerations[product_id]["inventory_difference"]
+      = product_considerations[product_id]["inventory_difference"]
+      | default: 0
+      | plus: quantity_times_pack_size
+    %}
   {% endfor %}
 
 {% elsif event.topic contains "shopify/products/" %}
@@ -119,13 +128,13 @@
     {% assign product_tags = product_inventory_tag_prefix | append: 80 %}
   {% endif %}
 
-  {% assign product_consideration = hash %}
-  {% assign product_consideration["id"] = product_id %}
-  {% assign product_consideration["tags"] = product_tags %}
-  {% assign product_considerations[product_considerations.size] = product_consideration %}
+  {% assign product_considerations[product_id] = hash %}
+  {% assign product_considerations[product_id]["tags"] = product_tags %}
 {% endif %}
 
-{% for product_consideration in product_considerations %}
+{% for keyval in product_considerations %}
+  {% assign product_consideration_id = keyval[0] %}
+  {% assign product_consideration = keyval[1] %}
   {% assign product_inventory_old = nil %}
 
   {% for product_tag in product_consideration.tags %}
@@ -145,7 +154,7 @@
 
   {% capture query %}
     query {
-      product(id: {{ product_consideration.id | json }}) {
+      product(id: {{ product_consideration_id | json }}) {
         variants(first: 100) {
           nodes {
             inventoryItem {
@@ -277,7 +286,7 @@
   {% capture mutations %}
     {% if product_inventory_old != product_inventory_new %}
       tagsRemove(
-        id: {{ product_consideration.id | json }}
+        id: {{ product_consideration_id | json }}
         tags: {{ product_inventory_tag_prefix | append: product_inventory_old | json }}
       ) {
         userErrors {
@@ -287,7 +296,7 @@
       }
 
       tagsAdd(
-        id: {{ product_consideration.id | json }}
+        id: {{ product_consideration_id | json }}
         tags: {{ product_inventory_tag_prefix | append: product_inventory_new | json }}
       ) {
         userErrors {
@@ -307,10 +316,9 @@
       ) {
         inventoryAdjustmentGroup {
           reason
-          changes {
+          changes(quantityNames: "available") {
             name
             delta
-            quantityAfterChange
             item {
               id
               sku
