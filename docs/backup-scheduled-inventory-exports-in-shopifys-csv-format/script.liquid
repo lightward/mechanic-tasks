@@ -91,7 +91,9 @@
                     location {
                       name
                     }
-                    available
+                    quantities(names: "available") {
+                      quantity
+                    }
                   }
                 }
               }
@@ -123,8 +125,8 @@
   {% if event.preview %}
     {% capture jsonl_string %}
       {"id":"gid:\/\/shopify\/ProductVariant\/1234567890","__typename":"ProductVariant","product":{"handle":"log","title":"Log","options":[{"name":"Size","position":1}]},"selectedOptions":[{"name":"Size","value":"Petite"}],"sku":"LOG-3","inventoryItem":{"tracked":true}}
-      {"id":"gid:\/\/shopify\/InventoryLevel\/1357924680?inventory_item_id=1470258369","__typename":"InventoryLevel","location":{"name":"123 Main Street"},"available":9,"__parentId":"gid:\/\/shopify\/ProductVariant\/1234567890"}
-      {"id":"gid:\/\/shopify\/InventoryLevel\/2468013579?inventory_item_id=1470258369","__typename":"InventoryLevel","location":{"name":"987 Alley Way"},"available":8,"__parentId":"gid:\/\/shopify\/ProductVariant\/1234567890"}
+      {"id":"gid:\/\/shopify\/InventoryLevel\/1357924680?inventory_item_id=1470258369","__typename":"InventoryLevel","location":{"name":"123 Main Street"},"quantities":[{"quantity":9}],"__parentId":"gid:\/\/shopify\/ProductVariant\/1234567890"}
+      {"id":"gid:\/\/shopify\/InventoryLevel\/2468013579?inventory_item_id=1470258369","__typename":"InventoryLevel","location":{"name":"987 Alley Way"},"quantities":[{"quantity":8}],"__parentId":"gid:\/\/shopify\/ProductVariant\/1234567890"}
     {% endcapture %}
 
     {% assign bulkOperation = hash %}
@@ -233,12 +235,12 @@
     {% endfor %}
 
     {% comment %}
-    -- add inventory levels by location
+    -- add "available" inventory levels by location
     {% endcomment %}
 
     {% for inventory_level in variant.inventory_levels %}
       {% assign location_name = inventory_level.location.name %}
-      {% assign variant_row[location_name] = inventory_level.available %}
+      {% assign variant_row[location_name] = inventory_level.quantities.first.quantity %}
     {% endfor %}
 
     {% comment %}

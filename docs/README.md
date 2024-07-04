@@ -994,6 +994,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-sort collections by inventory levels](./auto-sort-collections-by-inventory-levels)
 * [Auto-tag out-of-stock products](./auto-tag-out-of-stock-products)
 * [Auto-tag products with incoming inventory](./auto-tag-products-with-incoming-inventory)
+* [Backup inventory to SFTP in Shopify CSV format](./backup-scheduled-inventory-exports-in-shopifys-csv-format)
 * [Create a product inventory CSV feed](./create-a-product-inventory-feed)
 * [Email a summary of all products and quantities ordered](./email-a-summary-of-all-products-and-quantities-ordered)
 * [Hide out-of-stock products](./hide-out-of-stock-products)

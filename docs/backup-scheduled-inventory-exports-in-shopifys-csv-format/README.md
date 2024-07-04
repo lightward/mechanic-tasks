@@ -1,8 +1,8 @@
 # Backup inventory to SFTP in Shopify CSV format
 
-Tags: Backups, CSV, Export, FTP
+Tags: Backups, CSV, Export, FTP, Inventory
 
-On a configurable schedule, this task generates a Shopify-friendly CSV of your inventory, and uploads it to the SFTP destination of your choice, and/or sends it via email. This is a convenient way to keep regular backups of your entire product inventory: simply import a CSV to restore your inventory to that point in time. ([Learn more about CSV imports and exports of Shopify inventory.](https://help.shopify.com/en/manual/locations/changing-quantities/exporting-or-importing-inventory))
+On a configurable schedule, this task generates a Shopify-friendly CSV of your inventory, and uploads it to the SFTP destination of your choice, and/or sends it via email. This is a convenient way to keep regular backups of your entire product inventory: simply import a CSV to restore your inventory to that point in time. ([Learn more about CSV imports and exports of Shopify inventory.](https://help.shopify.com/en/manual/products/inventory/getting-started-with-inventory/inventory-csv))
 
 * View in the task library: [tasks.mechanic.dev/backup-scheduled-inventory-exports-in-shopifys-csv-format](https://tasks.mechanic.dev/backup-scheduled-inventory-exports-in-shopifys-csv-format)
 * Task JSON, for direct import: [task.json](../../tasks/backup-scheduled-inventory-exports-in-shopifys-csv-format.json)
@@ -40,7 +40,7 @@ mechanic/shopify/bulk_operation
 
 ## Documentation
 
-On a configurable schedule, this task generates a Shopify-friendly CSV of your inventory, and uploads it to the SFTP destination of your choice, and/or sends it via email. This is a convenient way to keep regular backups of your entire product inventory: simply import a CSV to restore your inventory to that point in time. ([Learn more about CSV imports and exports of Shopify inventory.](https://help.shopify.com/en/manual/locations/changing-quantities/exporting-or-importing-inventory))
+On a configurable schedule, this task generates a Shopify-friendly CSV of your inventory, and uploads it to the SFTP destination of your choice, and/or sends it via email. This is a convenient way to keep regular backups of your entire product inventory: simply import a CSV to restore your inventory to that point in time. ([Learn more about CSV imports and exports of Shopify inventory.](https://help.shopify.com/en/manual/products/inventory/getting-started-with-inventory/inventory-csv))
 
 To only export certain products, set the "Only export products matching this query" option to a search query that works with Shopify's inventory admin area. For example, to only export products tagged "backmeup", use the search query "tag:backmeup".
 
