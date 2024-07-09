@@ -30,12 +30,14 @@
 {% endif %}
 
 {% if publications.size != sales_channel_names.size %}
-  {% log
-    publications_named: sales_channel_names,
-    publications_available: result.data.publications.nodes,
-    publications_matched: publications
-  %}
-  {% error "Unable to find all configured publications. Double-check your task configuration." %}
+  {% unless event.preview %}
+    {% log
+      publications_named: sales_channel_names,
+      publications_available: result.data.publications.nodes,
+      publications_matched: publications
+    %}
+    {% error "Unable to find all configured publications. Double-check your task configuration." %}
+  {% endunless %}
 {% endif %}
 
 {% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}

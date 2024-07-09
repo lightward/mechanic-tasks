@@ -1441,6 +1441,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Publish
 
+* [Add all products to a certain sales channel](./add-all-products-to-a-certain-sales-channel)
 * [Advanced: Scheduled section publishing](./advanced-scheduled-section-publishing)
 * [Auto create collections by metafield values](./auto-create-collections-by-metafield-values)
 * [Auto publish products by tag](./auto-publish-products-by-tag)

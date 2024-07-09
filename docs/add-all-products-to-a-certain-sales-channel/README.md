@@ -1,6 +1,6 @@
 # Add all products to a certain sales channel
 
-Tags: Bulk, Products, Sales Channel
+Tags: Bulk, Products, Publish, Sales Channel
 
 Does exactly as it says: this task will publish all products to the sales channel(s) of your choice, on demand. Optionally, filter products by a search query, or choose to have this task run hourly or daily.
 
