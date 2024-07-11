@@ -2,7 +2,7 @@
 
 Tags: Barcodes, Bulk, SKU
 
-This task watches for new and updated products, copying variant barcodes over to the variant SKU. This occurs whenever a barcode is found, and the related variant's SKU does not already have that value.
+This task watches for new and updated products, copying variant barcodes over to the variants' inventory item SKUs. This occurs whenever a barcode is found, and the related SKU does not already have that value.
 
 * View in the task library: [tasks.mechanic.dev/keep-skus-up-to-date-with-barcodes](https://tasks.mechanic.dev/keep-skus-up-to-date-with-barcodes)
 * Task JSON, for direct import: [task.json](../../tasks/keep-skus-up-to-date-with-barcodes.json)
@@ -12,7 +12,7 @@ This task watches for new and updated products, copying variant barcodes over to
 
 ```liquid
 shopify/products/create
-shopify/products/delete
+shopify/products/update
 mechanic/user/trigger
 mechanic/shopify/bulk_operation
 ```
@@ -21,9 +21,9 @@ mechanic/shopify/bulk_operation
 
 ## Documentation
 
-This task watches for new and updated products, copying variant barcodes over to the variant SKU. This occurs whenever a barcode is found, and the related variant's SKU does not already have that value.
+This task watches for new and updated products, copying variant barcodes over to the variants' inventory item SKUs. This occurs whenever a barcode is found, and the related SKU does not already have that value.
 
-The task may also be run manually to scan all products and variants in the shop, updating the unmatched SKUs as needed.
+The task may also be run manually to scan all variants and inventory items in the shop, updating the unmatched SKUs as needed.
 
 ## Installing this task
 

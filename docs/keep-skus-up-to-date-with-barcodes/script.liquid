@@ -1,61 +1,45 @@
 {% if event.topic == "shopify/products/create" or event.topic == "shopify/products/update" %}
-  {% if event.preview %}
-    {% capture product_json %}
-      {
-        "variants": [
-          {
-            "admin_graphql_api_id": "gid://shopify/ProductVariant/1234567890",
-            "barcode": "ABC123",
-            "sku": ""
-          }
-        ]
-      }
-    {% endcapture %}
+  {% comment %}
+    -- query all variants for this product, along with their inventory items
+  {% endcomment %}
 
-    {% assign product = product_json | parse_json %}
-  {% endif %}
-
-  {% for variant in product.variants %}
-    {% if variant.barcode != blank and variant.sku != variant.barcode %}
-      {% action "shopify" %}
-        mutation {
-          productVariantUpdate(
-            input: {
-              id: {{ variant.admin_graphql_api_id | json }}
-              sku: {{ variant.barcode | json }}
-            }
-          ) {
-            productVariant {
-              barcode
-              sku
-            }
-            userErrors {
-              field
-              message
+  {% capture query %}
+    query {
+      product(id: {{ product.admin_graphql_api_id | json }}) {
+        variants(first: 100) {
+          nodes {
+            id
+            barcode
+            sku
+            inventoryItem {
+              id
             }
           }
         }
-      {% endaction %}
-    {% endif %}
-  {% endfor %}
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% assign variants = result.data.product.variants.nodes %}
 
 {% elsif event.topic == "mechanic/user/trigger" %}
+  {% comment %}
+    -- use bulk op to query all variants in the shop, along with their inventory items
+  {% endcomment %}
+
   {% capture bulk_operation_query %}
     query {
-      products {
+      productVariants {
         edges {
           node {
             __typename
             id
-            variants {
-              edges {
-                node {
-                  __typename
-                  id
-                  barcode
-                  sku
-                }
-              }
+            barcode
+            sku
+            inventoryItem {
+              id
             }
           }
         }
@@ -81,57 +65,55 @@
   {% endaction %}
 
 {% elsif event.topic == "mechanic/shopify/bulk_operation" %}
-  {% if event.preview %}
-    {% capture jsonl_string %}
-      {"__typename":"Product","id":"gid:\/\/shopify\/Product\/1234567890"}
-      {"__typename":"ProductVariant","id":"gid:\/\/shopify\/ProductVariant\/1234567890","barcode":"123ABC","__parentId":"gid:\/\/shopify\/Product\/1234567890"}
-      {"__typename":"ProductVariant","id":"gid:\/\/shopify\/ProductVariant\/2345678901","barcode":"456DEF","__parentId":"gid:\/\/shopify\/Product\/1234567890"}
-    {% endcapture %}
+  {% assign variants = bulkOperation.objects %}
+{% endif %}
 
-    {% assign bulkOperation = hash %}
-    {% assign bulkOperation["objects"] = jsonl_string | parse_jsonl %}
-  {% endif %}
+{% if event.preview %}
+  {% capture variants_json %}
+    [
+      {
+        "id": "gid://shopify/ProductVariant/1234567890",
+        "barcode": "ABC123",
+        "sku": "",
+        "inventoryItem": {
+          "id": "gid://shopify/InventoryItem/1234567890"
+        }
+      }
+    ]
+  {% endcapture %}
 
-  {% assign products = bulkOperation.objects | where: "__typename", "Product" %}
-  {% assign bulk_variants = bulkOperation.objects | where: "__typename", "ProductVariant" %}
+  {% assign variants = variants_json | parse_json %}
+{% endif %}
 
-  {% for product in products %}
-    {% assign variants = bulk_variants | where: "__parentId", product.id %}
+{% comment %}
+  -- update skus on inventory items, as this is no longer supported on variants as 2024-07 API
+  -- note: unlike variants, there is not yet a bulk update mutation for inventory items
+{% endcomment %}
 
-    {% assign variant_inputs = array %}
-
-    {% for variant in variants %}
-      {% if variant.barcode != blank and variant.barcode != variant.sku %}
-        {% assign variant_input = hash %}
-        {% assign variant_input["id"] = variant.id %}
-        {% assign variant_input["sku"] = variant.barcode %}
-        {% assign variant_inputs = variant_inputs | push: variant_input %}
-      {% endif %}
-    {% endfor %}
-
-    {% if variant_inputs != blank %}
-      {% action "shopify" %}
-        mutation {
-          productVariantsBulkUpdate(
-            allowPartialUpdates: true
-            productId: {{ product.id | json }}
-            variants: {{ variant_inputs | graphql_arguments }}
-          ) {
-            product {
-              title
-            }
-            productVariants {
+{% for variant in variants %}
+  {% if variant.barcode != blank and variant.sku != variant.barcode %}
+    {% action "shopify" %}
+      mutation {
+        inventoryItemUpdate(
+          id: {{ variant.inventoryItem.id | json }}
+          input: {
+            sku: {{ variant.barcode | json }}
+          }
+        ) {
+          inventoryItem {
+            variant {
+              id
               displayName
               barcode
               sku
             }
-            userErrors {
-              field
-              message
-            }
+          }
+          userErrors {
+            field
+            message
           }
         }
-      {% endaction %}
-    {% endif %}
-  {% endfor %}
-{% endif %}
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}
