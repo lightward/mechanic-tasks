@@ -83,12 +83,25 @@
   {% if variant_sku_generated != variant.sku %}
     {% log message: "updating sku", original_sku: variant.sku, generated_sku: variant_sku_generated %}
 
+    {% comment %}
+      -- update skus on inventory items, as this is no longer supported on variants as of 2024-07 API
+    {% endcomment %}
+
     {% action "shopify" %}
       mutation {
-        productVariantUpdate(input: {
-          id: {{ variant.admin_graphql_api_id | json }}
-          sku: {{ variant_sku_generated | json }}
-        }) {
+        inventoryItemUpdate(
+          id: {{ variant.inventory_item.admin_graphql_api_id | json }}
+          input: {
+            sku: {{ variant_sku_generated | json }}
+          }
+        ) {
+          inventoryItem {
+            variant {
+              id
+              displayName
+              sku
+            }
+          }
           userErrors {
             field
             message
