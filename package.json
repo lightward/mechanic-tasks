@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@shopify/prettier-config": "1.1.2",
-    "ajv": "8.16.0",
+    "ajv": "8.17.1",
     "dir-compare": "5.0.0",
     "glob": "10.4.2",
     "husky": "^9.0.7",
