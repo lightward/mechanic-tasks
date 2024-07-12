@@ -1,30 +1,29 @@
-{% comment %}
-  Option order:
+{% assign draft_order_tag = options.draft_order_tag__required %}
+{% assign cycle_start_date = options.cycle_start_date__required %}
+{% assign number_of_days_in_cycle = options.number_of_days_in_cycle__number_required %}
+{% assign complete_the_order_after_creating = options.complete_the_order_after_creating__boolean %}
+{% assign complete_the_order_and_mark_as_paid_after_creating = options.complete_the_order_and_mark_as_paid_after_creating__boolean %}
+{% assign send_email_invoice_after_creating = options.send_email_invoice_after_creating__boolean %}
+{% assign email_invoice_subject = options.email_invoice_subject %}
+{% assign email_invoice_bcc = options.email_invoice_bcc__email_array %}
+{% assign email_invoice_custom_message = options.email_invoice_custom_message__multiline %}
 
-  {{ options.draft_order_tag__required }}
-  {{ options.cycle_start_date__required }}
-  {{ options.number_of_days_in_cycle__number_required }}
-  {{ options.complete_the_order_after_creating__boolean }}
-  {{ options.complete_the_order_and_mark_as_paid_after_creating__boolean }}
-  {{ options.send_email_invoice_after_creating__boolean }}
-  {{ options.email_invoice_subject }}
-  {{ options.email_invoice_bcc__email_array }}
-  {{ options.email_invoice_custom_message__multiline }}
-{% endcomment %}
-
-{% if options.send_email_invoice_after_creating__boolean and options.complete_the_order_after_creating__boolean %}
-  {"error": "Choose either an email invoice or completing the order - not both. :)"}
-{% elsif options.send_email_invoice_after_creating__boolean and options.complete_the_order_and_mark_as_paid_after_creating__boolean %}
-  {"error": "Choose either an email invoice or completing the order - not both. :)"}
+{% if send_email_invoice_after_creating and complete_the_order_after_creating %}
+  {% error "Choose either an email invoice or completing the order - not both. :)" %}
+{% elsif send_email_invoice_after_creating and complete_the_order_and_mark_as_paid_after_creating %}
+  {% error "Choose either an email invoice or completing the order - not both. :)" %}
 {% endif %}
 
-{% if options.complete_the_order_after_creating__boolean or options.complete_the_order_and_mark_as_paid_after_creating__boolean %}
+{% if complete_the_order_after_creating or complete_the_order_and_mark_as_paid_after_creating %}
   {% assign autocomplete = true %}
 {% endif %}
 
-{% assign cycle_start = options.cycle_start_date__required | date: "%s" %}
-{% if cycle_start == blank or cycle_start == options.cycle_start_date__required %}
-  {"error": {{ options.cycle_start_date__required | json | prepend: "Mechanic wasn't able to parse " | append: " - try another value." | json }}}
+{% assign cycle_start = cycle_start_date | date: "%s" %}
+
+{% if cycle_start == blank or cycle_start == cycle_start_date %}
+  {% error %}
+    {{ cycle_start_date | json | prepend: "Mechanic wasn't able to parse " | append: " - try another value." | json }}
+  {% enderror %}
 {% endif %}
 
 {% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
@@ -55,7 +54,10 @@
                   unit: GRAMS
                   value: 5
                 }
-                originalUnitPrice: "5.0"
+                originalUnitPriceWithCurrency: {
+                  amount: "5.0"
+                  currencyCode: USD
+                }
                 quantity: 2
                 requiresShipping: false
                 sku: "123ABC"
@@ -78,124 +80,130 @@
         }
       }
     {% endaction %}
+
   {% else %}
-    {% assign cycle_start_date = options.cycle_start_date__required %}
+    {% assign cycle_start_date = cycle_start_date %}
     {% assign cycle_start_d    = cycle_start_date | date: "%s" | times: 1 | divided_by: 60 | divided_by: 60 | divided_by: 24 %}
     {% assign now_d            = "now"            | date: "%s" | times: 1 | divided_by: 60 | divided_by: 60 | divided_by: 24 %}
-    {% assign day_gap          = now_d | minus: cycle_start_d | modulo: options.number_of_days_in_cycle__number_required %}
+    {% assign day_gap          = now_d | minus: cycle_start_d | modulo: number_of_days_in_cycle %}
 
     {% if day_gap == 0 %}
       {% assign run_qualifies = true %}
     {% else %}
-      {"log": {{ options.number_of_days_in_cycle__number_required | minus: day_gap | prepend: "Waiting another " | append: " day(s) for cycle to complete" | json }}}
+      {% log %}
+        {{ number_of_days_in_cycle | minus: day_gap | prepend: "Waiting another " | append: " day(s) for cycle to complete" | json }}
+      {% endlog %}
     {% endif %}
   {% endif %}
 
   {% if run_qualifies %}
-    {% for n in (0..1000) %}
+    {% for n in (0..10) %}
       {% capture query %}
         query {
           draftOrders(
-            first: 1
+            first: 100
             after: {{ cursor | json }}
-            query: {{ "tag:" | append: options.draft_order_tag__required | json }}
+            query: {{ "tag:" | append: draft_order_tag | json }}
             sortKey: NUMBER
           ) {
             pageInfo {
               hasNextPage
+              endCursor
             }
-            edges {
-              cursor
-              node {
-                id
-                appliedDiscount {
-                  amountV2 {
+            nodes {
+              id
+              appliedDiscount {
+                amountSet {
+                  shopMoney {
                     amount
                     currencyCode
                   }
-                  description
-                  title
-                  value
-                  valueType
                 }
-                billingAddress {
-                  address1
-                  address2
-                  city
-                  company
-                  countryCodeV2
-                  firstName
-                  lastName
-                  phone
-                  provinceCode
-                  zip
-                }
-                customer {
-                  id
-                }
-                customAttributes {
-                  key
-                  value
-                }
-                email
-                lineItems(first: 150) {
-                  edges {
-                    node {
-                      appliedDiscount {
-                        description
-                        title
-                        value
-                        valueType
-                        amountV2 {
-                          amount
-                          currencyCode
-                        }
-                      }
-                      customAttributes {
-                        key
-                        value
-                      }
-                      originalUnitPrice
-                      quantity
-                      sku
-                      taxable
-                      title
-                      variant {
-                        id
-                      }
-                      weight {
-                        unit
-                        value
-                      }
-                    }
-                  }
-                }
-                note2
-                shippingAddress {
-                  address1
-                  address2
-                  city
-                  company
-                  countryCodeV2
-                  firstName
-                  lastName
-                  phone
-                  provinceCode
-                  zip
-                }
-                shippingLine {
-                  title
-                  shippingRateHandle
-                  originalPriceSet {
-                    shopMoney {
-                      amount
-                      currencyCode
-                    }
-                  }
-                }
-                tags
-                taxExempt
+                description
+                title
+                value
+                valueType
               }
+              billingAddress {
+                address1
+                address2
+                city
+                company
+                countryCodeV2
+                firstName
+                lastName
+                phone
+                provinceCode
+                zip
+              }
+              customer {
+                id
+              }
+              customAttributes {
+                key
+                value
+              }
+              email
+              lineItems(first: 150) {
+                nodes {
+                  appliedDiscount {
+                    amountSet {
+                      shopMoney {
+                        amount
+                        currencyCode
+                      }
+                    }
+                    description
+                    title
+                    value
+                    valueType
+                  }
+                  customAttributes {
+                    key
+                    value
+                  }
+                  originalUnitPriceWithCurrency {
+                    amount
+                    currencyCode
+                  }
+                  quantity
+                  sku
+                  taxable
+                  title
+                  variant {
+                    id
+                  }
+                  weight {
+                    unit
+                    value
+                  }
+                }
+              }
+              note2
+              shippingAddress {
+                address1
+                address2
+                city
+                company
+                countryCodeV2
+                firstName
+                lastName
+                phone
+                provinceCode
+                zip
+              }
+              shippingLine {
+                title
+                shippingRateHandle
+                originalPriceSet {
+                  shopMoney {
+                    amount
+                    currencyCode
+                  }
+                }
+              }
+              tags
+              taxExempt
             }
           }
         }
@@ -203,135 +211,146 @@
 
       {% assign result = query | shopify %}
 
-      {% for edge in result.data.draftOrders.edges %}
-        {% assign draftOrder = edge.node %}
-
+      {% for draft_order in result.data.draftOrders.nodes %}
         {% action "shopify" %}
           mutation {
             draftOrderCreate(
               input: {
-                {% if draftOrder.appliedDiscount %}
+                {% if draft_order.appliedDiscount %}
                   appliedDiscount: {
-                    amount: {{ draftOrder.appliedDiscount.amountV2.amount | json }}
-                    description: {{ draftOrder.appliedDiscount.description | json }}
-                    title: {{ draftOrder.appliedDiscount.title | json }}
-                    value: {{ draftOrder.appliedDiscount.value | json }}
-                    valueType: {{ draftOrder.appliedDiscount.valueType }}
+                    amountWithCurrency: {
+                      amount: {{ draft_order.appliedDiscount.amountSet.shopMoney.amount | json }}
+                      currencyCode: {{ draft_order.appliedDiscount.amountSet.shopMoney.currencyCode }}
+                    }
+                    description: {{ draft_order.appliedDiscount.description | json }}
+                    title: {{ draft_order.appliedDiscount.title | json }}
+                    value: {{ draft_order.appliedDiscount.value }}
+                    valueType: {{ draft_order.appliedDiscount.valueType }}
                   }
                 {% endif %}
-                {% if draftOrder.billingAddress %}
+                {% if draft_order.billingAddress %}
                   billingAddress: {
-                    address1: {{ draftOrder.billingAddress.address1 | json }}
-                    address2: {{ draftOrder.billingAddress.address2 | json }}
-                    city: {{ draftOrder.billingAddress.city | json }}
-                    company: {{ draftOrder.billingAddress.company | json }}
-                    countryCode: {{ draftOrder.billingAddress.countryCodeV2 }}
-                    firstName: {{ draftOrder.billingAddress.firstName | json }}
-                    lastName: {{ draftOrder.billingAddress.lastName | json }}
-                    phone: {{ draftOrder.billingAddress.phone | json }}
-                    provinceCode: {{ draftOrder.billingAddress.provinceCode | json }}
-                    zip: {{ draftOrder.billingAddress.zip | json }}
+                    address1: {{ draft_order.billingAddress.address1 | json }}
+                    address2: {{ draft_order.billingAddress.address2 | json }}
+                    city: {{ draft_order.billingAddress.city | json }}
+                    company: {{ draft_order.billingAddress.company | json }}
+                    countryCode: {{ draft_order.billingAddress.countryCodeV2 }}
+                    firstName: {{ draft_order.billingAddress.firstName | json }}
+                    lastName: {{ draft_order.billingAddress.lastName | json }}
+                    phone: {{ draft_order.billingAddress.phone | json }}
+                    provinceCode: {{ draft_order.billingAddress.provinceCode | json }}
+                    zip: {{ draft_order.billingAddress.zip | json }}
                   }
                 {% endif %}
-                {% if draftOrder.customer %}
+                {% if draft_order.customer %}
                   purchasingEntity: {
-                    customerId: {{ draftOrder.customer.id | json }}
+                    customerId: {{ draft_order.customer.id | json }}
                   }
                 {% endif %}
-                {% if draftOrder.customAttributes != empty %}
+                {% if draft_order.customAttributes != empty %}
                   customAttributes: [
-                    {% for customAttribute in draftOrder.customAttributes %}
+                    {% for custom_attribute in draft_order.customAttributes %}
                       {
-                        key: {{ customAttribute.key | json }}
-                        value: {{ customAttribute.value | json }}
+                        key: {{ custom_attribute.key | json }}
+                        value: {{ custom_attribute.value | json }}
                       }
                     {% endfor %}
                   ]
                 {% endif %}
-                {% if draftOrder.email %}
-                  email: {{ draftOrder.email | json }}
+                {% if draft_order.email %}
+                  email: {{ draft_order.email | json }}
                 {% endif %}
                 lineItems: [
-                  {% for lineItem_edge in draftOrder.lineItems.edges %}
-                    {% assign lineItem = lineItem_edge.node %}
+                  {% for line_item in draft_order.lineItems.nodes %}
                     {
-                      {% if lineItem.appliedDiscount %}
+                      {% if line_item.appliedDiscount %}
                         appliedDiscount: {
-                          amount: {{ lineItem.appliedDiscount.amountV2.amount | json }}
-                          description: {{ lineItem.appliedDiscount.description | json }}
-                          title: {{ lineItem.appliedDiscount.title | json }}
-                          value: {{ lineItem.appliedDiscount.value | json }}
-                          valueType: {{ lineItem.appliedDiscount.valueType }}
+                          amountWithCurrency: {
+                            amount: {{ line_item.appliedDiscount.amountSet.shopMoney.amount | json }}
+                            currencyCode: {{ line_item.appliedDiscount.amountSet.shopMoney.currencyCode }}
+                          }
+                          description: {{ line_item.appliedDiscount.description | json }}
+                          title: {{ line_item.appliedDiscount.title | json }}
+                          value: {{ line_item.appliedDiscount.value | json }}
+                          valueType: {{ line_item.appliedDiscount.valueType }}
                         }
                       {% endif %}
-                      {% if lineItem.customAttributes != empty %}
+                      {% if line_item.customAttributes != empty %}
                         customAttributes: [
-                          {% for customAttribute in lineItem.customAttributes %}
+                          {% for custom_attribute in line_item.customAttributes %}
                             {
-                              key: {{ customAttribute.key | json }}
-                              value: {{ customAttribute.value | json }}
+                              key: {{ custom_attribute.key | json }}
+                              value: {{ custom_attribute.value | json }}
                             }
                           {% endfor %}
                         ]
                       {% endif %}
-                      originalUnitPrice: {{ lineItem.originalUnitPrice | json }}
-                      quantity: {{ lineItem.quantity | json }}
-                      {% if lineItem.requiresShipping != nil %}
-                        requiresShipping: {{ lineItem.requiresShipping | json }}
+                      {% if line_item.originalUnitPriceWithCurrency.amount %}
+                        originalUnitPriceWithCurrency: {
+                          amount: {{ line_item.originalUnitPriceWithCurrency.amount | json }}
+                          currencyCode: {{ line_item.originalUnitPriceWithCurrency.currencyCode }}
+                        }
                       {% endif %}
-                      {% if lineItem.sku %}
-                        sku: {{ lineItem.sku | json }}
+                      quantity: {{ line_item.quantity | json }}
+                      {% if line_item.requiresShipping != nil %}
+                        requiresShipping: {{ line_item.requiresShipping | json }}
                       {% endif %}
-                      taxable: {{ lineItem.taxable | json }}
-                      title: {{ lineItem.title | json }}
-                      {% if lineItem.variant %}
-                        variantId: {{ lineItem.variant.id | json }}
+                      {% if line_item.sku %}
+                        sku: {{ line_item.sku | json }}
                       {% endif %}
-                      {% if lineItem.weight and lineItem.weight.value != 0 %}
+                      taxable: {{ line_item.taxable | json }}
+                      title: {{ line_item.title | json }}
+                      {% if line_item.variant %}
+                        variantId: {{ line_item.variant.id | json }}
+                      {% endif %}
+                      {% if line_item.weight and line_item.weight.value != 0 %}
                         weight: {
-                          value: {{ lineItem.weight.value | json }}
-                          unit: {{ lineItem.weight.unit }}
+                          value: {{ line_item.weight.value | json }}
+                          unit: {{ line_item.weight.unit }}
                         }
                       {% endif %}
                     }
                   {% endfor %}
                 ]
-                {% if options.send_email_invoice_after_creating__boolean or autocomplete %}
+                {% if send_email_invoice_after_creating or autocomplete %}
                   metafields: [
                     {
                       namespace: "mechanic"
-                      key: {% if options.send_email_invoice_after_creating__boolean %}"autoinvoice"{% else %}"autocomplete"{% endif %}
+                      key: {% if send_email_invoice_after_creating %}"autoinvoice"{% else %}"autocomplete"{% endif %}
                       value: "true"
                       type: "boolean"
                     }
                   ]
                 {% endif %}
-                {% if draftOrder.note2 != blank %}
-                  note: {{ draftOrder.note2 | json }}
+                {% if draft_order.note2 != blank %}
+                  note: {{ draft_order.note2 | json }}
                 {% endif %}
-                {% if draftOrder.shippingAddress %}
+                {% if draft_order.shippingAddress %}
                   shippingAddress: {
-                    address1: {{ draftOrder.shippingAddress.address1 | json }}
-                    address2: {{ draftOrder.shippingAddress.address2 | json }}
-                    city: {{ draftOrder.shippingAddress.city | json }}
-                    company: {{ draftOrder.shippingAddress.company | json }}
-                    countryCode: {{ draftOrder.shippingAddress.countryCodeV2 }}
-                    firstName: {{ draftOrder.shippingAddress.firstName | json }}
-                    lastName: {{ draftOrder.shippingAddress.lastName | json }}
-                    phone: {{ draftOrder.shippingAddress.phone | json }}
-                    provinceCode: {{ draftOrder.shippingAddress.provinceCode | json }}
-                    zip: {{ draftOrder.shippingAddress.zip | json }}
+                    address1: {{ draft_order.shippingAddress.address1 | json }}
+                    address2: {{ draft_order.shippingAddress.address2 | json }}
+                    city: {{ draft_order.shippingAddress.city | json }}
+                    company: {{ draft_order.shippingAddress.company | json }}
+                    countryCode: {{ draft_order.shippingAddress.countryCodeV2 }}
+                    firstName: {{ draft_order.shippingAddress.firstName | json }}
+                    lastName: {{ draft_order.shippingAddress.lastName | json }}
+                    phone: {{ draft_order.shippingAddress.phone | json }}
+                    provinceCode: {{ draft_order.shippingAddress.provinceCode | json }}
+                    zip: {{ draft_order.shippingAddress.zip | json }}
                   }
                 {% endif %}
-                {% if draftOrder.shippingLine %}
+                {% if draft_order.shippingLine %}
                   shippingLine: {
-                    price: {{ draftOrder.shippingLine.originalPriceSet.shopMoney.amount | json }}
-                    shippingRateHandle: {{ draftOrder.shippingLine.shippingRateHandle | json }}
-                    title: {{ draftOrder.shippingLine.title | json }}
+                    priceWithCurrency: {
+                      amount: {{ draft_order.shippingLine.originalPriceSet.shopMoney.amount | json }}
+                      currencyCode: {{ draft_order.shippingLine.originalPriceSet.shopMoney.currencyCode }}
+                    }
+                    shippingRateHandle: {{ draft_order.shippingLine.shippingRateHandle | json }}
+                    title: {{ draft_order.shippingLine.title | json }}
                   }
                 {% endif %}
-                tags: {{ draftOrder.tags | remove_tag: options.draft_order_tag__required | json }}
-                taxExempt: {{ draftOrder.taxExempt | json }}
+                tags: {{ draft_order.tags | remove_tag: draft_order_tag | json }}
+                taxExempt: {{ draft_order.taxExempt | json }}
                 useCustomerDefaultAddress: false
               }
             ) {
@@ -348,13 +367,14 @@
       {% endfor %}
 
       {% if result.data.draftOrders.pageInfo.hasNextPage %}
-        {% assign cursor = result.data.draftOrders.edges.last.cursor %}
+        {% assign cursor = result.data.draftOrders.pageInfo.endCursor %}
       {% else %}
         {% break %}
       {% endif %}
     {% endfor %}
   {% endif %}
-{% elsif event.topic == "shopify/draft_orders/create" and options.send_email_invoice_after_creating__boolean %}
+
+{% elsif event.topic == "shopify/draft_orders/create" and send_email_invoice_after_creating %}
   {% capture query %}
     query {
       draftOrder(
@@ -378,11 +398,11 @@
         draftOrderInvoiceSend(
           id: {{ draft_order.admin_graphql_api_id | json }}
           email: {
-            {% if options.email_invoice_subject != blank %}
-              subject: {{ options.email_invoice_subject | json }}
+            {% if email_invoice_subject != blank %}
+              subject: {{ email_invoice_subject | json }}
             {% endif %}
-            bcc: {{ options.email_invoice_bcc__email_array | json }}
-            customMessage: {{ options.email_invoice_custom_message__multiline | json }}
+            bcc: {{ email_invoice_bcc | json }}
+            customMessage: {{ email_invoice_custom_message | json }}
           }
         ) {
           userErrors {
@@ -393,6 +413,7 @@
       }
     {% endaction %}
   {% endif %}
+
 {% elsif event.topic == "shopify/draft_orders/create" and autocomplete %}
   {% capture query %}
     query {
@@ -416,7 +437,7 @@
       mutation {
         draftOrderComplete(
           id: {{ draft_order.admin_graphql_api_id | json }}
-          paymentPending: {% if options.complete_the_order_and_mark_as_paid_after_creating__boolean %}false{% else %}true{% endif %}
+          paymentPending: {% if complete_the_order_and_mark_as_paid_after_creating %}false{% else %}true{% endif %}
         ) {
           draftOrder {
             order {

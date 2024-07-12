@@ -13,7 +13,7 @@ This task searches for draft orders having the configured tag, and duplicates ea
 ```json
 {
   "draft_order_tag__required": "repeat-me",
-  "cycle_start_date__required": "2021-01-01",
+  "cycle_start_date__required": "2024-01-01",
   "number_of_days_in_cycle__number_required": "7",
   "complete_the_order_after_creating__boolean": null,
   "complete_the_order_and_mark_as_paid_after_creating__boolean": null,
