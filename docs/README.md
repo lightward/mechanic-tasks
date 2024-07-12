@@ -1398,6 +1398,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Email someone when a certain product is purchased](./email-someone-when-certain-product-purchased)
 * [Email someone when a certain variant is purchased](./email-when-variant-purchased)
 * [Email vendors when their products are ordered](./email-vendors-when-their-products-are-ordered)
+* [Export all products to SFTP, as a Shopify-friendly CSV](./export-all-products-to-sftp-as-a-shopify-friendly-csv)
 * [Find duplicate SKUs](./find-duplicate-skus)
 * [Generate a discount code when a certain product is purchased](./generate-a-discount-code-when-a-certain-product-is-purchased)
 * [Generate a product discount when a voucher product is purchased](./generate-a-product-discount-when-a-voucher-product-is-purchased)

@@ -1,19 +1,16 @@
-{% comment %}
-  Preferred option order:
-
-  {{ options.only_export_products_matching_this_query }}
-  {{ options.run_every_x_hours__number }}
-  {{ options.sftp_host__required }}
-  {{ options.sftp_port__required_number }}
-  {{ options.sftp_user__required }}
-  {{ options.sftp_password__required }}
-  {{ options.sftp_upload_directory }}
-{% endcomment %}
+{% assign only_export_products_matching_this_query = options.only_export_products_matching_this_query %}
+{% assign run_every_x_hours = options.run_every_x_hours__number %}
+{% assign sftp_host = options.sftp_host__required %}
+{% assign sftp_port = options.sftp_port__required_number %}
+{% assign sftp_user = options.sftp_user__required %}
+{% assign sftp_password = options.sftp_password__required %}
+{% assign sftp_upload_directory = options.sftp_upload_directory %}
 
 {% comment %}
 -- validate options
 {% endcomment %}
-{% if options.run_every_x_hours__number != blank %}
+
+{% if run_every_x_hours != blank %}
   {% assign valid_hours = array %}
   {% assign valid_hours[valid_hours.size] = 1 %}
   {% assign valid_hours[valid_hours.size] = 2 %}
@@ -23,7 +20,7 @@
   {% assign valid_hours[valid_hours.size] = 12 %}
   {% assign valid_hours[valid_hours.size] = 24 %}
 
-  {% unless valid_hours contains options.run_every_x_hours__number %}
+  {% unless valid_hours contains run_every_x_hours %}
     {% error "If set, 'Run interval in hours' must be 1, 2, 3, 4, 6, 12, or 24." %}
   {% endunless %}
 {% endif %}
@@ -33,26 +30,33 @@
 {% if event.topic == "mechanic/user/trigger" or event.topic == "mechanic/scheduler/daily" %}
   {% assign ok_to_run = true %}
 
-{% elsif event.topic == "mechanic/scheduler/hourly" and options.run_every_x_hours__number != blank %}
-  {% assign hour_mod = "now" | date: "%H" | modulo: options.run_every_x_hours__number %}
+{% elsif event.topic == "mechanic/scheduler/hourly" and run_every_x_hours != blank %}
+  {% assign hour_mod = "now" | date: "%H" | modulo: run_every_x_hours %}
 
   {% if event.preview or hour_mod == 0 %}
     {% assign ok_to_run = true %}
 
   {% else %}
-    {% log message: "The current hour does not fall on the configured interval; skipping", hour_interval: options.run_every_x_hours__number, current_hour: hour_mod %}
+    {% log
+      message: "The current hour does not fall on the configured interval; skipping",
+      hour_interval: run_every_x_hours,
+      current_hour: hour_mod
+    %}
   {% endif %}
 {% endif %}
 
 {% if ok_to_run %}
   {% capture bulk_operation_query %}
     query {
-      products(reverse: true, query: {{ options.only_export_products_matching_this_query | json }}) {
+      products(
+        reverse: true
+        query: {{ only_export_products_matching_this_query | json }}
+      ) {
         edges {
           node {
             id
             __typename
-            bodyHtml
+            descriptionHtml
             handle
             isGiftCard
             onlineStoreUrl
@@ -77,20 +81,22 @@
                   __typename
                   barcode
                   compareAtPrice
-                  fulfillmentService {
-                    id
-                    __typename
-                    serviceName
-                  }
                   image {
                     id
                     __typename
                     altText
-                    originalSrc
+                    url
                   }
                   inventoryItem {
                     id
                     __typename
+                    measurement {
+                      weight {
+                        unit
+                        value
+                      }
+                    }
+                    requiresShipping
                     tracked
                     unitCost {
                       amount
@@ -102,7 +108,6 @@
                   product {
                     handle
                   }
-                  requiresShipping
                   selectedOptions {
                     name
                     value
@@ -111,8 +116,7 @@
                   taxable
                   taxCode
                   title
-                  weight
-                  weightUnit
+
                 }
               }
             }
@@ -123,7 +127,7 @@
                   id
                   __typename
                   altText
-                  originalSrc
+                  url
                 }
               }
             }
@@ -153,9 +157,9 @@
 {% elsif event.topic == "mechanic/shopify/bulk_operation" %}
   {% if event.preview %}
     {% capture jsonl_string %}
-      {"id":"gid:\/\/shopify\/Product\/92223864844","__typename":"Product","bodyHtml":"\u003cp\u003e\u003cem\u003eThis is a demonstration store. You can purchase products like this from \u003ca href=\"https:\/\/www.purefixcycles.com\" target=\"_blank\"\u003ePure Fix Cycles\u003c\/a\u003e\u003c\/em\u003e\u003c\/p\u003e\u003cp\u003eA favorite of professional mechanics around the world! The 4mm 5mm 6mm Balldriver Y-Wrench allows for quick insertion into bolt heads from a wider variety of angles. This baby is made from heat treated Bondhus Protanium, so it will last a lifetime. Plus, it's made in the USA!\u003c\/p\u003e\n\u003cp\u003eHaving a balldriver allows you to tighten screws at up to a 25 degree angle!\u003c\/p\u003e\n\u003cp class=\"tertiary\"\u003eNote: Balldrivers are not intended for high torque situations.\u003c\/p\u003e","handle":"4mm-5mm-6mm-balldriver-y-wrench","isGiftCard":false,"onlineStoreUrl":null,"options":[{"id":"gid:\/\/shopify\/ProductOption\/141068402700","__typename":"ProductOption","name":"Title","position":1,"values":["Y-Wrench"]}],"productType":"Tools","seo":{"description":null,"title":null},"tags":["Accessories","Essential","Essentials","Safety Gear","Tool","Tools","Tools and Maintenance","Wrench"],"title":"4mm 5mm 6mm Balldriver Y-Wrench","vendor":"Park Tool"}
-      {"id":"gid:\/\/shopify\/ProductImage\/711168557068","__typename":"Image","altText":"Park Tool Wrench","originalSrc":"https:\/\/cdn.shopify.com\/s\/files\/1\/1186\/9366\/products\/balldriver.jpg?v=1513060358","__parentId":"gid:\/\/shopify\/Product\/92223864844"}
-      {"id":"gid:\/\/shopify\/ProductVariant\/971762401292","__typename":"ProductVariant","barcode":null,"compareAtPrice":null,"fulfillmentService":{"id":"gid:\/\/shopify\/FulfillmentService\/manual","__typename":"FulfillmentService","serviceName":"Manual"},"image":{"id":"gid:\/\/shopify\/ProductImage\/711168557068","__typename":"Image","altText":"Park Tool Wrench","originalSrc":"https:\/\/cdn.shopify.com\/s\/files\/1\/1186\/9366\/products\/balldriver.jpg?v=1513060358"},"inventoryItem":{"id":"gid:\/\/shopify\/InventoryItem\/981398028300","__typename":"InventoryItem","tracked":true,"unitCost":null},"inventoryPolicy":"DENY","position":1,"price":"9.99","product":{"handle":"4mm-5mm-6mm-balldriver-y-wrench"},"requiresShipping":true,"selectedOptions":[{"name":"Title","value":"Y-Wrench"}],"sku":"Tool - Park Balldriver 456","taxable":true,"taxCode":null,"title":"Y-Wrench","weight":0.2491,"weightUnit":"POUNDS","__parentId":"gid:\/\/shopify\/Product\/92223864844"}
+      {"id":"gid:\/\/shopify\/Product\/1234567890","__typename":"Product","descriptionHtml":"Preview product","handle":"preview-product","isGiftCard":false,"onlineStoreUrl":null,"options":[{"id":"gid:\/\/shopify\/ProductOption\/1234567890","__typename":"ProductOption","name":"Title","position":1,"values":["Default Title"]}],"productType":"Indoor","seo":{"description":null,"title":null},"tags":["preview"],"title":"Preview product","vendor":"ACME"}
+      {"id":"gid:\/\/shopify\/ProductImage\/37002970530040","__typename":"Image","altText":"Preview product","url":"https:\/\/cdn.shopify.com\/s\/files\/1\/1337\/5150\/products\/preview-productr.jpg?v=1234567890","__parentId":"gid:\/\/shopify\/Product\/1234567890"}
+      {"id":"gid:\/\/shopify\/ProductVariant\/1234567890","__typename":"ProductVariant","barcode":null,"compareAtPrice":"30.00","image":{"id":"gid:\/\/shopify\/ProductImage\/1234567890","__typename":"Image","altText":"Preview product","url":"https:\/\/cdn.shopify.com\/s\/files\/1\/1337\/5150\/products\/preview-product.jpg?v=1234567890"},"inventoryItem":{"id":"gid:\/\/shopify\/InventoryItem\/1234567890","__typename":"InventoryItem","measurement":{"weight":{"unit":"KILOGRAMS","value":0.0}},"requiresShipping":true,"tracked":true,"unitCost":null},"inventoryPolicy":"DENY","position":1,"price":"15.99","product":{"handle":"preview-product"},"selectedOptions":[{"name":"Title","value":"Default Title"}],"sku":"PREVIEW-123","taxable":true,"taxCode":null,"title":"Default Title","__parentId":"gid:\/\/shopify\/Product\/1234567890"}
     {% endcapture %}
 
     {% assign bulkOperation = hash %}
@@ -205,7 +209,6 @@
 
       {% else %}
         {% log message: "Unexpected object type in JSONL", object_type: object.__typename, object: object %}
-
     {% endcase %}
   {% endfor %}
 
@@ -232,7 +235,7 @@
       {% endcomment %}
 
       {% if variant.position == 1 %}
-        {% assign variant_row["Body (HTML)"] = product.bodyHtml %}
+        {% assign variant_row["Body (HTML)"] = product.descriptionHtml %}
         {% assign variant_row["Gift Card"] = product.isGiftCard %}
         {% assign variant_row["Handle"] = product.handle %}
         {% assign variant_row["SEO Description"] = product.seo.description %}
@@ -260,10 +263,10 @@
       {% assign variant_row["Handle"] = variant.product.handle %}
       {% assign variant_row["Variant Barcode"] = variant.barcode %}
       {% assign variant_row["Variant Compare At Price"] = variant.compareAtPrice %}
-      {% assign variant_row["Variant Fulfillment Service"] = variant.fulfillmentService.serviceName | downcase %}
+      {% assign variant_row["Variant Fulfillment Service"] = "manual" %}
       {% assign variant_row["Variant Inventory Policy"] = variant.inventoryPolicy | downcase %}
       {% assign variant_row["Variant Price"] = variant.price %}
-      {% assign variant_row["Variant Requires Shipping"] = variant.requiresShipping %}
+      {% assign variant_row["Variant Requires Shipping"] = variant.inventoryItem.requiresShipping %}
       {% assign variant_row["Variant SKU"] = variant.sku %}
       {% assign variant_row["Variant Taxable"] = variant.taxable %}
       {% assign variant_row["Variant Tax Code"] = variant.taxCode %}
@@ -274,26 +277,26 @@
       {% endfor %}
 
       {% if variant.image %}
-        {% assign variant_row["Variant Image"] = variant.image.originalSrc %}
+        {% assign variant_row["Variant Image"] = variant.image.url %}
       {% endif  %}
 
       {% if variant.inventoryItem.tracked %}
         {% assign variant_row["Variant Inventory Tracker"] = "shopify" %}
       {% endif %}
 
-      {% case variant.weightUnit %}
+      {% case variant.inventoryItem.measurement.weight.unit %}
         {% when "GRAMS" %}
           {% assign variant_row["Variant Weight Unit"] = "g" %}
-          {% assign variant_row["Variant Grams"] = variant.weight %}
+          {% assign variant_row["Variant Grams"] = variant.inventoryItem.measurement.weight.value %}
         {% when "KILOGRAMS" %}
           {% assign variant_row["Variant Weight Unit"] = "kg" %}
-          {% assign variant_row["Variant Grams"] = variant.weight | times: 1000 %}
+          {% assign variant_row["Variant Grams"] = variant.inventoryItem.measurement.weight.value | times: 1000 %}
         {% when "OUNCES" %}
           {% assign variant_row["Variant Weight Unit"] = "oz" %}
-          {% assign variant_row["Variant Grams"] = variant.weight | times: 28.34952 %}
+          {% assign variant_row["Variant Grams"] = variant.inventoryItem.measurement.weight.value | times: 28.34952 %}
         {% when "POUNDS" %}
           {% assign variant_row["Variant Weight Unit"] = "lb" %}
-          {% assign variant_row["Variant Grams"] = variant.weight | times: 453.59237 %}
+          {% assign variant_row["Variant Grams"] = variant.inventoryItem.measurement.weight.value | times: 453.59237 %}
       {% endcase %}
 
       {% assign product_rows[product_rows.size] = variant_row %}
@@ -311,7 +314,7 @@
 
       {% if product_rows[forloop.index0] %}
         {% assign image_row = product_rows[forloop.index0] %}
-        {% assign image_row["Image Src"] = image.originalSrc %}
+        {% assign image_row["Image Src"] = image.url %}
         {% assign image_row["Image Position"] = forloop.index %}
         {% assign image_row["Image Alt Text"] = image.altText %}
         {% assign product_rows[forloop.index0] = image_row %}
@@ -323,7 +326,7 @@
         {% endfor %}
 
         {% assign image_row["Handle"] = product.handle %}
-        {% assign image_row["Image Src"] = image.originalSrc %}
+        {% assign image_row["Image Src"] = image.url %}
         {% assign image_row["Image Position"] = forloop.index %}
         {% assign image_row["Image Alt Text"] = image.altText %}
 
@@ -356,7 +359,7 @@
   {% assign csv = rows | csv %}
 
   {% if event.preview %}
-    {% action "echo" csv %}
+    {% log csv %}
   {% endif %}
 
   {% capture upload_path %}products__{{ "now" | date: "%Y-%m-%d_T%H-%M-%S_%Z", tz: "UTC" }}.csv{% endcapture %}
@@ -366,8 +369,8 @@
   -- if they don't, they're relative), but we always need a trailing slash
   {% endcomment %}
 
-  {% if options.sftp_upload_directory != blank %}
-    {% assign directory = options.sftp_upload_directory %}
+  {% if sftp_upload_directory != blank %}
+    {% assign directory = sftp_upload_directory %}
 
     {% if directory.last != "/" %}
       {% assign directory = directory | append: "/" %}
@@ -379,10 +382,10 @@
   {% action "ftp" %}
     {
       "protocol": "sftp",
-      "host": {{ options.sftp_host__required | json }},
-      "port": {{ options.sftp_port__required_number | json }},
-      "user": {{ options.sftp_user__required | json }},
-      "password": {{ options.sftp_password__required | json }},
+      "host": {{ sftp_host | json }},
+      "port": {{ sftp_port | json }},
+      "user": {{ sftp_user | json }},
+      "password": {{ sftp_password | json }},
       "uploads": {
         {{ upload_path | json }}: {{ csv | json }}
       }
