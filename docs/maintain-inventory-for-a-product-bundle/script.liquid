@@ -1,17 +1,21 @@
 {% assign bundle_sku = options.bundle_product_sku__required %}
 {% assign component_skus_and_quantities = options.component_product_skus_and_quantities_per_bundle__keyval_number_required %}
+{% assign inventory_buffer_quantity = options.inventory_buffer_quantity__number %}
+
 {% assign component_skus = component_skus_and_quantities | keys %}
 {% assign all_skus = array | push: bundle_sku | concat: component_skus %}
 
 {% assign variants_by_sku = hash %}
 
 {% assign primary_location = shop.locations[shop.primary_location_id] %}
+{% assign primary_location_id_string = shop.primary_location_id | append: "" %}
 
 {% log
-  primary_location: primary_location,
+  task_config: "for this event run",
   bundle_sku: bundle_sku,
   component_skus_and_quantities: component_skus_and_quantities,
-  inventory_buffer_quantity: options.inventory_buffer_quantity__number
+  inventory_buffer_quantity: inventory_buffer_quantity,
+  primary_location: primary_location
 %}
 
 {% assign do_full_sync = false %}
@@ -22,62 +26,162 @@
   {% assign do_full_sync = true %}
 {% endif %}
 
-{% if event.topic == "shopify/orders/create"%}
-  {% if event.preview %}
-    {% capture order_json %}
-      {
-        "line_items": [
-          {
-            "sku": {{ bundle_sku | json }},
-            "quantity": 1
+{% if event.topic == "shopify/orders/create" %}
+  {% comment %}
+    -- when new orders are created, only send along bundle line items that are assigned to the primary location
+  {% endcomment %}
+
+  {% capture query %}
+    query {
+      order(id: {{ order.admin_graphql_api_id | json }}) {
+        fulfillmentOrders(
+          first: 10
+          query: "assigned_location_id:{{ shop.primary_location_id }}"
+        ) {
+          nodes {
+            lineItems(first: 100) {
+              nodes {
+                sku
+                totalQuantity
+              }
+            }
           }
-        ]
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "order": {
+            "fulfillmentOrders": {
+              "nodes": [
+                {
+                  "lineItems": {
+                    "nodes": [
+                      {
+                        "sku": {{ bundle_sku | json }},
+                        "totalQuantity": 1
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
       }
     {% endcapture %}
-    {% assign order = order_json | parse_json %}
+
+    {% assign result = result_json | parse_json %}
   {% endif %}
 
-  {% assign bundle_quantity = order.line_items | where: "sku", bundle_sku | map: "quantity" | sum %}
+  {% assign bundle_quantity = 0 %}
+
+  {% for fulfillment_order in result.data.order.fulfillmentOrders.nodes %}
+    {% for line_item in fulfillment_order.lineItems.nodes %}
+      {% if line_item.sku == bundle_sku %}
+        {% assign bundle_quantity = bundle_quantity | plus: line_item.totalQuantity %}
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
 
   {% if bundle_quantity != 0 %}
     {% assign do_component_adjustment = true %}
     {% assign component_adjustment_bundle_quantity = bundle_quantity | times: -1 %}
+
+  {% else %}
+    {% log "None of the fulfillment orders on this order were assigned to the primary location; skipping." %}
   {% endif %}
 {% endif %}
 
 {% if event.topic == "shopify/refunds/create" %}
+  {% comment %}
+    -- when refunds are created, only send along bundle line items that are restocked to the primary location
+  {% endcomment %}
+
+  {% capture query %}
+    query {
+      refund(id: {{ refund.admin_graphql_api_id | json }}) {
+        refundLineItems(first: 100) {
+          nodes {
+            lineItem {
+              sku
+            }
+            location {
+              legacyResourceId
+            }
+            quantity
+            restocked
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
   {% if event.preview %}
-    {% capture refund_json %}
+    {% capture result_json %}
       {
-        "refund_line_items": [
-          {
-            "quantity": 1,
-            "restock_type": "cancel",
-            "line_item": {
-              "quantity": 1,
-              "sku": {{ bundle_sku | json }}
+        "data": {
+          "refund": {
+            "refundLineItems": {
+              "nodes": [
+                {
+                  "lineItem": {
+                    "sku": {{ bundle_sku | json }}
+                  },
+                  "location": {
+                    "legacyResourceId": {{ shop.primary_location_id | json }}
+                  },
+                  "quantity": 1,
+                  "restocked": true
+                }
+              ]
             }
           }
-        ]
+        }
       }
     {% endcapture %}
 
-    {% assign refund = refund_json | parse_json %}
+    {% assign result = result_json | parse_json %}
   {% endif %}
 
   {% assign bundle_restock_quantity = 0 %}
 
-  {% for refund_line_item in refund.refund_line_items %}
-    {% if refund_line_item.line_item.sku == bundle_sku and refund_line_item.restock_type != "no_restock" %}
-      {% assign do_component_adjustment = true %}
+  {% for refund_line_item in result.data.refund.refundLineItems.nodes %}
+    {% if refund_line_item.lineItem.sku == bundle_sku
+      and refund_line_item.location.legacyResourceId == primary_location_id_string
+      and refund_line_item.restocked
+    %}
       {% assign bundle_restock_quantity = bundle_restock_quantity | plus: refund_line_item.quantity %}
     {% endif %}
   {% endfor %}
 
-  {% assign component_adjustment_bundle_quantity = bundle_restock_quantity %}
+  {% if bundle_restock_quantity != 0 %}
+    {% assign do_component_adjustment = true %}
+    {% assign component_adjustment_bundle_quantity = bundle_restock_quantity %}
+
+  {% else %}
+    {% log "None of the line items on this refund were restocked to the primary location; skipping." %}
+  {% endif %}
 {% endif %}
 
 {% if event.topic contains "shopify/inventory_levels/" %}
+  {% comment %}
+    -- only respond to inventory level events at the primary location
+  {% endcomment %}
+
+  {% if inventory_level.location_id != shop.primary_location_id %}
+    {% log "This inventory level change was for an item not at the primary location; skipping." %}
+    {% break %}
+  {% endif %}
+
   {% capture query %}
     query {
       inventoryLevel(id: {{ inventory_level.admin_graphql_api_id | json }}) {
@@ -116,12 +220,15 @@
     {% assign do_full_sync = true %}
 
   {% else %}
-    {% assign log_message = updated_sku | json | prepend: "Inventory was updated for SKU " | append: ", which is not related to this bundle." %}
-    {% log log_message %}
+    {% log "The inventory level change did not include one of the SKUs configured in this task; skipping." %}
   {% endif %}
 {% endif %}
 
 {% if do_component_adjustment or do_full_sync %}
+  {% comment %}
+    -- get available inventory of the bundle and component(s) at the primary location
+  {% endcomment %}
+
   {% assign query_components = array %}
 
   {% for sku in all_skus %}
@@ -241,10 +348,14 @@
     {% endif %}
   {% endfor %}
 
-  {% log bundle_variant: variants_by_sku[bundle_sku][0], all_variants_by_sku: variants_by_sku %}
+  {% log bundle_and_component_quantities_before_adjustment: variants_by_sku %}
 {% endif %}
 
 {% if do_component_adjustment %}
+  {% comment %}
+    -- an order was created or a refund with restock occurred which contained the bundle, adjust the inventory of the components
+  {% endcomment %}
+
   {% assign inventory_adjustments = array %}
 
   {% for keyval in variants_by_sku %}
@@ -285,10 +396,9 @@
         ) {
           inventoryAdjustmentGroup {
             reason
-            changes {
+            changes(quantityNames: ["available"]) {
               name
               delta
-              quantityAfterChange
               item {
                 id
                 sku
@@ -322,6 +432,7 @@
     * bundle_variant: the bundle variant (remember, we only support one - no SKU sharing for bundles). we'll
         use this variant to perform any inventory updates needed to the bundle itself.
   {% endcomment %}
+
   {% assign minimum_inventory_component_variant = nil %}
   {% assign minimum_inventory_component_variant_bundle_quantity = nil %}
   {% assign bundle_variant = nil %}
@@ -361,15 +472,15 @@
     | minus: bundle_variant.inventoryItem.inventoryLevel.quantities.first.quantity
   %}
 
-  {% if options.inventory_buffer_quantity__number != blank %}
-    {% assign bundle_delta = bundle_delta | minus: options.inventory_buffer_quantity__number %}
+  {% if inventory_buffer_quantity != blank %}
+    {% assign bundle_delta = bundle_delta | minus: inventory_buffer_quantity %}
   {% endif %}
 
   {% log
     bundle_variant: bundle_variant,
     minimum_inventory_component_variant_sku: minimum_inventory_component_variant.sku,
     minimum_inventory_component_variant_quantity: minimum_inventory_component_variant.inventoryItem.inventoryLevel.quantities.first.quantity, minimum_inventory_component_variant_bundle_quantity: minimum_inventory_component_variant_bundle_quantity,
-    inventory_buffer_quantity: options.inventory_buffer_quantity__number,
+    inventory_buffer_quantity: inventory_buffer_quantity,
     available_delta: bundle_delta
   %}
 
@@ -394,10 +505,9 @@
         ) {
           inventoryAdjustmentGroup {
             reason
-            changes {
+            changes(quantityNames: ["available"]) {
               name
               delta
-              quantityAfterChange
               item {
                 id
                 sku
