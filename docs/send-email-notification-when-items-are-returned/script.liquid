@@ -7,22 +7,24 @@
         name
         returnLineItems(first: 100) {
           nodes {
-            quantity
-            returnReason
-            fulfillmentLineItem {
-              lineItem {
-                name
-                sku
+            ... on ReturnLineItem {
+              quantity
+              returnReason
+              fulfillmentLineItem {
+                lineItem {
+                  name
+                  sku
+                }
               }
             }
           }
         }
       }
-    }  
+    }
   {% endcapture %}
-  
+
   {% assign result = query | shopify %}
-  
+
   {% if event.preview %}
     {% capture result_json %}
       {
@@ -47,16 +49,26 @@
         }
       }
     {% endcapture %}
-  
+
     {% assign result = result_json | parse_json %}
   {% endif %}
-  
+
+  {% assign return_line_items = result.data.return.returnLineItems.nodes %}
+
+  {% if return_line_items == blank %}
+    {% log
+      message: "No verified return line items were found on this return.",
+      return: result.data.return
+    %}
+    {% break %}
+  {% endif %}
+
   {% capture email_subject %}ALERT: New return {{ result.data.return.name }}{% endcapture %}
 
   {% capture email_body -%}
     Returned items
     ==============
-    {% for return_line_item in result.data.return.returnLineItems.nodes %}
+    {% for return_line_item in return_line_items %}
       Title: <strong>{{ return_line_item.fulfillmentLineItem.lineItem.name }}</strong>
       SKU: <strong>{{ return_line_item.fulfillmentLineItem.lineItem.sku }}</strong>
       Quantity: <strong>{{ return_line_item.quantity }}</strong>
