@@ -137,23 +137,24 @@
       }
     {% endaction %}
   {% endif %}
+
 {% elsif event.topic == "mechanic/user/trigger" %}
-  {% assign customer_ids_to_mark = array %}
+  {% assign metafield_inputs = array %}
   {% assign cursor = nil %}
 
   {% for n in (0..100) %}
     {% capture query %}
       query {
-        customers(
-          first: 250
-          query: {{ approval_tag | json | prepend: "tag:" | json }}
+        customerSegmentMembers(
+          first: 1000
+          query: "customer_tags CONTAINS '{{ approval_tag }}'"
           after: {{ cursor | json }}
         ) {
           pageInfo {
             hasNextPage
+            endCursor
           }
           edges {
-            cursor
             node {
               id
               metafield(
@@ -174,14 +175,11 @@
       {% capture result_json %}
         {
           "data": {
-            "customers": {
-              "pageInfo": {
-                "hasNextPage": false
-              },
+            "customerSegmentMembers": {
               "edges": [
                 {
                   "node": {
-                    "id": "gid://shopify/Customer/1234567890",
+                    "id": "gid://shopify/CustomerSegmentMember/1234567890",
                     "metafield": null
                   }
                 }
@@ -194,68 +192,62 @@
       {% assign result = result_json | parse_json %}
     {% endif %}
 
-    {% for edge in result.data.customers.edges %}
-      {% if edge.node.metafield %}
-        {% continue %}
-      {% endif %}
+    {% assign customers = result.data.customerSegmentMembers.edges | map: "node" %}
 
-      {% assign customer_ids_to_mark[customer_ids_to_mark.size] = edge.node.id %}
+    {% comment %}
+      -- Note: Shopify API accepts CustomerSegmentMember IDs without needing replacement, at least for the metafieldsSet mutation
+    {% endcomment %}
+
+    {% for customer in customers %}
+      {% if customer.metafield == blank %}
+        {% assign metafield_input = hash %}
+        {% assign metafield_input["ownerId"] = customer.id %}
+        {% assign metafield_input["namespace"] = "mechanic" %}
+        {% assign metafield_input["key"] = tag_processed_metafield_key %}
+        {% assign metafield_input["type"] = "number_integer" %}
+        {% assign metafield_input["value"] = "1" %}
+        {% assign metafield_inputs = metafield_inputs | push: metafield_input %}
+      {% endif %}
     {% endfor %}
 
-    {% if result.data.customers.pageInfo.hasNextPage %}
-      {% assign cursor = result.data.customers.edges.last.cursor %}
+    {% if result.data.customerSegmentMembers.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.customerSegmentMembers.pageInfo.endCursor %}
     {% else %}
       {% break %}
     {% endif %}
   {% endfor %}
 
-  {% assign metafields = array %}
+  {% if metafield_inputs != blank %}
+    {% assign groups_of_metafield_inputs = metafield_inputs | in_groups_of: 25, fill_with: false %}
 
-  {% for customer_id in customer_ids_to_mark %}
-    {% capture metafield %}
-      {
-        ownerId: {{ customer_id | json }}
-        namespace: "mechanic"
-        key: {{ tag_processed_metafield_key | json }}
-        type: "number_integer"
-        value: "1"
-      }
-    {% endcapture %}
-
-    {% assign metafields = metafields | push: metafield %}
-  {% endfor %}
-
-  {% assign groups_of_metafields = metafields | in_groups_of: 25, fill_with: false %}
-
-  {% for group_of_metafields in groups_of_metafields %}
-    {% action "shopify" %}
-      mutation {
-        metafieldsSet(
-          metafields: [
-            {{ group_of_metafields | join: newline }}
-          ]
-        ) {
-          metafields {
-            id
-            namespace
-            key
-            type
-            value
-            owner {
-              ... on Customer {
-                id
+    {% for group_of_metafield_inputs in groups_of_metafield_inputs %}
+      {% action "shopify" %}
+        mutation {
+          metafieldsSet(
+            metafields: {{ group_of_metafield_inputs | graphql_arguments }}
+          ) {
+            metafields {
+              id
+              namespace
+              key
+              type
+              value
+              owner {
+                ... on Customer {
+                  id
+                }
               }
             }
-          }
-          userErrors {
-            code
-            field
-            message
+            userErrors {
+              code
+              field
+              message
+            }
           }
         }
-      }
-    {% endaction %}
-  {% endfor %}
+      {% endaction %}
+    {% endfor %}
+  {% endif %}
 
   {% action "shopify" %}
     mutation {
