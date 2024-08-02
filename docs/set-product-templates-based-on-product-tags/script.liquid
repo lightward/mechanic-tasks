@@ -1,3 +1,5 @@
+{% assign product_tags_and_template_suffixes = options.product_tags_and_template_suffixes__keyval_required %}
+
 {% assign products = array %}
 
 {% if event.topic == "mechanic/user/trigger" %}
@@ -34,7 +36,6 @@
   {% endaction %}
 
 {% elsif event.topic contains "shopify/products/" or event.preview %}
-
   {% capture query %}
     query {
       product(id: {{ product.admin_graphql_api_id | json }} ) {
@@ -47,33 +48,30 @@
 
   {% assign result = query | shopify %}
 
-    {% if event.preview %}
-      {% capture result_json %}
-        {
-          "data": {
-            "product": {
-              "id": "gid://shopify/Product/4354268561469",
-              "tags": ["123", {{ options.product_tags_and_template_suffixes__keyval_required.first.first | json }}],
-              "template_suffix": {{ options.product_tags_and_template_suffixes__keyval_required.first.last | json }}
-            }
-          }
-        }
-      {% endcapture %}
-
-      {% assign result = result_json | parse_json %}
-    {% endif %}  
-
   {% assign products[0] = result.data.product %}
 
 {% elsif event.topic == "mechanic/shopify/bulk_operation" %}
   {% assign products = bulkOperation.objects %}
 {% endif %}
 
+{% if event.preview %}
+  {% capture products_json %}
+    [
+      {
+        "id": "gid://shopify/Product/4354268561469",
+        "tags": ["123", {{ product_tags_and_template_suffixes.first.first | json }}],
+        "templateSuffix": "preview-1234567890"
+      }
+    ]
+  {% endcapture %}
+
+  {% assign products = products_json | parse_json %}
+{% endif %}
+
 {% for product in products %}
-  {% assign product_qualifies_for_update = false %}
   {% assign product_template_suffix_to_apply = nil %}
 
-  {% for keyval in options.product_tags_and_template_suffixes__keyval_required %}
+  {% for keyval in product_tags_and_template_suffixes %}
     {% assign product_tag_to_check = keyval[0] %}
     {% assign product_template_to_apply = keyval[1] %}
 
@@ -83,15 +81,7 @@
     {% endif %}
   {% endfor %}
 
-  {% comment %} Allow setting to template to blank{% endcomment %}
-  {% if product_template_suffix_to_apply == blank and product.templateSuffix != blank %}
-    {% assign product_qualifies_for_update = true %}
-  {% comment %} Make sure the template is not the right one already {% endcomment %}  
-  {% elsif product_template_suffix_to_apply != product.templateSuffix %}
-    {% assign product_qualifies_for_update = true %}
-  {% endif %}  
-
-  {% if product_qualifies_for_update %}
+  {% if product_template_suffix_to_apply != product.templateSuffix %}
     {% action "shopify" %}
       mutation {
         productUpdate(
@@ -100,13 +90,16 @@
             templateSuffix: {{ product_template_suffix_to_apply | json }}
           }
         ) {
+          product {
+            id
+            templateSuffix
+          }
           userErrors {
             field
             message
           }
         }
       }
-    {% endaction %}  
+    {% endaction %}
   {% endif %}
-
 {% endfor %}
