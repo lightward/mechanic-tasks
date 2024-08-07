@@ -33,7 +33,9 @@ mechanic/shopify/bulk_operation
 
 Use this task to send out account invitations to all the customers you already have on file, with the push of a button. Optionally, filter by customer tag.
 
-This task sends the same Shopify-powered emails that are used when sending individual customer invitations ([see Shopify's documentation](https://help.shopify.com/en/manual/customers/customer-accounts#individual-invites)), and uses the same Shopify email template. A custom subject and message are not required, but will be included when specified.
+**Note**: Account invitations are only intended to work with [classic customer accounts](https://help.shopify.com/en/manual/customers/customer-accounts/classic-customer-accounts).
+
+This task sends the same Shopify-powered emails that are used when sending individual customer invitations, and uses the same Shopify email template. A custom subject and message are not required, but will be included when specified.
 
 ## Installing this task
 

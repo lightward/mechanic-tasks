@@ -1,116 +1,204 @@
-{% comment %}
-  Preferred option order:
+{% assign customer_tags_and_order_minimums = options.customer_tags_and_order_minimums__keyval_number_required %}
+{% assign only_tag_the_highest_order_minimum = options.only_keep_the_customer_tag_for_the_highest_order_minimum__boolean %}
+{% assign tag_customers_by_number_of_orders = options.tag_customers_by_number_of_orders__boolean %}
+{% assign tag_customers_by_sum_of_order_totals = options.tag_customers_by_sum_of_order_totals__boolean %}
+{% assign customer_segment_query = options.only_process_customers_matching_this_segment_query %}
+{% assign only_count_orders_matching_this_query = options.only_count_orders_matching_this_query %}
 
-  {{ options.order_minimums_and_customer_tags__keyval_required }}
-  {{ options.only_keep_the_customer_tag_for_the_highest_order_minimum__boolean }}
-  {{ options.tag_customers_by_number_of_orders__boolean }}
-  {{ options.tag_customers_by_sum_of_order_totals__boolean }}
-  {{ options.only_process_customers_matching_this_query }}
-  {{ options.only_count_orders_matching_this_query }}
-  {{ options.run_hourly__boolean }}
-  {{ options.run_daily__boolean }}
-{% endcomment %}
-
-{% if options.tag_customers_by_number_of_orders__boolean and options.tag_customers_by_sum_of_order_totals__boolean %}
+{% if tag_customers_by_number_of_orders and tag_customers_by_sum_of_order_totals %}
   {% error "Choose only one of 'Tag customers by number of orders' and 'Tag customers by sum of order totals'. :)" %}
-{% elsif options.tag_customers_by_number_of_orders__boolean == false and options.tag_customers_by_sum_of_order_totals__boolean == false %}
-  {% error "Choose one of 'Tag customers by number of orders' and 'Tag customers by sum of order totals'. :)" %}
 {% endif %}
 
+{% unless tag_customers_by_number_of_orders or tag_customers_by_sum_of_order_totals %}
+  {% error "Choose one of 'Tag customers by number of orders' and 'Tag customers by sum of order totals'. :)" %}
+{% endunless %}
+
 {% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
-  {% capture bulk_operation_query %}
-    query {
-      customers(query: {{ options.only_process_customers_matching_this_query | json }}) {
-        edges {
-          node {
-            __typename
+  {% comment %}
+    -- get IDs of all customers who match the segment query
+    -- Note: a segment query cannot be null, so if one has not been configured in the task then send an empty string
+  {% endcomment %}
+
+  {% assign cursor = nil %}
+  {% assign customer_segment_member_ids = array %}
+
+  {% for n in (1..100) %}
+    {% capture query %}
+      query {
+        customerSegmentMembers(
+          first: 1000
+          after: {{ cursor | json }}
+          query: {{ customer_segment_query | default: "" | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          edges {
+            node {
+              id
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "customerSegmentMembers": {
+              "edges": [
+                {
+                  "node": {
+                    "id": "gid://shopify/CustomerSegmentMember/1234567890"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign customer_segment_member_ids
+      = result.data.customerSegmentMembers.edges
+      | map: "node"
+      | map: "id"
+      | concat: customer_segment_member_ids
+    %}
+
+    {% if result.data.customerSegmentMembers.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.customerSegmentMembers.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% unless event.preview %}
+    {% log count_of_customers_matching_query: customer_segment_member_ids.size %}
+  {% endunless %}
+
+  {% for customer_segment_member_id in customer_segment_member_ids %}
+    {% comment %}
+      -- get customer tags and all of their orders that meet the optional criteria
+    {% endcomment %}
+
+    {% assign cursor = nil %}
+    {% assign customer_orders = array %}
+
+    {% for n in (1..10) %}
+      {% capture query %}
+        query {
+          customer(id: {{ customer_segment_member_id | remove: "SegmentMember" | json }}) {
             id
             email
             tags
-            state
-            orders(query: {{ options.only_count_orders_matching_this_query | json }}) {
-              edges {
-                node {
-                  __typename
-                  id
-                  name
-                  totalPriceSet {
-                    shopMoney {
-                      amount
-                    }
+            orders(
+              first: 250
+              after: {{ cursor | json }}
+              query: {{ only_count_orders_matching_this_query | json }}
+            ) {
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+              nodes {
+                id
+                name
+                totalPriceSet {
+                  shopMoney {
+                    amount
                   }
                 }
               }
             }
           }
         }
-      }
-    }
-  {% endcapture %}
+      {% endcapture %}
 
-  {% action "shopify" %}
-    mutation {
-      bulkOperationRunQuery(
-        query: {{ bulk_operation_query | json }}
-      ) {
-        bulkOperation {
-          id
-          status
-        }
-        userErrors {
-          field
-          message
-        }
-      }
-    }
-  {% endaction %}
-{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
-  {% if event.preview %}
-    {% capture bulkOperation_objects_jsonl %}
-      {"__typename":"Customer","id":"gid:\/\/shopify\/Customer\/1234567890","tags":[],"state":"ENABLED"}
-      {% if options.tag_customers_by_number_of_orders__boolean -%}
-        {% assign count = options.order_minimums_and_customer_tags__keyval_required.first.first | times: 1 -%}
-        {% for n in (0..count) -%}
-          {"__typename":"Order","id":"gid:\/\/shopify\/Order\/1234567890","totalPriceSet":{"shopMoney":{"amount":"10.0"}},"__parentId":"gid:\/\/shopify\/Customer\/1234567890"}
-        {% endfor -%}
-      {% elsif options.tag_customers_by_sum_of_order_totals__boolean -%}
-        {"__typename":"Order","id":"gid:\/\/shopify\/Order\/1234567890","totalPriceSet":{"shopMoney":{"amount":{{ options.order_minimums_and_customer_tags__keyval_required.first.first | json}}}},"__parentId":"gid:\/\/shopify\/Customer\/1234567890"}
+      {% assign result = query | shopify %}
+
+      {% if event.preview %}
+        {% capture result_json %}
+          {
+            "data": {
+              "customer": {
+                "id": "gid://shopify/Customer/1234567890",
+                "orders": {
+                  "nodes": [
+                    {
+                      "id": "gid://shopify/Order/1234567890",
+                      "name": "#PREVIEW",
+                      "totalPriceSet": {
+                        "shopMoney": {
+                          "amount": {{ customer_tags_and_order_minimums.first.last | json }}
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        {% endcapture %}
+
+        {% assign result = result_json | parse_json %}
       {% endif %}
-    {% endcapture %}
 
-    {% assign bulkOperation = hash %}
-    {% assign bulkOperation["objects"] = bulkOperation_objects_jsonl | parse_jsonl %}
-  {% endif %}
+      {% assign customer = result.data.customer %}
+      {% assign customer_orders = customer_orders | concat: customer.orders.nodes %}
 
-  {% assign customers = bulkOperation.objects | where: "__typename", "Customer" %}
-  {% assign orders = bulkOperation.objects | where: "__typename", "Order" %}
-  
-  {% for customer in customers %}
-    {% assign customer_orders = orders | where: "__parentId", customer.id %}
+      {% if result.data.customer.orders.pageInfo.hasNextPage %}
+        {% assign cursor = result.data.customer.orders.pageInfo.endCursor %}
+      {% else %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+
     {% assign customer_orders_value = nil %}
 
-    {% if options.tag_customers_by_number_of_orders__boolean %}
+    {% if tag_customers_by_number_of_orders %}
       {% assign customer_orders_value = customer_orders.size %}
-    {% elsif options.tag_customers_by_sum_of_order_totals__boolean %}
+
+      {% if event.preview %}
+        {% assign customer_orders_value = customer_tags_and_order_minimums.first.last %}
+      {% endif %}
+
+    {% elsif tag_customers_by_sum_of_order_totals %}
       {% assign customer_orders_value = 0 %}
+
       {% for order in customer_orders %}
         {% assign customer_orders_value = customer_orders_value | plus: order.totalPriceSet.shopMoney.amount %}
       {% endfor %}
     {% endif %}
 
-    {% if customer_orders != empty %}
+    {% unless customer_orders == blank %}
       {% assign customer_orders_names = customer_orders | map: "name" %}
-      {% log customer_id: customer.id, customer_email: customer.email, customer_tags: customer.tags, customer_orders_names: customer_orders_names, customer_orders_value: customer_orders_value %}
-    {% endif %}
+
+      {% unless event.preview %}
+        {% log
+          customer_id: customer.id,
+          customer_email: customer.email,
+          customer_tags: customer.tags,
+          customer_orders_value: customer_orders_value,
+          customer_orders_names: customer_orders_names
+        %}
+      {% endunless %}
+    {% endunless %}
 
     {% assign best_fitting_tag_minimum = 0 %}
     {% assign best_fitting_tag = nil %}
     {% assign all_fitting_tags = array %}
     {% assign all_possible_tags = array %}
 
-    {% for pair in options.order_minimums_and_customer_tags__keyval_required %}
-      {% assign tag_minimum = pair[0] | times: 1 %}
-      {% assign tag = pair[1] %}
+    {% for pair in customer_tags_and_order_minimums %}
+      {% assign tag = pair[0] %}
+      {% assign tag_minimum = pair[1] %}
 
       {% assign all_possible_tags[all_possible_tags.size] = tag %}
 
@@ -133,12 +221,13 @@
       {% endunless %}
     {% endif %}
 
-    {% if options.only_keep_the_customer_tag_for_the_highest_order_minimum__boolean %}
+    {% if only_tag_the_highest_order_minimum %}
       {% for tag in all_possible_tags %}
         {% if tag != best_fitting_tag and customer.tags contains tag %}
           {% assign tags_to_remove[tags_to_remove.size] = tag %}
         {% endif %}
       {% endfor %}
+
     {% else %}
       {% for tag in all_fitting_tags %}
         {% unless tag == best_fitting_tag or customer.tags contains tag %}
@@ -147,10 +236,10 @@
       {% endfor %}
     {% endif %}
 
-    {% if tags_to_add != empty or tags_to_remove != empty %}
+    {% if tags_to_add != blank or tags_to_remove != blank %}
       {% action "shopify" %}
         mutation {
-          {% if tags_to_add != empty %}
+          {% if tags_to_add != blank %}
             tagsAdd(
               id: {{ customer.id | json }}
               tags: {{ tags_to_add | json }}
@@ -169,7 +258,7 @@
             }
           {% endif %}
 
-          {% if tags_to_remove != empty %}
+          {% if tags_to_remove != blank %}
             tagsRemove(
               id: {{ customer.id | json }}
               tags: {{ tags_to_remove | json }}
