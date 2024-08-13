@@ -2,7 +2,7 @@
 
 Tags: Auto-Tag, Customers, Loyalty
 
-Running daily, hourly, or manually, this task scans all customers and tags them based on the date of their last order. Choose between tagging customers whose orders are before x days ago, or after x days ago.
+Running daily or manually, this task scans all customers who have placed orders and tags them based on the date of their last order. Choose between tagging customers whose orders are before x days ago, or after x days ago.
 
 * View in the task library: [tasks.mechanic.dev/tag-customers-when-their-last-order-is-before-after-x-days-ago](https://tasks.mechanic.dev/tag-customers-when-their-last-order-is-before-after-x-days-ago)
 * Task JSON, for direct import: [task.json](../../tasks/tag-customers-when-their-last-order-is-before-after-x-days-ago.json)
@@ -16,7 +16,6 @@ Running daily, hourly, or manually, this task scans all customers and tags them 
   "tag_customers_when_last_order_is_after__boolean": true,
   "tag_customers_when_last_order_is_before__boolean": null,
   "customer_tag__required": "recent-customer",
-  "run_hourly__boolean": false,
   "run_daily__boolean": false
 }
 ```
@@ -28,10 +27,7 @@ Running daily, hourly, or manually, this task scans all customers and tags them 
 ```liquid
 mechanic/user/trigger
 mechanic/shopify/bulk_operation
-
-{% if options.run_hourly__boolean %}
-  mechanic/scheduler/hourly
-{% elsif options.run_daily__boolean %}
+{% if options.run_daily__boolean %}
   mechanic/scheduler/daily
 {% endif %}
 ```
@@ -40,7 +36,7 @@ mechanic/shopify/bulk_operation
 
 ## Documentation
 
-Running daily, hourly, or manually, this task scans all customers and tags them based on the date of their last order. Choose between tagging customers whose orders are before x days ago, or after x days ago.
+Running daily or manually, this task scans all customers who have placed orders and tags them based on the date of their last order. Choose between tagging customers whose orders are before x days ago, or after x days ago.
 
 ## Installing this task
 
