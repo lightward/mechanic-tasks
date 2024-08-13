@@ -136,14 +136,11 @@
     {% assign job["reason"] = order_qualifying_resource | append: ", in order " | append: order.name %}
     {% assign jobs[jobs.size] = job %}
   {% endif %}
-{% elsif event.topic == "mechanic/user/trigger" %}
-  {% assign orders_query = "financial_status:paid" %}
 
+{% elsif event.topic == "mechanic/user/trigger" %}
   {% capture bulk_operation_query %}
     query {
-      customers(
-        query: "orders_count:>0"
-      ) {
+      customers {
         edges {
           node {
             __typename

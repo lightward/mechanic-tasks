@@ -1,32 +1,58 @@
-{% comment %}
-  Preferred option order:
+{% assign days_since_last_order = options.days_since_last_order__required_number %}
+{% assign tag_customers_when_last_order_is_after = options.tag_customers_when_last_order_is_after__boolean %}
+{% assign tag_customers_when_last_order_is_before = options.tag_customers_when_last_order_is_before__boolean %}
+{% assign customer_tag_to_apply = options.customer_tag_to_apply__required %}
 
-  {{ options.days_since_last_order__required_number }}
-  {{ options.tag_customers_when_last_order_is_after__boolean }}
-  {{ options.tag_customers_when_last_order_is_before__boolean }}
-  {{ options.customer_tag__required }}
-{% endcomment %}
-
-{% if options.tag_customers_when_last_order_is_after__boolean and options.tag_customers_when_last_order_is_before__boolean %}
+{% if tag_customers_when_last_order_is_after and tag_customers_when_last_order_is_before %}
   {% error "Choose only one of 'Tag customers when last order is after' or 'Tag customers when last order is before' :)" %}
-{% elsif options.tag_customers_when_last_order_is_after__boolean == false and options.tag_customers_when_last_order_is_before__boolean == false %}
+{% endif %}
+
+{% unless tag_customers_when_last_order_is_after or tag_customers_when_last_order_is_before %}
   {% error "Choose either 'Tag customers when last order is after' or 'Tag customers when last order is before'" %}
+{% endunless %}
+
+{% capture advance_period -%}
+  -{{ days_since_last_order }} days
+{%- endcapture %}
+
+{% assign order_processed_at_threshold = "now" | date: "%F", advance: advance_period %}
+
+{% if tag_customers_when_last_order_is_after %}
+  {% log %}
+    "Threshold for tagging customers: {{ order_processed_at_threshold }} and after"
+  {% endlog %}
+
+{% elsif tag_customers_when_last_order_is_before %}
+  {% log %}
+    "Threshold for tagging customers: {{ order_processed_at_threshold }} and before"
+  {% endlog %}
 {% endif %}
 
 {% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% comment %}
+    -- get IDs of all customers who have placed an order after or before the threshold, and/or have the configured tag
+    -- due to limited data in customer segments, the bulk op query only serves to reduce the overall count of customers being reviewed
+  {% endcomment %}
+
+  {% if tag_customers_when_last_order_is_after %}
+    {% capture customer_segment_query -%}
+      last_order_date >= {{ order_processed_at_threshold }} OR customer_tags CONTAINS '{{ customer_tag_to_apply }}'
+    {%- endcapture %}
+
+  {% elsif tag_customers_when_last_order_is_before %}
+    {% capture customer_segment_query -%}
+      last_order_date <= {{ order_processed_at_threshold }} OR customer_tags CONTAINS '{{ customer_tag_to_apply }}'
+    {%- endcapture %}
+  {% endif %}
+
   {% capture bulk_operation_query %}
     query {
-      customers(
-        sortKey: LAST_ORDER_DATE
-        query: "orders_count:>0"
+      customerSegmentMembers(
+        query: {{ customer_segment_query | json }}
       ) {
         edges {
           node {
             id
-            tags
-            lastOrder {
-              processedAt
-            }
           }
         }
       }
@@ -49,105 +75,130 @@
       }
     }
   {% endaction %}
+
 {% elsif event.topic == "mechanic/shopify/bulk_operation" %}
-  {% assign order_processed_at_interval_s = options.days_since_last_order__required_number | times: 24 | times: 60 | times: 60 %}
-  {% assign order_processed_at_threshold_s = "now" | date: "%s" | minus: order_processed_at_interval_s %}
-  {% assign order_processed_at_threshold_human = order_processed_at_threshold_s | date: "%Y-%m-%d %H:%M %:z" %}
-
-  {% log %}{{ "Threshold for tagging customers: " | append: order_processed_at_threshold_human | json }}{% endlog %}
-
   {% if event.preview %}
-    {% assign bulkOperation = hash %}
-    {% assign bulkOperation["objects"] = array %}
-    {% assign bulkOperation["objects"][0] = hash %}
-    {% assign bulkOperation["objects"][0]["id"] = "gid://shopify/Customer/1234567890" %}
-    {% assign bulkOperation["objects"][0]["tags"] = "" %}
-    {% assign bulkOperation["objects"][0]["lastOrder"] = hash %}
+    {% capture jsonl_string %}
+      {"id":"gid:\/\/shopify\/CustomerSegmentMember\/1234567890"}
+      {"id":"gid:\/\/shopify\/CustomerSegmentMember\/2345678901"}
+    {% endcapture %}
 
-    {% if options.tag_customers_when_last_order_is_after__boolean %}
-      {% assign bulkOperation["objects"][0]["lastOrder"]["processedAt"] = order_processed_at_threshold_s | plus: 1 | date: "%FT%T%:z" %}
-    {% elsif options.tag_customers_when_last_order_is_before__boolean %}
-      {% assign bulkOperation["objects"][0]["lastOrder"]["processedAt"] = order_processed_at_threshold_s | minus: 1 | date: "%FT%T%:z" %}
-    {% endif %}
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = jsonl_string | parse_jsonl %}
   {% endif %}
 
-  {% assign customers = bulkOperation.objects %}
+  {% assign customer_segment_member_ids = bulkOperation.objects | map: "id" %}
 
-  {% for customer in customers %}
-    {% if customer.lastOrder == nil %}
-      {% continue %}
-    {% endif %}
+  {% comment %}
+    -- get tags and last order data from customer resource, since it's not available in customer segments
+  {% endcomment %}
 
-    {% assign customer_should_be_tagged = false %}
+  {% for customer_segment_member_id in customer_segment_member_ids %}
+    {% assign customer_should_be_tagged = nil %}
 
-    {% assign customer_last_order_processed_at_s = customer.lastOrder.processedAt | date: "%s" | times: 1 %}
+    {% capture query %}
+      query {
+        customer(id: {{ customer_segment_member_id | remove: "SegmentMember" | json }}) {
+          id
+          tags
+          lastOrder {
+            processedAt
+          }
+        }
+      }
+    {% endcapture %}
 
-    {% if options.tag_customers_when_last_order_is_after__boolean and customer_last_order_processed_at_s >= order_processed_at_threshold_s %}
-      {% assign customer_should_be_tagged = true %}
-    {% elsif options.tag_customers_when_last_order_is_before__boolean and customer_last_order_processed_at_s <= order_processed_at_threshold_s %}
-      {% assign customer_should_be_tagged = true %}
-    {% endif %}
+    {% assign result = query | shopify %}
 
-    {% assign customer_tags = customer.tags %}
-    {% assign customer_is_tagged = false %}
-    {% if customer_tags contains options.customer_tag__required %}
-      {% assign customer_is_tagged = true %}
-    {% endif %}
-
-    {% if customer_should_be_tagged and customer_is_tagged %}
-      {% comment %}no-op{% endcomment %}
-    {% elsif customer_should_be_tagged and customer_is_tagged == false %}
-      {% action "shopify" %}
-        mutation {
-          tagsAdd(
-            id: {{ customer.id | json }}
-            tags: {{ options.customer_tag__required | json }}
-          ) {
-            node {
-              ... on Customer {
-                id
-                email
-                tags
-                lastOrder {
-                  name
-                  processedAt
-                }
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "customer": {
+              "id": "gid://shopify/Customer/1234567890",
+              "lastOrder": {
+                {% if tag_customers_when_last_order_is_after %}
+                  "processedAt": {{ "now" | date: "%F" | json }}
+                {% elsif tag_customers_when_last_order_is_before %}
+                  "processedAt": "2000-01-01"
+                {% endif %}
               }
-            }
-            userErrors {
-              field
-              message
             }
           }
         }
-      {% endaction %}
-    {% elsif customer_should_be_tagged == false and customer_is_tagged %}
-      {% action "shopify" %}
-        mutation {
-          tagsRemove(
-            id: {{ customer.id | json }}
-            tags: {{ options.customer_tag__required | json }}
-          ) {
-            node {
-              ... on Customer {
-                id
-                email
-                tags
-                lastOrder {
-                  name
-                  processedAt
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign customer = result.data.customer %}
+    {% assign customer_last_order_processed_at = customer.lastOrder.processedAt | date: "%F" %}
+
+    {% if tag_customers_when_last_order_is_after and customer_last_order_processed_at >= order_processed_at_threshold %}
+      {% assign customer_should_be_tagged = true %}
+    {% elsif tag_customers_when_last_order_is_before and customer_last_order_processed_at <= order_processed_at_threshold %}
+      {% assign customer_should_be_tagged = true %}
+    {% endif %}
+
+    {% comment %}
+      -- add and remove customer tags as needed
+    {% endcomment %}
+
+    {% if customer_should_be_tagged %}
+      {% unless customer.tags contains customer_tag_to_apply %}
+        {% action "shopify" %}
+          mutation {
+            tagsAdd(
+              id: {{ customer.id | json }}
+              tags: {{ customer_tag_to_apply | json }}
+            ) {
+              node {
+                ... on Customer {
+                  id
+                  email
+                  tags
+                  lastOrder {
+                    name
+                    processedAt
+                  }
                 }
               }
-            }
-            userErrors {
-              field
-              message
+              userErrors {
+                field
+                message
+              }
             }
           }
-        }
-      {% endaction %}
-    {% elsif customer_should_be_tagged == false and customer_is_tagged == false %}
-      {% comment %}no-op{% endcomment %}
+        {% endaction %}
+      {% endunless %}
+
+    {% else %}
+      {% if customer.tags contains customer_tag_to_apply %}
+        {% action "shopify" %}
+          mutation {
+            tagsRemove(
+              id: {{ customer.id | json }}
+              tags: {{ customer_tag_to_apply | json }}
+            ) {
+              node {
+                ... on Customer {
+                  id
+                  email
+                  tags
+                  lastOrder {
+                    name
+                    processedAt
+                  }
+                }
+              }
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+      {% endif %}
     {% endif %}
   {% endfor %}
 {% endif %}

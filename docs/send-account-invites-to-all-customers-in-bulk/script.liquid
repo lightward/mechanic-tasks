@@ -1,52 +1,84 @@
 {% if event.topic == "mechanic/user/trigger" %}
-  {% assign query = "state:DISABLED" %}
+  {% assign search_query = "customer_account_status = 'DISABLED'" %}
+
   {% if options.only_invite_customers_with_this_tag %}
-    {% assign query = query | append: " AND " | append: "tag:" | append: options.only_invite_customers_with_this_tag %}
+    {%- capture search_query -%}
+      {{ search_query }} AND customer_tags CONTAINS '{{ options.only_invite_customers_with_this_tag }}'
+    {%- endcapture -%}
   {% endif %}
 
-  {% capture bulk_operation_query %}
-    query {
-      customers (query: {{ query | json }} ) {
-        edges {
-          node {
-            __typename
-            legacyResourceId
+  {% assign cursor = nil %}
+  {% assign customers = array %}
+
+  {% comment %}
+    -- can query 1000 segment members at a time
+  {% endcomment %}
+
+  {% for n in (1..100) %}
+    {% capture query %}
+      query {
+        customerSegmentMembers(
+          first: 1000
+          after: {{ cursor | json }}
+          query: {{ search_query | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          edges {
+            node {
+              id
+            }
           }
         }
       }
-    }
-  {% endcapture %}
+    {% endcapture %}
 
-  {% action "shopify" %}
-    mutation {
-      bulkOperationRunQuery(
-        query: {{ bulk_operation_query | json }}
-      )	{
-        bulkOperation {
-          id
-          status
-        }
-        userErrors {
-          field
-          message
-        }
-      }
-    }
-  {% endaction %}
+    {% assign result = query | shopify %}
 
-{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
-  {% assign customers = bulkOperation.objects | where: "__typename", "Customer" %}
-  {% if event.preview %}
-    {% assign customers = array %}
-    {% assign customers[0] = hash %}
-    {% assign customers[0]["legacyResourceId"] = 12345 %}
-  {% endif %}  
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "customerSegmentMembers": {
+              "edges": [
+                {
+                  "node": {
+                    "id": "gid://shopify/CustomerSegmentMember/1234567890"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign customers
+      = result.data.customerSegmentMembers.edges
+      | map: "node"
+      | concat: customers
+    %}
+
+    {% if result.data.customers.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.customers.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% comment %}
+    -- send invite to all customers with disabled accounts using REST (there is no equivalent GraphQL mutation)
+  {% endcomment %}
+
   {% for customer in customers %}
-
     {% action "shopify" %}
       [
         "post",
-        "/admin/customers/{{ customer.legacyResourceId }}/send_invite.json",
+        "/admin/customers/{{ customer.id | remove: "gid://shopify/CustomerSegmentMember/" }}/send_invite.json",
         {
           "customer_invite": {
             "subject": {{ options.custom_subject | json }},
