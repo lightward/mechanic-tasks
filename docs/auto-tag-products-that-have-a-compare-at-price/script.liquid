@@ -1,83 +1,194 @@
-{% if options.tag_for_sale_products == blank and options.tag_for_all_other_products == blank %}
-  {% error "Please fill in at least one of the two tag options." %}
+{% assign tag_for_sale_products = options.tag_for_sale_products__required %}
+{% assign tag_for_all_other_products = options.tag_for_all_other_products %}
+{% assign must_have_price_lower_than_the_compare_at_price = options.sale_products_must_have_a_price_lower_than_the_compare_at_price__boolean %}
+
+{% comment %}
+  -- for product create/update, filter the products query with the product ID that caused the event
+{% endcomment %}
+
+{% if event.topic == "shopify/products/update" %}
+  {% assign search_query = product.id | prepend: "id:" %}
 {% endif %}
 
-{% if event.preview %}
-  {% capture products_json %}
-    [
-      {
-        "admin_graphql_api_id": "gid://shopify/Product/1234567890",
-        "tags": "",
-        "variants": [
-          {
-            "price": "19.99",
-            "compare_at_price": "24.99"
-          }
-        ]
+{% comment %}
+  -- query product(s) in the shop; variants will be queried separately as needed to support up to 2K variants
+{% endcomment %}
+
+{% assign cursor = nil %}
+{% assign products = array %}
+
+{% for n in (1..100) %}
+  {% capture query %}
+    query {
+      products(
+        first: 250
+        after: {{ cursor | json }}
+        query: {{ search_query | json }}
+      ) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          id
+          tags
+        }
       }
-    ]
+    }
   {% endcapture %}
 
-  {% assign products = products_json | parse_json %}
-{% elsif event.topic contains "shopify/products/" %}
-  {% assign products = array %}
-  {% assign products[0] = product %}
-{% elsif event.topic == "mechanic/user/trigger" %}
-  {% assign products = shop.products %}
-{% endif %}
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "products": {
+            "nodes": [
+              {
+                "id": "gid://shopify/Product/1234567890"
+              }
+            ]
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign products = products | concat: result.data.products.nodes %}
+
+  {% if result.data.products.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.products.pageInfo.endCursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% comment %}
+  -- process each product by querying as many variants as needed to determine which tag applies
+{% endcomment %}
 
 {% for product in products %}
-  {% assign has_compare_at_price = false %}
-  {% assign has_sale_price = false %}
+  {% assign product_qualifies_as_sale = nil %}
+  {% assign cursor = nil %}
 
-  {% for variant in product.variants %}
-    {% if variant.compare_at_price == blank %}
-      {% continue %}
+  {% for n in (1..8) %}
+    {% capture query %}
+      query {
+        product(id: {{ product.id | json }}) {
+          variants(
+            first: 250
+            after: {{ cursor | json }}
+          ) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              price
+              compareAtPrice
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "product": {
+              "variants": {
+                "nodes": [
+                  {
+                    "price": "19.99",
+                    "compareAtPrice": "24.99"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
     {% endif %}
 
-    {% assign has_compare_at_price = true %}
+    {% assign variants = result.data.product.variants.nodes %}
 
-    {% if options.sale_products_must_have_a_price_lower_than_the_compare_at_price__boolean %}
-      {% assign price = variant.price | times: 1 %}
-      {% assign compare_at_price = variant.compare_at_price | times: 1 %}
-      {% if price < compare_at_price %}
-        {% assign has_sale_price = true %}
+    {% comment %}
+      -- check batch of variants to see if a compare at price exists, and optionally if it is greater than the price
+    {% endcomment %}
+
+    {% for variant in variants %}
+      {% if variant.compareAtPrice == blank %}
+        {% continue %}
       {% endif %}
+
+      {% if must_have_price_lower_than_the_compare_at_price %}
+        {% assign price = variant.price | times: 1 %}
+        {% assign compare_at_price = variant.compareAtPrice | times: 1 %}
+
+        {% if price < compare_at_price %}
+          {% assign product_qualifies_as_sale = true %}
+          {% break %}
+        {% endif %}
+
+      {% else %}
+        {% assign product_qualifies_as_sale = true %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+
+    {% comment %}
+      -- only query for more variants if the product has not yet qualified as "on sale" AND if there are more variants
+    {% endcomment %}
+
+    {% if product_qualifies_as_sale %}
+      {% break %}
+    {% elsif result.data.product.variants.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.product.variants.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
     {% endif %}
   {% endfor %}
 
-  {% assign product_tags = product.tags | split: ", " %}
+  {% comment %}
+    -- adjust tags on product as needed
+  {% endcomment %}
 
   {% assign tag_to_add = nil %}
   {% assign tag_to_remove = nil %}
 
-  {% assign product_qualifies_as_sale = false %}
-  {% if has_compare_at_price %}
-    {% if options.sale_products_must_have_a_price_lower_than_the_compare_at_price__boolean %}
-      {% if has_sale_price %}
-        {% assign product_qualifies_as_sale = true %}
-      {% endif %}
-    {% else %}
-      {% assign product_qualifies_as_sale = true %}
-    {% endif %}
-  {% endif %}
-
   {% if product_qualifies_as_sale %}
-    {% unless product_tags contains options.tag_for_sale_products %}
-      {% assign tag_to_add =        options.tag_for_sale_products %}
-    {% endunless %}
-
-    {% if product_tags contains options.tag_for_all_other_products %}
-      {% assign tag_to_remove = options.tag_for_all_other_products %}
+    {% if tag_for_sale_products != blank %}
+      {% unless product.tags contains tag_for_sale_products %}
+        {% assign tag_to_add = tag_for_sale_products %}
+      {% endunless %}
     {% endif %}
+
+    {% if tag_for_all_other_products != blank %}
+      {% if product.tags contains tag_for_all_other_products %}
+        {% assign tag_to_remove = tag_for_all_other_products %}
+      {% endif %}
+    {% endif %}
+
   {% else %}
-    {% if product_tags contains options.tag_for_sale_products %}
-      {% assign tag_to_remove = options.tag_for_sale_products %}
+    {% if tag_for_sale_products != blank %}
+      {% if product.tags contains tag_for_sale_products %}
+        {% assign tag_to_remove = tag_for_sale_products %}
+      {% endif %}
     {% endif %}
 
-    {% unless product_tags contains options.tag_for_all_other_products %}
-      {% assign tag_to_add =        options.tag_for_all_other_products %}
-    {% endunless %}
+    {% if tag_for_all_other_products != blank %}
+      {% unless product.tags contains tag_for_all_other_products %}
+        {% assign tag_to_add = tag_for_all_other_products %}
+      {% endunless %}
+    {% endif %}
   {% endif %}
 
   {% if tag_to_add or tag_to_remove %}
@@ -85,7 +196,7 @@
       mutation {
         {% if tag_to_add %}
           tagsAdd(
-            id: {{ product.admin_graphql_api_id | json }}
+            id: {{ product.id | json }}
             tags: {{ tag_to_add | json }}
           ) {
             userErrors {
@@ -97,7 +208,7 @@
 
         {% if tag_to_remove %}
           tagsRemove(
-            id: {{ product.admin_graphql_api_id | json }}
+            id: {{ product.id | json }}
             tags: {{ tag_to_remove | json }}
           ) {
             userErrors {

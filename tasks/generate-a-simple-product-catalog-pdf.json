@@ -1,20 +1,20 @@
 {
-  "docs": "This task is a simple demonstration of pulling product titles and images into a PDF, resulting in a simple catalog of the products available in your store. Use it as a starting point for building something more complex.\r\n\r\nRun this task manually to generate the PDF.",
+  "docs": "This task is a simple demonstration of pulling product titles and images into a PDF, resulting in a simple catalog of the products available in your store. Use it as a starting point for building something more complex.\n\nRun this task manually to generate the PDF.",
   "halt_action_run_sequence_on_error": false,
   "name": "Generate a simple product catalog PDF",
   "online_store_javascript": null,
   "options": {},
   "order_status_javascript": null,
   "perform_action_runs_in_sequence": false,
-  "script": "{% capture html %}\n  <h1>Product catalog</h1>\n  <ul>\n  {% for product in shop.products %}\n    {% assign image = product | img_url: \"300x300\", crop: \"center\" %}\n    <li>\n      <b>{{ product.title }}</b>\n      <br>\n      {% if image %}\n        <img src=\"{{ image }}\"/>\n      {% else %}\n        (no image)\n      {% endif %}\n    </li>\n  {% endfor %}\n{% endcapture %}\n\n{% action \"files\" %}\n  {\n    \"catalog.pdf\": {\n      \"pdf\": {\n        \"html\": {{ html | json }}\n      }\n    }\n  }\n{% endaction %}",
+  "script": "{% comment %}\n  -- get all of the products in the shop (up to 25K), and their feature images if they exist\n{% endcomment %}\n\n{% assign cursor = nil %}\n{% assign products_output = array %}\n\n{% for n in (1..100) %}\n  {% capture query %}\n    query {\n      products(\n        first: 250\n        after: {{ cursor | json }}\n        sortKey: TITLE\n      ) {\n        pageInfo {\n          hasNextPage\n          endCursor\n        }\n        nodes {\n          id\n          title\n          featuredImage {\n            url(\n              transform: {\n                maxWidth: 300\n                maxHeight: 300\n                crop: CENTER\n              }\n            )\n          }\n        }\n      }\n    }\n  {% endcapture %}\n\n  {% assign result = query | shopify %}\n\n  {% if event.preview %}\n    {% capture result_json %}\n      {\n        \"data\": {\n          \"products\": {\n            \"nodes\": [\n              {\n                \"id\": \"gid://shopify/Product/1234567890\",\n                \"title\": \"Widget\",\n                \"featuredImage\": {\n                  \"url\": \"https://cdn.shopify.com/s/files/1/1234/5678/1234/products/widget_300x300_crop_center.jpg?v=1234567890\"\n                }\n              }\n            ]\n          }\n        }\n      }\n    {% endcapture %}\n\n    {% assign result = result_json | parse_json %}\n  {% endif %}\n\n  {% comment %}\n    -- save the output for this product in an array\n  {% endcomment %}\n\n  {% for product in result.data.products.nodes %}\n    {% capture product_html %}\n      <li>\n        <b>{{ product.title }}</b>\n        <br>\n        {% if product.featuredImage %}\n          <img src=\"{{ product.featuredImage.url }}\"/>\n        {% else %}\n          (no image)\n        {% endif %}\n      </li>\n    {% endcapture %}\n\n    {% assign products_output = products_output | push: product_html %}\n  {% endfor %}\n\n  {% if result.data.products.pageInfo.hasNextPage %}\n    {% assign cursor = result.data.products.pageInfo.endCursor %}\n  {% else %}\n    {% break %}\n  {% endif %}\n{% endfor %}\n\n{% comment %}\n  -- capture the HTML used by the PDF generator\n{% endcomment %}\n\n{% capture html %}\n  <h1>Product catalog</h1>\n  <ul>\n  {{ products_output | join: newline }}\n  </ul>\n{% endcapture %}\n\n{% comment %}\n  -- generate the PDF catalog, which will appear as a file download in the task run log\n{% endcomment %}\n\n{% action \"files\" %}\n  {\n    \"catalog.pdf\": {\n      \"pdf\": {\n        \"html\": {{ html | json }}\n      }\n    }\n  }\n{% endaction %}\n",
   "subscriptions": [
     "mechanic/user/trigger"
   ],
   "subscriptions_template": "mechanic/user/trigger",
   "tags": [
     "Catalog",
-    "Email",
     "Files",
-    "PDF"
+    "PDF",
+    "Products"
   ]
 }

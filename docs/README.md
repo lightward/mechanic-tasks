@@ -844,7 +844,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Email vendors when their products are ordered](./email-vendors-when-their-products-are-ordered)
 * [Email your customers after a quiet period of no orders](./email-your-customers-after-a-quiet-period-of-no-orders)
 * [Forward incoming email to another address](./forward-incoming-email-to-another-address)
-* [Generate a simple product catalog PDF](./generate-a-simple-product-catalog-pdf)
 * [Get email alerts for FBA failures](./get-email-alerts-for-fba-failures)
 * [Get email alerts for out of stock products](./get-email-alerts-for-out-of-stock-products)
 * [Notify a team when a tagged product is ordered](./notify-a-team-when-a-tagged-product-is-ordered)
@@ -1402,6 +1401,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Find duplicate SKUs](./find-duplicate-skus)
 * [Generate a discount code when a certain product is purchased](./generate-a-discount-code-when-a-certain-product-is-purchased)
 * [Generate a product discount when a voucher product is purchased](./generate-a-product-discount-when-a-voucher-product-is-purchased)
+* [Generate a simple product catalog PDF](./generate-a-simple-product-catalog-pdf)
 * [Hide out-of-stock products](./hide-out-of-stock-products)
 * [Keep inventory levels in sync within products](./keep-inventory-levels-in-sync-within-products)
 * [Maintain a collection of new products](./maintain-a-collection-of-new-products)
@@ -1556,6 +1556,7 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Sale
 
 * [Advanced: Scheduled Price Changes](./advanced-scheduled-price-changes)
+* [Auto-tag products that have a "compare at" price](./auto-tag-products-that-have-a-compare-at-price)
 
 ### Sales Channel
 

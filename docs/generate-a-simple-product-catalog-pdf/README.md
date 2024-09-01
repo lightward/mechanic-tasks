@@ -1,6 +1,6 @@
 # Generate a simple product catalog PDF
 
-Tags: Catalog, Email, Files, PDF
+Tags: Catalog, Files, PDF, Products
 
 This task is a simple demonstration of pulling product titles and images into a PDF, resulting in a simple catalog of the products available in your store. Use it as a starting point for building something more complex.
 
