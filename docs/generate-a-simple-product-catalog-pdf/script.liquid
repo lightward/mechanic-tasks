@@ -1,19 +1,104 @@
+{% comment %}
+  -- get all of the products in the shop (up to 25K), and their feature images if they exist
+{% endcomment %}
+
+{% assign cursor = nil %}
+{% assign products_output = array %}
+
+{% for n in (1..100) %}
+  {% capture query %}
+    query {
+      products(
+        first: 250
+        after: {{ cursor | json }}
+        sortKey: TITLE
+      ) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          id
+          title
+          featuredImage {
+            url(
+              transform: {
+                maxWidth: 300
+                maxHeight: 300
+                crop: CENTER
+              }
+            )
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "products": {
+            "nodes": [
+              {
+                "id": "gid://shopify/Product/1234567890",
+                "title": "Widget",
+                "featuredImage": {
+                  "url": "https://cdn.shopify.com/s/files/1/1234/5678/1234/products/widget_300x300_crop_center.jpg?v=1234567890"
+                }
+              }
+            ]
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% comment %}
+    -- save the output for this product in an array
+  {% endcomment %}
+
+  {% for product in result.data.products.nodes %}
+    {% capture product_html %}
+      <li>
+        <b>{{ product.title }}</b>
+        <br>
+        {% if product.featuredImage %}
+          <img src="{{ product.featuredImage.url }}"/>
+        {% else %}
+          (no image)
+        {% endif %}
+      </li>
+    {% endcapture %}
+
+    {% assign products_output = products_output | push: product_html %}
+  {% endfor %}
+
+  {% if result.data.products.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.products.pageInfo.endCursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% comment %}
+  -- capture the HTML used by the PDF generator
+{% endcomment %}
+
 {% capture html %}
   <h1>Product catalog</h1>
   <ul>
-  {% for product in shop.products %}
-    {% assign image = product | img_url: "300x300", crop: "center" %}
-    <li>
-      <b>{{ product.title }}</b>
-      <br>
-      {% if image %}
-        <img src="{{ image }}"/>
-      {% else %}
-        (no image)
-      {% endif %}
-    </li>
-  {% endfor %}
+  {{ products_output | join: newline }}
+  </ul>
 {% endcapture %}
+
+{% comment %}
+  -- generate the PDF catalog, which will appear as a file download in the task run log
+{% endcomment %}
 
 {% action "files" %}
   {

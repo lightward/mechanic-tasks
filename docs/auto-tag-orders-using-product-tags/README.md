@@ -13,7 +13,7 @@ Use this task to tag incoming orders with all the product tags in the order. Opt
 ```json
 {
   "only_copy_these_tags__array": null,
-  "only_copy_tags_having_this_prefix": null
+  "only_copy_tags_having_one_of_these_prefixes__array": null
 }
 ```
 
@@ -25,6 +25,7 @@ Use this task to tag incoming orders with all the product tags in the order. Opt
 shopify/orders/create
 mechanic/user/trigger
 mechanic/shopify/bulk_operation
+mechanic/user/order
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)

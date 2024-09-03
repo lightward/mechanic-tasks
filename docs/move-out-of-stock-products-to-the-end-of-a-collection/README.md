@@ -13,8 +13,8 @@ This task re-sorts your collections, beginning with the sort order of your choic
 ```json
 {
   "base_sort_order__required": "ALPHA_ASC",
-  "collection_titles_or_ids_to_include__array": null,
-  "collection_titles_or_ids_to_exclude__array": null,
+  "collection_handles_or_ids_to_include__array": null,
+  "collection_handles_or_ids_to_exclude__array": null,
   "force_manual_sorting_on_collections__boolean": false,
   "run_hourly__boolean": false,
   "run_daily__boolean": false
