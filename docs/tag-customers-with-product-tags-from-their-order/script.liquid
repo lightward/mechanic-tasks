@@ -1,37 +1,97 @@
-{% if event.topic == "mechanic/user/trigger" %}
-  {% assign customers_query = nil %}
+{% assign customer_segment_query = options.limit_to_customers_matching_this_query_for_manual_runs %}
+{% assign only_copy_these_tags = options.only_copy_these_tags__array %}
 
-  {% if options.limit_to_customers_matching_this_query_for_manual_runs != blank %}
-    {% assign customers_query = options.limit_to_customers_matching_this_query_for_manual_runs %}
-  {% endif %}
+{% assign customer_ids = array %}
 
-  {% capture bulk_operation_query %}
-    query {
-      customers(
-        query: {{ customers_query | json }}
-      ) {
-        edges {
-          node {
-            __typename
-            id
-            tags
-            orders {
-              edges {
-                node {
-                  __typename
-                  id
-                  lineItems {
-                    edges {
-                      node {
-                        __typename
-                        id
-                        product {
-                          __typename
-                          id
-                          tags
-                        }
-                      }
-                    }
+{% if event.topic == "shopify/orders/create" %}
+  {% assign customer_ids[0] = order.customer.admin_graphql_api_id %}
+
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% comment %}
+    -- get IDs of all customers who match the segment query
+    -- Note: a segment query cannot be null, so if one has not been configured in the task then send an empty string
+  {% endcomment %}
+
+  {% assign cursor = nil %}
+  {% assign customer_segment_member_ids = array %}
+
+  {% for n in (1..100) %}
+    {% capture query %}
+      query {
+        customerSegmentMembers(
+          first: 1000
+          after: {{ cursor | json }}
+          query: {{ customer_segment_query | default: "" | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          edges {
+            node {
+              id
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% assign customer_segment_members = result.data.customerSegmentMembers.edges | map: "node" %}
+
+    {% comment %}
+      -- remove the "SegmentMember" portion from IDs so they can be processed with same code block for the orders/create event
+    {% endcomment %}
+
+    {% for customer_segment_member in customer_segment_members %}
+      {% assign customer_ids[customer_ids.size] = customer_segment_member.id | remove: "SegmentMember" %}
+    {% endfor %}
+
+    {% if result.data.customerSegmentMembers.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.customerSegmentMembers.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% unless event.preview %}
+    {% log count_of_customers_matching_query: customer_ids.size %}
+  {% endunless %}
+{% endif %}
+
+{% if event.preview %}
+  {% assign customer_ids[0] = "gid://shopify/Customer/1234567890" %}
+{% endif %}
+
+{% for customer_id in customer_ids %}
+  {% comment %}
+    -- get all relevant order data for this customer
+  {% endcomment %}
+
+  {% assign cursor = nil %}
+  {% assign tags_to_copy = array %}
+
+  {% for n in (1..10) %}
+    {% capture query %}
+      query {
+        customer(id: {{ customer_id | json }}) {
+          id
+          tags
+          orders(
+            first: 250
+            after: {{ cursor | json }}
+          ) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              id
+              lineItems(first: 250) {
+                nodes {
+                  product {
+                    tags
                   }
                 }
               }
@@ -39,132 +99,79 @@
           }
         }
       }
-    }
-  {% endcapture %}
-
-  {% action "shopify" %}
-    mutation {
-      bulkOperationRunQuery(
-        query: {{ bulk_operation_query | json }}
-      ) {
-        bulkOperation {
-          id
-          status
-        }
-        userErrors {
-          field
-          message
-        }
-      }
-    }
-  {% endaction %}
-{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
-  {% if event.preview %}
-    {% capture bulkOperation_objects_jsonl %}
-      {"__typename":"Customer","id":"gid:\/\/shopify\/Customer\/1234567890","tags":["red"]}
-      {"__typename":"Order","id":"gid:\/\/shopify\/Order\/1234567890","__parentId":"gid:\/\/shopify\/Customer\/1234567890"}
-      {"__typename":"LineItem","id":"gid:\/\/shopify\/LineItem\/1234567890","product":{"__typename":"Product","id":"gid:\/\/shopify\/Product\/1234567890","tags":{{ options.only_copy_these_tags__array | join: ", " | default: "red, green" | split: ", " | json }}},"__parentId":"gid:\/\/shopify\/Order\/1234567890"}
     {% endcapture %}
 
-    {% assign bulkOperation = hash %}
-    {% assign bulkOperation["objects"] = bulkOperation_objects_jsonl | parse_jsonl %}
-  {% endif %}
+    {% assign result = query | shopify %}
 
-  {% assign customers = bulkOperation.objects | where: "__typename", "Customer" %}
-  {% assign orders = bulkOperation.objects | where: "__typename", "Order" %}
-  {% assign line_items = bulkOperation.objects | where: "__typename", "LineItem" %}
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "customer": {
+              "id": "gid://shopify/Customer/1234567890",
+              "orders": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/Order/1234567890",
+                    "lineItems": {
+                      "nodes": [
+                        {
+                          "product": null
+                        },
+                        {
+                          "product": {
+                            "tags": [
+                              "preview",
+                              {{ only_copy_these_tags.first | json }}
+                            ]
+                          }
+                        }
+                      ]
+                    }
 
-  {% for customer in customers %}
-    {% assign tags_to_copy = array %}
+                  }
+                ]
+              }
+            }
+          }
+        }
+      {% endcapture %}
 
-    {% assign order_ids = orders | where: "__parentId", customer.id | map: "id" %}
+      {% assign result = result_json | parse_json %}
+    {% endif %}
 
-    {% for line_item in line_items %}
-      {% unless order_ids contains line_item.__parentId %}
-        {% continue %}
-      {% endunless %}
+    {% assign customer = result.data.customer %}
 
-      {% for tag in line_item.product.tags %}
-        {% if tags_to_copy contains tag or customer.tags contains tag %}
-          {% continue %}
-        {% endif %}
-
-        {% if options.only_copy_these_tags__array != blank %}
-          {% unless options.only_copy_these_tags__array contains tag %}
+    {% for order in customer.orders.nodes %}
+      {% for line_item in order.lineItems.nodes %}
+        {% for tag in line_item.product.tags %}
+          {% if tags_to_copy contains tag or customer.tags contains tag %}
             {% continue %}
-          {% endunless %}
-        {% endif %}
+          {% endif %}
 
-        {% assign tags_to_copy[tags_to_copy.size] = tag %}
+          {% if only_copy_these_tags != blank %}
+            {% unless only_copy_these_tags contains tag %}
+              {% continue %}
+            {% endunless %}
+          {% endif %}
+
+          {% assign tags_to_copy = tags_to_copy | push: tag %}
+        {% endfor %}
       {% endfor %}
     {% endfor %}
 
-    {% if tags_to_copy != empty %}
-      {% log customer: customer %}
-
-      {% action "shopify" %}
-        mutation {
-          tagsAdd(
-            id: {{ customer.id | json }}
-            tags: {{ tags_to_copy | json }}
-          ) {
-            userErrors {
-              field
-              message
-            }
-          }
-        }
-      {% endaction %}
+    {% if result.data.customer.orders.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.customer.orders.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
     {% endif %}
   {% endfor %}
-{% elsif event.topic == "shopify/orders/create" %}
-  {% if event.preview %}
-    {% capture order_json %}
-      {
-        "customer": {
-          "admin_graphql_api_id": "gid://shopify/Customer/1234567890"
-        },
-        "line_items": [
-          {
-            "product": {
-              "tags":
-                {% if options.only_copy_these_tags__array != blank %}
-                  {{ options.only_copy_these_tags__array | json }}
-                {% else %}
-                  "club-limited, december-sale"
-                {% endif  %}
-            }
-          }
-        ]
-      }
-    {% endcapture %}
 
-    {% assign order = order_json | parse_json %}
-  {% endif %}
-
-  {% assign product_tags_from_order = order.line_items | map: "product" | map: "tags" | join: ", " | split: ", " | sort | uniq %}
-  {% log product_tags_from_order: product_tags_from_order %}
-
-  {% if options.only_copy_these_tags__array == blank %}
-    {% assign tags_to_copy = product_tags_from_order %}
-  {% else %}
-    {% assign tags_to_copy = array %}
-
-    {% assign only_copy_these_tags = options.only_copy_these_tags__array %}
-    {% log only_copy_these_tags: only_copy_these_tags %}
-
-    {% for tag in only_copy_these_tags %}
-      {% if product_tags_from_order contains tag %}
-        {% assign tags_to_copy[tags_to_copy.size] = tag %}
-      {% endif %}
-    {% endfor %}
-  {% endif %}
-
-  {% if tags_to_copy != empty %}
+  {% if tags_to_copy != blank %}
     {% action "shopify" %}
       mutation {
         tagsAdd(
-          id: {{ order.customer.admin_graphql_api_id | json }}
+          id: {{ customer.id | json }}
           tags: {{ tags_to_copy | json }}
         ) {
           userErrors {
@@ -175,4 +182,4 @@
       }
     {% endaction %}
   {% endif %}
-{% endif %}
+{% endfor %}

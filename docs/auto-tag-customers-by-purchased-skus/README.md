@@ -2,7 +2,7 @@
 
 Tags: Auto-Tag, Customers, SKU
 
-Use this task to keep customers tagged with the SKUs of the products they've purchased, optionally ignoring product purchases that have been refunded. Add a tag prefix to make SKU tags easy to distinguish from your other customer tags. This task also stores all purchased SKUs in a customer metafield, dodging the 250 tag limit that exists for customers.
+This task keeps customers tagged with the SKUs of the products they've purchased, optionally ignoring product purchases that have been refunded. Add a tag prefix to make SKU tags easy to distinguish from your other customer tags.
 
 * View in the task library: [tasks.mechanic.dev/auto-tag-customers-by-purchased-skus](https://tasks.mechanic.dev/auto-tag-customers-by-purchased-skus)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-customers-by-purchased-skus.json)
@@ -15,7 +15,6 @@ Use this task to keep customers tagged with the SKUs of the products they've pur
   "tag_prefix": "",
   "ignore_refunded_purchases__boolean": true,
   "enable_running_manually__boolean": null,
-  "customer_query_when_running_manually": null,
   "test_mode__boolean": true
 }
 ```
@@ -26,22 +25,16 @@ Use this task to keep customers tagged with the SKUs of the products they've pur
 
 ```liquid
 shopify/orders/paid
-
 {% if options.ignore_refunded_purchases__boolean %}
   shopify/refunds/create
 {% endif %}
-
-{% if options.enable_running_manually__boolean %}
-  mechanic/user/trigger
-  mechanic/shopify/bulk_operation
-{% endif %}
+mechanic/user/trigger
+mechanic/shopify/bulk_operation
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
-
-Use this task to keep customers tagged with the SKUs of the products they've purchased, optionally ignoring product purchases that have been refunded. Add a tag prefix to make SKU tags easy to distinguish from your other customer tags. This task also stores all purchased SKUs in a customer metafield, dodging the 250 tag limit that exists for customers.
 
 This task keeps customers tagged with the SKUs of the products they've purchased, optionally ignoring product purchases that have been refunded. Add a tag prefix to make SKU tags easy to distinguish from your other customer tags.
 

@@ -374,6 +374,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Account
 
+* [Auto-tag customers with who have accounts](./auto-tag-customers-with-who-have-accounts)
 * [Auto-verify customer email addresses](./auto-verify-customer-email-addresses)
 * [Send account invites to all customers in bulk](./send-account-invites-to-all-customers-in-bulk)
 
