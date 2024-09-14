@@ -1,3 +1,6 @@
+{% assign customer_tag_to_apply = options.customer_tag_to_apply__required %}
+{% assign test_mode = options.test_mode__boolean %}
+
 {% if event.topic contains "shopify/customers/" %}
   {% if event.preview %}
     {% assign customer = hash %}
@@ -9,15 +12,16 @@
   {% assign customer_tags = customer.tags | split: ", " %}
 
   {% if customer.state == "enabled" %}
-    {% unless customer_tags contains options.customer_tag_to_apply__required %}
-      {% if options.test_mode__boolean %}
-        {% action "echo", "This customer should be tagged. (Doing nothing, because test mode is enabled." %}
+    {% unless customer_tags contains customer_tag_to_apply %}
+      {% if test_mode %}
+        {% log "This customer should be tagged. (Doing nothing, because test mode is enabled." %}
+
       {% else %}
         {% action "shopify" %}
           mutation {
             tagsAdd(
               id: {{ customer.admin_graphql_api_id | json }}
-              tags: {{ options.customer_tag_to_apply__required | json }}
+              tags: {{ customer_tag_to_apply | json }}
             ) {
               userErrors {
                 field
@@ -28,15 +32,17 @@
         {% endaction %}
       {% endif %}
     {% endunless %}
-  {% elsif customer_tags contains options.customer_tag_to_apply__required %}
-    {% if options.test_mode__boolean %}
-      {% action "echo", "This customer should be untagged. (Doing nothing, because test mode is enabled." %}
+
+  {% elsif customer_tags contains customer_tag_to_apply %}
+    {% if test_mode %}
+      {% log "This customer should be untagged. (Doing nothing, because test mode is enabled." %}
+
     {% else %}
       {% action "shopify" %}
         mutation {
           tagsRemove(
             id: {{ customer.admin_graphql_api_id | json }}
-            tags: {{ options.customer_tag_to_apply__required | json }}
+            tags: {{ customer_tag_to_apply | json }}
           ) {
             userErrors {
               field
@@ -47,95 +53,154 @@
       {% endaction %}
     {% endif %}
   {% endif %}
+
 {% elsif event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
-  {% assign customersToTag_cursor = nil %}
-  {% assign customersToUntag_cursor = nil %}
+  {% comment %}
+    -- get IDs of all customers who have accounts and have not yet been tagged
+  {% endcomment %}
 
   {% assign customer_ids_to_tag = array %}
-  {% assign customer_ids_to_untag = array %}
 
-  {% for n in (0..100) %}
-    {% if customersToTag_cursor == false and customersToUntag_cursor == false %}
-      {% break %}
-    {% endif %}
+  {%- capture search_query -%}
+    customer_tags NOT CONTAINS '{{ customer_tag_to_apply }}' AND customer_account_status = 'ENABLED'
+  {%- endcapture -%}
 
+  {% for n in (1..100) %}
     {% capture query %}
       query {
-        {% unless customersToTag_cursor == false %}
-          customersToTag: customers(
-            first: 250
-            after: {{ customersToTag_cursor | json }}
-            query: {{ options.customer_tag_to_apply__required | json | prepend: "-tag:" | append: " AND state:enabled" | json }}
-          ) {
-            pageInfo {
-              hasNextPage
-            }
-            edges {
-              cursor
-              node {
-                id
-              }
+        customerSegmentMembers(
+          first: 1000
+          after: {{ cursor | json }}
+          query: {{ search_query | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          edges {
+            node {
+              id
             }
           }
-        {% endunless %}
-
-        {% unless customersToUntag_cursor == false %}
-          customersToUntag: customers(
-            first: 250
-            after: {{ customersToUntag_cursor | json }}
-            query: {{ options.customer_tag_to_apply__required | json | prepend: "tag:" | append: " AND -state:enabled" | json }}
-          ) {
-            pageInfo {
-              hasNextPage
-            }
-            edges {
-              cursor
-              node {
-                id
-              }
-            }
-          }
-        {% endunless %}
+        }
       }
     {% endcapture %}
 
     {% assign result = query | shopify %}
 
-    {% for customer_edge in result.data.customersToTag.edges %}
-      {% assign customer_ids_to_tag[customer_ids_to_tag.size] = customer_edge.node.id %}
-    {% endfor %}
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "customerSegmentMembers": {
+              "edges": [
+                {
+                  "node": {
+                    "id": "gid://shopify/CustomerSegmentMember/1234567890"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
 
-    {% for customer_edge in result.data.customersToUntag.edges %}
-      {% assign customer_ids_to_untag[customer_ids_to_untag.size] = customer_edge.node.id %}
-    {% endfor %}
-
-    {% if result.data.customersToTag.pageInfo.hasNextPage %}
-      {% assign customersToTag_cursor = result.data.customersToTag.edges.last.cursor %}
-    {% else %}
-      {% assign customersToTag_cursor = false %}
+      {% assign result = result_json | parse_json %}
     {% endif %}
 
-    {% if result.data.customersToUntag.pageInfo.hasNextPage %}
-      {% assign customersToUntag_cursor = result.data.customersToUntag.edges.last.cursor %}
+    {% assign customer_ids_to_tag
+      = result.data.customerSegmentMembers.edges
+      | map: "node"
+      | map: "id"
+      | concat: customer_ids_to_tag
+    %}
+
+    {% if result.data.customerSegmentMembers.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.customerSegmentMembers.pageInfo.endCursor %}
     {% else %}
-      {% assign customersToUntag_cursor = false %}
+      {% break %}
     {% endif %}
   {% endfor %}
 
-  {% if event.preview %}
-    {% assign customer_ids_to_tag[0] = "gid://shopify/Customer/1234567890" %}
-    {% assign customer_ids_to_untag[0] = "gid://shopify/Customer/1234567890" %}
-  {% endif %}
+  {% comment %}
+    -- get IDs of all customers with tag who no longer have accounts
+  {% endcomment %}
 
-  {% if options.test_mode__boolean %}
-    {% action "echo", customers_to_tag: customer_ids_to_tag.size, customers_to_untag: customer_ids_to_untag.size %}
-  {% else %}
+  {% assign customer_ids_to_untag = array %}
+
+  {%- capture search_query -%}
+    customer_tags CONTAINS '{{ customer_tag_to_apply }}' AND customer_account_status != 'ENABLED'
+  {%- endcapture -%}
+
+  {% for n in (1..100) %}
+    {% capture query %}
+      query {
+        customerSegmentMembers(
+          first: 1000
+          after: {{ cursor | json }}
+          query: {{ search_query | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          edges {
+            node {
+              id
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "customerSegmentMembers": {
+              "edges": [
+                {
+                  "node": {
+                    "id": "gid://shopify/CustomerSegmentMember/2345678901"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign customer_ids_to_untag
+      = result.data.customerSegmentMembers.edges
+      | map: "node"
+      | map: "id"
+      | concat: customer_ids_to_untag
+    %}
+
+    {% if result.data.customerSegmentMembers.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.customerSegmentMembers.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% log
+    count_customers_to_tag: customer_ids_to_tag.size,
+    count_customers_to_untag: customer_ids_to_untag.size
+  %}
+
+  {% unless test_mode %}
     {% for customer_id in customer_ids_to_tag %}
       {% action "shopify" %}
         mutation {
           tagsAdd(
-            id: {{ customer_id | json }}
-            tags: {{ options.customer_tag_to_apply__required | json }}
+            id: {{ customer_id | remove: "SegmentMember" | json }}
+            tags: {{ customer_tag_to_apply | json }}
           ) {
             userErrors {
               field
@@ -150,8 +215,8 @@
       {% action "shopify" %}
         mutation {
           tagsRemove(
-            id: {{ customer_id | json }}
-            tags: {{ options.customer_tag_to_apply__required | json }}
+            id: {{ customer_id | remove: "SegmentMember" | json }}
+            tags: {{ customer_tag_to_apply | json }}
           ) {
             userErrors {
               field
@@ -161,5 +226,5 @@
         }
       {% endaction %}
     {% endfor %}
-  {% endif %}
+  {% endunless %}
 {% endif %}

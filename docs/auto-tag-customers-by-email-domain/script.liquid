@@ -1,4 +1,7 @@
-{% for email_domain in options.customer_email_domains__required_array %}
+{% assign customer_email_domains = options.customer_email_domains__required_array %}
+{% assign customer_tag_to_apply = options.customer_tag_to_apply__required %}
+
+{% for email_domain in customer_email_domains %}
   {% if email_domain contains "@" %}
     {% error "Do not include '@' symbols in email domains. Thanks!" %}
   {% endif %}
@@ -10,41 +13,56 @@
   {% if event.preview %}
     {% assign customer = hash %}
     {% assign customer["admin_graphql_api_id"] = "gid://shopify/Customer/1234567890" %}
-    {% assign customer["email"] = "test@" | append: options.customer_email_domains__required_array.first %}
+    {% assign customer["email"] = "test@" | append: customer_email_domains.first %}
   {% endif %}
 
   {% assign customer_email_domain = customer.email | split: "@" | last | downcase %}
   {% assign customer_tags = customer.tags | split: ", " %}
 
-  {% if options.customer_email_domains__required_array contains customer_email_domain %}
-    {% unless customer_tags contains options.customer_tag_to_apply__required %}
+  {% if customer_email_domains contains customer_email_domain %}
+    {% unless customer_tags contains customer_tag_to_apply %}
       {% assign customer_ids_to_tag[customer_ids_to_tag.size] = customer.admin_graphql_api_id %}
     {% endunless %}
   {% endif %}
+
 {% elsif event.topic == "mechanic/user/trigger" %}
-  {% capture customers_query -%}
-    -tag:{{ options.customer_tag_to_apply__required | json }} AND ({{ options.customer_email_domains__required_array | join: " OR email:" | prepend: "email:" }})
+  {% assign domain_query_parts = array %}
+
+  {% for email_domain in customer_email_domains %}
+    {% assign domain_query_parts[domain_query_parts.size]
+      = "customer_email_domain = '"
+      | append: email_domain
+      | append: "'"
+    %}
+  {% endfor %}
+
+  {% capture search_query -%}
+    customer_tags NOT CONTAINS '{{ customer_tag_to_apply }}' AND ({{ domain_query_parts | join: " OR " }})
   {%- endcapture %}
 
+  {% log search_query: search_query %}
+
   {% assign cursor = nil %}
+
+  {% comment %}
+    -- customers resource no longer supports tag filters (JUL 2024), so need to use the customerSegmentMembers resource instead
+  {% endcomment %}
 
   {% for n in (0..100) %}
     {% capture query %}
       query {
-        customers(
-          first: 250
-          query: {{ customers_query | json }}
+        customerSegmentMembers(
+          first: 1000
           after: {{ cursor | json }}
+          query: {{ search_query | json }}
         ) {
           pageInfo {
             hasNextPage
+            endCursor
           }
           edges {
-            cursor
             node {
               id
-              email
-              tags
             }
           }
         }
@@ -57,13 +75,11 @@
       {% capture result_json %}
         {
           "data": {
-            "customers": {
+            "customerSegmentMembers": {
               "edges": [
                 {
                   "node": {
-                    "id": "gid://shopify/Customer/1234567890",
-                    "email": {{ "test@" | append: options.customer_email_domains__required_array.first | json }},
-                    "tags": []
+                    "id": "gid://shopify/CustomerSegmentMember/1234567890"
                   }
                 }
               ]
@@ -75,31 +91,68 @@
       {% assign result = result_json | parse_json %}
     {% endif %}
 
-    {% for customer_edge in result.data.customers.edges %}
-      {% assign customer = customer_edge.node %}
+    {% assign customer_segment_member_ids
+      = result.data.customerSegmentMembers.edges
+      | map: "node"
+      | map: "id"
+    %}
+
+    {% for customer_segment_member_id in customer_segment_member_ids %}
+      {% comment %}
+        -- query the customer record in order to verify the domain and absence of the tag, in case the search query filter has "seepage"
+      {% endcomment %}
+
+      {% capture query %}
+        query {
+          customer(id: {{ customer_segment_member_id | remove: "SegmentMember" | json }}) {
+            id
+            email
+            tags
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = query | shopify %}
+
+      {% if event.preview %}
+        {% capture result_json %}
+          {
+            "data": {
+              "customer": {
+                "id": "gid://shopify/Customer/1234567890",
+                "email": {{ "test@" | append: customer_email_domains.first | json }}
+              }
+            }
+          }
+        {% endcapture %}
+
+        {% assign result = result_json | parse_json %}
+      {% endif %}
+
+      {% assign customer = result.data.customer %}
       {% assign customer_email_domain = customer.email | split: "@" | last | downcase %}
 
-      {% if options.customer_email_domains__required_array contains customer_email_domain %}
-        {% unless customer.tags contains options.customer_tag_to_apply__required %}
-          {% assign customer_ids_to_tag[customer_ids_to_tag.size] = customer.id %}
+      {% if customer_email_domains contains customer_email_domain %}
+        {% unless customer.tags contains customer_tag_to_apply %}
+          {% assign customer_ids_to_tag = customer_ids_to_tag | push: customer.id %}
         {% endunless %}
       {% endif %}
     {% endfor %}
 
     {% if result.data.customers.pageInfo.hasNextPage %}
-      {% assign cursor = result.data.customers.edges.last.cursor %}
+      {% assign cursor = result.data.customers.pageInfo.endCursor %}
     {% else %}
       {% break %}
     {% endif %}
   {% endfor %}
 {% endif %}
 
-{% for id in customer_ids_to_tag %}
+{% for customer_id in customer_ids_to_tag %}
   {% action "shopify" %}
     mutation {
       tagsAdd(
-        id: {{ id | json }}
-        tags: {{ options.customer_tag_to_apply__required | json }}
+        id: {{ customer_id | json }}
+        tags: {{ customer_tag_to_apply | json }}
       ) {
         userErrors {
           field

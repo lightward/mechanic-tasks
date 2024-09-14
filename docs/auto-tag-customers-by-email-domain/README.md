@@ -2,7 +2,7 @@
 
 Tags: Auto-Tag, Customers
 
-Useful in a million scenarios. The merchant who requested this task has discounts set up based on customer tag, and they're using this task to guarantee that qualifying customers see their discount immediately – even if they just signed up!
+This task runs when customers are created, and it applies a tag if they have one of the configured email domains.
 
 * View in the task library: [tasks.mechanic.dev/auto-tag-customers-by-email-domain](https://tasks.mechanic.dev/auto-tag-customers-by-email-domain)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-customers-by-email-domain.json)
@@ -32,9 +32,9 @@ mechanic/user/trigger
 
 ## Documentation
 
-Useful in a million scenarios. The merchant who requested this task has discounts set up based on customer tag, and they're using this task to guarantee that qualifying customers see their discount immediately – even if they just signed up!
+This task runs when customers are created, and it applies a tag if they have one of the configured email domains.
 
-This task runs when customers are created. Use the "Run task" button to scan all customers already registered.
+Use the "Run task" button to scan all customers already registered.
 
 ## Installing this task
 
