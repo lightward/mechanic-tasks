@@ -2,7 +2,7 @@
 
 Tags: Auto-Tag, Orders, Out of Stock
 
-This task watches for newly-created orders, and checks each line item for that variant's total inventory quantity. If any are found with an inventory level of 0 or less, the task will add the tag of your choice to the order – and, optionally, will add a tag to the customer and to each product related to an out-of-stock line item.
+This task watches for new orders, and checks each line item for that variant's total inventory quantity. If any are found with an inventory level of 0 or less, the task will add the tag of your choice to the order, and optionally will add a tag to the customer and to each product related to an out-of-stock line item.
 
 * View in the task library: [tasks.mechanic.dev/auto-tag-orders-that-contain-an-out-of-stock-item](https://tasks.mechanic.dev/auto-tag-orders-that-contain-an-out-of-stock-item)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-orders-that-contain-an-out-of-stock-item.json)
@@ -13,6 +13,7 @@ This task watches for newly-created orders, and checks each line item for that v
 ```json
 {
   "apply_this_order_tag__required": "",
+  "ignore_variants_marked_for_oversell__boolean": true,
   "apply_this_customer_tag": null,
   "apply_this_product_tag_for_each_out_of_stock_line_item": null
 }
@@ -30,7 +31,9 @@ shopify/orders/create
 
 ## Documentation
 
-This task watches for newly-created orders, and checks each line item for that variant's total inventory quantity. If any are found with an inventory level of 0 or less, the task will add the tag of your choice to the order – and, optionally, will add a tag to the customer and to each product related to an out-of-stock line item.
+This task watches for new orders, and checks each line item for that variant's total inventory quantity. If any are found with an inventory level of 0 or less, the task will add the tag of your choice to the order, and optionally will add a tag to the customer and to each product related to an out-of-stock line item.
+
+By default, this task will disregard the inventory levels of any variants which have the "Continue selling when out of stock" option enabled. Uncheck the "Ignore variants marked for oversell" task option to disable this exclusion.
 
 ## Installing this task
 
