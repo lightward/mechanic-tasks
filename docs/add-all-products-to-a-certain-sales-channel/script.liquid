@@ -41,6 +41,10 @@
 {% endif %}
 
 {% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% unless products_query contains "status:active" %}
+    {% assign products_query = products_query | append: " status:active" | strip %}
+  {% endunless %}
+
   {% capture bulk_operation_query %}
     query {
       products (

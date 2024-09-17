@@ -2,7 +2,7 @@
 
 Tags: Bulk, Products, Publish, Sales Channel
 
-Does exactly as it says: this task will publish all products to the sales channel(s) of your choice, on demand. Optionally, filter products by a search query, or choose to have this task run hourly or daily.
+Does exactly as it says: this task will publish all active products to the sales channel(s) of your choice, on demand. Optionally, filter products by a search query, or choose to have this task run hourly or daily.
 
 * View in the task library: [tasks.mechanic.dev/add-all-products-to-a-certain-sales-channel](https://tasks.mechanic.dev/add-all-products-to-a-certain-sales-channel)
 * Task JSON, for direct import: [task.json](../../tasks/add-all-products-to-a-certain-sales-channel.json)
@@ -40,7 +40,7 @@ mechanic/shopify/bulk_operation
 
 ## Documentation
 
-Does exactly as it says: this task will publish all products to the sales channel(s) of your choice, on demand. Optionally, filter products by a search query, or choose to have this task run hourly or daily.
+Does exactly as it says: this task will publish all active products to the sales channel(s) of your choice, on demand. Optionally, filter products by a search query, or choose to have this task run hourly or daily.
 
 Note: this task comes with a "test mode", which is enabled by default. Run the task at least once in this mode to make sure it would publish the products you expect, and then disbale the test mode.
 
