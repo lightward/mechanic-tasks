@@ -293,10 +293,10 @@
             }
           {% endcapture %}
 
-          {% assign result = query | shopify %}
+          {% assign variants_result = query | shopify %}
 
           {% if event.preview %}
-            {% capture result_json %}
+            {% capture variants_result_json %}
               {
                 "data": {
                   "product": {
@@ -314,18 +314,18 @@
               }
             {% endcapture %}
 
-            {% assign result = result_json | parse_json %}
+            {% assign variants_result = variants_result_json | parse_json %}
           {% endif %}
 
-          {% for variant in result.data.product.variants.nodes %}
+          {% for variant in variants_result.data.product.variants.nodes %}
             {% if variant.inventoryPolicy == "CONTINUE" or variant.inventoryQuantity > 0 %}
               {% assign has_in_stock_variant = true %}
               {% break %}
             {% endif %}
           {% endfor %}
 
-          {% if result.data.products.variants.pageInfo.hasNextPage and has_in_stock_variant != true %}
-            {% assign variants_cursor = result.data.products.variants.pageInfo.endCursor %}
+          {% if variants_result.data.product.variants.pageInfo.hasNextPage and has_in_stock_variant != true %}
+            {% assign variants_cursor = variants_result.data.product.variants.pageInfo.endCursor %}
           {% else %}
             {% break %}
           {% endif %}
