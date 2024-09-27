@@ -1,40 +1,144 @@
-{% if event.topic contains "shopify/orders/" %}
+{% assign collections_and_tags = options.collections_and_tags__keyval_required %}
+
+{% if event.topic == "shopify/orders/create" %}
   {% assign existing_tags = order.tags | split: ", " %}
-  {% assign tags_to_add = array %}
+
+  {% comment %}
+    -- get product IDs from order line items to build the collections search query
+  {% endcomment %}
+
+  {% assign order_product_ids = order.line_items | map: "product_id" | compact | uniq %}
+
+  {% if order_product_ids == blank %}
+    {% unless event.preview %}
+      {% log "This order does not contain any products from the shop catalog." %}
+      {% break %}
+    {% endunless %}
+  {% endif %}
+
+  {% assign search_query_parts = array %}
+
+  {% for order_product_id in order_product_ids %}
+    {% assign search_query_parts[search_query_parts.size] = order_product_id | prepend: "product_id:" %}
+  {% endfor %}
+
+  {% assign search_query = search_query_parts | join: " OR " %}
+
+  {% unless event.preview %}
+    {% log search_query: search_query %}
+  {% endunless %}
+
+  {% comment %}
+    -- get collections that contain any of this order's products
+  {% endcomment %}
+
+  {% assign cursor = nil %}
   {% assign order_collections = array %}
 
-  {% for line_item in order.line_items %}
-    {% if line_item.product != blank %}
-      {% assign order_collections = order_collections | concat: line_item.product.collections %}
+  {% for n in (1..10) %}
+    {% capture query %}
+      query {
+        collections(
+          first: 250
+          after: {{ cursor | json }}
+          query: {{ search_query | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            legacyResourceId
+            title
+            handle
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "collections": {
+              "nodes": [
+                {
+                  "id": "gid://shopify/Collection/1234567890",
+                  "legacyResourceId": "1234567890",
+                  "title": "Best Widgets",
+                  "handle": "best-widgets"
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign order_collections = order_collections | concat: result.data.collections.nodes %}
+
+    {% if result.data.collections.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.collections.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
     {% endif %}
   {% endfor %}
 
-  {% assign order_collection_ids = order_collections | map: "id" | join: "," | split: "," %}
+  {% if order_collections == blank %}
+    {% unless event.preview %}
+      {% log "This order does not contain any products that belong to any collections." %}
+      {% break %}
+    {% endunless %}
+  {% endif %}
+
+  {% comment %}
+    -- save the collection IDs, titles, and handles for comparison against the configured collections
+  {% endcomment %}
+
+  {% assign order_collection_ids = order_collections | map: "legacyResourceId" %}
   {% assign order_collection_titles = order_collections | map: "title" %}
   {% assign order_collection_handles = order_collections | map: "handle" %}
 
-  {% for pair in options.collections_and_tags__keyval_required %}
+  {% log
+    order_collection_ids: order_collection_ids,
+    order_collection_titles: order_collection_titles,
+    order_collection_handles: order_collection_handles
+  %}
+
+  {% comment %}
+    -- add order tags for any matched collections
+  {% endcomment %}
+
+  {% assign tags_to_add = array %}
+
+  {% for pair in collections_and_tags %}
     {% assign required_collection = pair[0] %}
     {% assign tags = pair[1] | split: "," %}
 
     {% if order_collection_ids contains required_collection
-          or order_collection_titles contains required_collection
-          or order_collection_handles contains required_collection
+      or order_collection_titles contains required_collection
+      or order_collection_handles contains required_collection
     %}
       {% for tag in tags %}
         {% assign stripped_tag = tag | strip %}
+
         {% unless existing_tags contains stripped_tag %}
-          {% assign tags_to_add[tags_to_add.size] = stripped_tag %}
+          {% assign tags_to_add = tags_to_add | push: stripped_tag %}
         {% endunless %}
       {% endfor %}
     {% endif %}
   {% endfor %}
 
   {% if event.preview %}
-    {% assign tags_to_add[0] = options.collections_and_tags__keyval_required.first.last %}
+    {% assign tags_to_add[0] = collections_and_tags.first.last %}
   {% endif %}
 
-  {% if tags_to_add != empty %}
+  {% if tags_to_add != blank %}
     {% action "shopify" %}
       mutation {
         tagsAdd(
@@ -134,16 +238,17 @@
     {% assign order_collection_titles = order_collections | map: "title" %}
     {% assign order_collection_handles = order_collections | map: "handle" %}
 
-    {% for pair in options.collections_and_tags__keyval_required %}
+    {% for pair in collections_and_tags %}
       {% assign required_collection = pair[0] %}
       {% assign tags = pair[1] | split: "," %}
 
       {% if order_collection_ids contains required_collection
-            or order_collection_titles contains required_collection
-            or order_collection_handles contains required_collection
+        or order_collection_titles contains required_collection
+        or order_collection_handles contains required_collection
       %}
         {% for tag in tags %}
           {% assign stripped_tag = tag | strip %}
+
           {% unless order.tags contains stripped_tag %}
             {% assign tags_to_add[tags_to_add.size] = stripped_tag %}
           {% endunless %}
@@ -152,10 +257,10 @@
     {% endfor %}
 
     {% if event.preview %}
-      {% assign tags_to_add[0] = options.collections_and_tags__keyval_required.first.last %}
+      {% assign tags_to_add[0] = collections_and_tags.first.last %}
     {% endif %}
 
-    {% if tags_to_add != empty %}
+    {% if tags_to_add != blank %}
       {% action "shopify" %}
         mutation {
           tagsAdd(

@@ -1,39 +1,87 @@
-{% assign collection = shop.collections[options.collection_id__number_required] %}
+{% assign collection_id = options.collection_id__number_required | prepend: "gid://shopify/Collection/" %}
 {% assign days_to_keep_products = options.number_of_days_to_keep_a_product_in_this_collection__number %}
 {% assign product_count = options.number_of_products_to_keep_in_this_collection__number %}
-
-{% if event.preview %}
-  {% capture collection_json %}
-    {
-      "admin_graphql_api_id": "gid://shopify/Collection/1234567890",
-      "products": [
-        {
-          "admin_graphql_api_id": "gid://shopify/Product/9876543210"
-        }
-      ]
-    }
-  {% endcapture %}
-
-  {% assign collection = collection_json | parse_json %}
-{% endif %}
-
-{% if collection == blank %}
-  {% error "Configured collection ID does not exist in this shop." %}
-{% endif %}
 
 {% if days_to_keep_products == blank and product_count == blank %}
   {% error %}
     "Please fill in either \"Number of days to keep a product in this collection\" or \"Number of products to keep in this collection\" (but not both!)."
   {% enderror %}
+
 {% elsif days_to_keep_products != blank and product_count != blank %}
   {% error "Please choose one of the options, but not both! :)" %}
 {% endif %}
+
+{% comment %}
+  -- get IDs of all products currently in the collection
+{% endcomment %}
+
+{% assign cursor = nil %}
+{% assign current_product_ids = array %}
+
+{% for n in (1..100) %}
+  {% capture query %}
+    query {
+      collection(id: {{ collection_id | json }}) {
+        products(
+          first: 250
+          after: {{ cursor | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "collection": {
+            "products": {
+              "nodes": [
+                {
+                  "id": "gid://shopify/Product/1234567890"
+                }
+              ]
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign current_product_ids
+    = result.data.collection.products.nodes
+    | map: "id"
+    | concat: current_product_ids
+  %}
+
+  {% if result.data.collection.products.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.collection.products.pageInfo.endCursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
 
 {% assign loop_count = 100 %}
 {% assign first_elements = 250 %}
 {% assign products_query = "status:active" %}
 
 {% if days_to_keep_products != blank %}
+  {% comment %}
+    -- calculate the "created at" threshold for products to keep in the collection
+  {% endcomment %}
+
   {% if days_to_keep_products < 1 %}
     {% error %}
       "\"Number of days to keep a product in this collection\" should be > 0"
@@ -44,11 +92,17 @@
   {% assign days_to_keep_products_s = days_to_keep_products | times: 86400 %}
   {% assign created_at_threshold_s = now_s | minus: days_to_keep_products_s %}
   {% assign created_at_threshold = created_at_threshold_s | date: "%Y-%m-%d" %}
+
   {% assign products_query = products_query
     | append: " created_at:>="
     | append: created_at_threshold
   %}
+
 {% elsif product_count != blank %}
+  {% comment %}
+    -- calculate the product pagination loops based on number of products to keep in the collection
+  {% endcomment %}
+
   {% if product_count < 1 %}
     {% error %}
       "\"Number of products to keep in this collection\" should be > 0"
@@ -58,6 +112,10 @@
   {% assign loop_count = product_count | divided_by: 250 %}
   {% assign remaining = product_count | modulo: 250 %}
 {% endif %}
+
+{% comment %}
+  -- get qualifying product IDs based on chosen criteria
+{% endcomment %}
 
 {% assign cursor = nil %}
 {% assign qualifying_product_ids = array %}
@@ -84,12 +142,10 @@
       ) {
         pageInfo {
           hasNextPage
+          endCursor
         }
-        edges {
-          cursor
-          node {
-            id
-          }
+        nodes {
+          id
         }
       }
     }
@@ -102,11 +158,9 @@
       {
         "data": {
           "products": {
-            "edges": [
+            "nodes": [
               {
-                "node": {
-                  "id": "gid://shopify/Product/1234567890"
-                }
+                "id": "gid://shopify/Product/2345678901"
               }
             ]
           }
@@ -117,17 +171,19 @@
     {% assign result = result_json | parse_json %}
   {% endif %}
 
-  {% assign result_product_ids = result.data.products.edges | map: "node" | map: "id" %}
+  {% assign result_product_ids = result.data.products.nodes | map: "id" %}
   {% assign qualifying_product_ids = qualifying_product_ids | concat: result_product_ids %}
 
   {% if result.data.products.pageInfo.hasNextPage %}
-    {% assign cursor = result.data.products.edges.last.cursor %}
+    {% assign cursor = result.data.products.pageInfo.endCursor %}
   {% else %}
     {% break %}
   {% endif %}
 {% endfor %}
 
-{% assign current_product_ids =  collection.products | map: "admin_graphql_api_id" %}
+{% comment %}
+  -- create arrays for the products to add and to remove, and split them into groups of 250
+{% endcomment %}
 
 {% assign product_ids_to_add = array %}
 {% assign product_ids_to_remove = array %}
@@ -152,7 +208,7 @@
   {% for group_of_product_ids_to_add in groups_of_product_ids_to_add %}
     {% capture mutation %}
       collectionAddProducts{{ forloop.index0 }}: collectionAddProducts(
-        id: {{ collection.admin_graphql_api_id | json }}
+        id: {{ collection_id | json }}
         productIds: {{ group_of_product_ids_to_add | json }}
       ) {
         userErrors {
@@ -172,7 +228,7 @@
   {% for group_of_product_ids_to_remove in groups_of_product_ids_to_remove %}
     {% capture mutation %}
       collectionRemoveProducts{{ forloop.index0 }}: collectionRemoveProducts(
-        id: {{ collection.admin_graphql_api_id | json }}
+        id: {{ collection_id | json }}
         productIds: {{ group_of_product_ids_to_remove | json }}
       ) {
         userErrors {
@@ -192,6 +248,7 @@
       {{ mutations | join: newline }}
     }
   {% endaction %}
+
 {% else %}
   {% log "This collection already has the correct products." %}
 {% endif %}

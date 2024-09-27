@@ -49,7 +49,7 @@ To illustrate, a shirt available at `myshop.com/products/stylish-shirt-503`, wit
 * XL, Heather gray: `503-XL-H`
 * Small, Red: `503-S-R`
 
-To update your product handle, so as to control the first portion of generated SKUs, open the product in the Shopify admin, scroll to the bottom of the page, click "Edit website SEO", and update the "URL and handle" field to taste. :)
+To update your product handle, so as to control the first portion of generated SKUs, open the product in the Shopify admin, scroll to the bottom of the page, click the edit icon next to "Search engine listing", and update the "URL handle" field to taste. :)
 
 ## Installing this task
 
