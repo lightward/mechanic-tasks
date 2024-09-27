@@ -1,71 +1,109 @@
-{% if event.preview %}
-  {% capture product_json %}
-    {
-      "handle": "stylish-shirt-503",
-      "variants": [
-        {
-          "sku": "503-L-B",
-          "option1": "L",
-          "option2": "Black",
-          "admin_graphql_api_id": "gid://shopify/ProductVariant/1234567890"
-        },
-        {
-          "sku": "503-XL-G",
-          "option1": "XL",
-          "option2": "Heather Grey",
-          "admin_graphql_api_id": "gid://shopify/ProductVariant/2345678901"
-      {% if options.skip_variants_that_already_have_skus__boolean %}
-        },
-        {
-          "option1": "XXL",
-          "option2": "Red",
-          "admin_graphql_api_id": "gid://shopify/ProductVariant/3456789012"
-      {% endif %}
-        }
-      ],
-      "options": [
-        {
-          "name": "Size"
-        },
-        {
-          "name": "Color"
-        }
-      ]
-    }
-  {% endcapture %}
-
-  {% assign product = product_json | parse_json %}
-{% endif %}
+{% assign skip_variants_that_already_have_skus = options.skip_variants_that_already_have_skus__boolean %}
+{% assign product_options_to_keep_unabbreviated = options.product_options_to_keep_unabbreviated__array %}
 
 {% assign allowed_characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" %}
 
 {% assign sku_base = product.handle | split: "-" | last | upcase %}
 
-{% for variant in product.variants %}
-  {% if options.skip_variants_that_already_have_skus__boolean and variant.sku != blank %}
-    {% log message: "variant already has a sku; skipping", original_sku: variant.sku %}
+{% if event.preview %}
+  {% assign sku_base = "503" %}
+{% endif %}
+
+{% assign cursor = nil %}
+{% assign variants = array %}
+
+{% for n in (1..8) %}
+  {% capture query %}
+    query {
+      product(id: {{ product.admin_graphql_api_id | json }}) {
+        id
+        handle
+        variants(
+          first: 250
+          after: {{ cursor | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            inventoryItem {
+              id
+            }
+            sku
+            selectedOptions {
+              name
+              value
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "product": {
+            "variants": {
+              "nodes": [
+                {
+                  "inventoryItem": {
+                    "id": "gid://shopify/InventoryItem/1234567890"
+                  },
+                  {% unless skip_variants_that_already_have_skus %}"sku": "503-XL-G",{% endunless %}
+                  "selectedOptions": [
+                    {
+                      "name": "Size",
+                      "value": "XL"
+                    },
+                    {
+                      "name": "Color",
+                      "value": "Heather Grey"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign variants = variants | concat: result.data.product.variants.nodes %}
+
+  {% if result.data.product.variants.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.product.variants.pageInfo.endCursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% for variant in variants %}
+  {% if skip_variants_that_already_have_skus and variant.sku != blank %}
+    {% log
+      message: "variant already has a sku; skipping",
+      original_sku: variant.sku
+    %}
     {% continue %}
   {% endif %}
 
   {% assign variant_sku_generated = sku_base %}
 
-  {% assign variant_options = array %}
-  {% assign variant_options[0] = variant.option1 %}
-  {% assign variant_options[1] = variant.option2 %}
-  {% assign variant_options[2] = variant.option3 %}
+  {% for selected_option in variant.selectedOptions %}
+    {% if product_options_to_keep_unabbreviated contains selected_option.name %}
+      {% assign variant_sku_generated = variant_sku_generated | append: "-" | append: selected_option.value %}
 
-  {% assign variant_option_names = product.options | map: "name" %}
-
-  {% for variant_option in variant_options %}
-    {% if variant_option == blank %}
-      {% continue %}
-    {% endif %}
-
-    {% if options.product_options_to_keep_unabbreviated__array contains variant_option_names[forloop.index0] %}
-      {% assign variant_sku_generated = variant_sku_generated | append: "-" | append: variant_option %}
     {% else %}
       {% assign variant_option_abbreviation = "" %}
-      {% assign variant_option_characters = variant_option | split: "" %}
+      {% assign variant_option_characters = selected_option.value | split: "" %}
+
       {% for variant_option_character in variant_option_characters %}
         {% if allowed_characters contains variant_option_character %}
           {% assign variant_option_abbreviation = variant_option_abbreviation | append: variant_option_character %}
@@ -81,16 +119,20 @@
   {% endfor %}
 
   {% if variant_sku_generated != variant.sku %}
-    {% log message: "updating sku", original_sku: variant.sku, generated_sku: variant_sku_generated %}
+    {% log
+      message: "updating sku",
+      original_sku: variant.sku,
+      generated_sku: variant_sku_generated
+    %}
 
     {% comment %}
-      -- update skus on inventory items, as this is no longer supported on variants as of 2024-07 API
+      -- as of the 2024-07 API, SKUs are updated on inventory items instead of variants
     {% endcomment %}
 
     {% action "shopify" %}
       mutation {
         inventoryItemUpdate(
-          id: {{ variant.inventory_item.admin_graphql_api_id | json }}
+          id: {{ variant.inventoryItem.id | json }}
           input: {
             sku: {{ variant_sku_generated | json }}
           }
