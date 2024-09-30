@@ -2,7 +2,7 @@
 
 Tags: Email, Invite, Orders, Retention
 
-Automatically prompt customers to activate their customer accounts, after placing an order in your store, by triggering a customizable Shopify-powered email. Useful if your online store unlocks special offers, functionality, or content after making a purchase. Optionally, only send invitations if the customer has ordered a product with a specific tag.
+Automatically prompt customers to activate their customer accounts, after placing an order in your store, by triggering a customizable Shopify-powered email. Useful if your online store unlocks special offers, functionality, or content after making a purchase. Optionally, only send invitations if the customer has a certain tag and/or has ordered a product with a specific tag.
 
 * View in the task library: [tasks.mechanic.dev/auto-invite-customers-after-an-order](https://tasks.mechanic.dev/auto-invite-customers-after-an-order)
 * Task JSON, for direct import: [task.json](../../tasks/auto-invite-customers-after-an-order.json)
@@ -33,9 +33,13 @@ shopify/orders/create
 
 ## Documentation
 
-Automatically prompt customers to activate their customer accounts, after placing an order in your store, by triggering a customizable Shopify-powered email. Useful if your online store unlocks special offers, functionality, or content after making a purchase. Optionally, only send invitations if the customer has ordered a product with a specific tag.
+Automatically prompt customers to activate their customer accounts, after placing an order in your store, by triggering a customizable Shopify-powered email. Useful if your online store unlocks special offers, functionality, or content after making a purchase. Optionally, only send invitations if the customer has a certain tag and/or has ordered a product with a specific tag.
 
-This task works by asking Shopify to send along an invitation email, using the subject and body that you configure here. The email will use your Shopify account's "Customer account invite" email template, available in the "Notifications" area of your Shopify settings. Note: Because this task triggers a Shopify-powered email, and because this email already uses a Shopify template, the actual message body is optional. (If provided, HTML and CSS are not supported.) And, there's no need to add in an invitation link yourself – this will be taken care of by the Shopify email template as well.
+This task works by asking Shopify to send along an invitation email, using the subject and body that you configure here. The email will use your Shopify account's "Customer account invite" email template, available in the "Notifications" area of your Shopify settings.
+
+**Note:** Because this task triggers a Shopify-powered email, and because this email already uses a Shopify template, the actual message body is optional. (If provided, HTML and CSS are not supported.) And, there's no need to add in an invitation link yourself – this will be taken care of by the Shopify email template as well.
+
+
 
 ## Installing this task
 
