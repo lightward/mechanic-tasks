@@ -1,14 +1,15 @@
+{% assign tag_to_monitor = options.tag_to_monitor__required %}
+{% assign tag_removal_interval_s = options.days_to_wait_before_untagging__number_required | times: 24 | times: 60 | times: 60 | round %}
+
+{% assign untag_flag_tag = tag_to_monitor | append: " - will be auto-removed by Mechanic" %}
+{% assign now_s = "now" | date: "%s" | times: 1 %}
+{% assign metafield_key = task.id | sha256 | slice: 0, 7 %}
+
 {% if event.topic == "user/task/untag_product" %}
   {% assign product_id = event.data.product_id %}
 {% else %}
   {% assign product_id = product.admin_graphql_api_id %}
 {% endif %}
-
-{% assign tag = options.tag_to_monitor__required %}
-{% assign untag_flag_tag = tag | append: " - will be auto-removed by Mechanic" %}
-{% assign tag_removal_interval_s = options.days_to_wait_before_untagging__number_required | times: 24 | times: 60 | times: 60 | round %}
-{% assign now_s = "now" | date: "%s" | times: 1 %}
-{% assign metafield_key = task.id | sha256 | slice: 0, 7 %}
 
 {% capture query %}
   query {
@@ -34,8 +35,7 @@
       "data": {
         "product": {
           "id": "gid://shopify/Product/1234567890",
-          "tags": [{{ tag | json }}],
-          "metafield": null
+          "tags": {{ tag_to_monitor | json }}
         }
       }
     }
@@ -46,10 +46,10 @@
 
 {% assign product = result.data.product %}
 
-{% if product.tags contains tag %}
+{% if product.tags contains tag_to_monitor %}
   {% assign time_to_remove_s = product.metafield.value | times: 1 %}
 
-  {% if product.metafield == nil or time_to_remove_s == 0 %}
+  {% if product.metafield == blank or time_to_remove_s == 0 %}
     {% action "shopify" %}
       mutation {
         tagsAdd(
@@ -67,28 +67,32 @@
           }
         }
 
-        productUpdate(
-          input: {
-            id: {{ product.id | json }}
-            metafields: [
-              {
-                namespace: "mechanic"
-                key: {{ metafield_key | json }}
-                value: {{ now_s | plus: tag_removal_interval_s | append: "" | json }}
-                type: "number_integer"
-              }
-            ]
-          }
-        ) {
-          product {
-            metafield(
+        metafieldsSet(
+          metafields: [
+            {
+              ownerId: {{ product.id | json }}
               namespace: "mechanic"
               key: {{ metafield_key | json }}
-            ) {
-              id
+              value: {{ now_s | plus: tag_removal_interval_s | append: "" | json }}
+              type: "number_integer"
+            }
+          ]
+        ) {
+          metafields {
+            id
+            namespace
+            key
+            type
+            value
+            owner {
+              ... on Product {
+                id
+                title
+              }
             }
           }
           userErrors {
+            code
             field
             message
           }
@@ -106,16 +110,31 @@
         "task_id": {{ task.id | json }}
       }
     {% endaction %}
+
   {% elsif product.tags contains untag_flag_tag %}
     {% if now_s < time_to_remove_s %}
-      {% log message: "This product is scheduled to be untagged, but it's not time yet. Skipping.", tag: tag, untag_flag_tag: untag_flag_tag, now_s: now_s, time_to_remove_s: time_to_remove_s %}
+      {% log
+        message: "This product is scheduled to be untagged, but it's not time yet. Skipping.",
+        tag_to_monitor: tag_to_monitor,
+        untag_flag_tag: untag_flag_tag,
+        now_s: now_s,
+        time_to_remove_s: time_to_remove_s
+      %}
+
     {% else %}
-      {% log message: "This product is scheduled to be untagged, and that time is now.", tag: tag, untag_flag_tag: untag_flag_tag, now_s: now_s, time_to_remove_s: time_to_remove_s %}
+      {% log
+        message: "This product is scheduled to be untagged, and that time is now.",
+        tag_to_monitor: tag_to_monitor,
+        untag_flag_tag: untag_flag_tag,
+        now_s: now_s,
+        time_to_remove_s: time_to_remove_s
+      %}
+
       {% action "shopify" %}
         mutation {
           tagsRemove(
             id: {{ product.id | json }}
-            tags: [{{ tag | json }}, {{ untag_flag_tag | json }}]
+            tags: {{ array | push: tag_to_monitor, untag_flag_tag | json }}
           ) {
             node {
               ... on Product {
@@ -128,11 +147,20 @@
             }
           }
 
-          metafieldDelete(
-            input: {
-              id: {{ product.metafield.id | json }}
-            }
+          metafieldsDelete(
+            metafields: [
+              {
+                ownerId: {{ product.id | json }}
+                namespace: "mechanic"
+                key: {{ metafield_key | json }}
+              }
+            ]
           ) {
+            deletedMetafields {
+              ownerId
+              namespace
+              key
+            }
             userErrors {
               field
               message
@@ -141,9 +169,21 @@
         }
       {% endaction %}
     {% endif %}
+
   {% else %}
-    {% log message: "This product has a tag removal time recorded, but the 'untag flag tag' has been removed. Skipping.", tag: tag, untag_flag_tag: untag_flag_tag, now_s: now_s, time_to_remove_s: time_to_remove_s %}
+    {% log
+      message: "This product has a tag removal time recorded, but the 'untag flag tag' has been removed. Skipping.",
+      tag_to_monitor: tag_to_monitor,
+      untag_flag_tag: untag_flag_tag,
+      now_s: now_s,
+      time_to_remove_s: time_to_remove_s
+    %}
   {% endif %}
+
 {% elsif event.topic == "user/task/untag_product" %}
-  {% log message: "The tag auto-removal event has arrived, but the product has already been untagged by someone/something else. Skipping.", tag: tag, product_tags: product.tags %}
+  {% log
+    message: "The tag auto-removal event has arrived, but the product has already been untagged by someone/something else. Skipping.",
+    tag_to_monitor: tag_to_monitor,
+    product_tags: product.tags
+  %}
 {% endif %}

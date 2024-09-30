@@ -1,10 +1,10 @@
 {% comment %}
   1. Watch for updates to inventory levels.
   2. Look up the associated product, when an update comes in.
-  3. If the product's total inventory is 0, record the current time in a metafield. If the
+  3. If the product's total inventory is <=0, record the current time in a metafield. If the
      total inventory is not 0, delete that metafield, if it exists.
   4. Scan all products, on a schedule, retrieving each product's out-of-stock time metafield.
-     For products found with a total inventory of 0, with a recorded time that's at least a
+     For products found with a total inventory of <=0, with a recorded time that's at least a
      configurable distance in days from the current time, unpublish the product.
 {% endcomment %}
 
@@ -112,11 +112,20 @@
     {% else %}
       {% action "shopify" %}
         mutation {
-          metafieldDelete(
-            input: {
-              id: {{ product.metafield.id | json }}
-            }
+          metafieldsDelete(
+            metafields: [
+              {
+                ownerId: {{ product.id | json }}
+                namespace: "mechanic"
+                key: "out_of_stock_at"
+              }
+            ]
           ) {
+            deletedMetafields {
+              ownerId
+              namespace
+              key
+            }
             userErrors {
               field
               message
