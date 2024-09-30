@@ -75,7 +75,7 @@
 
         {% if valid_start_datetime == blank %}
           {% unless event.preview %}
-            {% error "The event start date is not a valid date. Please re-enter it (per the task documentaion) and try scheduling the event again." %}
+            {% error "The event start date is not a valid date. Please re-enter it (per the task documentation) and try scheduling the event again." %}
             {% break %}
           {% endunless %}
         {% endif %}
@@ -88,7 +88,7 @@
 
         {% if valid_end_datetime == blank %}
           {% unless event.preview %}
-            {% error "The event end date is not a valid date. Please re-enter it (per the task documentaion) and try scheduling the event again." %}
+            {% error "The event end date is not a valid date. Please re-enter it (per the task documentation) and try scheduling the event again." %}
             {% break %}
           {% endunless %}
         {% endif %}
@@ -100,7 +100,7 @@
 
       {% if start_datetime_s <= now or start_datetime_s >= end_datetime_s %}
         {% unless event.preview %}
-          {% error "The event start and end dates must be future dates and the start date must be before the end date. Please re-enter them (per the task documentaion) and try scheduling the event again." %}
+          {% error "The event start and end dates must be future dates and the start date must be before the end date. Please re-enter them (per the task documentation) and try scheduling the event again." %}
           {% break %}
         {% endunless %}
       {% endif %}
@@ -137,7 +137,7 @@
           {% if discount != discount_string %}
             {% unless event.preview %}
               {% error
-                message: "Percentage discount entry incorrect. Please update the task configuration (per the task documentaion) and try scheduling the event again.",
+                message: "Percentage discount entry incorrect. Please update the task configuration (per the task documentation) and try scheduling the event again.",
                 discount: discount
               %}
               {% break %}
@@ -147,7 +147,7 @@
           {% if discount_percentage <= 0 or discount_percentage >= 100 %}
             {% unless event.preview %}
               {% error
-                message: "Percentage discount entries should contain an number between 0 and 100. Please update the task configuration (per the task documentaion) and try scheduling the event again.",
+                message: "Percentage discount entries should contain an number between 0 and 100. Please update the task configuration (per the task documentation) and try scheduling the event again.",
                 discount: discount
               %}
               {% break %}
@@ -160,7 +160,7 @@
           {% if discount_absolute == 0 %}
             {% unless event.preview %}
               {% error
-                message: "Fixed price and fixed discount entries must contain an absolute number > 0. Please update the task configuration (per the task documentaion) and try scheduling the event again.",
+                message: "Fixed price and fixed discount entries must contain an absolute number > 0. Please update the task configuration (per the task documentation) and try scheduling the event again.",
                 discount: discount
               %}
               {% break %}
@@ -1014,7 +1014,7 @@
 
     {% for product in products %}
       {% assign variant_updates = array %}
-      {% assign mutations = array %}
+      {% assign metafields_to_delete = array %}
 
       {% assign variants_with_metafield = product.variants.edges | map: "node" | where: "metafield" %}
 
@@ -1026,44 +1026,48 @@
             -- revert the prices on this variant and delete the metafield
           {% endcomment %}
 
-          {% capture variant_update %}
-            {
-              id: {{ variant.id | json}}
-              price: {{ metafield.original_price | json }}
-              {% if metafield.original_compare_at_price %}compareAtPrice: {{ metafield.original_compare_at_price | json }}{% endif %}
-            }
-          {% endcapture %}
-
+          {% assign variant_update = hash %}
+          {% assign variant_update["id"] = variant.id %}
+          {% assign variant_update["price"] = metafield.original_price %}
+          {% if metafield.original_compare_at_price %}
+            {% assign variant_update["compareAtPrice"] = metafield.original_compare_at_price %}
+          {% endif %}
           {% assign variant_updates = variant_updates | push: variant_update %}
 
-          {% capture mutation %}
-            mutation {
-              metafieldDelete(
-                input: {
-                  id: {{ variant.metafield.id | json }}
-                }
-              ) {
-                deletedId
-                userErrors {
-                  field
-                  message
-                }
-              }
-            }
-          {% endcapture %}
-
-          {% assign mutations = mutations | push: mutation %}
+          {% assign metafield_to_delete = hash %}
+          {% assign metafield_to_delete["ownerId"] = variant.id %}
+          {% assign metafield_to_delete["namespace"] = variant_metafield_namespace | json %}
+          {% assign metafield_to_delete["key"] = variant_metafield_key | json %}
+          {% assign metafields_to_delete = metafields_to_delete | push: metafield_to_delete %}
         {% endif %}
       {% endfor %}
+
+      {% if metafields_to_delete != blank %}
+        {% action "shopify" %}
+          mutation {
+            metafieldsDelete(
+              metafields: {{ metafields_to_delete | graphql_arguments }}
+            ) {
+              deletedMetafields {
+                ownerId
+                namespace
+                key
+              }
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+      {% endif %}
 
       {% if variant_updates != blank %}
         {% action "shopify" %}
           mutation {
             productVariantsBulkUpdate(
               productId: {{ product.id | json }}
-              variants: [
-                {{ variant_updates | join: newline }}
-              ]
+              variants: {{ variant_updates | graphql_arguments }}
             ) {
               product {
                 id
@@ -1084,10 +1088,6 @@
           }
         {% endaction %}
       {% endif %}
-
-      {% for mutation in mutations %}
-        {% action "shopify" mutation %}
-      {% endfor %}
     {% endfor %}
 
     {% if products_result.data.products.pageInfo.hasNextPage %}
@@ -1267,7 +1267,7 @@
 
     {% for product in products %}
       {% assign variant_updates = array %}
-      {% assign mutations = array %}
+      {% assign metafields_to_delete = array %}
 
       {% assign variants_with_metafield = product.variants.edges | map: "node" | where: "metafield" %}
 
@@ -1284,43 +1284,47 @@
           -- revert the prices on this variant and delete the metafield
         {% endcomment %}
 
-        {% capture variant_update %}
-          {
-            id: {{ variant.id | json}}
-            price: {{ metafield.original_price | json }}
-            {% if metafield.original_compare_at_price %}compareAtPrice: {{ metafield.original_compare_at_price | json }}{% endif %}
-          }
-        {% endcapture %}
-
+        {% assign variant_update = hash %}
+        {% assign variant_update["id"] = variant.id %}
+        {% assign variant_update["price"] = metafield.original_price %}
+        {% if metafield.original_compare_at_price %}
+          {% assign variant_update["compareAtPrice"] = metafield.original_compare_at_price %}
+        {% endif %}
         {% assign variant_updates = variant_updates | push: variant_update %}
 
-        {% capture mutation %}
+        {% assign metafield_to_delete = hash %}
+        {% assign metafield_to_delete["ownerId"] = variant.id %}
+        {% assign metafield_to_delete["namespace"] = variant_metafield_namespace | json %}
+        {% assign metafield_to_delete["key"] = variant_metafield_key | json %}
+        {% assign metafields_to_delete = metafields_to_delete | push: metafield_to_delete %}
+      {% endfor %}
+
+      {% if metafields_to_delete != blank %}
+        {% action "shopify" %}
           mutation {
-            metafieldDelete(
-              input: {
-                id: {{ variant.metafield.id | json }}
-              }
+            metafieldsDelete(
+              metafields: {{ metafields_to_delete | graphql_arguments }}
             ) {
-              deletedId
+              deletedMetafields {
+                ownerId
+                namespace
+                key
+              }
               userErrors {
                 field
                 message
               }
             }
           }
-        {% endcapture %}
-
-        {% assign mutations = mutations | push: mutation %}
-      {% endfor %}
+        {% endaction %}
+      {% endif %}
 
       {% if variant_updates != blank %}
         {% action "shopify" %}
           mutation {
             productVariantsBulkUpdate(
               productId: {{ product.id | json }}
-              variants: [
-                {{ variant_updates | join: newline }}
-              ]
+              variants: {{ variant_updates | graphql_arguments }}
             ) {
               product {
                 id
@@ -1341,10 +1345,6 @@
           }
         {% endaction %}
       {% endif %}
-
-      {% for mutation in mutations %}
-        {% action "shopify" mutation %}
-      {% endfor %}
     {% endfor %}
 
     {% if products_result.data.products.pageInfo.hasNextPage %}
@@ -1360,12 +1360,20 @@
 
   {% action "shopify" %}
     mutation {
-      metafieldDelete(
-        input: {
-          id: {{ shop.metafield.id | json }}
-        }
+      metafieldsDelete(
+        metafields: [
+          {
+            ownerId: {{ shop.id | json }}
+            namespace: {{ shop_metafield_namespace | json }}
+            key: {{ shop_metafield_key | json }}
+          }
+        ]
       ) {
-        deletedId
+        deletedMetafields {
+          ownerId
+          namespace
+          key
+        }
         userErrors {
           field
           message

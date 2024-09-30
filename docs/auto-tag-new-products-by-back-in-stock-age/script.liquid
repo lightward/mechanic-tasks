@@ -253,19 +253,19 @@
 
   {% log product: product, back_in_stock_inventory_level: back_in_stock_inventory_level %}
 
-  {% assign metafield_inputs = array %}
+  {% assign metafields_to_set = array %}
 
   {% comment %}
     -- save the first seen time in a metafield if it doesn't already exist
   {% endcomment %}
 
   {% if product.back_in_stock_first_seen_metafield == blank %}
-    {% assign metafield_input = hash %}
-    {% assign metafield_input["namespace"] = "mechanic" %}
-    {% assign metafield_input["key"] = "back_in_stock_first_seen_s" %}
-    {% assign metafield_input["type"] = "number_integer" %}
-    {% assign metafield_input["value"] = now_s %}
-    {% assign metafield_inputs = metafield_inputs | push: metafield_input %}
+    {% assign metafield_to_set = hash %}
+    {% assign metafield_to_set["namespace"] = "mechanic" %}
+    {% assign metafield_to_set["key"] = "back_in_stock_first_seen_s" %}
+    {% assign metafield_to_set["type"] = "number_integer" %}
+    {% assign metafield_to_set["value"] = now_s %}
+    {% assign metafields_to_set = metafields_to_set | push: metafield_to_set %}
   {% endif %}
 
   {% if product.totalInventory >= back_in_stock_inventory_level %}
@@ -274,12 +274,12 @@
     {% endcomment %}
 
     {% if product.back_in_stock_metafield == blank %}
-      {% assign metafield_input = hash %}
-      {% assign metafield_input["namespace"] = "mechanic" %}
-      {% assign metafield_input["key"] = "back_in_stock_s" %}
-      {% assign metafield_input["type"] = "number_integer" %}
-      {% assign metafield_input["value"] = now_s %}
-      {% assign metafield_inputs = metafield_inputs | push: metafield_input %}
+      {% assign metafield_to_set = hash %}
+      {% assign metafield_to_set["namespace"] = "mechanic" %}
+      {% assign metafield_to_set["key"] = "back_in_stock_s" %}
+      {% assign metafield_to_set["type"] = "number_integer" %}
+      {% assign metafield_to_set["value"] = now_s %}
+      {% assign metafields_to_set = metafields_to_set | push: metafield_to_set %}
     {% endif %}
 
   {% elsif product.back_in_stock_metafield != blank  %}
@@ -289,11 +289,20 @@
 
     {% action "shopify" %}
       mutation {
-        metafieldDelete(
-          input: {
-            id: {{ product.back_in_stock_metafield.id | json }}
-          }
+        metafieldsDelete(
+          metafields: [
+            {
+              ownerId: {{ product.id | json }}
+              namespace: "mechanic"
+              key: "back_in_stock_s"
+            }
+          ]
         ) {
+          deletedMetafields {
+            ownerId
+            namespace
+            key
+          }
           userErrors {
             field
             message
@@ -303,16 +312,27 @@
     {% endaction %}
   {% endif %}
 
-  {% if metafield_inputs != blank %}
+  {% if metafields_to_set != blank %}
     {% action "shopify" %}
       mutation {
-        productUpdate(
-          input: {
-            id: {{ product.id | json }}
-            metafields: {{ metafield_inputs | graphql_arguments }}
-          }
+        metafieldsSet(
+          metafields: {{ metafields_to_set | graphql_arguments }}
         ) {
+          metafields {
+            id
+            namespace
+            key
+            type
+            value
+            owner {
+              ... on Product {
+                id
+                title
+              }
+            }
+          }
           userErrors {
+            code
             field
             message
           }

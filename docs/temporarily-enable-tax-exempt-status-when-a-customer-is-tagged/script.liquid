@@ -21,6 +21,7 @@
 
   {% assign customer_qualifies = false %}
   {% assign customer_tags = customer.tags | split: ", " %}
+
   {% if customer_tags contains options.tax_exempt_tag__required %}
     {% if customer.metafields[metafield_namespace][metafield_key] != nil %}
       {% log "Customer already has their metafield set - skipping" %}
@@ -76,6 +77,7 @@
       }
     {% endaction %}
   {% endif %}
+
 {% elsif event.topic == expiry_event_topic %}
   {% capture customer_query %}
     query {
@@ -148,11 +150,20 @@
           }
         }
 
-        metafieldDelete(
-          input: {
-            id: {{ customer_result.data.customer.metafield.id | json }}
-          }
+        metafieldsDelete(
+          metafields: [
+            {
+              ownerId: {{ customer.id | json }}
+              namespace: {{ metafield_namespace | json }}
+              key: {{ metafield_key | json }}
+            }
+          ]
         ) {
+          deletedMetafields {
+            ownerId
+            namespace
+            key
+          }
           userErrors {
             field
             message
