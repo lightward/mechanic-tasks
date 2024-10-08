@@ -85,7 +85,7 @@
     {% action "shopify" %}
       mutation {
         productUpdate(
-          input: {
+          product: {
             id: {{ product.id | json }}
             templateSuffix: {{ product_template_suffix_to_apply | json }}
           }

@@ -1,57 +1,115 @@
+{% assign avoid_duplicate_invites = options.only_invite_if_the_customer_has_not_yet_been_invited__boolean %}
+{% assign invite_customer_tag = options.only_invite_if_the_customer_has_this_tag %}
+{% assign invite_product_tag = options.only_invite_if_the_order_contains_a_product_with_this_tag %}
+{% assign custom_invitation_email_subject = options.custom_invitation_email_subject %}
+{% assign custom_invitation_email_message = options.custom_invitation_email_message__multiline %}
+{% assign invitation_email_bcc = options.invitation_email_bcc__array %}
+
 {% comment %}
-  Establish option order:
-  {{ options.only_invite_if_the_customer_has_not_yet_been_invited__boolean }}
-  {{ options.only_invite_if_the_customer_has_this_tag }}
-  {{ options.only_invite_if_the_order_contains_a_product_with_this_tag }}
-  {{ options.custom_invitation_email_subject }}
-  {{ options.custom_invitation_email_message__multiline }}
-  {{ options.invitation_email_bcc__array }}
+  -- get customer and product details from order
 {% endcomment %}
 
-{% if event.preview %}
-  {% assign order = hash %}
-  {% assign order["customer"] = hash %}
-  {% assign order["customer"]["state"] = "disabled" %}
-
-  {% if options.only_invite_if_the_customer_has_this_tag != blank %}
-    {% assign order["customer"]["tags"] = options.only_invite_if_the_customer_has_this_tag %}
-  {% endif %}
-
-  {% if options.only_invite_if_the_order_contains_a_product_with_this_tag != blank %}
-    {% capture line_items_json %}
-      [
-        {
-          "product": {
-            "tags": {{ options.only_invite_if_the_order_contains_a_product_with_this_tag | json }}
+{% capture query %}
+  query {
+    order(id: {{ order.admin_graphql_api_id | json }}) {
+      id
+      name
+      customer {
+        id
+        displayName
+        email
+        state
+        tags
+      }
+      lineItems(first: 250) {
+        nodes {
+          title
+          product {
+            tags
           }
         }
-      ]
-    {% endcapture %}
-    {% assign order["line_items"] = line_items_json | parse_json %}
-  {% endif %}
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "order": {
+          "id": "gid://shopify/Order/1234567890",
+          "name": "#1185",
+          "customer": {
+            "id": "gid://shopify/Customer/1234567890",
+            "state": "DISABLED",
+            "tags": {{ invite_customer_tag | json }}
+          },
+          "lineItems": {
+            "nodes": [
+              {
+                "product": {
+                  "tags": {{ invite_product_tag | json }}
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
 {% endif %}
 
+{% assign order = result.data.order %}
+{% assign customer = order.customer %}
+
+{% comment %}
+  -- verify whether the customer qualifies for an invite based on configured options
+{% endcomment %}
+
 {% assign customer_qualifies = true %}
-{% if order.customer == nil or order.customer.state == "enabled" %}
+
+{% if customer == blank or customer.state == "ENABLED" %}
   {% assign customer_qualifies = false %}
-{% elsif options.only_invite_if_the_customer_has_not_yet_been_invited__boolean and order.customer.state == "invited" %}
+
+{% elsif avoid_duplicate_invites and customer.state == "INVITED" %}
   {% assign customer_qualifies = false %}
-{% elsif options.only_invite_if_the_customer_has_this_tag != blank %}
-  {% assign customer_tags = order.customer.tags | downcase | split: ", " %}
-  {% assign tag_to_match = options.only_invite_if_the_customer_has_this_tag | strip | downcase %}
+
+{% elsif invite_customer_tag != blank %}
+  {% assign customer_tags
+    = customer.tags
+    | json
+    | downcase
+    | parse_json
+  %}
+  {% assign tag_to_match = invite_customer_tag | strip | downcase %}
+
   {% unless customer_tags contains tag_to_match %}
     {% assign customer_qualifies = false %}
   {% endunless %}
 {% endif %}
 
 {% assign order_qualifies = false %}
+
 {% if customer_qualifies %}
-  {% if options.only_invite_if_the_order_contains_a_product_with_this_tag == blank %}
+  {% if invite_product_tag == blank %}
     {% assign order_qualifies = true %}
+
   {% else %}
-    {% for line_item in order.line_items %}
-      {% assign product_tags = line_item.product.tags | split: ", " %}
-      {% if product_tags contains options.only_invite_if_the_order_contains_a_product_with_this_tag %}
+    {% for line_item in order.lineItems.nodes %}
+      {% assign product_tags
+        = line_item.product.tags
+        | json
+        | downcase
+        | parse_json
+      %}
+      {% assign tag_to_match = invite_product_tag | strip | downcase %}
+
+      {% if product_tags contains tag_to_match %}
         {% assign order_qualifies = true %}
         {% break %}
       {% endif %}
@@ -59,36 +117,54 @@
   {% endif %}
 {% endif %}
 
-{% if order.customer == nil %}
+{% if customer == blank %}
   {% log message: "Order does not have a customer; skipping invitation" %}
+
 {% elsif customer_qualifies == false %}
-  {% log message: "Customer does not qualify for an invitation", customer_state: order.customer.state, customer_tags: order.customer.tags %}
-{% elsif order_qualifies == false and options.only_invite_if_the_order_contains_a_product_with_this_tag != blank %}
-  {% log message: "No qualifying product found", required_product_tag: options.only_invite_if_the_order_contains_a_product_with_this_tag %}
-{% endif %} 
+  {% log
+    message: "Customer does not qualify for an invitation",
+    customer_name: customer.displayName,
+    customer_state: customer.state,
+    customer_tags: customer.tags
+  %}
+
+{% elsif order_qualifies == false and invite_product_tag != blank %}
+  {% log
+    message: "No qualifying product found",
+    invite_product_tag: invite_product_tag,
+    order: order
+  %}
+{% endif %}
 
 {% if order_qualifies %}
-  {% assign customer_invite = hash %}
-
-  {% if options.custom_invitation_email_subject != blank %}
-    {% assign customer_invite["subject"] = options.custom_invitation_email_subject %}
-  {% endif %}
-
-  {% if options.custom_invitation_email_message__multiline != blank %}
-    {% assign customer_invite["custom_message"] = options.custom_invitation_email_message__multiline %}
-  {% endif %}
-
-  {% if options.invitation_email_bcc__array != blank %}
-    {% assign customer_invite["bcc"] = options.invitation_email_bcc__array %}
-  {% endif %}
-
   {% action "shopify" %}
-    [
-      "post",
-      "/admin/customers/{{ order.customer.id | json }}/send_invite.json",
-      {
-        "customer_invite": {{ customer_invite | json }}
+    mutation {
+      customerSendAccountInviteEmail(
+        customerId: {{ customer.id | json }}
+        email: {
+          {% if custom_invitation_email_subject != blank %}
+            subject: {{ custom_invitation_email_subject | json }}
+          {% endif %}
+          {% if custom_invitation_email_message != blank %}
+            customMessage: {{ custom_invitation_email_message | json }}
+          {% endif %}
+          {% if invitation_email_bcc != blank %}
+            bcc: {{ invitation_email_bcc | json }}
+          {% endif %}
+        }
+      ) {
+        customer {
+          id
+          displayName
+          email
+          state
+        }
+        userErrors {
+          code
+          field
+          message
+        }
       }
-    ]
+    }
   {% endaction %}
 {% endif %}

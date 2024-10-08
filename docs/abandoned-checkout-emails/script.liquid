@@ -84,18 +84,78 @@
     {% assign line_item_output = array %}
 
     {% for line_item in checkout.line_items %}
-      {% assign product = shop.products[line_item.product_id] %}
-      {% assign variant = shop.variants[line_item.variant_id] %}
-      {% assign variant_image = product.images | where: "id", variant.image_id | first %}
-      {% assign image = variant_image | default: product.image %}
+      {% comment %}
+        -- query GraphQL variant and product resource to determine line item image to use
+      {% endcomment %}
+
+      {% capture query %}
+        query {
+          productVariant(id: {{ line_item.variant_id | prepend: "gid://shopify/ProductVariant/" | json }}) {
+            image {
+              url(transform: {
+                maxWidth: 60
+                maxHeight: 60
+                scale: 3
+                crop: CENTER
+              })
+            }
+            product {
+              featuredMedia {
+                mediaContentType
+                ... on MediaImage {
+                  image {
+                    url(transform: {
+                      maxWidth: 60
+                      maxHeight: 60
+                      scale: 3
+                      crop: CENTER
+                    })
+                  }
+                }
+              }
+              media(
+                first: 1
+                query: "media_type:image"
+              ) {
+                nodes {
+                  ... on MediaImage {
+                    image {
+                      url(transform: {
+                        maxWidth: 60
+                        maxHeight: 60
+                        scale: 3
+                        crop: CENTER
+                      })
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = query | shopify %}
+
+      {% assign variant = result.data.productVariant %}
+
+      {% comment %}
+        -- use image assigned to variant if it exists; else use the featured media for the product if it is an image; else use the first product image
+      {% endcomment %}
+
+      {% assign image_url
+        = variant.image.url
+        | default: variant.product.featuredMedia.image.url
+        | default: variant.product.media.nodes.first.image.url
+      %}
 
       {%- capture line_item_html -%}
         <tr class="order-list__item">
           <td class="order-list__item__cell">
             <table>
               <td>
-                {% if image %}
-                  <img src="{{ image.src | img_url: 'compact_cropped' }}" align="left" width="60" height="60" class="order-list__product-image"/>
+                {% if image_url %}
+                  <img src="{{ image_url }}" align="left" width="60" height="60" class="order-list__product-image"/>
                 {% endif %}
               </td>
               <td class="order-list__product-description-cell">

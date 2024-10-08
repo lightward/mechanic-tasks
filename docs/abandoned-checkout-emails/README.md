@@ -2,7 +2,7 @@
 
 Tags: Abandoned Checkout, Email, Retention
 
-This task monitors checkouts in your store, and kicks off an email a configurable number of hours after a checkout is created – if the checkout wasn't completed, and if the customer provided their email address.
+This task monitors checkouts in your store, and kicks off an email a configurable number of hours after a checkout is created - if the checkout wasn't completed, and if the customer provided their email address.
 
 * View in the task library: [tasks.mechanic.dev/abandoned-checkout-emails](https://tasks.mechanic.dev/abandoned-checkout-emails)
 * Task JSON, for direct import: [task.json](../../tasks/abandoned-checkout-emails.json)
@@ -36,7 +36,7 @@ shopify/orders/create
 
 ## Documentation
 
-This task monitors checkouts in your store, and kicks off an email a configurable number of hours after a checkout is created – if the checkout wasn't completed, and if the customer provided their email address.
+This task monitors checkouts in your store, and kicks off an email a configurable number of hours after a checkout is created - if the checkout wasn't completed, and if the customer provided their email address.
 
 This task uses the same basic formatting as the standard Shopify abandoned checkout notification template. You may override the action button background with your own brand color, provided it is entered as an RGB hex value (e.g. #abc123).
 

@@ -82,7 +82,7 @@
   {% for keyval in fulfillment_order_ids_by_location_and_type %}
     {% action "shopify" %}
       mutation {
-        fulfillmentCreateV2(
+        fulfillmentCreate(
           fulfillment: {
             lineItemsByFulfillmentOrder: [
               {% for fulfillment_order_id in keyval[1] %}

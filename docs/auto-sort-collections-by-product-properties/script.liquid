@@ -1,6 +1,53 @@
-{% assign product_property_lookups = options.product_property_lookups__array_required %}
+{% assign product_property = options.product_property %}
+{% assign product_metafield = options.product_metafield %}
+{% assign first_variant_property = options.first_variant_property %}
 {% assign only_sort_these_collections = options.only_sort_these_collections__array %}
 {% assign reverse_sort = options.reverse_sort__boolean %}
+
+{% comment %}
+  -- build the query fragment for the configured property
+{% endcomment %}
+
+{% assign property_fields_count = 0 %}
+
+{% if product_property != blank %}
+  {% assign property_fields_count = property_fields_count | plus: 1 %}
+{% endif %}
+
+{% if product_metafield != blank %}
+  {% assign property_fields_count = property_fields_count | plus: 1 %}
+{% endif %}
+
+{% if first_variant_property != blank %}
+  {% assign property_fields_count = property_fields_count | plus: 1 %}
+{% endif %}
+
+{% if property_fields_count != 1 %}
+  {% error "Configure one (and only one) of these options: 'Product property', 'Product metafield', or 'First variant property'" %}
+  {% break %}
+{% endif %}
+
+{% assign query_fragment = nil %}
+
+{% if product_property != blank %}
+  {% assign query_fragment = product_property %}
+
+{% elsif product_metafield != blank %}
+  {%- capture query_fragment -%}
+    metafield(key: {{ product_metafield | json }}) {
+      value
+    }
+  {%- endcapture -%}
+
+{% elsif first_variant_property != blank %}
+  {%- capture query_fragment -%}
+    variants(first: 1) {
+      nodes {
+        {{ first_variant_property }}
+      }
+    }
+  {%- endcapture -%}
+{% endif %}
 
 {% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
   {% comment %}
@@ -16,16 +63,17 @@
         collections(
           first: 250
           after: {{ cursor | json }}
-          query: {{ search_query | json }}
         ) {
           pageInfo {
             hasNextPage
             endCursor
           }
           nodes {
+            id
             legacyResourceId
-            sortOrder
             title
+            handle
+            sortOrder
           }
         }
       }
@@ -40,6 +88,7 @@
             "collections": {
               "nodes": [
                 {
+                  "id": "gid://shopify/Collection/1234567890",
                   "legacyResourceId": "1234567890",
                   "sortOrder": "MANUAL"
                 }
@@ -52,10 +101,15 @@
       {% assign result = result_json | parse_json %}
     {% endif %}
 
+    {% comment %}
+      -- loop through collections and filter by ID, title, or handle as configured
+    {% endcomment %}
+
     {% for collection in result.data.collections.nodes %}
       {% if only_sort_these_collections != blank %}
         {% unless only_sort_these_collections contains collection.legacyResourceId
           or only_sort_these_collections contains collection.title
+          or only_sort_these_collections contains collection.handle
           or event.preview
         %}
           {% continue %}
@@ -63,14 +117,13 @@
       {% endif %}
 
       {% if collection.sortOrder != "MANUAL" %}
-        {% log
-          message: "Collection is not configured for manual sorting; skipping.",
-          collection: collection
-        %}
+        {% log %}
+          {{ collection.title | json | append: " is not configured for manual sorting; skipping." | json }}
+        {% endlog %}
         {% continue %}
       {% endif %}
 
-      {% assign collection_ids_to_sort = collection_ids_to_sort | push: collection.legacyResourceId %}
+      {% assign collection_ids_to_sort = collection_ids_to_sort | push: collection.id %}
     {% endfor %}
 
     {% if result.data.collections.pageInfo.hasNextPage %}
@@ -81,7 +134,7 @@
   {% endfor %}
 
   {% if collection_ids_to_sort == blank %}
-    {% log "No collections qualified to be sorted on this task run." %}
+    {% log "None of the configured collections were found or set for manual sorting." %}
     {% break %}
   {% endif %}
 
@@ -114,94 +167,121 @@
   {% assign cache_index = event.data.cache_index %}
   {% assign collection_ids_to_sort = cache[cache_key] %}
   {% assign collection_id = collection_ids_to_sort[cache_index] %}
-  {% assign collection = shop.collections[collection_id] %}
-
-  {% if event.preview %}
-    {% comment %}
-      -- use stub data instead of a preview event to incorporate the configured product properties
-    {% endcomment %}
-
-    {% assign product_ids = array | push: "1234567890", "3456789012", "2345678901" %}
-    {% assign products = array %}
-
-    {% for product_id in product_ids %}
-      {% assign product = hash %}
-
-      {% for lookup in product_property_lookups reversed %}
-        {% if forloop.first %}
-          {% assign product[lookup] = product_id %}
-
-        {% else %}
-          {% assign temp = product %}
-          {% assign product = hash %}
-          {% assign product[lookup] = temp %}
-        {% endif %}
-      {% endfor %}
-
-      {% assign product["id"] = product_id %}
-      {% assign product["admin_graphql_api_id"] = "gid://shopify/Product/" | append: product_id %}
-      {% assign products[products.size] = product %}
-    {% endfor %}
-
-    {% capture collection_json %}
-      {
-        "title": {{ only_sort_these_collections[0] | default: "Some collection" | json }},
-        "admin_graphql_api_id": "gid://shopify/Collection/1234567890",
-        "products": {{ products | json }}
-      }
-    {% endcapture %}
-
-    {% assign collection = collection_json | parse_json %}
-  {% endif %}
-
-  {% comment %}
-    -- process products using REST resources to align with configured product properties
-  {% endcomment %}
 
   {% assign moves = array %}
   {% assign product_ids_and_positions = hash %}
   {% assign product_ids_and_values = array %}
 
-  {% for product in collection.products %}
-    {% assign product_ids_and_positions[product.admin_graphql_api_id] = forloop.index0 %}
+  {% assign cursor = nil %}
+  {% assign products = array %}
+
+  {% for n in (1..100) %}
+    {% capture query %}
+      query {
+        collection(id: {{ collection_id | json }}) {
+          id
+          title
+          products(
+            first: 250
+            after: {{ cursor | json }}
+            sortKey: COLLECTION_DEFAULT
+          ) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              id
+              {{ query_fragment }}
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "collection": {
+              "id": "gid://shopify/Collection/1234567890",
+              "title": "Widgets",
+              "products": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/Product/1234567890"
+                  },
+                  {
+                    "id": "gid://shopify/Product/2345678901"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign collection = result.data.collection %}
+    {% assign products = products | concat: result.data.collection.products.nodes %}
+
+    {% if result.data.products.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.products.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% log collection_products: products %}
+
+  {% for product in products %}
+    {% assign product_ids_and_positions[product.id] = forloop.index0 %}
 
     {% assign product_id_and_value = hash %}
-    {% assign product_id_and_value["id"] = product.admin_graphql_api_id %}
+    {% assign product_id_and_value["id"] = product.id %}
 
-    {% assign value = product %}
+    {% if product_property != blank %}
+      {% assign value = product[product_property] %}
 
-    {% for lookup in options.product_property_lookups__array_required %}
-      {% comment %}
-        -- NOTE: command methods (size, first, last) can only be invoked via dot notation
-      {% endcomment %}
+    {% elsif product_metafield != blank %}
+      {% assign value = product.metafield.value %}
 
-      {% case lookup %}
-        {% when "size" %}
-          {% assign value = value.size %}
-        {% when "first" %}
-          {% assign value = value.first %}
-        {% when "last" %}
-          {% assign value = value.last %}
-        {% else %}
-          {% assign value = value[lookup] %}
-      {% endcase %}
-    {% endfor %}
+    {% elsif first_variant_property != blank %}
+      {% assign value = product.variants.nodes.first[first_variant_property] %}
+    {% endif %}
 
     {% comment %}
-      -- make sure this is always a serializable/sortable object, defaulting to nil in the case of an empty string so that SKU values which are *either* nil or an empty string always end up at the end of the list.
+      -- make sure this is always a serializable/sortable object, defaulting to nil in the case of an empty string
+      -- values which are *either* nil or an empty string will always end up at the end of the list
     {% endcomment %}
 
     {% assign product_id_and_value["value"] = value | json | parse_json | default: nil %}
-
     {% assign product_ids_and_values[product_ids_and_values.size] = product_id_and_value %}
   {% endfor %}
 
   {% assign sorted_product_values = product_ids_and_values | sort: "value" %}
-  {% assign sorted_product_ids = product_ids_and_values | sort: "value" | map: "id" %}
+  {% assign sorted_product_ids = sorted_product_values | map: "id" %}
 
   {% if reverse_sort %}
-    {% assign sorted_product_ids = sorted_product_ids | reverse %}
+    {% comment %}
+      -- only reverse the order of products which have values, leaving nil values at the end
+    {% endcomment %}
+
+    {% assign sorted_product_ids
+      = sorted_product_values
+      | where: "value"
+      | map: "id"
+      | reverse
+      | concat: sorted_product_ids
+      | uniq
+    %}
   {% endif %}
+
+  {% log sorted_product_ids: sorted_product_ids %}
 
   {% comment %}
     -- determine the moves necessary to place products in their sorted positions
@@ -215,6 +295,27 @@
       {% assign moves[moves.size] = move %}
     {% endif %}
   {% endfor %}
+
+  {% comment %}
+    -- add preview here so collectionReorderProducts is reached, and the proper scopes are requested
+  {% endcomment %}
+
+  {% if event.preview %}
+    {% capture moves_json %}
+      [
+        {
+          "id": "gid://shopify/Product/1234567890",
+          "newPosition": "1"
+        },
+        {
+          "id": "gid://shopify/Product/2345678901",
+          "newPosition": "0"
+        }
+      ]
+    {% endcapture %}
+
+    {% assign moves = moves_json | parse_json %}
+  {% endif %}
 
   {% if moves == blank %}
     {% log
@@ -239,7 +340,7 @@
       {% action "shopify" %}
         mutation {
           collectionReorderProducts(
-            id: {{ collection.admin_graphql_api_id | json }}
+            id: {{ collection.id | json }}
             moves: {{ move_group | graphql_arguments }}
           ) {
             userErrors {
