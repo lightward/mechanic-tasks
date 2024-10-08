@@ -80,20 +80,32 @@
     {% else %}
       {% action "shopify" %}
         mutation {
-          productUpdate(
-            input: {
-              id: {{ product.id | json }}
-              metafields: [
-                {
-                  namespace: "mechanic"
-                  key: "out_of_stock_at"
-                  type: "date_time"
-                  value: {{ "now" | date: time_format | json }}
-                }
-              ]
-            }
+          metafieldsSet(
+            metafields: [
+              {
+                ownerId: {{ product.id | json }}
+                namespace: "mechanic"
+                key: "out_of_stock_at"
+                type: "date_time"
+                value: {{ "now" | date: time_format | json }}
+              }
+            ]
           ) {
+            metafields {
+              id
+              namespace
+              key
+              type
+              value
+              owner {
+                ... on Product {
+                  id
+                  title
+                }
+              }
+            }
             userErrors {
+              code
               field
               message
             }
