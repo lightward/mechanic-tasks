@@ -62,8 +62,8 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-remove a product tag x days after it's added](./auto-remove-a-product-tag-x-days-after-its-added)
 * [Auto-remove attributes on new orders after X minutes](./auto-remove-attributes-on-new-orders-after-x-minutes)
 * [Auto-reserve draft order items for X days](./auto-reserve-draft-order-items-for-x-days)
+* [Auto-sort collections by a product property](./auto-sort-collections-by-product-properties)
 * [Auto-sort collections by inventory levels](./auto-sort-collections-by-inventory-levels)
-* [Auto-sort collections by product properties](./auto-sort-collections-by-product-properties)
 * [Auto-tag a customer's first order](./auto-tag-a-customers-first-order)
 * [Auto-tag cancelled orders](./auto-tag-cancelled-orders)
 * [Auto-tag customers based on discount codes used](./auto-tag-customers-based-on-discount-codes-used)
@@ -622,8 +622,8 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto create collections by metafield values](./auto-create-collections-by-metafield-values)
 * [Auto-add products to a custom collection when tagged](./auto-add-products-to-a-custom-collection-when-tagged)
 * [Auto-create collections by product type or vendor](./auto-create-collections-by-product-type-or-vendor)
+* [Auto-sort collections by a product property](./auto-sort-collections-by-product-properties)
 * [Auto-sort collections by inventory levels](./auto-sort-collections-by-inventory-levels)
-* [Auto-sort collections by product properties](./auto-sort-collections-by-product-properties)
 * [Auto-tag orders by product collections](./auto-tag-orders-by-product-collections)
 * [Auto-tag products in a manual collection](./auto-tag-products-in-a-manual-collection)
 * [Delete the oldest x products from a specific collection](./delete-the-oldest-x-products-from-a-specific-collection)
@@ -1353,7 +1353,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-publish new products](./auto-publish-new-products)
 * [Auto-publish products tagged with the current day](./auto-publish-products-tagged-with-the-current-day)
 * [Auto-reserve draft order items for X days](./auto-reserve-draft-order-items-for-x-days)
-* [Auto-sort collections by product properties](./auto-sort-collections-by-product-properties)
+* [Auto-sort collections by a product property](./auto-sort-collections-by-product-properties)
 * [Auto-tag customers when they purchase a matching product](./auto-tag-customers-upon-product-purchase)
 * [Auto-tag customers who purchase an item on sale](./auto-tag-customers-who-purchase-an-item-on-sale)
 * [Auto-tag customers with product tags from their order](./tag-customers-with-product-tags-from-their-order)
@@ -1641,8 +1641,8 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Sort
 
+* [Auto-sort collections by a product property](./auto-sort-collections-by-product-properties)
 * [Auto-sort collections by inventory levels](./auto-sort-collections-by-inventory-levels)
-* [Auto-sort collections by product properties](./auto-sort-collections-by-product-properties)
 * [Move out-of-stock products to the end of a collection](./move-out-of-stock-products-to-the-end-of-a-collection)
 
 ### Spend

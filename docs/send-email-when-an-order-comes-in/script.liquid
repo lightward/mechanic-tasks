@@ -1,24 +1,66 @@
-{% assign order_qualifies = false %}
-{% if options.only_for_orders_including_this_product_tag == blank %}
-  {% assign order_qualifies = true %}
-{% else %}
-  {% assign order_product_tags = order.line_items | map: "product" | map: "tags" | join: ", " | split: ", " | sort | uniq %}
-  {% if order_product_tags contains options.only_for_orders_including_this_product_tag %}
-    {% assign order_qualifies = true %}
-  {% endif %}
-{% endif %}
+{% assign only_for_orders_including_this_product_tag = options.only_for_orders_including_this_product_tag %}
+{% assign email_recipients = options.email_recipients__required %}
+{% assign email_subject = options.email_subject__required %}
+{% assign email_body = options.email_body__required_multiline %}
 
-{% if event.preview or order_qualifies %}
-  {
-    "action": {
-      "type": "email",
-      "options": {
-        "to": {{ options.email_recipients__required | json }},
-        "subject": {{ options.email_subject__required | strip | json }},
-        "body": {{ options.email_body__required_multiline | newline_to_br | strip | json }},
-        "reply_to": {{ shop.customer_email | json }},
-        "from_display_name": {{ shop.name | json }}
+{% if only_for_orders_including_this_product_tag == blank %}
+  {% assign order_qualifies = true %}
+
+{% else %}
+  {% capture query %}
+    query {
+      order(id: {{ order.admin_graphql_api_id | json }}) {
+        lineItems(first: 250) {
+          nodes {
+            product {
+              tags
+            }
+          }
+        }
       }
     }
-  }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "order": {
+            "lineItems": {
+              "nodes": [
+                {
+                  "product": {
+                    "tags": {{ only_for_orders_including_this_product_tag | json }}
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% for line_item in result.data.order.lineItems.nodes %}
+    {% if line_item.product.tags contains only_for_orders_including_this_product_tag %}
+      {% assign order_qualifies = true %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+{% if order_qualifies %}
+  {% action "email" %}
+    {
+      "to": {{ email_recipients | json }},
+      "subject": {{ email_subject | json }},
+      "body": {{ email_body | newline_to_br | json }},
+      "reply_to": {{ shop.customer_email | json }},
+      "from_display_name": {{ shop.name | json }}
+    }
+  {% endaction %}
 {% endif %}

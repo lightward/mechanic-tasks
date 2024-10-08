@@ -21,9 +21,10 @@ Use this task to help you close in on the last few products that are missing cos
 ## Subscriptions
 
 ```liquid
-mechanic/user/trigger
 shopify/products/create
 shopify/products/update
+mechanic/user/trigger
+mechanic/shopify/bulk_operation
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
