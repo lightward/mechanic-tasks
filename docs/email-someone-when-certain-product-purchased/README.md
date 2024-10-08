@@ -36,8 +36,6 @@ shopify/orders/paid{% if delay_days != blank %}+{{ delay_days }}.days{% endif %}
 
 This task sends an email notification, immediately after an order is paid - if a product in the order has a title matching the product title you configure. Optionally, configure this task with a delay, in days, to wait before sending the email. (The task will not send any emails for orders that have since been cancelled.)
 
-[YouTube: See the upgrade process for this task!](https://youtu.be/xT9j0yMXPDM)
-
 ## Installing this task
 
 Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/email-someone-when-certain-product-purchased), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-someone-when-certain-product-purchased.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.

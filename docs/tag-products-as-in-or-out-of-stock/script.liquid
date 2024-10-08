@@ -1,38 +1,35 @@
+{% assign in_stock_tag = options.in_stock_tag__required %}
+{% assign out_of_stock_tag = options.out_of_stock_tag__required %}
+
 {% assign products = array %}
 
 {% if event.topic contains "shopify/products/" %}
-  {% if event.preview %}
-    {% capture product_json %}
-      {
-        "tags": "",
-        "admin_graphql_api_id": "gid:\/\/shopify\/Product\/788032119674292922",
-        "variants": [
-          {
-            "inventory_quantity": 6
-          },
-          {
-            "inventory_quantity": -5
-          }
-        ]
+  {% capture query %}
+    query {
+      product(id: {{ product.admin_graphql_api_id | json }}) {
+        id
+        status
+        totalInventory
+        tags
       }
+    }
+  {% endcapture %}
 
-    {% endcapture %}
+  {% assign result = query | shopify %}
 
-    {% assign product = product_json | parse_json %}
+  {% if result.data.product.status == "ACTIVE" or event.preview %}
+    {% assign products[0] = result.data.product %}
   {% endif %}
 
-  {% assign graphql_product = hash %}
-  {% assign graphql_product["id"] = product.admin_graphql_api_id %}
-  {% assign graphql_product["tags"] = product.tags | split: ", " %}
-  {% assign graphql_product["totalInventory"] = product.variants | map: "inventory_quantity" | sum %}
-
-  {% assign products[0] = graphql_product %}
 {% elsif event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
   {% capture bulk_operation_query %}
     query {
-      products {
+      products(
+        query: "status:active"
+      ) {
         edges {
           node {
+            __typename
             id
             totalInventory
             tags
@@ -58,17 +55,26 @@
       }
     }
   {% endaction %}
+
 {% elsif event.topic == "mechanic/shopify/bulk_operation" %}
-  {% if event.preview %}
-    {% capture bulkOperation_objects_jsonl %}
-      {"id":"gid:\/\/shopify\/Product\/1234567890","totalInventory":1,"tags":[]}
-    {% endcapture %}
+  {% assign products = bulkOperation.objects | where: "__typename", "Product" %}
+{% endif %}
 
-    {% assign bulkOperation = hash %}
-    {% assign bulkOperation["objects"] = bulkOperation_objects_jsonl | parse_jsonl %}
-  {% endif %}
+{% if event.preview %}
+  {% capture products_json %}
+    [
+      {
+        "id": "gid://shopify/Product/1234567890",
+        "totalInventory": 1
+      },
+      {
+        "id": "gid://shopify/Product/2345678901",
+        "totalInventory": 0
+      }
+    ]
+  {% endcapture %}
 
-  {% assign products = bulkOperation.objects %}
+  {% assign products = products_json | parse_json %}
 {% endif %}
 
 {% for product in products %}
@@ -76,27 +82,28 @@
   {% assign tag_to_remove = nil %}
 
   {% if product.totalInventory > 0 %}
-    {% unless product.tags contains options.in_stock_tag__required %}
-      {% assign tag_to_add = options.in_stock_tag__required %}
+    {% unless product.tags contains in_stock_tag %}
+      {% assign tag_to_add = in_stock_tag %}
     {% endunless %}
 
-    {% if product.tags contains options.out_of_stock_tag__required %}
-      {% assign tag_to_remove = options.out_of_stock_tag__required %}
+    {% if product.tags contains out_of_stock_tag %}
+      {% assign tag_to_remove = out_of_stock_tag %}
     {% endif %}
+
   {% else %}
-    {% unless product.tags contains options.out_of_stock_tag__required %}
-      {% assign tag_to_add = options.out_of_stock_tag__required %}
+    {% unless product.tags contains out_of_stock_tag %}
+      {% assign tag_to_add = out_of_stock_tag %}
     {% endunless %}
 
-    {% if product.tags contains options.in_stock_tag__required %}
-      {% assign tag_to_remove = options.in_stock_tag__required %}
+    {% if product.tags contains in_stock_tag %}
+      {% assign tag_to_remove = in_stock_tag %}
     {% endif %}
   {% endif %}
 
-  {% if tag_to_add or tag_to_remove %}
+  {% if tag_to_add != blank or tag_to_remove != blank %}
     {% action "shopify" %}
       mutation {
-        {% if tag_to_add %}
+        {% if tag_to_add != blank %}
           tagsAdd(
             id: {{ product.id | json }}
             tags: {{ tag_to_add | json }}
@@ -107,7 +114,7 @@
             }
           }
         {% endif %}
-        {% if tag_to_remove %}
+        {% if tag_to_remove != blank %}
           tagsRemove(
             id: {{ product.id | json }}
             tags: {{ tag_to_remove | json }}

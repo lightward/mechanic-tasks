@@ -1,28 +1,76 @@
-{% unless event.preview %}
-  {% assign order = order.reload %}
-{% endunless %}
+{% assign product_title = options.product_title__required %}
+{% assign email_address = options.email_address__required %}
+{% assign email_subject = options.email_subject__required %}
+{% assign email_body = options.email_body__multiline_required %}
+{% assign reply_to_email_address = options.reply_to_email_address %}
 
-{% assign order_qualifies = false %}
+{% comment %}
+  -- requery the order in case a delay is configured in the task
+{% endcomment %}
 
-{% for line_item in order.line_items %}
-  {% if line_item.product.title == options.product_title__required %}
-    {% assign order_qualifies = true %}
+{% capture query %}
+  query {
+    order(id: {{ order.admin_graphql_api_id | json }}) {
+      id
+      cancelledAt
+      lineItems(first: 250) {
+        nodes {
+          title
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "order": {
+          "id": "gid://shopify/Order/1234567890",
+          "lineItems": {
+            "nodes": [
+              {
+                "title": {{ product_title | json }}
+              }
+            ]
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% assign order = result.data.order %}
+
+{% comment %}
+  -- don't send notification email if the order has been cancelled
+{% endcomment %}
+
+{% if order.cancelledAt != blank %}
+  {% break %}
+{% endif %}
+
+{% comment %}
+  -- send notification email if any line item contains the configured product title
+{% endcomment %}
+
+{% for line_item in order.lineItems.nodes %}
+  {% if line_item.title == product_title %}
+    {% action "email" %}
+      {
+        "to": {{ email_address | json }},
+        "subject": {{ email_subject | json }},
+        "body": {{ email_body | strip | newline_to_br | json }},
+        "reply_to": {{ reply_to_email_address | default: shop.customer_email | json }},
+        "from_display_name": {{ shop.name | json }}
+      }
+    {% endaction %}
+
     {% break %}
   {% endif %}
 {% endfor %}
-
-{% if order.cancelled_at != blank %}
-  {% assign order_qualifies = false %}
-{% endif %}
-
-{% if event.preview or order_qualifies %}
-  {% action "email" %}
-    {
-      "to": {{ options.email_address__required | json }},
-      "subject": {{ options.email_subject__required | json }},
-      "body": {{ options.email_body__multiline_required | strip | newline_to_br | json }},
-      "reply_to": {{ options.reply_to_email_address | json }},
-      "from_display_name": {{ shop.name | json }}
-    }
-  {% endaction %}
-{% endif %}

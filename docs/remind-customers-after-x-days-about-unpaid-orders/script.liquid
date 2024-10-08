@@ -1,36 +1,77 @@
-{% unless event.preview %}
-  {% assign order = order.reload %}
-{% endunless %}
+{% assign email_subject = options.email_subject__required %}
+{% assign email_body = options.email_body__multiline_required %}
+{% assign tag_to_add_to_the_order = options.tag_to_add_to_the_order %}
 
-{% assign order_qualifies = false %}
-{% if order.financial_status == "pending" and order.cancelled_at == blank %}
-  {% assign order_qualifies = true %}
-{% endif %}
+{% comment %}
+  -- requery the order since a delay is typically configured in the task
+{% endcomment %}
 
-{% if event.preview or order_qualifies %}
-  {% action "email" %}
-    {
-      "to": {{ order.email | json }},
-      "reply_to": {{ shop.customer_email | json }},
-      "subject": {{ options.email_subject__required | json }},
-      "body": {{ options.email_body__multiline_required | strip | newline_to_br | json }},
-      "from_display_name": {{ shop.name | json }}
+{% capture query %}
+  query {
+    order(id: {{ order.admin_graphql_api_id | json }}) {
+      id
+      email
+      cancelledAt
+      displayFinancialStatus
+      tags
     }
-  {% endaction %}
+  }
+{% endcapture %}
 
-  {% if options.tag_to_add_to_the_order != blank %}
-    {% action "shopify" %}
-      mutation {
-        tagsAdd(
-          id: {% if event.preview %}"gid://shopify/Order/1234567890"{% else %}{{ order.admin_graphql_api_id | json }}{% endif %}
-          tags: {{ options.tag_to_add_to_the_order | json }}
-        ) {
-          userErrors {
-            field
-            message
-          }
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "order": {
+          "id": "gid://shopify/Order/1234567890",
+          "email": "sample@example.com",
+          "displayFinancialStatus": "PENDING"
         }
       }
-    {% endaction %}
-  {% endif %}
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% assign order = result.data.order %}
+
+{% comment %}
+  -- don't send notification email if the order has no email, has been cancelled, or is no longer pending
+{% endcomment %}
+
+{% if order.email == blank or order.cancelledAt != blank or order.displayFinancialStatus != "PENDING" %}
+  {% break %}
+{% endif %}
+
+{% comment %}
+  -- send reminder email and tag the order if that option is configured
+{% endcomment %}
+
+{% action "email" %}
+  {
+    "to": {{ order.email | json }},
+    "subject": {{ email_subject | json }},
+    "body": {{ email_body | strip | newline_to_br | json }},
+    "reply_to": {{ shop.customer_email | json }},
+    "from_display_name": {{ shop.name | json }}
+  }
+{% endaction %}
+
+{% if tag_to_add_to_the_order != blank %}
+  {% action "shopify" %}
+    mutation {
+      tagsAdd(
+        id: {{ order.id | json }}
+        tags: {{ tag_to_add_to_the_order | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
 {% endif %}

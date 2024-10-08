@@ -1,28 +1,129 @@
+{% assign out_of_stock_inventory_level = options.out_of_stock_inventory_level__number_required %}
+{% assign product_tag = options.product_tag__required %}
+{% assign email_alert_recipient = options.email_alert_recipient__email %}
+
 {% assign products = array %}
 
-{% if event.preview %}
-  {% assign product = '{"title": "A Shoe", "variants": [{"inventory_quantity": 5}], "admin_graphql_api_id": "gid://shopify/Product/1234567890"}' | parse_json %}
-  {% assign products[products.size] = product %}
-{% elsif event.topic contains "shopify/products/" %}
-  {% assign products[products.size] = product %}
-{% elsif event.topic contains "shopify/inventory_levels/" %}
-  {% assign products[products.size] = inventory_level.variant.product %}
+{% if event.topic == "shopify/inventory_levels/update" %}
+  {% comment %}
+    -- get product data from the inventory level resource
+  {% endcomment %}
+
+  {% capture query %}
+    query {
+      inventoryLevel(id: {{ inventory_level.admin_graphql_api_id | json }}) {
+        item {
+          variant {
+            product {
+              id
+              legacyResourceId
+              status
+              title
+              totalInventory
+              tags
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% assign product = result.data.inventoryLevel.item.variant.product %}
+
+  {% comment %}
+    -- only process active products
+  {% endcomment %}
+
+  {% if product.status == "ACTIVE" or event.preview %}
+    {% assign products[0] = product %}
+  {% endif %}
+
 {% elsif event.topic == "mechanic/user/trigger" %}
-  {% assign products = shop.products %}
+  {% comment %}
+    -- get all active products in the shop
+  {% endcomment %}
+
+  {% capture bulk_operation_query %}
+    query {
+      products(
+        query: "status:active"
+      ) {
+        edges {
+          node {
+            __typename
+            id
+            totalInventory
+            tags
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+  {% break %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% assign products = bulkOperation.objects | where: "__typename", "Product" %}
 {% endif %}
 
+{% comment %}
+  -- preview event to handle both inventory level updates and bulk product queries
+{% endcomment %}
+
+{% if event.preview %}
+  {% capture products_json %}
+    [
+      {
+        "id": "gid://shopify/Product/1234567890",
+        "totalInventory": {{ out_of_stock_inventory_level | plus: 1 }},
+        "tags": {{ product_tag | json }}
+      },
+      {
+        "id": "gid://shopify/Product/2345678901",
+        "title": "Widget",
+        "totalInventory": {{ out_of_stock_inventory_level }}
+      }
+    ]
+  {% endcapture %}
+
+  {% assign products = products_json | parse_json %}
+{% endif %}
+
+{% comment %}
+  - process all of the products from bulk query, or the single active product linked to the inventory level update event
+{% endcomment %}
+
 {% for product in products %}
-  {% assign product_inventory = product.variants | map: "inventory_quantity" | sum %}
+  {% if product.totalInventory > out_of_stock_inventory_level %}
+    {% if product.tags contains product_tag %}
+      {% comment %}
+        -- product is above the configured out of stock level and has the out of stock tag; remove it
+      {% endcomment %}
 
-  {% assign product_tags = product.tags | split: ", " %}
-
-  {% if event.preview or product_inventory <= options.out_of_stock_inventory_level__number_required %}
-    {% unless event.preview != true and product_tags contains options.product_tag__required %}
       {% action "shopify" %}
         mutation {
-          tagsAdd(
-            id: {{ product.admin_graphql_api_id | json }}
-            tags: {{ options.product_tag__required | json }}
+          tagsRemove(
+            id: {{ product.id | json }}
+            tags: {{ product_tag | json }}
           ) {
             userErrors {
               field
@@ -31,43 +132,58 @@
           }
         }
       {% endaction %}
+    {% endif %}
 
-      {% if event.topic != "mechanic/user/trigger" and options.email_alert_recipient__email != blank %}
-        {% capture email_body %}
-          Hello,
-
-          {{ product.title }} is now out of stock, with a total stock level of {{ product_inventory }} (across all variants and locations).
-
-          <a href="https://{{ shop.domain }}/admin/products/{{ product.id }}">Manage this product</a>
-
-          Thanks,
-          Mechanic (for {{ shop.name }})
-        {% endcapture %}
-
-        {% action "email" %}
-          {
-            "to": {{ options.email_alert_recipient__email | json }},
-            "subject": {{ product.title | append: " is now out of stock (" | append: product_inventory | append: ")" | json }},
-            "body": {{ email_body | unindent | strip | newline_to_br | json }},
-            "reply_to": {{ shop.customer_email | json }},
-            "from_display_name": {{ shop.name | json }}
-          }
-        {% endaction %}
-      {% endif %}
-    {% endunless %}
   {% else %}
-    {% if product_tags contains options.product_tag__required %}
-      {% action "shopify" %}
-        mutation {
-          tagsRemove(
-            id: {{ product.admin_graphql_api_id | json }}
-            tags: {{ options.product_tag__required | json }}
-          ) {
-            userErrors {
-              field
-              message
-            }
+    {% comment %}
+      -- product is out of stock
+    {% endcomment %}
+
+    {% if product.tags contains product_tag %}
+      {% comment %}
+        -- product has already been tagged; skip it (including email notification if applicable)
+      {% endcomment %}
+
+      {% continue %}
+    {% endif %}
+
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {{ product.id | json }}
+          tags: {{ product_tag | json }}
+        ) {
+          userErrors {
+            field
+            message
           }
+        }
+      }
+    {% endaction %}
+
+    {% comment %}
+      -- send email if this is a single inventory level event and an alert recipient is configured
+    {% endcomment %}
+
+    {% if event.topic == "shopify/inventory_levels/update" and email_alert_recipient != blank %}
+      {% capture email_body %}
+        Hello,
+
+        {{ product.title }} is now out of stock, with a total stock level of {{ product.totalInventory }} (across all variants and locations).
+
+        <a href="{{ shop.admin_url }}/products/{{ product.legacyResourceId }}">Manage this product</a>
+
+        Thanks,
+        Mechanic (for {{ shop.name }})
+      {% endcapture %}
+
+      {% action "email" %}
+        {
+          "to": {{ email_alert_recipient | json }},
+          "subject": {{ product.title | append: " is now out of stock (" | append: product.totalInventory | append: ")" | json }},
+          "body": {{ email_body | unindent | strip | newline_to_br | json }},
+          "reply_to": {{ shop.customer_email | json }},
+          "from_display_name": {{ shop.name | json }}
         }
       {% endaction %}
     {% endif %}
