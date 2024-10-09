@@ -24,9 +24,13 @@
           lineItems(first: 30) {
             nodes {
               id
-              inventoryItemId
               remainingQuantity
               requiresShipping
+              variant {
+                product {
+                  tags
+                }
+              }
             }
           }
         }
@@ -56,15 +60,13 @@
                   "nodes": [
                     {
                       "id": "gid://shopify/FulfillmentOrderLineItem/1234567890",
-                      "inventoryItemId": "gid://shopify/InventoryItem/1234567890",
                       "remainingQuantity": 1,
-                      "requiresShipping": false
-                    },
-                    {
-                      "id": "gid://shopify/FulfillmentOrderLineItem/2345678901",
-                      "inventoryItemId": "gid://shopify/InventoryItem/2345678901",
-                      "remainingQuantity": 2,
-                      "requiresShipping": false
+                      "requiresShipping": false,
+                      "variant": {
+                        "product": {
+                          "tags": {{ inclusion_tags.first | json }}
+                        }
+                      }
                     }
                   ]
                 }
@@ -114,43 +116,7 @@
       {% assign has_exclusion_tag = nil %}
       {% assign has_inclusion_tag = nil %}
 
-      {% comment %}
-        -- use the inventory item Id to query for product tags; product access from fulfillment order line items has been deprecated
-      {% endcomment %}
-
-      {% capture query %}
-        query {
-          inventoryItem(id: {{ fulfillment_order_line_item.inventoryItemId | json }}) {
-            variant {
-              product {
-                tags
-              }
-            }
-          }
-        }
-      {% endcapture %}
-      
-      {% assign result = query | shopify %}
-      
-      {% if event.preview %}
-        {% capture result_json %}
-          {
-            "data": {
-              "inventoryItem": {
-                "variant": {
-                  "product": {
-                    "tags": {{ inclusion_tags.first | json }}
-                  }
-                }
-              }
-            }
-          }
-        {% endcapture %}
-      
-        {% assign result = result_json | parse_json %}
-      {% endif %}
-      
-      {% assign product_tags = result.data.inventoryItem.variant.product.tags %}
+      {% assign product_tags = fulfillment_order_line_item.variant.product.tags %}
 
       {% for exclusion_tag in exclusion_tags %}
         {% if product_tags contains exclusion_tag %}
@@ -226,7 +192,7 @@
 {% for keyval in fulfillment_orders_by_location %}
   {% action "shopify" %}
     mutation {
-      fulfillmentCreateV2(
+      fulfillmentCreate(
         fulfillment: {
           lineItemsByFulfillmentOrder: [
             {% for fulfillment_order_data in keyval[1] %}
