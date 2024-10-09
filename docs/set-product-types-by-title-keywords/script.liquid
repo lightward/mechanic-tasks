@@ -113,7 +113,7 @@
       {% action "shopify" %}
         mutation {
           productUpdate(
-            input: {
+            product: {
               id: {{ product.id | json }}
               productType: {{ product_type_to_set | json }}
             }
