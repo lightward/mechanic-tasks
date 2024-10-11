@@ -1,96 +1,210 @@
 {% assign ve_product_ids_keyval = options.voucher_product_ids_and_entitled_product_ids__keyval_number_required %}
+{% assign discount_code_prefix = options.discount_code_prefix__required %}
+{% assign discount_value = options.discount_value__number_required %}
+{% assign email_subject = options.email_subject__required %}
+{% assign email_body = options.email_body__multiline_required %}
 
-{% if event.preview or order.customer %}
-  {% for order_line_item in order.line_items %}
-    {% assign voucher_product_id = order_line_item.product_id %}
+{% if event.topic == "shopify/orders/paid" %}
+  {% if event.preview %}
+    {% capture order_json %}
+      {
+        "email": "customer@example.com",
+        "customer": {
+          "id": 1234567890,
+          "first_name": "TEST"
+        },
+        "line_items": [
+          {
+            "id": 1234567890,
+            "product_id": {{ ve_product_ids_keyval.first.first }},
+            "quantity": 1
+          }
+        ]
+      }
+    {% endcapture %}
+
+    {% assign order = order_json | parse_json %}
+  {% endif %}
+
+  {% if order.customer == blank %}
+    {% log "This order has no related customer. Skipping" %}
+    {% break %}
+  {% endif %}
+
+  {% if order.email == blank %}
+    {% log "This order has no email address. Skipping" %}
+    {% break %}
+  {% endif %}
+
+  {% assign customer_id = order.customer.id | prepend: "gid://shopify/Customer/" %}
+
+  {% for line_item in order.line_items %}
+    {% assign voucher_product_title = line_item.title %}
+    {% assign voucher_product_id = line_item.product_id %}
     {% assign voucher_product_id_string = voucher_product_id | append: "" %}
     {% assign entitled_product_id = ve_product_ids_keyval[voucher_product_id_string] %}
 
-    {% if event.preview or entitled_product_id %}
-      {% for order_line_item_n in (1..order_line_item.quantity) %}
-        {% assign discount_code = options.discount_code_prefix__required | append: order.order_number | append: order_line_item.sku | append: order_line_item_n | append: order.customer.id %}
-
-        {% if event.preview or shop.discount_codes[discount_code] == nil %}
-          {% assign voucher_product = shop.products[voucher_product_id] %}
-          {% assign entitled_product = shop.products[entitled_product_id] %}
-
-          {% assign voucher_product_title = voucher_product.title | default: "(voucher product title)" %}
-          {% assign entitled_product_title = entitled_product.title | default: "(entitled product title)" %}
-          {% assign entitled_product_admin_graphql_api_id = entitled_product.admin_graphql_api_id %}
-
-          {% assign customer_admin_graphql_api_id = shop.customers[order.customer.id].admin_graphql_api_id %}
-
-          {% capture graphql_query %}
-            mutation {
-              priceRuleCreate(
-                priceRule: {
-                  allocationMethod: ACROSS
-                  customerSelection: {
-                    customerIdsToAdd: [{{ customer_admin_graphql_api_id | json }}]
-                  }
-                  itemEntitlements:{
-                    productIds: [{{ entitled_product_admin_graphql_api_id | json }}]
-                  }
-                  target: LINE_ITEM
-                  title: {{ discount_code | json }}
-                  usageLimit: 1
-                  validityPeriod: {
-                    start: {{ "now" | date: "%FT%T%:z" | json }}
-                  }
-                  value: {
-                    fixedAmountValue: {{ options.discount_value__number_required | json }}
-                  }
-                }
-                priceRuleDiscountCode: {
-                  code: {{ discount_code | json }}
-                }
-              ) {
-                priceRule {
-                  id
-                }
-                priceRuleUserErrors {
-                  code
-                  field
-                  message
-                }
-                priceRuleDiscountCode {
-                  code
-                  id
-                }
-              }
-            }
-          {% endcapture %}
-
-          {
-            "action": {
-              "type": "shopify",
-              "options": {{ graphql_query | json }}
-            }
-          }
-
-          {% assign email_subject = options.email_subject__required | replace: 'DISCOUNT_CODE', discount_code | replace: 'VOUCHER_PRODUCT_TITLE', voucher_product_title | replace: 'ENTITLED_PRODUCT_TITLE', entitled_product_title %}
-          {% assign email_body = options.email_body__multiline_required | replace: 'DISCOUNT_CODE', discount_code | replace: 'VOUCHER_PRODUCT_TITLE', voucher_product_title | replace: 'ENTITLED_PRODUCT_TITLE', entitled_product_title %}
-
-          {
-            "action": {
-              "type": "email",
-              "options": {
-                "to": {{ order.email | json }},
-                "subject": {{ email_subject | strip | json }},
-                "body": {{ email_body | newline_to_br | json }},
-                "reply_to": {{ shop.customer_email | json }},
-                "from_display_name": {{ shop.name | json }}
-              }
-            }
-          }
-        {% else %}
-          {"log": {{ discount_code | append: " already exists; skipping" | json }}}
-        {% endif %}
-      {% endfor %}
+    {% if entitled_product_id == blank %}
+      {% continue %}
     {% endif %}
+
+    {% comment %}
+      -- make sure the entitled product exists in the shop and get its title
+    {% endcomment %}
+
+    {% capture query %}
+      query {
+        product(id: {{ entitled_product_id | prepend: "gid://shopify/Product/" | json }}) {
+          id
+          title
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
 
     {% if event.preview %}
-      {% break %}
+      {% capture result_json %}
+        {
+          "data": {
+            "product": {
+              "id": "gid://shopify/Product/1234567890",
+              "title": "Widget"
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
     {% endif %}
+
+    {% assign entitled_product = result.data.product %}
+
+    {% if entitled_product == blank %}
+      {% action "echo"
+        __error: "Entitled product not found in the shop. Discount code will not be created.",
+        entitled_product_id: entitled_product_id,
+        voucher_product_id: voucher_product_id
+      %}
+      {% continue %}
+    {% endif %}
+
+    {% for line_item_n in (1..line_item.quantity) %}
+      {% assign discount_code = line_item.id | append: n | split: "" | reverse | join: "" | slice: 0, 4 | append: order.order_number | base64 | replace: "=", "" | upcase | prepend: discount_code_prefix %}
+
+      {% capture mutation %}
+        mutation {
+          discountCodeBasicCreate(
+            basicCodeDiscount: {
+              code: {{ discount_code | json }}
+              customerSelection: {
+                customers: {
+                  add: {{ array | push: customer_id | json }}
+                }
+              }
+              title: {{ discount_code | json }}
+              startsAt: {{ "now" | date: "%FT%T%:z" | json }}
+              customerGets: {
+                items: {
+                  products: {
+                    productsToAdd: {{ array | push: entitled_product.id | json }}
+                  }
+                }
+                value: {
+                  discountAmount: {
+                    amount: {{ discount_fixed_amount | abs | times: 1.0 | json }}
+                    appliesOnEachItem: false
+                  }
+                }
+              }
+              usageLimit: 1
+            }
+          ) {
+            codeDiscountNode {
+              id
+              codeDiscount {
+                ... on DiscountCodeBasic {
+                  codes(first: 1) {
+                    nodes {
+                      id
+                      code
+                    }
+                  }
+                  summary
+                }
+              }
+            }
+            userErrors {
+              code
+              extraInfo
+              field
+              message
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% action %}
+        {
+          "type": "shopify",
+          "options": {
+            "query": {{ mutation | json }}
+          },
+          "meta": {
+            "customer_first_name": {{ order.customer.first_name | default: "there" | json }},
+            "order_email": {{ order.email | json }},
+            "order_name": {{ order.name | json }},
+            "discount_code": {{ discount_code | json }},
+            "entitled_product_title": {{ entitled_product.title | json }},
+            "voucher_product_title": {{ voucher_product_title | json }}
+          }
+        }
+      {% endaction %}
+    {% endfor %}
   {% endfor %}
+
+{% elsif event.topic == "mechanic/actions/perform" %}
+  {% comment %}
+    -- only process a successful discountCodeBasicCreate shopify action; the Error reporter task should be used to respond to failures
+  {% endcomment %}
+
+  {% unless action.type == "shopify" and action.run.ok == true %}
+    {% break %}
+  {% endunless %}
+
+  {% assign customer_first_name = action.meta.customer_first_name %}
+  {% assign order_email = action.meta.order_email %}
+  {% assign order_name = action.meta.order_name %}
+  {% assign discount_code = action.meta.discount_code %}
+  {% assign entitled_product_title = action.meta.entitled_product_title %}
+  {% assign voucher_product_title = action.meta.voucher_product_title %}
+
+  {% comment %}
+    -- send a customer email for the created discount code
+  {% endcomment %}
+
+  {% assign email_subject = email_subject
+    | replace: 'CUSTOMER_FIRST_NAME', customer_first_name
+    | replace: 'DISCOUNT_CODE', discount_code
+    | replace: 'ENTITLED_PRODUCT_TITLE', entitled_product_title
+    | replace: 'ORDER_NAME', order_name
+    | replace: 'VOUCHER_PRODUCT_TITLE', voucher_product_title
+  %}
+  {% assign email_body = email_body
+    | replace: 'CUSTOMER_FIRST_NAME', customer_first_name
+    | replace: 'DISCOUNT_CODE', discount_code
+    | replace: 'ENTITLED_PRODUCT_TITLE', entitled_product_title
+    | replace: 'ORDER_NAME', order_name
+    | replace: 'VOUCHER_PRODUCT_TITLE', voucher_product_title
+  %}
+
+  {% action "email" %}
+    {
+      "to": {{ order_email | json }},
+      "subject": {{ email_subject | strip | json }},
+      "body": {{ email_body | strip | newline_to_br | json }},
+      "reply_to": {{ shop.customer_email | json }},
+      "from_display_name": {{ shop.name | json }}
+    }
+  {% endaction %}
 {% endif %}
