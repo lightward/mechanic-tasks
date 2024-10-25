@@ -1,23 +1,71 @@
-{% assign order_qualifies = false %}
-{% assign order_product_tags = order.line_items | map: "product" | map: "tags" | join: ", " | split: ", " | sort | uniq %}
-{% if order_product_tags contains options.required_product_tag__required %}
-  {% assign order_qualifies = true %}
-{% endif %}
+{% assign required_product_tag = options.required_product_tag__required %}
+{% assign team_email = options.team_email__required %}
+{% assign email_subject = options.email_subject__required %}
+{% assign email_body = options.email_body__multiline_required %}
 
-{% if event.preview or order_qualifies %}
-  {
-    "action": {
-      "type": "email",
-      "options": {
-        "to": {{ options.team_email__required | json }},
-        "subject": {{ options.email_subject__required | json }},
-        "body": {{ options.email_body__multiline_required | strip | newline_to_br | json }},
-        "reply_to": {{ shop.customer_email | json }},
-        "from_display_name": {{ shop.name | json }}
+{% comment %}
+  -- query the order, line items, products, and tags
+{% endcomment %}
+
+{% capture query %}
+  query {
+    order(id: {{ order.admin_graphql_api_id | json }}) {
+      id
+      tags
+      lineItems(first: 250) {
+        nodes {
+          product {
+            tags
+          }
+        }
       }
     }
   }
-{% elsif order_qualifies == false %}
-  {% capture log_message %}Order tags did not include {{ options.required_product_tag__required | json }} (found {{ order_product_tags | json }}){% endcapture %}
-  {"log": {{ log_message }}}
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "order": {
+          "id": "gid://shopify/Order/1234567890",
+          "lineItems": {
+            "nodes": [
+              {
+                "product": {
+                  "tags": {{ required_product_tag | json }}
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
 {% endif %}
+
+{% assign products = result.data.order.lineItems.nodes | map: "product" %}
+
+{% comment %}
+  -- loop through tags of products, sending the team email and breaking the loop when a match is found
+{% endcomment %}
+
+{% for product in products %}
+  {% if product.tags contains required_product_tag %}
+    {% action "email" %}
+      {
+        "to": {{ team_email | json }},
+        "subject": {{ email_subject | json }},
+        "body": {{ email_body | strip | newline_to_br | json }},
+        "reply_to": {{ shop.customer_email | json }},
+        "from_display_name": {{ shop.name | json }}
+      }
+    {% endaction %}
+
+    {% break %}
+  {% endif %}
+{% endfor %}

@@ -5,19 +5,13 @@
       "tags": "Apple",
       "line_items": [
         {
-          "product": {
-            "vendor": "Apple"
-          }
+          "vendor": "Apple"
         },
         {
-          "product": {
-            "vendor": "Nike"
-          }
+          "vendor": "Nike"
         },
         {
-          "product": {
-            "vendor": null
-          }
+          "vendor": null
         }
       ]
     }
@@ -26,7 +20,7 @@
   {% assign order = order_json | parse_json %}
 {% endif %}
 
-{% assign product_vendors = order.line_items | map: "product" | map: "vendor" %}
+{% assign product_vendors = order.line_items | map: "vendor" %}
 {% assign order_tags = order.tags | split: ", " %}
 {% assign tags_to_add = array %}
 

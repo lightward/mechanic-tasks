@@ -12,6 +12,7 @@ Use this task to automatically tag incoming orders with the vendor of each produ
 
 ```liquid
 shopify/orders/create
+mechanic/user/order
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)

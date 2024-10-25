@@ -26,7 +26,7 @@ Use this task to automatically tag customers when they purchase specific a membe
 ```liquid
 shopify/orders/paid
 {% if options.remove_tag_immediately_for_cancelled_orders__boolean %}
-  shopify/orders/updated
+  shopify/orders/cancelled
 {% endif %}
 user/memberships/expire
 ```

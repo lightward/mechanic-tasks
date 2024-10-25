@@ -1,31 +1,91 @@
-{% comment %}
-  A preference on option order:
+{% assign membership_product_title = options.membership_product_title__required %}
+{% assign membership_tag = options.membership_tag__required %}
+{% assign days_to_wait_before_untagging = options.days_to_wait_before_untagging__number_required %}
 
-  {{ options.membership_product_title__required }}
-  {{ options.membership_tag__required }}
-  {{ options.days_to_wait_before_untagging__number_required }}
-  {{ options.remove_tag_immediately_for_cancelled_orders__boolean }}
-{% endcomment %}
-
-{% assign order_includes_membership_product = false %}
 {% if order %}
-  {% assign purchased_product_titles = order.line_items | map: "product" | map: "title" | sort | uniq %}
+  {% comment %}
+    -- query the order, products, and customer for use in all events triggered by orders
+  {% endcomment %}
 
-  {% if options.membership_product_title__required != blank and purchased_product_titles contains options.membership_product_title__required %}
-    {% assign order_includes_membership_product = true %}
+  {% capture query %}
+    query {
+      order(id: {{ order.admin_graphql_api_id | json }}) {
+        id
+        tags
+        customer {
+          id
+          tags
+        }
+        lineItems(first: 250) {
+          nodes {
+            product {
+              title
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "order": {
+            "id": "gid://shopify/Order/1234567890",
+            "customer": {
+              "id": "gid://shopify/Customer/1234567890"
+            },
+            "lineItems": {
+              "nodes": [
+                {
+                  "product": {
+                    "title": {{ membership_product_title | json }}
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
   {% endif %}
+
+  {% assign order = result.data.order %}
+  {% assign customer = order.customer %}
+  {% assign purchased_product_titles
+    = order.lineItems.nodes
+    | map: "product"
+    | map: "title"
+  %}
+
+  {% comment %}
+    -- stop processing this order if there is no customer or the membership product is not included
+  {% endcomment %}
+
+  {% unless customer != blank and purchased_product_titles contains membership_product_title %}
+    {% break %}
+  {% endunless %}
 {% endif %}
 
 {% if event.topic == "shopify/orders/paid" %}
-  {% assign days_in_the_future_s = options.days_to_wait_before_untagging__number_required | times: 24 | times: 60 | times: 60 %}
+  {% assign days_in_the_future_s = days_to_wait_before_untagging | times: 86400 %}
   {% assign expire_at_s = "now" | date: "%s" | plus: days_in_the_future_s %}
 
-  {% if event.preview %}
+  {% comment %}
+    -- if the customer does not already have the membership tag, then tag them and create a future event to untag them
+  {% endcomment %}
+
+  {% unless customer.tags contains membership_tag %}
     {% action "shopify" %}
       mutation {
         tagsAdd(
-          id: "gid://shopify/Customer/1234567890"
-          tags: {{ options.membership_tag__required | json }}
+          id: {{ customer.id | json }}
+          tags: {{ membership_tag | json }}
         ) {
           userErrors {
             field
@@ -39,79 +99,75 @@
       {
         "topic": "user/memberships/expire",
         "data": {
-          "membership_tag": {{ options.membership_tag__required | json }},
-          "customer_id": 1234567890
+          "membership_tag": {{ membership_tag | json }},
+          "customer_id": {{ customer.id | json }}
         },
         "run_at": {{ expire_at_s | json }},
         "task_id": {{ task.id | json }}
       }
     {% endaction %}
-  {% elsif order_includes_membership_product %}
-    {% assign customer = order.customer.reload %}
-    {% assign customer_tags = customer.tags | split: ", " %}
-    {% unless customer_tags contains options.membership_tag__required %}
-      {% action "shopify" %}
-        mutation {
-          tagsAdd(
-            id: {{ customer.admin_graphql_api_id | json }}
-            tags: {{ options.membership_tag__required | json }}
-          ) {
-            userErrors {
-              field
-              message
-            }
-          }
-        }
-      {% endaction %}
+  {% endunless %}
 
-      {% action "event" %}
-        {
-          "topic": "user/memberships/expire",
-          "data": {
-            "membership_tag": {{ options.membership_tag__required | json }},
-            "customer_id": {{ customer.id | json }}
-          },
-          "run_at": {{ expire_at_s | json }},
-          "task_id": {{ task.id | json }}
-        }
-      {% endaction %}
-    {% endunless %}
-  {% endif %}
-{% elsif event.topic == "shopify/orders/updated" and options.remove_tag_immediately_for_cancelled_orders__boolean %}
-  {% if event.preview %}
+{% elsif event.topic == "shopify/orders/cancelled" %}
+  {% comment %}
+    -- if customer still has the membership tag, then call custom event to untag them
+  {% endcomment %}
+
+  {% if customer.tags contains membership_tag or event.preview %}
     {% action "event" %}
       {
         "topic": "user/memberships/expire",
         "data": {
-          "membership_tag": {{ options.membership_tag__required | json }},
-          "customer_id": {{ order.customer.id | json }}
+          "membership_tag": {{ membership_tag | json }},
+          "customer_id": {{ customer.id | json }}
         },
         "task_id": {{ task.id | json }}
       }
     {% endaction %}
-  {% elsif order_includes_membership_product %}
-    {% assign customer = order.customer.reload %}
-    {% assign customer_tags = customer.tags | split: ", " %}
-    {% if order.cancelled_at != blank and customer_tags contains options.membership_tag__required %}
-      {% action "event" %}
-        {
-          "topic": "user/memberships/expire",
-          "data": {
-            "membership_tag": {{ options.membership_tag__required | json }},
-            "customer_id": {{ customer.id | json }}
-          },
-          "task_id": {{ task.id | json }}
-        }
-      {% endaction %}
-    {% endif %}
   {% endif %}
+
 {% elsif event.topic == "user/memberships/expire" %}
+  {% comment %}
+    -- get the customer ID and membership tag from the event data, as the tag may have changed in the task config since the customer was originally tagged
+  {% endcomment %}
+
+  {% assign customer_id = event.data.customer_id %}
+  {% assign membership_tag = event.data.membership_tag %}
+
+  {% capture query %}
+    query {
+      customer(id: {{ customer_id | json }}) {
+        id
+        tags
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
   {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "customer": {
+            "id": "gid://shopify/Customer/1234567890",
+            "tags": {{ membership_tag | json }}
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign customer = result.data.customer %}
+
+  {% if customer.tags contains membership_tag %}
     {% action "shopify" %}
       mutation {
         tagsRemove(
-          id: "gid://shopify/Customer/1234567890" 
-          tags: {{ options.membership_tag__required | json }}
+          id: {{ customer.id | json }}
+          tags: {{ membership_tag | json }}
         ) {
           userErrors {
             field
@@ -120,23 +176,5 @@
         }
       }
     {% endaction %}
-  {% elsif event.data.membership_tag == options.membership_tag__required %}
-    {% assign customer = shop.customers[event.data.customer_id] %}
-    {% assign customer_tags = customer.tags | split: ", " %}
-    {% if customer_tags contains options.membership_tag__required %}
-      {% action "shopify" %}
-        mutation {
-          tagsRemove(
-            id: {{ customer.admin_graphql_api_id | json }}
-            tags: {{ options.membership_tag__required | json }}
-          ) {
-            userErrors {
-              field
-              message
-            }
-          }
-        }
-      {% endaction %}
-    {% endif %}
   {% endif %}
 {% endif %}

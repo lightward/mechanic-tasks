@@ -1,129 +1,220 @@
-{% if event.preview %}
-  {
-    "action": {
-      "type": "shopify",
-      "options": [
-        "update",
-        [
-          "variant",
-          12345
-        ],
-        {
-          "inventory_policy": "continue"
-        }
-      ]
-    }
-  }
-{% elsif event.topic == "shopify/products/create" or event.topic == "shopify/products/update" %}
+{% if event.topic == "shopify/products/create" or event.topic == "shopify/products/update" %}
+  {% comment %}
+    -- only check published products
+  {% endcomment %}
+
   {% if product.published_at == blank %}
-    {"log": "Product is not published; skipping scan"}
-  {% else %}
-    {% assign updated_variants_count = 0 %}
-    {% assign product_updated = false %}
+    {% unless event.preview %}
+      {% log "Product is not published; skipping scan" %}
+      {% break %}
+    {% endunless %}
+  {% endif %}
 
-    {% assign product_tags = product.tags | split: ", " %}
-    {% assign allow_preorders = false %}
-    {% for tag in product_tags %}
-      {% assign tag_parts = tag | split: "_" %}
-      {% if tag_parts[0] == "preorder" %}
-        {% assign allow_preorders = true %}
-        {% break %}
-      {% endif %}
-    {% endfor %}
+  {% comment %}
+    -- query product and variant data, up to 2K variants
+  {% endcomment %}
 
-    {% assign inventory_policy_update = nil %}
+  {% assign products = array %}
+  {% assign variants = array %}
+  {% assign cursor = nil %}
 
-    {% for variant in product.variants %}
-      {% if allow_preorders and variant.inventory_policy == "deny" %}
-        {% assign inventory_policy_update = "continue" %}
-      {% elsif allow_preorders == false and variant.inventory_policy == "continue" %}
-        {% assign inventory_policy_update = "deny" %}
-      {% endif %}
-
-      {% if inventory_policy_update %}
-        {% assign product_updated = true %}
-        {% assign updated_variants_count = updated_variants_count | plus: 1 %}
-        {
-          "action": {
-            "type": "shopify",
-            "options": [
-              "update",
-              [
-                "variant",
-                {{ variant.id | json }}
-              ],
-              {
-                "inventory_policy": {{ inventory_policy_update | json }}
-              }
-            ]
+  {% for n in (1..8) %}
+    {% capture query %}
+      query {
+        product(id: {{ product.admin_graphql_api_id | json }}) {
+          id
+          tags
+          variants(
+            first: 250
+            after: {{ cursor | json }}
+          ) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              id
+              inventoryPolicy
+            }
           }
         }
-      {% endif %}
-    {% endfor %}
-
-    {% capture log_message %}
-      {{ product.variants.size }} variants scanned, {{ updated_variants_count }} variants required an update
+      }
     {% endcapture %}
 
-    {"log": {{ log_message | strip | json }}}
-  {% endif %}
-{% else %}
-  {% assign products_count = 0 %}
-  {% assign updated_products_count = 0 %}
-  {% assign updated_variants_count = 0 %}
+    {% assign result = query | shopify %}
 
-  {% for product in shop.products.published %}
-    {% assign product_updated = false %}
-
-    {% assign product_tags = product.tags | split: ", " %}
-    {% assign allow_preorders = false %}
-    {% for tag in product_tags %}
-      {% assign tag_parts = tag | split: "_" %}
-      {% if tag_parts[0] == "preorder" %}
-        {% assign allow_preorders = true %}
-        {% break %}
-      {% endif %}
-    {% endfor %}
-
-    {% assign inventory_policy_update = nil %}
-
-    {% for variant in product.variants %}
-      {% if allow_preorders and variant.inventory_policy == "deny" %}
-        {% assign inventory_policy_update = "continue" %}
-      {% elsif allow_preorders == false and variant.inventory_policy == "continue" %}
-        {% assign inventory_policy_update = "deny" %}
-      {% endif %}
-
-      {% if inventory_policy_update %}
-        {% assign product_updated = true %}
-        {% assign updated_variants_count = updated_variants_count | plus: 1 %}
+    {% if event.preview %}
+      {% capture result_json %}
         {
-          "action": {
-            "type": "shopify",
-            "options": [
-              "update",
-              [
-                "variant",
-                {{ variant.id | json }}
-              ],
-              {
-                "inventory_policy": {{ inventory_policy_update | json }}
+          "data": {
+            "product": {
+              "id": "gid://shopify/Product/1234567890",
+              "tags": "preorder",
+              "variants": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/ProductVariant/1234567890",
+                    "inventoryPolicy": "DENY"
+                  }
+                ]
               }
-            ]
+            }
           }
         }
-      {% endif %}
-    {% endfor %}
+      {% endcapture %}
 
-    {% assign products_count = products_count | plus: 1 %}
-    {% if product_updated %}
-      {% assign updated_products_count = updated_products_count | plus: 1 %}
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% comment %}
+      -- only save the product ID and tags from the product object; a separate array is used to support 2K variants
+    {% endcomment %}
+
+    {% assign products[0] = result.data.product | except: "variants" %}
+    {% assign variants = variants | concat: result.data.product.variants.nodes %}
+
+    {% if result.data.product.variants.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.product.variants.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
     {% endif %}
   {% endfor %}
 
-  {% capture log_message %}
-    {{ products_count }} published products scanned, {{ updated_products_count }} products ({{ updated_variants_count }} variants) required an update
+{% elsif event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% comment %}
+    -- get all published products in the shop, and all of their variants
+  {% endcomment %}
+
+  {% capture bulk_operation_query %}
+    query {
+      products(
+        query: "gift_card:false published_status:published"
+      ) {
+        edges {
+          node {
+            __typename
+            id
+            tags
+            variants {
+              edges {
+                node {
+                  __typename
+                  id
+                  inventoryPolicy
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   {% endcapture %}
 
-  {"log": {{ log_message | strip | json }}}
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+  {% break %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture jsonl_string %}
+      {"__typename":"Product","id":"gid://shopify/Product/1234567890","tags":["preorder"]}
+      {"__typename":"ProductVariant","id":"gid://shopify/ProductVariant/1234567890","inventoryPolicy":"DENY","__parentId":"gid://shopify/Product/1234567890"}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = jsonl_string | parse_jsonl %}
+  {% endif %}
+
+  {% comment %}
+    -- products and variants will be separate lines in the JSONL, so filter them into their own arrays
+    -- match variants to their parents in the products processing loop (this prevents creating another potentially large array in memory)
+  {% endcomment %}
+
+  {% assign products = bulkOperation.objects | where: "__typename", "Product" %}
+  {% assign bulk_variants = bulkOperation.objects | where: "__typename", "ProductVariant" %}
 {% endif %}
+
+{% comment %}
+  -- using products array, either process the product which triggered the event, or all products from bulk op query
+{% endcomment %}
+
+{% for product in products %}
+  {% if event.topic == "mechanic/shopify/bulk_operation" %}
+    {% assign variants = bulk_variants | where: "__parentId", product.id %}
+  {% endif %}
+
+  {% comment %}
+    -- overselling should be disabled unless this product has a preorder tag
+  {% endcomment %}
+
+  {% assign expected_inventory_policy = "DENY" %}
+
+  {% for tag in product.tags %}
+    {% assign tag_parts = tag | split: "_" %}
+
+    {% if tag_parts[0] == "preorder" %}
+      {% assign expected_inventory_policy = "CONTINUE" %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% comment %}
+    -- save GraphQL mutation inputs for variants that need to have their inventory policy updated to match what is expected based on product tags
+  {% endcomment %}
+
+  {% assign variant_inputs = array %}
+
+  {% for variant in variants %}
+    {% if variant.inventoryPolicy != expected_inventory_policy %}
+      {% assign variant_input = hash %}
+      {% assign variant_input["id"] = variant.id %}
+      {% assign variant_input["inventoryPolicy"] = expected_inventory_policy %}
+      {% assign variant_inputs = variant_inputs | push: variant_input %}
+    {% endif %}
+  {% endfor %}
+
+  {% if variant_inputs != blank %}
+    {% comment %}
+      -- pass variant inputs as GraphQL variables to handle products with a very large number of variants to update
+    {% endcomment %}
+
+    {% assign variables = hash %}
+    {% assign variables["variants"] = variant_inputs %}
+
+    {% capture query %}
+      mutation productVariantsBulkUpdate($variants: [ProductVariantsBulkInput!]!) {
+        productVariantsBulkUpdate(
+          productId: {{ product.id | json }}
+          variants: $variants
+        ) {
+          product {
+            id
+            title
+            tags
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% action "shopify" query: query, variables: variables %}
+  {% endif %}
+{% endfor %}

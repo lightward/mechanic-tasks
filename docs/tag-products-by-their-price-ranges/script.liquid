@@ -1,8 +1,10 @@
 {% assign tag_prefix = options.tag_prefix__required %}
-
 {% assign range_max = options.range_maximum__required_number | round %}
 {% assign range_min = options.range_minimum__required_number | round %}
 {% assign range_increment = options.range_increment__required_number | round %}
+{% assign use_only_the_single_smallest_range = options.use_only_the_single_smallest_range_that_applies_to_each_variant__boolean %}
+{% assign use_every_range = options.use_every_range_that_applies_to_each_variant__boolean %}
+
 {% assign range_steps = range_max | minus: range_min | divided_by: range_increment %}
 
 {% if range_max <= range_min %}
@@ -17,58 +19,183 @@
   {% enderror %}
 {% endif %}
 
-{% if options.use_only_the_single_smallest_range_that_applies_to_each_variant__boolean and options.use_every_range_that_applies_to_each_variant__boolean %}
+{% if use_only_the_single_smallest_range and use_every_range %}
   {% error "Use only one of the 'Use only...' options. :)" %}
-{% elsif options.use_only_the_single_smallest_range_that_applies_to_each_variant__boolean == false and options.use_every_range_that_applies_to_each_variant__boolean == false %}
+
+{% elsif use_only_the_single_smallest_range == false and use_every_range == false %}
   {% error "Use exactly one of the 'Use only...' options. :)" %}
 {% endif %}
 
-{% assign products = array %}
+{% if event.topic == "shopify/products/create" or event.topic == "shopify/products/update" %}
+  {% comment %}
+    -- query product and variant data, up to 2K variants
+  {% endcomment %}
 
-{% if event.preview %}
-  {% assign products[0] = hash %}
-  {% assign products[0]["admin_graphql_api_id"] = "gid://shopify/Product/1234567890" %}
+  {% assign products = array %}
+  {% assign variants = array %}
+  {% assign cursor = nil %}
 
-  {% assign tags = array %}
-  {% assign tags[tags.size] = "red" %}
-  {% assign tags[tags.size] = "blue" %}
-  {% assign tags[tags.size] = tag_prefix | append: "1-99999999999999999" %}
+  {% for n in (1..8) %}
+    {% capture query %}
+      query {
+        product(id: {{ product.admin_graphql_api_id | json }}) {
+          id
+          variants(
+            first: 250
+            after: {{ cursor | json }}
+          ) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              price
+            }
+          }
+        }
+      }
+    {% endcapture %}
 
-  {% assign products[0]["tags"] = tags | join: ", " %}
-  {% assign products[0]["variants"] = array %}
-  {% assign products[0]["variants"][0] = hash %}
-  {% assign products[0]["variants"][0]["price"] = options.range_minimum__required_number | plus: 0.01 %}
-  {% assign products[0]["variants"][1] = hash %}
-  {% assign products[0]["variants"][1]["price"] = options.range_maximum__required_number | minus: 0.01 %}
-{% elsif event.topic == "mechanic/user/trigger" %}
-  {% assign products = shop.products %}
-{% elsif event.topic == "shopify/products/create" or event.topic == "shopify/products/update" %}
-  {% assign products[0] = product %}
-{% endif %}
+    {% assign result = query | shopify %}
 
-{% for product in products %}
-  {% assign product_tags = product.tags | split: ", " %}
-  {% assign existing_price_range_tags = array %}
-  {% assign applicable_price_range_tags = array %}
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "product": {
+              "id": "gid://shopify/Product/1234567890",
+              "tags": {{ tag_prefix | append: "1-99999999999999999" | json }},
+              "variants": {
+                "nodes": [
+                  {
+                    "price": {{ range_min | plus: 0.01 | json }}
+                  },
+                  {
+                    "price": {{ range_max | minus: 0.01 | json }}
+                  }
+                ]
+              }
+            }
+          }
+        }
+      {% endcapture %}
 
-  {% for tag in product_tags %}
-    {% assign possible_prefix = tag | slice: 0, tag_prefix.size %}
-    {% if possible_prefix == tag_prefix %}
-      {% assign existing_price_range_tags[existing_price_range_tags.size] = tag %}
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% comment %}
+      -- only save the product ID and tags from the product object; a separate array is used to support 2K variants
+    {% endcomment %}
+
+    {% assign products[0] = result.data.product | except: "variants" %}
+    {% assign variants = variants | concat: result.data.product.variants.nodes %}
+
+    {% if result.data.product.variants.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.product.variants.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
     {% endif %}
   {% endfor %}
 
-  {% if options.use_only_the_single_smallest_range_that_applies_to_each_variant__boolean %}
-    {% for variant in product.variants %}
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% comment %}
+    -- get all active and draft products in the shop, and all of their variant prices
+  {% endcomment %}
+
+  {% capture bulk_operation_query %}
+    query {
+      products(
+        query: "-status:archived"
+      ) {
+        edges {
+          node {
+            __typename
+            id
+            tags
+            variants {
+              edges {
+                node {
+                  __typename
+                  id
+                  price
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+  {% break %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture jsonl_string %}
+      {"__typename":"Product","id":"gid://shopify/Product/1234567890","tags":[{{ tag_prefix | append: "1-99999999999999999" | json }}]}
+      {"__typename":"ProductVariant","id":"gid://shopify/ProductVariant/1234567890","price":{{ range_min | plus: 0.01 | json }},"__parentId":"gid://shopify/Product/1234567890"}
+      {"__typename":"ProductVariant","id":"gid://shopify/ProductVariant/2345678901","price":{{ range_max | minus: 0.01 | json }},"__parentId":"gid://shopify/Product/1234567890"}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = jsonl_string | parse_jsonl %}
+  {% endif %}
+
+  {% assign products = bulkOperation.objects | where: "__typename", "Product" %}
+  {% assign bulk_variants = bulkOperation.objects | where: "__typename", "ProductVariant" %}
+{% endif %}
+
+{% comment %}
+  -- using products array, either process the product which triggered the event, or all products from bulk op query
+{% endcomment %}
+
+{% for product in products %}
+  {% if event.topic == "mechanic/shopify/bulk_operation" %}
+    {% assign variants = bulk_variants | where: "__parentId", product.id %}
+  {% endif %}
+
+  {% assign existing_price_range_tags = array %}
+  {% assign applicable_price_range_tags = array %}
+
+  {% for tag in product.tags %}
+    {% assign possible_prefix = tag | slice: 0, tag_prefix.size %}
+
+    {% if possible_prefix == tag_prefix %}
+      {% assign existing_price_range_tags = existing_price_range_tags | push: tag %}
+    {% endif %}
+  {% endfor %}
+
+  {% if use_only_the_single_smallest_range %}
+    {% for variant in variants %}
       {% assign variant_price = variant.price | times: 1 %}
       {% assign variant_price_left = variant_price | divided_by: range_increment | floor | times: range_increment %}
       {% assign variant_price_right = variant_price_left | plus: range_increment %}
+
       {% capture tag %}{{ tag_prefix }}{{ variant_price_left }}-{{ variant_price_right }}{% endcapture %}
+
       {% unless applicable_price_range_tags contains tag %}
-        {% assign applicable_price_range_tags[applicable_price_range_tags.size] = tag %}
+        {% assign applicable_price_range_tags = applicable_price_range_tags | push: tag %}
       {% endunless %}
     {% endfor %}
-  {% elsif options.use_every_range_that_applies_to_each_variant__boolean %}
+
+  {% elsif use_every_range %}
     {% for i in (0..range_steps) %}
       {% for j in (i..range_steps) %}
         {% if j <= i %}
@@ -78,12 +205,14 @@
         {% assign step_min = i | times: range_increment | plus: range_min %}
         {% assign step_max = j | times: range_increment | plus: range_min %}
 
-        {% for variant in product.variants %}
+        {% for variant in variants %}
           {% assign variant_price = variant.price | times: 1 %}
+
           {% if variant_price >= step_min and variant_price <= step_max %}
             {% capture tag %}{{ tag_prefix }}{{ step_min }}-{{ step_max }}{% endcapture %}
+
             {% unless applicable_price_range_tags contains tag %}
-              {% assign applicable_price_range_tags[applicable_price_range_tags.size] = tag %}
+              {% assign applicable_price_range_tags = applicable_price_range_tags | push: tag %}
             {% endunless %}
           {% endif %}
         {% endfor %}
@@ -96,23 +225,22 @@
 
   {% for tag in applicable_price_range_tags %}
     {% unless existing_price_range_tags contains tag %}
-      {% assign tags_to_add[tags_to_add.size] = tag %}
+      {% assign tags_to_add = tags_to_add | push: tag %}
     {% endunless %}
   {% endfor %}
 
   {% for tag in existing_price_range_tags %}
     {% unless applicable_price_range_tags contains tag %}
-      {% assign tags_to_remove[tags_to_remove.size] = tag %}
+      {% assign tags_to_remove = tags_to_remove | push: tag %}
     {% endunless %}
   {% endfor %}
 
-  {% if tags_to_add != empty or tags_to_remove != empty %}
+  {% if tags_to_add != blank or tags_to_remove != blank %}
     {% action "shopify" %}
       mutation {
-
-        {% if tags_to_add != empty %}
+        {% if tags_to_add != blank %}
           tagsAdd(
-            id: {{ product.admin_graphql_api_id | json }}
+            id: {{ product.id | json }}
             tags: {{ tags_to_add | json }}
           ) {
             userErrors {
@@ -121,10 +249,9 @@
             }
           }
         {% endif %}
-
-        {% if tags_to_remove != empty %}
+        {% if tags_to_remove != blank %}
           tagsRemove(
-            id: {{ product.admin_graphql_api_id | json }}
+            id: {{ product.id | json }}
             tags: {{ tags_to_remove | json }}
           ) {
             userErrors {
@@ -133,7 +260,6 @@
             }
           }
         {% endif %}
-
       }
     {% endaction %}
   {% endif %}

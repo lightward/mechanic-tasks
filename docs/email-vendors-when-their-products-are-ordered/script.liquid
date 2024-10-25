@@ -1,14 +1,22 @@
+{% assign vendors_and_email_addresses = options.vendors_and_email_addresses__keyval_required %}
+{% assign email_subject = options.email_subject__required %}
+{% assign email_body = options.email_body__required_multiline %}
+
 {% if event.topic contains "shopify/orders/" %}
+  {% comment %}
+    -- preview event is for the order webhook data available to this task
+  {% endcomment %}
+
   {% if event.preview %}
     {% capture order_json %}
       {
         "line_items": [
           {
-            "id": 4776535457853,
+            "id": 1234567890,
             "title": "Test line item",
             "quantity": 5,
             "sku": "ABC123",
-            "vendor": {{ options.vendors_and_email_addresses__keyval_required.first.first | json }},
+            "vendor": {{ vendors_and_email_addresses.first.first | json }},
             "variant_title": "Test variant title"
           }
         ]
@@ -18,6 +26,10 @@
     {% assign order = order_json | parse_json %}
   {% endif %}
 
+  {% comment %}
+    -- get a list of vendors on this order
+  {% endcomment %}
+
   {% assign order_vendors = order.line_items | map: "vendor" | uniq %}
 
   {% for vendor in order_vendors %}
@@ -25,26 +37,113 @@
       {% continue %}
     {% endif %}
 
-    {% assign vendor_email = options.vendors_and_email_addresses__keyval_required[vendor] %}
+    {% comment %}
+      -- check to see if this vendor has been configured in the task
+    {% endcomment %}
+
+    {% assign vendor_email = vendors_and_email_addresses[vendor] %}
 
     {% if vendor_email == blank %}
       {% log message: "No email address found for vendor; skipping", vendor: vendor %}
       {% continue %}
     {% endif %}
 
+    {% comment %}
+      -- filter the line items by vendor
+    {% endcomment %}
+
     {% assign vendor_line_items = order.line_items | where: "vendor", vendor %}
+
+    {% comment %}
+      -- create a clone of the order data from the webhook so its line items can be augmented with additional data from a GraphQL query
+    {% endcomment %}
 
     {% assign order_data = order | json | parse_json %}
     {% assign order_data["line_items"] = array %}
 
+    {% comment %}
+      -- this GraphQL query shows how to get additional product or variant data that is not available in the order webhook
+      -- adjust it and the subsequent line_item assignments as needed for the Liquid content of your email body
+      -- product GraphQL fields - https://shopify.dev/docs/api/admin-graphql/latest/objects/Product#fields-connections
+      -- variant GraphQL fields - https://shopify.dev/docs/api/admin-graphql/latest/objects/ProductVariant#fields-connections
+      -- order webhook data available for use without a query - https://shopify.dev/docs/api/webhooks?reference=toml#list-of-topics-orders/create
+    {% endcomment %}
+
+    {% capture query %}
+      query {
+        order(id: {{ order.admin_graphql_api_id | json }}) {
+          lineItems(first: 250) {
+            nodes {
+              id
+              # product {
+                # additional fields if needed
+              # }
+              variant {
+                barcode
+                # additional fields if needed
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "order": {
+              "lineItems": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/LineItem/1234567890",
+                    "variant": {
+                      "barcode": "987654321"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign graphql_order = result.data.order %}
+
     {% for line_item in vendor_line_items %}
       {% comment %}
-        Augment the line item that we'll send with the email event, with any additional data your email needs.
+        -- create a clone of this line item data from the order webhook, so additional data can be added
       {% endcomment %}
+
       {% assign line_item_data = line_item | json | parse_json %}
-      {% assign line_item_data["variant_barcode"] = line_item.variant.barcode %}
+
+      {% comment %}
+        -- the following line gives access to the GraphQL data queried above for this specific line item
+      {% endcomment %}
+
+      {% assign graphql_line_item = graphql_order.lineItems.nodes | where: "id", line_item.admin_graphql_api_id | first %}
+
+      {% comment %}
+        -- add any additional data your email needs from the GraphQL query (e.g. barcode, which is not available in the order webhook data)
+      {% endcomment %}
+
+      {% assign line_item_data["variant_barcode"] = graphql_line_item.variant.barcode %}
+
+      {% comment %}
+        -- add the cloned and enhanced line item into the order data to be passed to the vendor email event
+      {% endcomment %}
+
       {% assign order_data["line_items"][forloop.index0] = line_item_data %}
     {% endfor %}
+
+    {% comment %}
+      -- call a custom event to send the email so Liquid tags used in the subject and body have access to the augmented order data (in event.data)
+    {% endcomment %}
 
     {% action "event" %}
       {
@@ -58,12 +157,13 @@
       }
     {% endaction %}
   {% endfor %}
+
 {% elsif event.topic == "user/orders/send_vendor_email" %}
   {% action "email" %}
     {
       "to": {{ event.data.vendor_email | json }},
-      "subject": {{ options.email_subject__required | json }},
-      "body": {{ options.email_body__required_multiline | json }},
+      "subject": {{ email_subject | json }},
+      "body": {{ email_body | json }},
       "reply_to": {{ shop.customer_email | json }},
       "from_display_name": {{ shop.name | json }}
     }
