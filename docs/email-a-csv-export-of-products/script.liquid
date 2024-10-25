@@ -1,32 +1,63 @@
-{% if event.preview %}
-  {% capture shop_json %}
-    {
-      "products": [
-        {
-          "id": 1234567890,
-          "title": "Short sleeve t-shirt"
+{% comment %}
+  -- create the initial array of arrays expected by the csv filter, and add the header row with column titles to it
+{% endcomment %}
+
+{% assign header_row = array | push: "Product ID", "Product Title" %}
+{% assign rows = array | push: header_row %}
+
+{% assign cursor = nil %}
+{% assign products = array %}
+
+{% for n in (1..100) %}
+  {% capture query %}
+    query {
+      products(
+        first: 250
+        after: {{ cursor | json }}
+      ) {
+        pageInfo {
+          hasNextPage
+          endCursor
         }
-      ]
+        nodes {
+          legacyResourceId
+          title
+        }
+      }
     }
   {% endcapture %}
 
-  {% assign shop = shop_json | parse_json %}
-{% endif %}
+  {% assign result = query | shopify %}
 
-{% assign rows = array %}
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "products": {
+            "nodes": [
+              {
+                "legacyResourceId": "1234567890",
+                "title": "Short sleeve t-shirt"
+              }
+            ]
+          }
+        }
+      }
+    {% endcapture %}
 
-{% assign header = array %}
-{% assign header[0] = "Product ID" %}
-{% assign header[1] = "Product Title" %}
+    {% assign result = result_json | parse_json %}
+  {% endif %}
 
-{% assign rows[0] = header %}
+  {% for product in result.data.products.nodes %}
+    {% assign row = array | push: product.legacyResourceId, product.title %}
+    {% assign rows = rows | push: row %}    
+  {% endfor %}
 
-{% for product in shop.products %}
-  {% assign row = array %}
-  {% assign row[0] = product.id %}
-  {% assign row[1] = product.title %}
-
-  {% assign rows[rows.size] = row %}
+  {% if result.data.products.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.products.pageInfo.endCursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
 {% endfor %}
 
 {% assign csv = rows | csv %}
@@ -44,4 +75,4 @@
   }
 {% endaction %}
 
-{% action "echo" csv %}
+{% log csv %}
