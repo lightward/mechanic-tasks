@@ -27,7 +27,6 @@ This task will run daily to query all customers in your shop who have placed an 
 ## Subscriptions
 
 ```liquid
-mechanic/shopify/bulk_operation
 mechanic/scheduler/daily
 mechanic/user/trigger
 ```

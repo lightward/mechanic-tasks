@@ -1,200 +1,242 @@
-{% comment %}
-  Option order:
+{% assign include_order_tags = options.include_order_tags__boolean %}
+{% assign include_product_tags = options.include_product_tags__boolean %}
+{% assign customer_segment_query = options.only_include_customers_matching_this_query %}
+{% assign only_include_orders_matching_this_query = options.only_include_orders_matching_this_query %}
+{% assign only_copy_these_tags = options.only_copy_these_tags__array %}
+{% assign remove_those_tags_if_a_qualifying_source_cannot_be_found = options.remove_those_tags_if_a_qualifying_source_cannot_be_found__boolean %}
 
-  {{ options.include_order_tags__boolean }}
-  {{ options.include_product_tags__boolean }}
+{% unless include_order_tags or include_product_tags %}
+  {% error "Choose at least one of 'Include order tags' and 'Include product tags'. :)" %}
+{% endunless %}
 
-  {{ options.only_include_customers_matching_this_query }}
-  {{ options.only_include_orders_matching_this_query }}
-
-  {{ options.only_copy_these_tags__array }}
-  {{ options.remove_those_tags_if_a_qualifying_source_cannot_be_found__boolean }}
-
-  {{ options.run_daily__boolean }}
-{% endcomment %}
-
-{% if options.include_order_tags__boolean == false and options.include_product_tags__boolean == false %}
-  {"error": "Choose at least one of 'Include order tags' and 'Include product tags'.  :)"}
-{% endif %}
-
-{% if options.remove_those_tags_if_a_qualifying_source_cannot_be_found__boolean and options.only_copy_these_tags__array == blank %}
-  {"error": "Mechanic can only remove tags it knows about. If you choose 'Remove those tags [...]', you must also fill in 'Only copy these tags'."}
+{% if remove_those_tags_if_a_qualifying_source_cannot_be_found and only_copy_these_tags == blank %}
+  {% error "Mechanic can only remove tags it knows about. If you choose 'Remove those tags [...]', you must also fill in 'Only copy these tags'." %}
 {% endif %}
 
 {% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
-  {% capture bulk_operation_query %}
-    query {
-      customers(query: {{ options.only_include_customers_matching_this_query | json }}) {
-        edges {
-          node {
-            __typename
+  {% comment %}
+    -- get IDs of all customers who match the segment query
+    -- Note: a segment query cannot be null, so if one has not been configured in the task then send an empty string
+  {% endcomment %}
+
+  {% assign cursor = nil %}
+  {% assign customer_ids = array %}
+
+  {% for n in (1..100) %}
+    {% capture query %}
+      query {
+        customerSegmentMembers(
+          first: 1000
+          after: {{ cursor | json }}
+          query: {{ customer_segment_query | default: "" | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          edges {
+            node {
+              id
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% assign customer_segment_members = result.data.customerSegmentMembers.edges | map: "node" %}
+
+    {% comment %}
+      -- remove the "SegmentMember" portion from IDs for easier use in querying each customer for additional data not available in the segment resource
+    {% endcomment %}
+
+    {% for customer_segment_member in customer_segment_members %}
+      {% assign customer_ids[customer_ids.size] = customer_segment_member.id | remove: "SegmentMember" %}
+    {% endfor %}
+
+    {% if result.data.customerSegmentMembers.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.customerSegmentMembers.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% unless event.preview %}
+    {% log count_of_customers_matching_query: customer_ids.size %}
+  {% endunless %}
+
+  {% if event.preview %}
+    {% assign customer_ids[0] = "gid://shopify/Customer/1234567890" %}
+  {% endif %}
+
+  {% for customer_id in customer_ids %}
+    {% comment %}
+      -- get all relevant order data for this customer
+    {% endcomment %}
+
+    {% assign cursor = nil %}
+    {% assign tags_should_have = array %}
+
+    {% for n in (1..10) %}
+      {% capture query %}
+        query {
+          customer(id: {{ customer_id | json }}) {
             id
             tags
-            orders(query: {{ options.only_include_orders_matching_this_query | json }}) {
-              edges {
-                node {
-                  __typename
-                  id
-                  {% if options.include_order_tags__boolean %}
-                    tags
-                  {% endif %}
-                  {% if options.include_product_tags__boolean %}
-                    lineItems {
-                      edges {
-                        node {
-                          __typename
-                          id
-                          product {
-                            __typename
-                            id
-                            tags
-                          }
-                        }
+            orders(
+              first: 250
+              after: {{ cursor | json }}
+            ) {
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+              nodes {
+                id
+                {% if include_order_tags %}tags{% endif %}
+                {% if include_product_tags %}
+                  lineItems(first: 250) {
+                    nodes {
+                      product {
+                        tags
                       }
                     }
-                  {% endif %}
+                  }
+                {% endif %}
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = query | shopify %}
+
+      {% if event.preview %}
+        {% capture result_json %}
+          {
+            "data": {
+              "customer": {
+                "id": "gid://shopify/Customer/1234567890",
+                "orders": {
+                  "nodes": [
+                    {
+                      "id": "gid://shopify/Order/1234567890",
+                      "tags": {{ only_copy_these_tags.first | default: "order preview tag" | json }},
+                      "lineItems": {
+                        "nodes": [
+                          {
+                            "product": {
+                              "tags": {{ only_copy_these_tags.first | default: "product preview tag" | json }}
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
                 }
               }
             }
           }
-        }
-      }
-    }
-  {% endcapture %}
+        {% endcapture %}
 
-  {% action "shopify" %}
-    mutation {
-      bulkOperationRunQuery(
-        query: {{ bulk_operation_query | json }}
-      ) {
-        bulkOperation {
-          id
-          status
-        }
-        userErrors {
-          field
-          message
-        }
-      }
-    }
-  {% endaction %}
-{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
-  {% assign customer_ids = bulkOperation.objects | where: "__typename", "Customer" | map: "id" %}
-
-  {% assign tags_available_by_customer_id = hash %}
-
-  {% if options.include_order_tags__boolean %}
-    {% assign orders = bulkOperation.objects | where: "__typename", "Order" %}
-    {% for order in orders %}
-      {% assign customer = order.__parent %}
-
-      {% if tags_available_by_customer_id[customer.id] == nil %}
-        {% assign tags_available_by_customer_id[customer.id] = array %}
+        {% assign result = result_json | parse_json %}
       {% endif %}
 
-      {% assign tags_available_by_customer_id[customer.id] = tags_available_by_customer_id[customer.id] | concat: order.tags %}
-    {% endfor %}
-  {% endif %}
+      {% assign customer = result.data.customer %}
 
-  {% if options.include_product_tags__boolean %}
-    {% assign lineItems = bulkOperation.objects | where: "__typename", "LineItem" | where: "product" %}
-    {% for lineItem in lineItems %}
-      {% assign product = lineItem.product %}
-      {% assign order = lineItem.__parent %}
-      {% assign customer = order.__parent %}
+      {% comment %}
+        -- process order tags and/or product tags to see which a customer should have based on task configuration
+      {% endcomment %}
 
-      {% if tags_available_by_customer_id[customer.id] == nil %}
-        {% assign tags_available_by_customer_id[customer.id] = array %}
+      {% for order in customer.orders.nodes %}
+        {% if include_order_tags %}
+          {% for tag in order.tags %}
+            {% if only_copy_these_tags != blank %}
+              {% unless only_copy_these_tags contains tag %}
+                {% continue %}
+              {% endunless %}
+            {% endif %}
+
+            {% assign tags_should_have = tags_should_have | push: tag %}
+          {% endfor %}
+        {% endif %}
+
+        {% if include_product_tags %}
+          {% for line_item in order.lineItems.nodes %}
+            {% for tag in line_item.product.tags %}
+              {% if only_copy_these_tags != blank %}
+                {% unless only_copy_these_tags contains tag %}
+                  {% continue %}
+                {% endunless %}
+              {% endif %}
+
+              {% assign tags_should_have = tags_should_have | push: tag %}
+            {% endfor %}
+          {% endfor %}
+        {% endif %}
+      {% endfor %}
+
+      {% if result.data.customer.orders.pageInfo.hasNextPage %}
+        {% assign cursor = result.data.customer.orders.pageInfo.endCursor %}
+      {% else %}
+        {% break %}
       {% endif %}
-
-      {% assign tags_available_by_customer_id[customer.id] = tags_available_by_customer_id[customer.id] | concat: product.tags %}
     {% endfor %}
-  {% endif %}
 
-  {% if event.preview %}
-    {% assign preview_tags = "foo,bar,baz" | split: "," %}
-    {% assign customer_ids[0] = "gid://shopify/Customer/1234567890" %}
-    {% assign tags_available_by_customer_id["gid://shopify/Customer/1234567890"] = options.only_copy_these_tags__array | default: preview_tags %}
-    {% assign bulkOperation = hash %}
-    {% assign bulkOperation["objects"] = array %}
-    {% assign bulkOperation["objects"][0] = '{"id":"gid://shopify/Customer/1234567890","tags":""}' | parse_json %}
-  {% endif %}
+    {% comment %}
+      -- determine which tags should be added or removed from the customer
+    {% endcomment %}
 
-  {% for customer_id in customer_ids %}
-    {% assign customer = bulkOperation.objects | where: "id", customer_id | first %}
+    {% assign tags_to_add = array %}
+    {% assign tags_to_remove = array %}
 
-    {% assign tags_available = tags_available_by_customer_id[customer_id] | default: array %}
+    {% for tag in tags_should_have %}
+      {% unless customer.tags contains tag or tags_to_add contains tag %}
+        {% assign tags_to_add = tags_to_add | push: tag %}
+      {% endunless %}
+    {% endfor %}
 
-    {% if options.only_copy_these_tags__array == blank %}
-      {% assign tags_applicable = tags_available %}
-    {% else %}
-      {% assign tags_applicable = array %}
-
-      {% for whitelisted_tag in options.only_copy_these_tags__array %}
-        {% if tags_available contains whitelisted_tag %}
-          {% assign tags_applicable[tags_applicable.size] = whitelisted_tag %}
+    {% if remove_those_tags_if_a_qualifying_source_cannot_be_found %}
+      {% for tag in only_copy_these_tags %}
+        {% if customer.tags contains tag %}
+          {% unless tags_should_have contains tag %}
+            {% assign tags_to_remove = tags_to_remove | push: tag %}
+          {% endunless %}
         {% endif %}
       {% endfor %}
     {% endif %}
 
-    {% assign tags_applicable = tags_applicable | sort | uniq %}
-
-    {% if tags_applicable != empty %}
-      {% assign tags_to_copy = array %}
-
-      {% for tag in tags_applicable %}
-        {% unless customer.tags contains tag %}
-          {% assign tags_to_copy[tags_to_copy.size] = tag %}
-        {% endunless %}
-      {% endfor %}
-
-      {% if tags_to_copy == empty %}
-        {% capture log_message %}Customer {{ customer.id }} already has all applicable tags ({{ tags_applicable | join: ", " }}); nothing to do.{% endcapture %}
-        {"log": {{ log_message | json }}}
-      {% else %}
-        {% action "shopify" %}
-          mutation {
-            tagsAdd(
-              id: {{ customer.id | json }}
-              tags: {{ tags_to_copy | json }}
-            ) {
-              userErrors {
-                field
-                message
-              }
+    {% if tags_to_add != blank %}
+      {% action "shopify" %}
+        mutation {
+          tagsAdd(
+            id: {{ customer.id | json }}
+            tags: {{ tags_to_add | sort_natural | json }}
+          ) {
+            userErrors {
+              field
+              message
             }
           }
-        {% endaction %}
-      {% endif %}
+        }
+      {% endaction %}
     {% endif %}
 
-    {% if options.remove_those_tags_if_a_qualifying_source_cannot_be_found__boolean and options.only_copy_these_tags__array != blank %}
-      {% assign tags_to_remove = array %}
-
-      {% for tag in options.only_copy_these_tags__array %}
-        {% unless tags_applicable contains tag %}
-          {% if customer.tags contains tag %}
-            {% assign tags_to_remove[tags_to_remove.size] = tag %}
-          {% endif %}
-        {% endunless %}
-      {% endfor %}
-
-      {% if tags_to_remove != empty %}
-        {% action "shopify" %}
-          mutation {
-            tagsRemove(
-              id: {{ customer.id | json }}
-              tags: {{ tags_to_remove | json }}
-            ) {
-              userErrors {
-                field
-                message
-              }
+    {% if tags_to_remove != blank %}
+      {% action "shopify" %}
+        mutation {
+          tagsRemove(
+            id: {{ customer.id | json }}
+            tags: {{ tags_to_remove | sort_natural | json }}
+          ) {
+            userErrors {
+              field
+              message
             }
           }
-        {% endaction %}
-      {% endif %}
+        }
+      {% endaction %}
     {% endif %}
-
   {% endfor %}
 {% endif %}

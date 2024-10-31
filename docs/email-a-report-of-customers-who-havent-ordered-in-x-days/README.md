@@ -27,15 +27,10 @@ Use this task to request or schedule an email digest of customers, having a cert
 ## Subscriptions
 
 ```liquid
-mechanic/shopify/bulk_operation
-
 mechanic/user/trigger
-
 {% if options.send_email_daily__boolean %}
   mechanic/scheduler/daily
-{% endif %}
-
-{% if options.send_email_every_monday__boolean %}
+{% elsif options.send_email_every_monday__boolean %}
   mechanic/scheduler/monday
 {% endif %}
 ```
@@ -47,8 +42,6 @@ mechanic/user/trigger
 Use this task to request or schedule an email digest of customers, having a certain tag, who haven't placed an order in a certain number of days.
 
 Run this task manually to request a report immediately, or configure the task to run automatically on a schedule.
-
-[YouTube: Watch the development video!](https://youtu.be/y1fV3aQrS1g)
 
 ## Installing this task
 

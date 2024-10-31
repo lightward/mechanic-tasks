@@ -1,125 +1,180 @@
-{% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
-  {% capture bulk_operation_query %}
-    query {
-      customers(
-        query: {{ options.required_customer_tag__required | json | prepend: "orders_count:>=1 AND tag:" | json }}
-      ) {
-        edges {
-          node {
-            displayName
-            email
-            id
-            legacyResourceId
+{% assign required_customer_tag = options.required_customer_tag__required %}
+{% assign interval_days = options.include_customers_who_have_not_placed_an_order_in_this_many_days__number_required %}
+{% assign email_subject_prefix = options.email_subject_prefix__required %}
+{% assign email_recipient = options.email_recipient__required_email %}
+{% assign send_email_anyway_if_no_customers_are_found = options.send_email_anyway_if_no_customers_are_found__boolean %}
 
-            lastOrder {
-              createdAt
-              legacyResourceId
-              name
+{% if interval_days <= 0 %}
+  {% error "The number of days must be greater than 0. :)" %}
+{% endif %}
+
+{% assign now_s = "now" | date: "%s" | times: 1 %}
+
+{% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% comment %}
+    -- get IDs of all customers with the required tag and who have placed an order over X days
+  {% endcomment %}
+
+  {%- capture customer_segment_query -%}
+    customer_tags CONTAINS '{{ required_customer_tag }}' AND orders_placed(until: -{{ interval_days }}d) = true
+  {%- endcapture -%}
+
+  {% assign cursor = nil %}
+  {% assign customer_ids = array %}
+
+  {% for n in (1..100) %}
+    {% capture query %}
+      query {
+        customerSegmentMembers(
+          first: 1000
+          after: {{ cursor | json }}
+          query: {{ customer_segment_query | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          edges {
+            node {
+              id
             }
           }
         }
       }
-    }
-  {% endcapture %}
-
-  {% action "shopify" %}
-    mutation {
-      bulkOperationRunQuery(
-        query: {{ bulk_operation_query | json }}
-      ) {
-        bulkOperation {
-          id
-          status
-        }
-        userErrors {
-          field
-          message
-        }
-      }
-    }
-  {% endaction %}
-{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
-  {% assign now_s = "now" | date: "%s" | times: 1 %}
-  {% assign interval_d = options.include_customers_who_have_not_placed_an_order_in_this_many_days__number_required %}
-  {% assign interval_s = interval_d | times: 24 | times: 60 | times: 60 %}
-  {% assign order_time_threshold_s = now_s | minus: interval_s %}
-
-  {% if interval_d <= 0 %}
-    {% error "The number of days must be greater than 0. :)" %}
-  {% endif %}
-
-  {% if event.preview %}
-    {% capture objects_json %}
-      [
-        {
-          "displayName": "Alpha Beta",
-          "email": "customer@example.com",
-          "id": "gid://shopify/Customer/1234567890",
-          "legacyResourceId": "1234567890",
-          "lastOrder": {
-            "createdAt": {{ now_s | minus: interval_s | minus: 432000 | date: "%Y-%m-%dT%H:%M:%SZ" | json }},
-            "legacyResourceId": "1234567890",
-            "name": "#1000"
-          }
-        }
-      ]
     {% endcapture %}
 
-    {% assign bulkOperation = hash %}
-    {% assign bulkOperation["objects"] = objects_json | parse_json %}
-  {% endif %}
+    {% assign result = query | shopify %}
 
-  {% assign qualifying_customers = array %}
+    {% assign customer_segment_members = result.data.customerSegmentMembers.edges | map: "node" %}
 
-  {% for customer in bulkOperation.objects %}
-    {% assign order_time_s = customer.lastOrder.createdAt | date: "%s" | times: 1 %}
-    {% if order_time_s < order_time_threshold_s %}
-      {% assign qualifying_customers[qualifying_customers.size] = customer %}
+    {% comment %}
+      -- remove the "SegmentMember" portion from IDs for easier use in querying each customer for additional data not available in the segment resource
+    {% endcomment %}
+
+    {% for customer_segment_member in customer_segment_members %}
+      {% assign customer_ids[customer_ids.size] = customer_segment_member.id | remove: "SegmentMember" %}
+    {% endfor %}
+
+    {% if result.data.customerSegmentMembers.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.customerSegmentMembers.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
     {% endif %}
   {% endfor %}
 
+  {% unless event.preview %}
+    {% log count_of_customers_who_qualify: customer_ids.size %}
+  {% endunless %}
+
+  {% if event.preview %}
+    {% assign customer_ids[0] = "gid://shopify/Customer/1234567890" %}
+  {% endif %}
+
+  {% comment %}
+    -- get additional customer and last order data and save list item in an array for email body processing
+  {% endcomment %}
+
+  {% assign list_items = array %}
+
+  {% for customer_id in customer_ids %}
+    {% capture query %}
+      query {
+        customer(id: {{ customer_id | json }}) {
+          legacyResourceId
+          displayName
+          email
+          lastOrder {
+            legacyResourceId
+            name
+            processedAt
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "customer": {
+              "legacyResourceId": "1234567890",
+              "displayName": "Alpha Beta",
+              "email": "customer@example.com",
+              "lastOrder": {
+                "processedAt": {{ interval_days | times: -86400 | plus: now_s | minus: 432000 | date: "%Y-%m-%dT%H:%M:%SZ" | json }},
+                "legacyResourceId": "1234567890",
+                "name": "#PREVIEW"
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign customer = result.data.customer %}
+
+    {% assign lastOrder_days_ago
+      = customer.lastOrder.processedAt
+      | date: "%s"
+      | minus: now_s
+      | divided_by: -86400
+    %}
+
+    {% capture list_item %}
+      <li>
+        <a href="{{ shop.admin_url }}customers/{{ customer.legacyResourceId }}">{{ customer.displayName | default: "(unnamed)" }}</a>
+        ({{ customer.email | default: "(no email)" }})
+        <br>
+        Last ordered on {{ customer.lastOrder.processedAt | date: "%Y-%m-%d" }},
+        {{ lastOrder_days_ago }} {{ lastOrder_days_ago | pluralize: "day", "days" }} ago
+        – <a href="{{ shop.admin_url }}orders/{{ customer.lastOrder.legacyResourceId }}">{{ customer.lastOrder.name }}</a>
+      </li>
+    {% endcapture %}
+
+    {% assign list_items = list_items | push: list_item %}
+  {% endfor %}
+
+  {% comment %}
+    -- generate the email subject and body with the list item data from qualifying customers
+  {% endcomment %}
+
   {% capture email_subject %}
-    {{ options.email_subject_prefix__required }} {{ qualifying_customers.size }} {{ qualifying_customers.size | pluralize: "customer", "customers" }} found
+    {{ email_subject_prefix }} {{ list_items.size }} {{ list_items.size | pluralize: "customer", "customers" }} found
   {% endcapture %}
 
-  {% if qualifying_customers != empty %}
+  {% if list_items != blank %}
     {% capture email_body %}
       <p>Hello,</p>
       <p>
-        Filtering for customers tagged {{ options.required_customer_tag__required | json }},
-        the following {{ qualifying_customers.size }} {{ qualifying_customers.size | pluralize: "customer was", "customers were" }}
-        found to have not placed an order in the last {{ interval_d }} {{ interval_d | pluralize: "day", "days" }}:
+        Filtering for customers tagged {{ required_customer_tag | json }},
+        the following {{ list_items.size }} {{ list_items.size | pluralize: "customer was", "customers were" }}
+        found to have not placed an order in the last {{ interval_days }} {{ interval_days | pluralize: "day", "days" }}:
       </p>
       <ul>
-        {% for customer in qualifying_customers %}
-          {% assign lastOrder_days_ago = customer.lastOrder.createdAt | date: "%s" | times: 1 | minus: now_s | times: -1 | divided_by: 60 | divided_by: 60 | divided_by: 24 %}
-          <li>
-            <a href="https://{{ shop.domain }}/admin/customers/{{ customer.legacyResourceId }}">{{ customer.displayName | default: "(unnamed)" }}</a>
-            ({{ customer.email | default: "(no email)" }})
-            <br>
-            Last ordered on {{ customer.lastOrder.createdAt | date: "%Y-%m-%d" }},
-            {{ lastOrder_days_ago }} {{ lastOrder_days_ago | pluralize: "day", "days" }} ago
-            – <a href="https://{{ shop.domain }}/admin/orders/{{ customer.lastOrder.legacyResourceId }}">{{ customer.lastOrder.name }}</a>
-          </li>
-        {% endfor %}
+      {{ list_items | join: newline }}
       </ul>
       <p>Thanks,<br>- Mechanic, for {{ shop.name }}</p>
     {% endcapture %}
 
     {% action "email" %}
       {
-        "to": {{ options.email_recipient__required_email | json }},
+        "to": {{ email_recipient | json }},
         "subject": {{ email_subject | strip | json }},
         "body": {{ email_body | json }},
         "reply_to": {{ shop.customer_email | json }},
         "from_display_name": {{ shop.name | json }}
       }
     {% endaction %}
-  {% elsif options.send_email_anyway_if_no_customers_are_found__boolean %}
+
+  {% elsif send_email_anyway_if_no_customers_are_found %}
     {% capture email_body %}
       Hello,
 
-      We didn't find any customers (tagged {{ options.required_customer_tag__required | json }}) having zero orders placed in the last {{ interval_d }} day(s).
+      We didn't find any customers (tagged {{ required_customer_tag | json }}) having zero orders placed in the last {{ interval_days }} day(s).
 
       Thanks,
       - Mechanic, for {{ shop.name }}
@@ -127,7 +182,7 @@
 
     {% action "email" %}
       {
-        "to": {{ options.email_recipient__required_email | json }},
+        "to": {{ email_recipient | json }},
         "subject": {{ email_subject | strip | json }},
         "body": {{ email_body | unindent | strip | newline_to_br | json }},
         "reply_to": {{ shop.customer_email | json }},
