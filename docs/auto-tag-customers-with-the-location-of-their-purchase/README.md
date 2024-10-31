@@ -2,7 +2,7 @@
 
 Tags: Auto-Tag, Customers, Location, Orders
 
-When an order is created, this task adds the location of the purchase to the customer's tags. Useful for stores with multiple Shopify-powered locations.
+When an order is created, this task adds the location name of the purchase to the customer's tags. Useful for stores with multiple Shopify-powered POS locations.
 
 * View in the task library: [tasks.mechanic.dev/auto-tag-customers-with-the-location-of-their-purchase](https://tasks.mechanic.dev/auto-tag-customers-with-the-location-of-their-purchase)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-customers-with-the-location-of-their-purchase.json)
@@ -23,18 +23,17 @@ When an order is created, this task adds the location of the purchase to the cus
 ```liquid
 shopify/orders/create
 mechanic/user/trigger
-mechanic/shopify/bulk_operation
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
-When an order is created, this task adds the location of the purchase to the customer's tags. Useful for stores with multiple Shopify-powered locations.
+When an order is created, this task adds the location name of the purchase to the customer's tags. Useful for stores with multiple Shopify-powered POS locations.
 
-This task will run for each new order that's created, applying the order location as a customer tag. Optionally, define a tag to be used for orders that have no physical location.
+This task will run for each new order that's created, applying the POS location name as a customer tag. Optionally, define a tag to be used for online orders.
 
-Run this task manually to have Mechanic scan your entire customer base, and each customer's order history.
+Run this task manually to have Mechanic scan each customer with an order history.
 
 ## Installing this task
 

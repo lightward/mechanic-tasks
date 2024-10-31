@@ -31,59 +31,108 @@
 {% endif %}
 
 {% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
-  {% capture bulk_operation_query %}
-    query {
-      customers(
-        query: "orders_count:>0"
-      ) {
-        edges {
-          node {
-            id
-            tags
-            lastOrder {
-              processedAt
+  {% comment %}
+    -- get IDs of all customers who have placed an order
+  {% endcomment %}
+
+  {% assign cursor = nil %}
+  {% assign customer_ids = array %}
+
+  {% for n in (1..100) %}
+    {% capture query %}
+      query {
+        customerSegmentMembers(
+          first: 1000
+          after: {{ cursor | json }}
+          query: "number_of_orders > 0"
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          edges {
+            node {
+              id
             }
           }
         }
       }
-    }
-  {% endcapture %}
-
-  {% action "shopify" %}
-    mutation {
-      bulkOperationRunQuery(
-        query: {{ bulk_operation_query | json }}
-      ) {
-        bulkOperation {
-          id
-          status
-        }
-        userErrors {
-          field
-          message
-        }
-      }
-    }
-  {% endaction %}
-
-{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
-  {% log tag_rules: tag_rules %}
-
-  {% if event.preview %}
-    {% capture bulkOperation_objects_jsonl %}
-      {"id":"gid:\/\/shopify\/Customer\/1234567890","lastOrder":{"processedAt":{{ tag_rules[0].threshold_s | json }}}}
     {% endcapture %}
 
-    {% assign bulkOperation = hash %}
-    {% assign bulkOperation["objects"] = bulkOperation_objects_jsonl | parse_jsonl %}
+    {% assign result = query | shopify %}
+
+    {% assign customer_segment_members = result.data.customerSegmentMembers.edges | map: "node" %}
+
+    {% comment %}
+      -- remove the "SegmentMember" portion from IDs for easier use in querying each customer for additional data not available in the segment resource
+    {% endcomment %}
+
+    {% for customer_segment_member in customer_segment_members %}
+      {% assign customer_ids[customer_ids.size] = customer_segment_member.id | remove: "SegmentMember" %}
+    {% endfor %}
+
+    {% if result.data.customerSegmentMembers.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.customerSegmentMembers.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% unless event.preview %}
+    {% log
+      count_of_customers_who_have_placed_an_order: customer_ids.size,
+      tag_rules: tag_rules
+    %}
+  {% endunless %}
+
+  {% if event.preview %}
+    {% assign customer_ids[0] = "gid://shopify/Customer/1234567890" %}
   {% endif %}
 
-  {% assign customers = bulkOperation.objects %}
+  {% for customer_id in customer_ids %}
+    {% comment %}
+      -- get customer tags and last order date
+    {% endcomment %}
 
-  {% for customer in customers %}
-    {% assign tag_should_have = nil %}
+    {% capture query %}
+      query {
+        customer(id: {{ customer_id | json }}) {
+          id
+          tags
+          lastOrder {
+            processedAt
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "customer": {
+              "id": "gid://shopify/Customer/1234567890",
+              "lastOrder": {
+                "processedAt": {{ tag_rules[0].threshold_s | json }}
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign customer = result.data.customer %}
+
+    {% comment %}
+      -- determine the tag that the customer should have based their last order date
+    {% endcomment %}
 
     {% assign customer_last_order_processed_at_s = customer.lastOrder.processedAt | date: "%s" | times: 1 %}
+    {% assign tag_should_have = nil %}
 
     {% for tag_rule in tag_rules %}
       {% if customer_last_order_processed_at_s <= tag_rule.threshold_s %}
@@ -103,7 +152,6 @@
               ... on Customer {
                 id
                 email
-                tags
                 lastOrder {
                   name
                   processedAt
@@ -119,12 +167,18 @@
       {% endaction %}
     {% endunless %}
 
+    {% comment %}
+      -- remove any other configured tags from the customer if needed
+    {% endcomment %}
+
     {% assign tags_to_remove = array %}
 
-    {% for customer_tag in customer.tags %}
-      {% if configured_tags contains customer_tag and tag_should_have != customer_tag %}
-        {% assign tags_to_remove = tags_to_remove | push: customer_tag %}
-      {% endif %}
+    {% for configured_tag in configured_tags %}
+      {% unless configured_tag == tag_should_have %}
+        {% if customer.tags contains configured_tag %}
+          {% assign tags_to_remove = tags_to_remove | push: configured_tag %}
+        {% endif %}
+      {% endunless %}
     {% endfor %}
 
     {% if tags_to_remove != blank %}
@@ -138,7 +192,6 @@
               ... on Customer {
                 id
                 email
-                tags
                 lastOrder {
                   name
                   processedAt
@@ -155,11 +208,15 @@
     {% endif %}
   {% endfor %}
 
+  {% comment %}
+    -- if task option enabled, then create customer segments for each configured tag (if they don't already exist)
+  {% endcomment %}
+
   {% if create_customer_segments_by_tag %}
     {% assign cursor = nil %}
     {% assign segments = array %}
 
-    {% for n in (1..100) %}
+    {% for n in (1..10) %}
       {% capture query %}
         query {
           segments(
@@ -181,29 +238,11 @@
 
       {% assign result = query | shopify %}
 
-      {% if event.preview %}
-        {% capture result_json %}
-          {
-            "data": {
-              "segments": {
-                "nodes": []
-              }
-            }
-          }          
-        {% endcapture %}
-      
-        {% assign result = result_json | parse_json %}
-      {% endif %}
-
-      {% assign segments = segemnts | concat: result.data.segments.nodes %}
-      {% comment %}
-        
       {% assign segments
         = result.data.segments.nodes
         | default: array
         | concat: segments
       %}
-      {% endcomment %}
 
       {% if result.data.segments.pageInfo.hasNextPage %}
         {% assign cursor = result.data.segments.pageInfo.endCursor %}

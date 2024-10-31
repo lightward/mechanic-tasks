@@ -1,33 +1,59 @@
+{% assign tag_for_online_orders = options.tag_for_online_orders %}
+
 {% if event.topic contains "shopify/orders" %}
+  {% capture query %}
+    query {
+      order(id: {{ order.admin_graphql_api_id | json }}) {
+        id
+        name
+        customer {
+          id
+          tags
+        }
+        retailLocation {
+          name
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
   {% if event.preview %}
-    {% capture order_json %}
+    {% capture result_json %}
       {
-        "location": {
-          "name": "Storefront"
-        },
-        "customer": {
-          "admin_graphql_api_id": "gid://shopify/Customer/1234567890",
-          "tags": ""
+        "data": {
+          "order": {
+            "id": "gid://shopify/Order/1234567890",
+            "customer": {
+              "id": "gid://shopify/Customer/1234567890"
+            },
+            "retailLocation": {
+              "name": "Storefront"
+            }
+          }
         }
       }
     {% endcapture %}
 
-    {% assign order = order_json | parse_json %}
+    {% assign result = result_json | parse_json %}
   {% endif %}
 
-  {% assign customer_tags = order.customer.tags | split: ", " %}
+  {% assign order = result.data.order %}
+  {% assign customer = order.customer %}
+  {% assign location_name = order.retailLocation.name | default: tag_for_online_orders %}
 
-  {% assign location = order.location.name | default: options.tag_for_online_orders %}
-
-  {% unless location == blank or customer_tags contains location %}
+  {% unless customer == blank or location_name == blank or customer.tags contains location_name %}
     {% action "shopify" %}
       mutation {
         tagsAdd(
-          id: {{ order.customer.admin_graphql_api_id | json }}
-          tags: [{{ location | json }}]
+          id: {{ customer.id | json }}
+          tags: {{ location_name | json }}
         ) {
           node {
             ... on Customer {
+              id
+              displayName
               tags
             }
           }
@@ -39,88 +65,151 @@
       }
     {% endaction %}
   {% endunless %}
+
 {% elsif event.topic == "mechanic/user/trigger" %}
-  {% capture bulk_operation_query %}
-    query {
-      customers(query: "orders_count:>0") {
-        edges {
-          node {
-            __typename
+  {% comment %}
+    -- get IDs of all customers who have placed an order
+  {% endcomment %}
+
+  {% assign cursor = nil %}
+  {% assign customer_ids = array %}
+
+  {% for n in (1..100) %}
+    {% capture query %}
+      query {
+        customerSegmentMembers(
+          first: 1000
+          after: {{ cursor | json }}
+          query: "number_of_orders > 0"
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          edges {
+            node {
+              id
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% assign customer_segment_members = result.data.customerSegmentMembers.edges | map: "node" %}
+
+    {% comment %}
+      -- remove the "SegmentMember" portion from IDs for easier use in querying each customer for additional data not available in the segment resource
+    {% endcomment %}
+
+    {% for customer_segment_member in customer_segment_members %}
+      {% assign customer_ids[customer_ids.size] = customer_segment_member.id | remove: "SegmentMember" %}
+    {% endfor %}
+
+    {% if result.data.customerSegmentMembers.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.customerSegmentMembers.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% unless event.preview %}
+    {% log count_of_customers_who_have_placed_an_order: customer_ids.size %}
+  {% endunless %}
+
+  {% if event.preview %}
+    {% assign customer_ids[0] = "gid://shopify/Customer/1234567890" %}
+  {% endif %}
+
+  {% for customer_id in customer_ids %}
+    {% comment %}
+      -- get all relevant order data for this customer
+    {% endcomment %}
+
+    {% assign cursor = nil %}
+    {% assign tags_to_add = array %}
+
+    {% for n in (1..10) %}
+      {% capture query %}
+        query {
+          customer(id: {{ customer_id | json }}) {
             id
             tags
-            orders {
-              edges {
-                node {
-                  __typename
-                  id
-                  physicalLocation {
-                    name
-                  }
+            orders(
+              first: 250
+              after: {{ cursor | json }}
+            ) {
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+              nodes {
+                id
+                name
+                retailLocation {
+                  name
                 }
               }
             }
           }
         }
-      }
-    }
-  {% endcapture %}
+      {% endcapture %}
 
-  {% action "shopify" %}
-    mutation {
-      bulkOperationRunQuery(
-        query: {{ bulk_operation_query | json }}
-      ) {
-        bulkOperation {
-          id
-          status
-        }
-        userErrors {
-          field
-          message
-        }
-      }
-    }
-  {% endaction %}
-{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
-  {% if event.preview %}
-    {% capture objects_jsonl %}
-      {"__typename":"Customer","id":"gid:\/\/shopify\/Customer\/1234567890","tags":[]}
-      {"__typename":"Order","id":"gid:\/\/shopify\/Order\/1234567890","physicalLocation":{"name":"Storefront"},"__parentId":"gid:\/\/shopify\/Customer\/1234567890"}
-    {% endcapture %}
+      {% assign result = query | shopify %}
 
-    {% assign bulkOperation = hash %}
-    {% assign bulkOperation["objects"] = objects_jsonl | parse_jsonl %}
-  {% endif %}
+      {% if event.preview %}
+        {% capture result_json %}
+          {
+            "data": {
+              "customer": {
+                "id": "gid://shopify/Customer/1234567890",
+                "orders": {
+                  "nodes": [
+                    {
+                      "id": "gid://shopify/Order/1234567890",
+                      "retailLocation": {
+                        "name": "Storefront"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        {% endcapture %}
 
-  {% assign customers = bulkOperation.objects | where: "__typename", "Customer" %}
-  {% assign orders = bulkOperation.objects | where: "__typename", "Order" %}
-
-  {% for customer in customers %}
-    {% assign customer_orders = orders | where: "__parentId", customer.id %}
-    {% assign tags_to_add = array %}
-
-    {% for order in customer_orders %}
-      {% assign location = order.physicalLocation.name | default: options.tag_for_online_orders %}
-
-      {% if location == blank or customer.tags contains location %}
-        {% continue %}
+        {% assign result = result_json | parse_json %}
       {% endif %}
 
-      {% assign tags_to_add[tags_to_add.size] = location %}
+      {% assign customer = result.data.customer %}
+
+      {% comment %}
+        -- process orders to see which location names should be set as tags
+      {% endcomment %}
+
+      {% for order in customer.orders.nodes %}
+        {% assign location_name = order.retailLocation.name | default: tag_for_online_orders %}
+
+        {% unless location_name == blank or customer.tags contains location_name or tags_to_add contains location_name %}
+          {% assign tags_to_add = tags_to_add | push: location_name %}
+        {% endunless %}
+      {% endfor %}
+
+      {% if result.data.customer.orders.pageInfo.hasNextPage %}
+        {% assign cursor = result.data.customer.orders.pageInfo.endCursor %}
+      {% else %}
+        {% break %}
+      {% endif %}
     {% endfor %}
 
-    {% if tags_to_add != empty %}
+    {% if tags_to_add != blank %}
       {% action "shopify" %}
         mutation {
           tagsAdd(
             id: {{ customer.id | json }}
-            tags: {{ tags_to_add | uniq | json }}
+            tags: {{ tags_to_add | sort_natural | json }}
           ) {
-            node {
-              ... on Customer {
-                tags
-              }
-            }
             userErrors {
               field
               message
