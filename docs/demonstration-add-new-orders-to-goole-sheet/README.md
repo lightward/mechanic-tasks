@@ -12,10 +12,10 @@ Tags: Demonstration, Files, Google Sheets, Orders, Spreadsheets
 
 ```json
 {
-  "google_account__required": "matt@lightward.com",
-  "spreadsheet_title__required": "Better order tracking spreadsheet",
+  "google_account__required": null,
+  "spreadsheet_title__required": null,
   "spreadsheet_id": "",
-  "email_address_for_export__email": "matt@lightward.com",
+  "email_address_for_export__email": null,
   "file_format_for_export": "pdf",
   "create_sheet_mode__boolean": true,
   "export_sheet_mode__boolean": false
