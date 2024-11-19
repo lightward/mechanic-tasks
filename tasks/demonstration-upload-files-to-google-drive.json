@@ -1,0 +1,24 @@
+{
+  "docs": "# Google Drive File Upload Demo\n\nEver wondered how to upload files to Google Drive from Mechanic? This demo task creates sample files in various formats and uploads them to your Drive. Try it out to learn how the Google Drive action works!\n\n## What's Included\n\nWe'll create and upload:\n- A text file (showing basic file creation)\n- A styled PDF (built from HTML)\n- A CSV spreadsheet\n- An HTML webpage\n- A ZIP file with multiple contents\n\n## Quick Start\n\n1. Connect your Google account (Settings → Authentication)\n2. Set two options:\n  - Your Google account email\n  - Whether to overwrite existing files\n3. Run the task!\n\nLook in your Google Drive for all the generated files. Run it again to see how file overwriting works!\n\n## Want to Learn More?\n\nThis task shows you how to:\n- Create different file types\n- Structure file content\n- Handle file overwrites\n- Process upload responses\n\nTake a look at the task code to see exactly how it works, then use these examples in your own tasks.\n",
+  "halt_action_run_sequence_on_error": false,
+  "name": "Demonstration: Upload files to Google Drive",
+  "online_store_javascript": null,
+  "options": {
+    "google_account__required": null,
+    "overwrite_files_with_the_same_name__boolean": false
+  },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "preview_event_definitions": [],
+  "script": "{% comment %}\n  Demonstration: Upload files to Google Drive\n  \n  This task shows different ways to generate and upload files using the Google Drive action.\n  Each example demonstrates a different file generation technique.\n\n  Preferred option order:\n  {{ options.google_account__required }}\n  {{ options.overwrite_files_with_the_same_name__boolean }}\n{% endcomment %}\n\n{% if event.topic == \"mechanic/user/trigger\" %}\n  {% action \"google_drive\" %}\n    {\n      \"account\": {{ options.google_account__required | json }},\n      \"uploads\": {\n        {% if options.overwrite_files_with_the_same_name__boolean %}\n          \"overwrite\": true,\n        {% endif %}\n        \"simple.txt\": \"This is a simple text file\\nIt can have multiple lines\\nAnd basic formatting\",\n        \"report.pdf\": {\n          \"pdf\": {\n            \"html\": \"<style>body{font-family:Arial,sans-serif}.header{color:#333;font-size:24px}.content{margin:20px 0}</style><div class='header'>Monthly Report</div><div class='content'><p>This demonstrates PDF generation from styled HTML.</p><p>You can include:</p><ul><li>Formatted text</li><li>Lists and tables</li><li>Styled elements</li></ul></div>\"\n          }\n        },\n        \"data.csv\": \"Date,Category,Value\\n2024-01-01,Sales,100\\n2024-01-02,Returns,-20\\n2024-01-03,Sales,150\",\n        \"chart.html\": \"<html><head><style>body{font-family:sans-serif}.chart{border:1px solid #ccc;padding:20px}</style></head><body><div class='chart'><h1>Interactive Chart</h1><p>This could be enhanced with JavaScript libraries.</p></div></body></html>\",\n        \"package.zip\": {\n          \"zip\": {\n            \"files\": {\n              \"readme.txt\": \"This is a package containing multiple files\",\n              \"data.csv\": \"id,name\\n1,test\"\n            }\n          }\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}\n\n{% if event.topic == \"mechanic/actions/perform\" %}\n  {% if action.type == \"google_drive\" %}\n    {% if action.run.ok %}\n      {% log success: true, message: \"Files successfully uploaded to Google Drive\", results: action.run.result %}\n    {% else %}\n      {% log success: false, message: \"Error uploading files\", error: action.run.result.errors %}\n    {% endif %}\n  {% endif %}\n{% endif %}",
+  "subscriptions": [
+    "mechanic/user/trigger",
+    "mechanic/actions/perform"
+  ],
+  "subscriptions_template": "mechanic/user/trigger\nmechanic/actions/perform",
+  "tags": [
+    "Demonstration",
+    "Files",
+    "Google Drive"
+  ]
+}

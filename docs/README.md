@@ -199,6 +199,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Demonstration: Performing action runs in sequence](./demonstration-performing-action-runs-in-sequence)
 * [Demonstration: Shopify Flow integration](./demonstration-shopify-flow-integration)
 * [Demonstration: Trigger a custom event for specific product or variant changes](./demonstration-trigger-a-custom-event-for-specific-product-or-variant-changes)
+* [Demonstration: Upload files to Google Drive](./demonstration-upload-files-to-google-drive)
 * [Demonstration: Web fonts in PDFs](./demonstration-web-fonts-in-pdfs)
 * [Demonstration: Write to a customer metafield](./demonstration-write-to-a-customer-metafield)
 * [Download and email a file to a customer, when purchased](./download-and-email-a-file-to-a-customer-when-purchased)
@@ -778,6 +779,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Demonstration: Performing action runs in sequence](./demonstration-performing-action-runs-in-sequence)
 * [Demonstration: Shopify Flow integration](./demonstration-shopify-flow-integration)
 * [Demonstration: Trigger a custom event for specific product or variant changes](./demonstration-trigger-a-custom-event-for-specific-product-or-variant-changes)
+* [Demonstration: Upload files to Google Drive](./demonstration-upload-files-to-google-drive)
 * [Demonstration: Web fonts in PDFs](./demonstration-web-fonts-in-pdfs)
 * [Demonstration: Write to a customer metafield](./demonstration-write-to-a-customer-metafield)
 
@@ -919,6 +921,7 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Files
 
 * [Demonstration: Generating a file and uploading it to Shopify](./demonstration-generate-a-file-and-upload-to-shopify)
+* [Demonstration: Upload files to Google Drive](./demonstration-upload-files-to-google-drive)
 * [Demonstration: Web fonts in PDFs](./demonstration-web-fonts-in-pdfs)
 * [Download and email a file to a customer, when purchased](./download-and-email-a-file-to-a-customer-when-purchased)
 * [Generate a simple product catalog PDF](./generate-a-simple-product-catalog-pdf)
@@ -954,6 +957,10 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Send an email alert when a fulfillment is cancelled](./send-an-email-alert-when-a-fulfillment-is-cancelled)
 * [Send an event to Klaviyo when a fulfillment is delayed](./send-an-event-to-klaviyo-when-a-fulfillment-is-delayed)
 * [Set a default tracking number for new fulfillments](./set-a-default-tracking-number-for-new-fulfillments)
+
+### Google Drive
+
+* [Demonstration: Upload files to Google Drive](./demonstration-upload-files-to-google-drive)
 
 ### HTTP
 
