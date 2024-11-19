@@ -190,6 +190,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Delete the oldest x products from a specific collection](./delete-the-oldest-x-products-from-a-specific-collection)
 * [Delete variants having a metafield date that has passed](./delete-variants-having-a-metafield-date-that-has-passed)
 * [Demonstration, Tutorial: Fetch data from a shared Google sheet](./demonstration-fetch-data-from-a-shared-google-sheet)
+* [Demonstration: Add new orders to a Google Sheet](./demonstration-add-new-orders-to-goole-sheet)
 * [Demonstration: Auto-tag new orders, with scheduled reconciliation](./demonstration-auto-tag-new-orders-with-reconciliation)
 * [Demonstration: Fetch an external configuration file](./demonstration-fetch-an-external-configuration-file)
 * [Demonstration: Fulfillment order move](./demonstration-fulfillment-order-move)
@@ -770,6 +771,7 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Demonstration
 
 * [Demonstration, Tutorial: Fetch data from a shared Google sheet](./demonstration-fetch-data-from-a-shared-google-sheet)
+* [Demonstration: Add new orders to a Google Sheet](./demonstration-add-new-orders-to-goole-sheet)
 * [Demonstration: Auto-tag new orders, with scheduled reconciliation](./demonstration-auto-tag-new-orders-with-reconciliation)
 * [Demonstration: Fetch an external configuration file](./demonstration-fetch-an-external-configuration-file)
 * [Demonstration: Fulfillment order move](./demonstration-fulfillment-order-move)
@@ -920,6 +922,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Files
 
+* [Demonstration: Add new orders to a Google Sheet](./demonstration-add-new-orders-to-goole-sheet)
 * [Demonstration: Generating a file and uploading it to Shopify](./demonstration-generate-a-file-and-upload-to-shopify)
 * [Demonstration: Upload files to Google Drive](./demonstration-upload-files-to-google-drive)
 * [Demonstration: Web fonts in PDFs](./demonstration-web-fonts-in-pdfs)
@@ -961,6 +964,10 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Google Drive
 
 * [Demonstration: Upload files to Google Drive](./demonstration-upload-files-to-google-drive)
+
+### Google Sheets
+
+* [Demonstration: Add new orders to a Google Sheet](./demonstration-add-new-orders-to-goole-sheet)
 
 ### HTTP
 
@@ -1251,6 +1258,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Copy prefixed tags to metafields](./copy-prefixed-tags-to-metafields)
 * [Credit customers for sample orders](./credit-customers-for-sample-orders)
 * [Delete cancelled orders after 48 hours](./delete-cancelled-orders-after-48-hours)
+* [Demonstration: Add new orders to a Google Sheet](./demonstration-add-new-orders-to-goole-sheet)
 * [Demonstration: Auto-tag new orders, with scheduled reconciliation](./demonstration-auto-tag-new-orders-with-reconciliation)
 * [Demonstration: Order editing](./demonstration-order-editing)
 * [Download and email a file to a customer, when purchased](./download-and-email-a-file-to-a-customer-when-purchased)
@@ -1655,6 +1663,10 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Spend
 
 * [Auto-tag customers having a rolling minimum total spend](./auto-tag-customers-having-a-rolling-minimum-total-spend)
+
+### Spreadsheets
+
+* [Demonstration: Add new orders to a Google Sheet](./demonstration-add-new-orders-to-goole-sheet)
 
 ### Staff
 

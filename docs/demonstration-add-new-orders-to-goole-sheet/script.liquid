@@ -1,0 +1,143 @@
+{% comment %}
+  Order Tracking with Google Sheets Integration
+  
+  Features:
+  - Creates a spreadsheet with order tracking columns
+  - Automatically logs new orders 
+  - Exports to XLSX, CSV, or PDF formats
+  - Email delivery
+
+  Setup:
+  1. Connect Google account in Settings > Authentication
+  2. Configure spreadsheet title
+  3. Run task to create initial spreadsheet
+  4. Copy spreadsheet_id from results
+  5. Add spreadsheet_id to options
+  6. Toggle between create mode and export mode as needed
+
+  Preferred option order:
+  {{ options.google_account__required }}
+  {{ options.spreadsheet_title__required }}
+  {{ options.spreadsheet_id }}
+  {{ options.email_address_for_export__email }}
+  {{ options.file_format_for_export }}
+  {{ options.create_sheet_mode__boolean }}
+  {{ options.export_sheet_mode__boolean }}
+{% endcomment %}
+
+{% assign order_headers = array %}
+{% assign order_headers[0] = "Order Number" %}
+{% assign order_headers[1] = "Date" %}
+{% assign order_headers[2] = "Customer" %}
+{% assign order_headers[3] = "Total" %}
+{% assign order_headers[4] = "Items" %}
+{% assign order_headers[5] = "Status" %}
+
+{% if event.topic == "mechanic/user/trigger" %}
+  {% if options.create_sheet_mode__boolean and options.export_sheet_mode__boolean %}
+    {% error "Please enable only one mode: either 'Create sheet mode' or 'Export sheet mode', but not both." %}
+  {% elsif options.create_sheet_mode__boolean %}
+    {% if options.spreadsheet_id != blank %}
+      {% error "A spreadsheet ID is already configured. To proceed, either: 1) Uncheck 'Create sheet mode' to just track orders, or 2) Uncheck 'Create sheet mode' and enable 'Export sheet mode' to export the existing spreadsheet." %}    
+    {% else %}
+      {% action "google_sheets" %}
+        {
+          "account": {{ options.google_account__required | json }},
+          "operation": "create_spreadsheet",
+          "title": {{ options.spreadsheet_title__required | json }},
+          "rows": [
+            {{ order_headers | json }}
+          ]
+        }
+      {% endaction %}
+    {% endif %}
+  {% elsif options.export_sheet_mode__boolean %}
+    {% if options.spreadsheet_id == blank %}
+      {% error "Please configure the spreadsheet ID before exporting. First create a spreadsheet using 'Create sheet mode', then copy the spreadsheet ID to the task options." %}
+    {% elsif options.email_address_for_export__email == blank %}
+      {% error "Please provide an email address for export in the task options when using 'Export sheet mode'." %}            
+    {% else %}
+      {% assign file_type = "xlsx" %}
+      {% assign export_format = options.file_format_for_export | default: "xlsx" | downcase %}
+      {% if export_format == "csv" %}
+        {% assign file_type = "csv" %}
+      {% elsif export_format == "pdf" %}
+        {% assign file_type = "pdf" %}
+      {% endif %}
+      
+      {% action "google_sheets" %}
+        {
+          "account": {{ options.google_account__required | json }},
+          "operation": "export_spreadsheet",
+          "spreadsheet_id": {{ options.spreadsheet_id | json }},
+          "file_type": {{ file_type | json }}
+        }
+      {% endaction %}
+    {% endif %}
+  {% else %}
+    {% if options.spreadsheet_id != blank %}
+      {% assign message = "✓ Task is configured and actively tracking orders. To export the spreadsheet: 1) Enable 'Export sheet mode', 2) Save the task, then 3) Run the task manually." %}
+      {% assign url = "https://docs.google.com/spreadsheets/d/" | append: options.spreadsheet_id %}
+      {% log message: message, spreadsheet_url: url %}
+    {% else %}
+      {% log message: "Please select an action mode in task options: Enable 'Create sheet mode' to create a new spreadsheet, or enable 'Export sheet mode' to export an existing spreadsheet. After creating a spreadsheet, copy its ID to the 'Spreadsheet ID' option." %}
+    {% endif %}
+  {% endif %}
+{% endif %}
+
+{% if event.topic == "mechanic/actions/perform" %}
+  {% if action.type == "google_sheets" and action.run.ok and action.run.result.data_base64 != blank %}
+    {% assign file_extension = ".xlsx" %}
+    {% assign export_format = options.file_format_for_export | default: "xlsx" | downcase %}
+    {% if export_format == "csv" %}
+      {% assign file_extension = ".csv" %}
+    {% elsif export_format == "pdf" %}
+      {% assign file_extension = ".pdf" %}
+    {% endif %}
+
+    {% action "email" %}
+      {
+        "to": {{ options.email_address_for_export__email | json }},
+        "subject": "Order Tracking Spreadsheet Export",
+        "body": "Please find attached the requested order tracking data.",
+        "attachments": {
+          {{ action.run.result.name | append: file_extension | json }}: {
+            "base64": {{ action.run.result.data_base64 | json }}
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endif %}
+
+{% if event.topic == "shopify/orders/create" %}
+  {% if options.spreadsheet_id == blank %}
+    {% error "Please run this task manually first to create a spreadsheet, then add the spreadsheet_id to the task options." %}
+  {% endif %}
+
+  {% comment %}Format order data for spreadsheet{% endcomment %}
+  {% assign order_items = array %}
+  {% for item in order.line_items %}
+    {% assign item_str = item.quantity | append: "x " | append: item.title %}
+    {% assign order_items = order_items | push: item_str %}
+  {% endfor %}
+
+  {% assign order_row = array %}
+  {% assign order_row[0] = order.order_number %}
+  {% assign order_row[1] = order.created_at | date: "%Y-%m-%d %H:%M:%S" %}
+  {% assign order_row[2] = order.customer.first_name | append: " " | append: order.customer.last_name %}
+  {% assign order_row[3] = order.total_price %}
+  {% assign order_row[4] = order_items | join: ", " %}
+  {% assign order_row[5] = order.financial_status %}
+
+  {% action "google_sheets" %}
+    {
+      "account": {{ options.google_account__required | json }},
+      "operation": "append_rows",
+      "spreadsheet_id": {{ options.spreadsheet_id | json }},
+      "rows": [
+        {{ order_row | json }}
+      ]
+    }
+  {% endaction %}
+{% endif %}
