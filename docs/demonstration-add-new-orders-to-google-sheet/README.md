@@ -4,8 +4,8 @@ Tags: Demonstration, Files, Google Sheets, Orders, Spreadsheets
 
 # Order Tracking with Google Sheets (Demonstration)
 
-* View in the task library: [tasks.mechanic.dev/demonstration-add-new-orders-to-goole-sheet](https://tasks.mechanic.dev/demonstration-add-new-orders-to-goole-sheet)
-* Task JSON, for direct import: [task.json](../../tasks/demonstration-add-new-orders-to-goole-sheet.json)
+* View in the task library: [tasks.mechanic.dev/demonstration-add-new-orders-to-google-sheet](https://tasks.mechanic.dev/demonstration-add-new-orders-to-google-sheet)
+* Task JSON, for direct import: [task.json](../../tasks/demonstration-add-new-orders-to-google-sheet.json)
 * Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
@@ -130,7 +130,7 @@ Use this task as a reference when building your own Google Sheets automations.
 
 ## Installing this task
 
-Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/demonstration-add-new-orders-to-goole-sheet), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/demonstration-add-new-orders-to-goole-sheet.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/demonstration-add-new-orders-to-google-sheet), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/demonstration-add-new-orders-to-google-sheet.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 
