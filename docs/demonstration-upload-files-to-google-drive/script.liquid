@@ -1,0 +1,49 @@
+{% comment %}
+  Demonstration: Upload files to Google Drive
+  
+  This task shows different ways to generate and upload files using the Google Drive action.
+  Each example demonstrates a different file generation technique.
+
+  Preferred option order:
+  {{ options.google_account__required }}
+  {{ options.overwrite_files_with_the_same_name__boolean }}
+{% endcomment %}
+
+{% if event.topic == "mechanic/user/trigger" %}
+  {% action "google_drive" %}
+    {
+      "account": {{ options.google_account__required | json }},
+      "uploads": {
+        {% if options.overwrite_files_with_the_same_name__boolean %}
+          "overwrite": true,
+        {% endif %}
+        "simple.txt": "This is a simple text file\nIt can have multiple lines\nAnd basic formatting",
+        "report.pdf": {
+          "pdf": {
+            "html": "<style>body{font-family:Arial,sans-serif}.header{color:#333;font-size:24px}.content{margin:20px 0}</style><div class='header'>Monthly Report</div><div class='content'><p>This demonstrates PDF generation from styled HTML.</p><p>You can include:</p><ul><li>Formatted text</li><li>Lists and tables</li><li>Styled elements</li></ul></div>"
+          }
+        },
+        "data.csv": "Date,Category,Value\n2024-01-01,Sales,100\n2024-01-02,Returns,-20\n2024-01-03,Sales,150",
+        "chart.html": "<html><head><style>body{font-family:sans-serif}.chart{border:1px solid #ccc;padding:20px}</style></head><body><div class='chart'><h1>Interactive Chart</h1><p>This could be enhanced with JavaScript libraries.</p></div></body></html>",
+        "package.zip": {
+          "zip": {
+            "files": {
+              "readme.txt": "This is a package containing multiple files",
+              "data.csv": "id,name\n1,test"
+            }
+          }
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}
+
+{% if event.topic == "mechanic/actions/perform" %}
+  {% if action.type == "google_drive" %}
+    {% if action.run.ok %}
+      {% log success: true, message: "Files successfully uploaded to Google Drive", results: action.run.result %}
+    {% else %}
+      {% log success: false, message: "Error uploading files", error: action.run.result.errors %}
+    {% endif %}
+  {% endif %}
+{% endif %}
