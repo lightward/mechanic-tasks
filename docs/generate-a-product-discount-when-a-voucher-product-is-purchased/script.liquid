@@ -1,8 +1,16 @@
 {% assign ve_product_ids_keyval = options.voucher_product_ids_and_entitled_product_ids__keyval_number_required %}
 {% assign discount_code_prefix = options.discount_code_prefix__required %}
-{% assign discount_value = options.discount_value__number_required %}
+{% assign discount_fixed_amount = options.discount_fixed_amount__number %}
+{% assign discount_percentage = options.discount_percentage__number %}
 {% assign email_subject = options.email_subject__required %}
 {% assign email_body = options.email_body__multiline_required %}
+
+{% if discount_percentage == blank and discount_fixed_amount == blank %}
+  {% error "Please fill either the discount percentage or discount fixed amount." %}
+
+{% elsif discount_percentage != blank and discount_fixed_amount != blank %}
+  {% error "Please choose between the discount percentage and discount fixed amount - only one is permitted." %}
+{% endif %}
 
 {% if event.topic == "shopify/orders/paid" %}
   {% if event.preview %}
@@ -89,7 +97,7 @@
       {% continue %}
     {% endif %}
 
-    {% for line_item_n in (1..line_item.quantity) %}
+    {% for n in (1..line_item.quantity) %}
       {% assign discount_code = line_item.id | append: n | split: "" | reverse | join: "" | slice: 0, 4 | append: order.order_number | base64 | replace: "=", "" | upcase | prepend: discount_code_prefix %}
 
       {% capture mutation %}
@@ -111,10 +119,14 @@
                   }
                 }
                 value: {
-                  discountAmount: {
-                    amount: {{ discount_fixed_amount | abs | times: 1.0 | json }}
-                    appliesOnEachItem: false
-                  }
+                  {% if discount_percentage != blank %}
+                    percentage: {{ discount_percentage | abs | divided_by: 100.0 | json }}
+                  {% else %}
+                    discountAmount: {
+                      amount: {{ discount_fixed_amount | abs | times: 1.0 | json }}
+                      appliesOnEachItem: false
+                    }
+                  {% endif %}
                 }
               }
               usageLimit: 1
