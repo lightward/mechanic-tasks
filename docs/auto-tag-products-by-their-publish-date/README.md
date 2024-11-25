@@ -2,7 +2,7 @@
 
 Tags: Auto-Tag, Products, Publish
 
-This task formats the publish date of each product (according to the format you choose), adds a prefix (also of your choosing), and applies it to each product. Run this task manually to scan your entire product catalog at once, or wait for the task to run automatically when products are created or updated.
+This task formats the publish date of a product (according to the format you choose), adds a prefix (also of your choosing), and applies it as a tag to the product. Run this task manually to scan your entire catalog of active products, or wait for the task to run automatically when products are created or updated.
 
 * View in the task library: [tasks.mechanic.dev/auto-tag-products-by-their-publish-date](https://tasks.mechanic.dev/auto-tag-products-by-their-publish-date)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-products-by-their-publish-date.json)
@@ -31,7 +31,7 @@ shopify/products/update
 
 ## Documentation
 
-This task formats the publish date of each product (according to the format you choose), adds a prefix (also of your choosing), and applies it to each product. Run this task manually to scan your entire product catalog at once, or wait for the task to run automatically when products are created or updated.
+This task formats the publish date of a product (according to the format you choose), adds a prefix (also of your choosing), and applies it as a tag to the product. Run this task manually to scan your entire catalog of active products, or wait for the task to run automatically when products are created or updated.
 
 Use [strfti.me](http://www.strfti.me) to build a date format that suits you. Use the previews to the right of the task options form to verify that your date format does what you expect. If you've got any questions, use the chat button in the corner. :)
 

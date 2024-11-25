@@ -1,61 +1,168 @@
-{% if event.preview %}
-  {
-    "action": {
-      "type": "shopify",
-      "options": [
-        "post",
-        "/admin/inventory_levels/connect.json",
-        {
-          "inventory_item_id": 1234567890,
-          "location_id": 1234567890,
-          "relocate_if_necessary": false
+{% comment %}
+  -- get all locations in the shop (up to 1K); by default legacy locations (fulfillment services) and inactive locations are excluded from results
+{% endcomment %}
+
+{% assign cursor = nil %}
+{% assign locations = array %}
+
+{% for n in (1..4) %}
+  {% capture query %}
+    query {
+      locations(
+        first: 250
+        after: {{ cursor | json }}
+        query: {{ search_query | json }}
+      ) {
+        pageInfo {
+          hasNextPage
+          endCursor
         }
-      ]
-    }
-  }
-{% else %}
-  {% for variant in product.variants %}
-    {% for location in shop.locations %}
-      {
-        "action": {
-          "type": "shopify",
-          "options": [
-            "post",
-            "/admin/inventory_levels/connect.json",
-            {
-              "inventory_item_id": {{ variant.inventory_item_id | json }},
-              "location_id": {{ location.id | json }},
-              "relocate_if_necessary": false
-            }
-          ]
+        nodes {
+          id
+          name
         }
       }
-    {% endfor %}
-  {% endfor %}
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "locations": {
+            "nodes": [
+              {
+                "id": "gid://shopify/Location/1234567890"
+              },
+              {
+                "id": "gid://shopify/Location/2345678901"
+              }
+            ]
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign locations = locations | concat: result.data.locations.nodes %}
+
+  {% if result.data.locations.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.locations.pageInfo.endCursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% comment %}
+  -- if there is only one active location configured in the shop, then there will be nothing for this task to do
+{% endcomment %}
+
+{% if locations.size == 1 %}
+  {% break %}
 {% endif %}
 
-{% if event.preview or options.track_inventory_using_shopify__boolean or options.allow_orders_for_out_of_stock_products__boolean %}
-  {
-    "action": {
-      "type": "shopify",
-      "options": [
-        "update",
-        [
-          "product",
-          {{ product.id | json }}
-        ],
-        {
-          "variants": [
-            {% for variant in product.variants %}
-              {
-                "id": {{ variant.id | json }},
-                "inventory_management": {% if options.track_inventory_using_shopify__boolean %}"shopify"{% else %}null{% endif %},
-                "inventory_policy": {% if options.allow_orders_for_out_of_stock_products__boolean %}"continue"{% else %}"deny"{% endif %}
-              }{% unless forloop.last %},{% endunless %}
-            {% endfor %}
-          ]
+{% comment %}
+  -- get all variants for this product (up to 2K)
+{% endcomment %}
+
+{% assign cursor = nil %}
+{% assign variants = array %}
+
+{% for n in (1..8) %}
+  {% capture query %}
+    query {
+      product(id: {{ product.admin_graphql_api_id | json }}) {
+        variants(
+          first: 250
+          after: {{ cursor | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            inventoryItem {
+              id
+            }
+          }
         }
-      ]
+      }
     }
-  }
-{% endif %}
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "product": {
+            "variants": {
+              "nodes": [
+                {
+                  "id": "gid://shopify/ProductVariant/1234567890",
+                  "inventoryItem": {
+                    "id": "gid://shopify/inventoryItem/1234567890"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign product = result.data.product %}
+  {% assign variants = variants | concat: result.data.product.variants.nodes %}
+
+  {% if result.data.product.variants.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.product.variants.pageInfo.endCursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% comment %}
+  -- activate each variant's inventory at all active locations
+{% endcomment %}
+
+{% for variant in variants %}
+  {% action "shopify" %}
+    mutation {
+      inventoryBulkToggleActivation(
+        inventoryItemId: {{ variant.inventoryItem.id | json }}
+        inventoryItemUpdates: [
+          {% for location in locations %}
+            {
+              locationId: {{ location.id | json }}
+              activate: true
+            }
+          {% endfor %}
+        ]
+      ) {
+        inventoryItem {
+          id
+        }
+        inventoryLevels {
+          location {
+            id
+            name
+          }
+        }
+        userErrors {
+          field
+          message
+          code
+        }
+      }
+    }
+  {% endaction %}
+{% endfor %}

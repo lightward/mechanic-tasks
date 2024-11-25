@@ -8,17 +8,6 @@ Using Shopify's multi-locations feature, and importing products in bulk? Use thi
 * Task JSON, for direct import: [task.json](../../tasks/auto-connect-new-products-to-all-locations.json)
 * Preview task code: [script.liquid](./script.liquid)
 
-## Default options
-
-```json
-{
-  "track_inventory_using_shopify__boolean": true,
-  "allow_orders_for_out_of_stock_products__boolean": true
-}
-```
-
-[Learn about task options in Mechanic](https://learn.mechanic.dev/core/tasks/options)
-
 ## Subscriptions
 
 ```liquid

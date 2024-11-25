@@ -1,62 +1,135 @@
-{% if options.date_format__required contains "," %}
+{% assign date_format = options.date_format__required %}
+{% assign tag_prefix = options.tag_prefix__required %}
+
+{% if date_format contains "," %}
   {% error "Tags are not permitted to include commas (','). :)" %}
 {% endif %}
 
-{% if event.preview %}
-  {% action "shopify" %}
-    mutation {
-      tagsAdd(
-        id: "gid://shopify/Product/1234576890"
-        tags: {{ "now" | date: options.date_format__required | prepend: options.tag_prefix__required | json }}
-      ) {
-        userErrors {
-          field
-          message
-        }
+{% if event.topic contains "shopify/products/" %}
+  {% capture query %}
+    query {
+      product(id: {{ product.admin_graphql_api_id | json }}) {
+        id
+        publishedAt
+        tags
       }
     }
-  {% endaction %}
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% assign products = array | push: result.data.product %}
+
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% comment %}
+    -- get up to 25K active products in the shop
+  {% endcomment %}
+
+  {% assign cursor = nil %}
+  {% assign products = array %}
+
+  {% for n in (1..100) %}
+    {% capture query %}
+      query {
+        products(
+          first: 250
+          after: {{ cursor | json }}
+          query: "status:active"
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            publishedAt
+            tags
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "products": {
+              "nodes": [
+                {
+                  "id": "gid://shopify/Product/1234567890"
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign products = products | concat: result.data.products.nodes %}
+
+    {% if result.data.products.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.products.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
 {% endif %}
 
-{% if event.topic == "mechanic/user/trigger" %}
-  {% assign products = shop.products %}
-{% elsif event.topic contains "shopify/products/" %}
-  {% assign products = array %}
-  {% assign products[0] = product %}
+{% if event.preview %}
+  {% capture products_json %}
+    [
+      {
+        "id": "gid://shopify/Product/1234567890",
+        "publishedAt": {{ "now" | date: "%F" | json }},
+        "tags": [
+          {{ "now - 1 year" | date: date_format | prepend: tag_prefix | json }}
+        ]
+      }
+    ]
+  {% endcapture %}
+
+  {% assign products = products_json | parse_json %}
 {% endif %}
+
+{% comment %}
+  -- process all products from paginated query, or the single product that initiated the webhook event
+{% endcomment %}
 
 {% for product in products %}
-  {% assign product_tags = product.tags | split: ", " %}
-
   {% assign calculated_published_at_tag = nil %}
   {% assign new_published_at_tag = nil %}
   {% assign old_published_at_tags = array %}
 
-  {% if product.published_at != blank %}
-    {% assign calculated_published_at_tag = product.published_at | date: options.date_format__required | prepend: options.tag_prefix__required %}
+  {% if product.publishedAt != blank %}
+    {% assign calculated_published_at_tag = product.publishedAt | date: date_format | prepend: tag_prefix %}
   {% endif %}
 
-  {% for tag in product_tags %}
+  {% for tag in product.tags %}
     {% if tag == calculated_published_at_tag %}
       {% continue %}
     {% endif %}
 
-    {% assign potential_tag_prefix = tag | slice: 0, options.tag_prefix__required.size %}
-    {% if potential_tag_prefix == options.tag_prefix__required %}
-      {% assign old_published_at_tags[old_published_at_tags.size] = tag %}
+    {% assign potential_tag_prefix = tag | slice: 0, tag_prefix.size %}
+
+    {% if potential_tag_prefix == tag_prefix %}
+      {% assign old_published_at_tags = old_published_at_tags | push: tag %}
     {% endif %}
   {% endfor %}
 
-  {% unless product_tags contains calculated_published_at_tag %}
+  {% unless product.tags contains calculated_published_at_tag %}
     {% assign new_published_at_tag = calculated_published_at_tag %}
   {% endunless %}
 
-  {% if new_published_at_tag != blank or old_published_at_tags != empty %}
+  {% if new_published_at_tag != blank or old_published_at_tags != blank %}
     {% action "shopify" %}
       mutation {
         {% if new_published_at_tag != blank %}
           tagsAdd(
-            id: {{ product.admin_graphql_api_id | json }}
+            id: {{ product.id | json }}
             tags: {{ new_published_at_tag | json }}
           ) {
             userErrors {
@@ -66,9 +139,9 @@
           }
         {% endif %}
 
-        {% if old_published_at_tags != empty %}
+        {% if old_published_at_tags != blank %}
           tagsRemove(
-            id: {{ product.admin_graphql_api_id | json }}
+            id: {{ product.id | json }}
             tags: {{ old_published_at_tags | json }}
           ) {
             userErrors {

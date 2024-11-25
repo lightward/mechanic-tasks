@@ -1,15 +1,13 @@
-{% comment %}
-  An opinion about option order:
+{% assign variant_attribute = options.variant_attribute_to_watch_for_changes__required %}
+{% assign tag_product_with_variant_titles = options.tag_product_with_the_titles_of_each_variant_that_has_changed__boolean %}
+{% assign product_tag_to_add = options.product_tag_to_add__required %}
+{% assign ignore_products_with_any_of_these_tags = options.ignore_products_with_any_of_these_tags__array %}
 
-  {{ options.variant_attribute_to_watch_for_changes__required }}
-  {{ options.tag_product_with_the_titles_of_each_variant_that_has_changed__boolean }}
-  {{ options.product_tag_to_add__required }}
-  {{ options.ignore_products_with_any_of_these_tags__array }}
+{% comment %}
+  -- verify a supported variant value has been configured
 {% endcomment %}
 
-{% assign variant_attribute = options.variant_attribute_to_watch_for_changes__required %}
-
-{% assign valid_variant_attributes = "barcode,compare_at_price,grams,option1,option2,option3,price,sku,taxable" | split: "," %}
+{% assign valid_variant_attributes = "barcode,compareAtPrice,price,sku,taxable" | split: "," %}
 
 {% unless valid_variant_attributes contains variant_attribute %}
   {% capture message -%}
@@ -20,111 +18,231 @@
 
 {% assign metafield_key = "variant_ids_and_" | append: variant_attribute | append: "s" %}
 
-{% assign products_that_need_a_metafield_update = array %}
+{% assign products = array %}
 
-{% if event.topic == "mechanic/user/trigger" %}
-  {% if event.preview %}
-    {% capture shop_json %}
-      {
-        "products": [
-          {
-            "variants": [
-              {
-                "id": 1234567890,
-                {{ variant_attribute | json }}: "OHHELLO"
-              },
-              {
-                "id": 2345678901,
-                {{ variant_attribute | json }}: "OHGOODBYE"
-              }
-            ]
+{% if event.topic == "shopify/products/create" or event.topic == "shopify/products/update" %}
+  {% comment %}
+    -- get all variants (up to 2K) for this product
+  {% endcomment %}
+
+  {% assign cursor = nil %}
+  {% assign variants = array %}
+
+  {% for n in (1..8) %}
+    {% capture query %}
+      query {
+        product(id: {{ product.admin_graphql_api_id | json }}) {
+          id
+          tags
+          metafield(
+            namespace: "mechanic"
+            key: {{ metafield_key | json }}
+          ) {
+            jsonValue
           }
-        ]
-      }
-    {% endcapture %}
-
-    {% assign shop = shop_json | parse_json %}
-  {% endif %}
-
-  {% assign products_that_need_a_metafield_update = shop.products %}
-{% elsif event.topic == "shopify/products/create" %}
-  {% assign products_that_need_a_metafield_update[0] = product %}
-{% elsif event.topic == "shopify/products/update" %}
-  {% if event.preview %}
-    {% capture product_json %}
-      {
-        "admin_graphql_api_id": "gid://shopify/Product/12346567890",
-        "variants": [
-          {
-            "id": 1234567890,
-            {{ variant_attribute | json }}: "OHHELLO",
-            "title": "OH / HELLO"
-          },
-          {
-            "id": 2345678901,
-            {{ variant_attribute | json }}: "OHGOODBYE",
-            "title": "OH / GOODBYE"
-          }
-        ],
-        "metafields": {
-          "mechanic": {
-            {{ metafield_key | json }}: {
-              "1234567890": "OHHELLOOOOOOOOOOOOOOOOO",
-              "2345678901": "OHGOODBYE"
+          variants(
+            first: 250
+            after: {{ cursor | json }}
+          ) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              legacyResourceId
+              title
+              {{ variant_attribute }}
             }
           }
         }
       }
     {% endcapture %}
 
-    {% assign product = product_json | parse_json %}
-  {% endif %}
+    {% assign result = query | shopify %}
 
-  {% assign previous_variant_ids_and_values = product.metafields.mechanic[metafield_key].value %}
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "product": {
+              "id": "gid://shopify/Product/1234567890",
+              "variants": {
+                "nodes": [
+                  {
+                    "legacyResourceId": "1234567890",
+                    "title": "Widget",
+                    {{ variant_attribute | json }}: "PREVIEW"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      {% endcapture %}
 
-  {% if previous_variant_ids_and_values == blank %}
-    {% error "Mechanic has not had an opportunity to store this product's previous variant values. Use the 'Run task' button to re-scan your products. :)" %}
-  {% endif %}
+      {% assign result = result_json | parse_json %}
+    {% endif %}
 
-  {% assign product_qualifies = false %}
+    {% assign products[0] = result.data.product %}
+    {% assign variants = variants | concat: result.data.product.variants.nodes %}
 
-  {% assign tags_to_add = array %}
-
-  {% unless options.tag_product_with_the_titles_of_each_variant_that_has_changed__boolean %}
-    {% assign tags_to_add[0] = options.product_tag_to_add__required %}
-  {% endunless %}
-
-  {% for variant in product.variants %}
-    {% assign variant_id_string = variant.id | append: "" %}
-    {% if previous_variant_ids_and_values[variant_id_string] != variant[variant_attribute] %}
-      {% assign product_qualifies = true %}
-
-      {% if options.tag_product_with_the_titles_of_each_variant_that_has_changed__boolean %}
-        {% if variant.title == "Default Title" %}
-          {% assign tags_to_add[tags_to_add.size] = options.product_tag_to_add__required %}
-        {% else %}
-          {% assign tags_to_add[tags_to_add.size] = options.product_tag_to_add__required | append: " " | append: variant.title %}
-        {% endif %}
-      {% endif %}
+    {% if result.data.product.variants.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.product.variants.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
     {% endif %}
   {% endfor %}
 
-  {% if options.ignore_products_with_any_of_these_tags__array != empty %}
-    {% assign product_tags = product.tags | split: ", " %}
-    {% for product_tag in product_tags %}
-      {% if options.ignore_products_with_any_of_these_tags__array contains product_tag %}
-        {% log message: "Product is disqualified by tag", disqualifying_product_tag: product_tag %}
-        {% assign product_qualifies = false %}
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% comment %}
+    -- get all active products in the shop and their variants
+  {% endcomment %}
+
+  {% capture bulk_operation_query %}
+    query {
+      products(
+        query: "status:active"
+      ) {
+        edges {
+          node {
+            __typename
+            id
+            tags
+            metafield(
+              namespace: "mechanic"
+              key: {{ metafield_key | json }}
+            ) {
+              jsonValue
+            }
+            variants {
+              edges {
+                node {
+                  __typename
+                  legacyResourceId
+                  title
+                  {{ variant_attribute }}
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+  {% break %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture jsonl_string %}
+      {"__typename":"Product","id":"gid://shopify/Product/1234567890"}
+      {"__typename":"ProductVariant","legacyResourceId":"1234567890","title":"Widget",{{ variant_attribute | json }}:"PREVIEW","__parentId":"gid://shopify/Product/1234567890"}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = jsonl_string | parse_jsonl %}
+  {% endif %}
+
+  {% assign products = bulkOperation.objects | where: "__typename", "Product" %}
+  {% assign bulk_variants = bulkOperation.objects | where: "__typename", "ProductVariant" %}
+{% endif %}
+
+{% comment %}
+  -- process all products returned by bulk op query, or the product that caused the create/update event
+  -- for product create/update, "variants" will have been assigned in paginated queries above
+{% endcomment %}
+
+{% assign metafield_inputs = array %}
+
+{% for product in products %}
+  {% if event.topic == "mechanic/shopify/bulk_operation" %}
+    {% assign variants = bulk_variants | where: "__parentId", product.id %}
+  {% endif %}
+
+  {% comment %}
+    -- see if this product should be excluded by tag
+  {% endcomment %}
+
+  {% assign exclude_product = nil %}
+
+  {% if ignore_products_with_any_of_these_tags != blank %}
+    {% for tag in product.tags %}
+      {% if ignore_products_with_any_of_these_tags contains tag %}
+        {% log
+          message: "Product is disqualified by tag",
+          disqualifying_product_tag: tag
+        %}
+        {% assign exclude_product = true %}
         {% break %}
       {% endif %}
     {% endfor %}
   {% endif %}
 
-  {% if product_qualifies %}
+  {% if exclude_product %}
+    {% continue %}
+  {% endif %}
+
+  {% assign previous_variant_ids_and_values = product.metafield.jsonValue %}
+
+  {% comment %}
+    -- only tag and check existing metafield variant values when a product is updated
+    -- new products and bulk scans will always set metafields (but not tags)
+  {% endcomment %}
+
+  {% if event.topic == "shopify/products/update" %}
+    {% if previous_variant_ids_and_values == blank %}
+      {% unless event.preview %}
+        {% error "Mechanic has not had an opportunity to store this product's previous variant values. Use the 'Run task' button to re-scan your products. :)" %}
+      {% endunless %}
+    {% endif %}
+
+    {% assign product_qualifies = nil %}
+    {% assign tags_to_add = array %}
+
+    {% unless tag_product_with_variant_titles %}
+      {% assign tags_to_add = tags_to_add | push: product_tag_to_add %}
+    {% endunless %}
+
+    {% for variant in variants %}
+      {% if previous_variant_ids_and_values[variant.legacyResourceId] != variant[variant_attribute] %}
+        {% assign product_qualifies = true %}
+
+        {% if tag_product_with_variant_titles %}
+          {% if variant.title == "Default Title" %}
+            {% assign tags_to_add = tags_to_add | push: product_tag_to_add %}
+
+          {% else %}
+            {% assign tags_to_add[tags_to_add.size] = product_tag_to_add | append: " " | append: variant.title %}
+          {% endif %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+
+    {% unless product_qualifies %}
+      {% break %}
+    {% endunless %}
+
     {% action "shopify" %}
       mutation {
         tagsAdd(
-          id: {{ product.admin_graphql_api_id | json }}
+          id: {{ product.id | json }}
           tags: {{ tags_to_add | json }}
         ) {
           userErrors {
@@ -134,70 +252,60 @@
         }
       }
     {% endaction %}
-
-    {% assign products_that_need_a_metafield_update[0] = product %}
   {% endif %}
-{% endif %}
 
-{% assign metafields = array %}
+  {% comment %}
+    -- product has variant changes, or has been newly scanned or created; set metafield values
+  {% endcomment %}
 
-{% for product in products_that_need_a_metafield_update %}
   {% assign metafield_value = hash %}
-  {% assign existing_metafield = product.metafields.mechanic | where: "key", metafield_key | first %}
 
-  {% for variant in product.variants %}
+  {% for variant in variants %}
     {% assign variant_id_string = variant.id | append: "" %}
-    {% assign metafield_value[variant_id_string] = variant[variant_attribute] %}
+    {% assign metafield_value[variant.legacyResourceId] = variant[variant_attribute] %}
   {% endfor %}
 
-  {% assign metafield_value_json = metafield_value | json %}
-
-  {% if existing_metafield.value == metafield_value_json %}
-    {% log message: "Product metafield is already up to date", product_id: product.id %}
-
-  {% else %}
-    {% capture metafield %}
-      {
-        ownerId: {{ product.admin_graphql_api_id | json }}
-        namespace: "mechanic"
-        key: {{ metafield_key | json }}
-        value: {{ metafield_value_json | json }}
-        type: "json"
-      }
-    {% endcapture %}
-
-    {% assign metafields = metafields | push: metafield %}
-  {% endif %}
+  {% assign metafield_input = hash %}
+  {% assign metafield_input["ownerId"] = product.id %}
+  {% assign metafield_input["namespace"] = "mechanic" %}
+  {% assign metafield_input["key"] = metafield_key %}
+  {% assign metafield_input["type"] = "json" %}
+  {% assign metafield_input["value"] = metafield_value | json %}
+  {% assign metafield_inputs = metafield_inputs | push: metafield_input %}
 {% endfor %}
 
-{% assign groups_of_metafields = metafields | in_groups_of: 25, fill_with: false %}
+{% comment %}
+  -- process any metafield updates from this task run
+{% endcomment %}
 
-{% for group_of_metafields in groups_of_metafields %}
-  {% action "shopify" %}
-    mutation {
-      metafieldsSet(
-        metafields: [
-          {{ group_of_metafields | join: newline }}
-        ]
-      ) {
-        metafields {
-          id
-          namespace
-          key
-          type
-          value
-          owner {
-            ... on Product {
-              id
+{% if metafield_inputs != blank %}
+  {% assign groups_of_metafield_inputs = metafield_inputs | in_groups_of: 25, fill_with: false %}
+
+  {% for group_of_metafield_inputs in groups_of_metafield_inputs %}
+    {% action "shopify" %}
+      mutation {
+        metafieldsSet(
+          metafields: {{ group_of_metafield_inputs | graphql_arguments }}
+        ) {
+          metafields {
+            id
+            namespace
+            key
+            type
+            value
+            owner {
+              ... on Product {
+                id
+              }
             }
           }
-        }
-        userErrors {
-          code
-          field
-          message
+          userErrors {
+            code
+            field
+            message
+          }
         }
       }
-    }
-  {% endaction %}
-{% endfor %}
+    {% endaction %}
+  {% endfor %}
+{% endif %}
