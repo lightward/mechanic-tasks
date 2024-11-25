@@ -1,41 +1,145 @@
-{% if event.preview %}
-  {
-    "action": {
-      "type": "shopify",
-      "options": [
-        "update",
-        [
-          "product",
-          1234567890
-        ],
-        {
-          "published": true
-        }
-      ]
+{% assign day_of_week_lowercase = "now" | date: "%A" | downcase %}
+
+{% comment %}
+  -- get Online Store publication ID
+{% endcomment %}
+
+{% capture query %}
+  query {
+    publications(
+      first: 250
+      catalogType: APP
+    ) {
+      nodes {
+        id
+        name
+      }
     }
   }
-{% else %}
-  {% assign dow_tag = "now" | date: "%A" | downcase %}
-  {"log": {{ "Publishing unpublished products tagged with '" | append: dow_tag | append: "'" | json }}}
+{% endcapture %}
 
-  {% for product in shop.products.unpublished %}
-    {% assign product_tags = product.tags | downcase | split: ", " %}
-    {% if product_tags contains dow_tag %}
-      {
-        "action": {
-          "type": "shopify",
-          "options": [
-            "update",
-            [
-              "product",
-              {{ product.id | json }}
-            ],
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "publications": {
+          "nodes": [
             {
-              "published": true
+              "id": "gid://shopify/Publication/1234567890",
+              "name": "Online Store"
             }
           ]
         }
       }
-    {% endif %}
-  {% endfor %}
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
 {% endif %}
+
+{% assign online_store_publication_id
+  = result.data.publications.nodes
+  | where: "name", "Online Store"
+  | map: "id"
+  | first
+%}
+
+{% comment %}
+  -- get all unpublished products with the day of week tag (tag search filter is case-insensitive, but using lowercase for tag verification in results)
+{% endcomment %}
+
+{%- capture search_query -%}
+  -published_at:* tag:{{ day_of_week_lowercase | json }}
+{%- endcapture -%}
+
+{% log search_query: search_query %}
+
+{% assign cursor = nil %}
+{% assign products = array %}
+
+{% for n in (1..100) %}
+  {% capture query %}
+    query {
+      products(
+        first: 250
+        after: {{ cursor | json }}
+        query: {{ search_query | json }}
+      ) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          id
+          tags
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "products": {
+            "nodes": [
+              {
+                "id": "gid://shopify/Product/1234567890",
+                "tags": {{ array | push: day_of_week_lowercase | json }}
+              }
+            ]
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign products = products | concat: result.data.products.nodes %}
+
+  {% if result.data.products.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.products.pageInfo.endCursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% if products == blank %}
+  {% log "No unpublished products qualified to be published on this task run." %}
+{% endif %}
+
+{% for product in products %}
+  {% comment %}
+    -- validate the product does indeed have the day of week tag exactly, since the tag query filter returns partial matches
+  {% endcomment %}
+
+  {% assign product_tags_lowercase
+    = product.tags
+    | json
+    | downcase
+    | parse_json
+  %}
+
+  {% if product_tags_lowercase contains day_of_week_lowercase %}
+    {% action "shopify" %}
+      mutation {
+        publishablePublish(
+          id: {{ product.id | json }}
+          input: {
+            publicationId: {{ online_store_publication_id | json }}
+          }
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}

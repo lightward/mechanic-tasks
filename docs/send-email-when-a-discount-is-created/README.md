@@ -12,7 +12,7 @@ Use this task to send email notifications whenever discounts are created in your
 
 ```json
 {
-  "email_receipients__array_required": null,
+  "email_recipients__array_required": null,
   "app_names_to_monitor__array": null
 }
 ```

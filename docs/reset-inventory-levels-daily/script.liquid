@@ -1,66 +1,201 @@
-{% if event.preview %}
-  {
-    "action": {
-      "type": "shopify",
-      "options": [
-        "post",
-        "/admin/inventory_levels/set.json",
-        {
-          "inventory_item_id": 1234567890,
-          "location_id": {{ shop.primary_location_id | json }},
-          "available": {{ options.inventory_level_to_apply__number_required | round | json }}
-        }
-      ]
-    }
-  }
-{% else %}
-  {% assign collection_id = options.collection_id__number_required | round %}
-  {% assign collection = shop.collections[collection_id] %}
+{% assign inventory_level_to_apply = options.inventory_level_to_apply__number_required %}
+{% assign collection_id = options.collection_id__number_required %}
 
-  {% unless collection %}
-    {% capture message %}No collection found with ID #{{ collection_id | json }}.{% endcapture %}
-    {"log": {{ message | json }}}
-  {% endunless %}
+{% assign location_id = shop.primary_location_id | prepend: "gid://shopify/Location/" %}
 
-  {% if collection.products.count == 0 %}
-    {% capture message %}No products in collection #{{ collection_id | json }}.{% endcapture %}
-    {"log": {{ message | json }}}
-  {% endif %}
+{% comment %}
+  -- get all product IDs from the configured collection
+{% endcomment %}
 
-  {% for product in collection.products %}
-    {% for variant in product.variants %}
-      {% if variant.inventory_management != "shopify" %}
-        {% capture message %}Inventory management policy is {{ variant.inventory_management | json }}, skipping inventory update for {{ variant.title }} on {{ product.title }}{% endcapture %}
-        {"log": {{ message | json }}}
-        {% continue %}
-      {% endif %}
+{% assign cursor = nil %}
+{% assign product_ids = array %}
 
-      {% for inventory_level in variant.inventory_levels %}
-        {% if inventory_level.location_id != shop.primary_location_id %}
-          {% continue %}
-        {% endif %}
-
-        {% if inventory_level.available == options.inventory_level_to_apply__number_required %}
-          {% capture message %}Inventory level is already {{ inventory_level.available | json }}, skipping inventory update for {{ variant.title }} on {{ product.title }}{% endcapture %}
-          {"log": {{ message | json }}}
-          {% continue %}
-        {% endif %}
-
-        {
-          "action": {
-            "type": "shopify",
-            "options": [
-              "post",
-              "/admin/inventory_levels/set.json",
-              {
-                "inventory_item_id": {{ inventory_level.inventory_item_id | json }},
-                "location_id": {{ inventory_level.location_id | json }},
-                "available": {{ options.inventory_level_to_apply__number_required | round | json }}
-              }
-            ]
+{% for n in (1..100) %}
+  {% capture query %}
+    query {
+      collection(id: {{ collection_id | prepend: "gid://shopify/Collection/" | json }}) {
+        products(
+          first: 250
+          after: {{ cursor | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
           }
         }
-      {% endfor %}
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "collection": {
+            "products": {
+              "nodes": [
+                {
+                  "id": "gid://shopify/Product/1234567890"
+                }
+              ]
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign collection = result.data.collection %}
+  {% assign product_ids
+    = collection.products.nodes
+    | map: "id"
+    | concat: product_ids
+    %}
+
+  {% if result.data.collection.products.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.collection.products.pageInfo.endCursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% comment %}
+  -- make sure collection exists and has products
+{% endcomment %}
+
+{% if collection == blank %}
+  {% log "Collection not found by ID." %}
+  {% break %}
+
+{% elsif product_ids == blank %}
+  {% log "No products found in the collection." %}
+  {% break %}
+{% endif %}
+
+{% comment %}
+  -- determine which inventory levels need to be set on this task run
+{% endcomment %}
+
+{% assign inventory_inputs = array %}
+
+{% for product_id in product_ids %}
+  {% comment %}
+    -- get all variants for this product (up to 2K), and their inventory items and inventory levels at the default location
+  {% endcomment %}
+
+  {% assign cursor = nil %}
+  {% assign variants = array %}
+
+  {% for n in (1..8) %}
+    {% capture query %}
+      query {
+        product(id: {{ product_id | json }}) {
+          id
+          handle
+          variants(
+            first: 250
+            after: {{ cursor | json }}
+          ) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              inventoryItem {
+                id
+                tracked
+                inventoryLevel(locationId: {{ location_id | json }}) {
+                  quantities(names: "available") {
+                    quantity
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "product": {
+              "variants": {
+                "nodes": [
+                  {
+                    "inventoryItem": {
+                      "id": "gid://shopify/InventoryItem/1234567890",
+                      "tracked": "true",
+                      "inventoryLevel": {
+                        "quantities": {
+                          "quantity": {{ inventory_level_to_apply | minus: 1 }}
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% comment %}
+      -- if a variant's inventory is tracked (i.e. managed by Shopify) and the available quantity at the default location differs from the configured level, then add it to input array
+    {% endcomment %}
+
+    {% for variant in result.data.product.variants.nodes %}
+      {% if variant.inventoryItem.tracked and variant.inventoryItem.inventoryLevel.quantities.first.quantity != inventory_level_to_apply %}
+        {% assign inventory_input = hash %}
+        {% assign inventory_input["inventoryItemId"] = variant.inventoryItem.id %}
+        {% assign inventory_input["locationId"] = location_id %}
+        {% assign inventory_input["quantity"] = inventory_level_to_apply %}
+        {% assign inventory_inputs = inventory_inputs | push: inventory_input %}
+      {% endif %}
     {% endfor %}
+
+    {% if result.data.product.variants.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.product.variants.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+{% endfor %}
+
+{% if inventory_inputs != blank %}
+  {% assign groups_of_inventory_inputs = inventory_inputs | in_groups_of: 250, fill_with: false %}
+
+  {% for group_of_inventory_inputs in groups_of_inventory_inputs %}
+    {% action "shopify" %}
+      mutation {
+        inventorySetQuantities(
+          input: {
+            name: "available"
+            reason: "correction"
+            ignoreCompareQuantity: true
+            quantities: {{ group_of_inventory_inputs | graphql_arguments }}
+          }
+        ) {
+          userErrors {
+            code
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
   {% endfor %}
 {% endif %}

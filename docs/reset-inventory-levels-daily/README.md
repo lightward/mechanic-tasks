@@ -2,7 +2,7 @@
 
 Tags: Inventory, Schedule
 
-Use this task to bring all of your inventory levels to the same place, every night.
+This task resets your inventory levels at the default location in your shop, every night, for all products within a given collection (configured by ID).
 
 * View in the task library: [tasks.mechanic.dev/reset-inventory-levels-daily](https://tasks.mechanic.dev/reset-inventory-levels-daily)
 * Task JSON, for direct import: [task.json](../../tasks/reset-inventory-levels-daily.json)
@@ -29,9 +29,7 @@ mechanic/scheduler/daily
 
 ## Documentation
 
-Use this task to bring all of your inventory levels to the same place, every night.
-
-This task resets your inventory levels every night, for a given collection ID.
+This task resets your inventory levels at the default location in your shop, every night, for all products within a given collection (configured by ID).
 
 ## Installing this task
 

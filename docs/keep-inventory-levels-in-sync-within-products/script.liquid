@@ -1,72 +1,230 @@
-{% if event.preview %}
-  {
-    "action": {
-      "type": "shopify",
-      "options": [
-        "post",
-        "/admin/inventory_levels/set.json",
-        {
-          "location_id": 123467890,
-          "inventory_item_id": 123467890,
-          "available": 30
-        }
-      ]
-    }
-  }
+{% assign filter_by_these_location_names = options.filter_by_these_location_names__array %}
+{% assign filter_by_these_product_types = options.filter_by_these_product_types__array %}
 
-  {
-    "action": {
-      "type": "cache",
-      "options": {
-        "setex": {
-          "key": "product-inventory-level-1234567890",
-          "value": true,
-          "ttl": 60
+{% assign changed_inventory_level_id = inventory_level.admin_graphql_api_id %}
+
+{% comment %}
+  -- get location and product data from the inventory level that changed
+{% endcomment %}
+
+{% capture query %}
+  query IL {
+    inventoryLevel(id: {{ changed_inventory_level_id | json }}) {
+      location {
+        name
+      }
+      quantities(names: "available") {
+        quantity
+      }
+      item {
+        id
+        variant {
+          product {
+            id
+            legacyResourceId
+            productType
+          }
         }
       }
     }
   }
-{% else %}
-  {% if options.filter_by_these_location_names__array == blank or options.filter_by_these_location_names__array contains inventory_level.location.name %}
-    {% if options.filter_by_these_product_types__array == blank or options.filter_by_these_product_types__array contains inventory_level.variant.product.product_type %}
-      {% assign cache_key = "product-inventory-level-" | append: inventory_level.variant.product.id %}
-      {% if cache[cache_key] == blank %}
-        {% for other_variant in inventory_level.variant.product.variants %}
-          {% for other_inventory_level in other_variant.inventory_levels %}
-            {% if other_inventory_level.available != inventory_level.available %}
-              {% if options.filter_by_these_location_names__array == blank or options.filter_by_these_location_names__array contains other_inventory_level.location.name %}
-                {
-                  "action": {
-                    "type": "shopify",
-                    "options": [
-                      "post",
-                      "/admin/inventory_levels/set.json",
-                      {
-                        "location_id": {{ other_inventory_level.location_id | json }},
-                        "inventory_item_id": {{ other_inventory_level.inventory_item_id | json }},
-                        "available": {{ inventory_level.available | json }}
-                      }
-                    ]
-                  }
-                }
-              {% endif %}
-            {% endif %}
-          {% endfor %}
-        {% endfor %}
+{% endcapture %}
 
-        {
-          "action": {
-            "type": "cache",
-            "options": {
-              "setex": {
-                "key": {{ cache_key | json }},
-                "value": true,
-                "ttl": 60
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "inventoryLevel": {
+          "location": {
+            "name": {{ filter_by_these_location_names.first | json }}
+          },
+          "quantities": [
+            {
+              "quantity": 100
+            }
+          ],
+          "item": {
+            "id": "gid://shopify/inventoryItem/1234567890",
+            "variant": {
+              "product": {
+                "id": "gid://shopify/Product/1234567890",
+                "legacyResourceId": "1234567890",
+                "productType": {{ filter_by_these_product_types.first | json }}
               }
             }
           }
         }
-      {% endif %}
-    {% endif %}
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% assign new_quantity = result.data.inventoryLevel.quantities.first.quantity %}
+{% assign location = result.data.inventoryLevel.location %}
+{% assign product = result.data.inventoryLevel.item.variant.product %}
+
+{% unless filter_by_these_location_names == blank or filter_by_these_location_names contains location.name %}
+  {% break %}
+{% endunless %}
+
+{% unless filter_by_these_product_types == blank or filter_by_these_product_types contains product.productType %}
+  {% break %}
+{% endunless %}
+
+{% assign cache_key = "product-inventory-level-" | append: product.legacyResourceId %}
+
+{% comment %}
+  -- if there is a cache entry, then inventory level updates were made by this task in the last minute, so stop processing
+{% endcomment %}
+
+{% if cache[cache_key] != blank %}
+  {% break %}
+{% endif %}
+
+{% comment %}
+  -- get inventory levels of each variant at all locations to see which need to be updated
+  -- support up to 2K variants
+{% endcomment %}
+
+{% assign cursor = nil %}
+{% assign inventory_inputs = array %}
+
+{% for n in (1..8) %}
+  {% capture query %}
+    query {
+      product(id: {{ product.id | json }}) {
+        variants(
+          first: 250
+          after: {{ cursor | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            inventoryItem {
+              id
+              inventoryLevels(first: 250) {
+                nodes {
+                  id
+                  quantities(names: "available") {
+                    quantity
+                  }
+                  location {
+                    id
+                    name
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "product": {
+            "variants": {
+              "nodes": [
+                {
+                  "inventoryItem": {
+                    "id": "gid://shopify/InventoryItem/2345678901",
+                    "inventoryLevels": {
+                      "nodes": [
+                        {
+                          "quantities": [
+                            {
+                              "quantity": 0
+                            }
+                          ],
+                          "location": {
+                            "id": "gid://shopify/Location/1234567890",
+                            "name": {{ filter_by_these_location_names.first | json }}
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
   {% endif %}
+
+  {% for variant in result.data.product.variants.nodes %}
+    {% for inventory_level in variant.inventoryItem.inventoryLevels.nodes %}
+      {% if inventory_level.id == changed_inventory_level_id %}
+        {% continue %}
+      {% endif %}
+
+      {% unless filter_by_these_location_names == blank or filter_by_these_location_names contains inventory_level.location.name %}
+        {% continue %}
+      {% endunless %}
+
+      {% if inventory_level.quantities.first.quantity != new_quantity %}
+        {% assign inventory_input = hash %}
+        {% assign inventory_input["inventoryItemId"] = variant.inventoryItem.id %}
+        {% assign inventory_input["locationId"] = inventory_level.location.id %}
+        {% assign inventory_input["quantity"] = new_quantity %}
+        {% assign inventory_inputs = inventory_inputs | push: inventory_input %}
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+
+  {% if result.data.product.variants.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.product.variants.pageInfo.endCursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% if inventory_inputs != blank %}
+  {% comment %}
+    -- set a cache entry for 60 seconds
+  {% endcomment %}
+
+  {% action "cache", "setex", cache_key, 60, true %}
+
+  {% comment %}
+    -- set the inventory levels in batches of 250
+  {% endcomment %}
+
+  {% assign groups_of_inventory_inputs = inventory_inputs | in_groups_of: 250, fill_with: false %}
+
+  {% for group_of_inventory_inputs in groups_of_inventory_inputs %}
+    {% action "shopify" %}
+      mutation {
+        inventorySetQuantities(
+          input: {
+            name: "available"
+            reason: "correction"
+            ignoreCompareQuantity: true
+            quantities: {{ group_of_inventory_inputs | graphql_arguments }}
+          }
+        ) {
+          userErrors {
+            code
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endfor %}
 {% endif %}

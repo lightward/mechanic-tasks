@@ -50,9 +50,7 @@ mechanic/user/trigger
 
 Use this task to schedule adding and/or removing tags for specific products, with support for scheduling by date, or by date and hour.
 
-Use this task to schedule adding and/or removing product tags by date.
-
-Use the "Product IDs" option to choose which products this task will tag. [Learn how to find product IDs here.](https://help.usemechanic.com/en/articles/2946120-how-do-i-find-an-id-for-a-product-collection-order-or-something-else)
+Use the "Product IDs" option to choose which products this task will tag. [Learn how to find product IDs here.](https://learn.mechanic.dev/techniques/finding-a-resource-id)
 
 Fill in the "Dates and tags to add" and/or "Dates and tags to remove" options with dates (including year, month, and day) on the left, and product tags on the right.
 

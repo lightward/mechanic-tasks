@@ -1,18 +1,60 @@
 {% assign product_tag_to_apply = options.product_tag_to_apply__required | strip %}
 
 {% if event.topic == "shopify/inventory_levels/update" %}
-  {% assign qualifies_to_be_tagged = nil %}
+  {% comment %}
+    -- get product ID and tags using the inventory_item_id in the inventory_level webhook
+  {% endcomment %}
 
+  {% capture query %}
+    query {
+      inventoryItem(
+        id: {{ inventory_level.inventory_item_id | prepend: "gid://shopify/InventoryItem/" | json }}
+      ) {
+        variant {
+          product {
+            id
+            tags
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "inventoryItem": {
+            "variant": {
+              "product": {
+                "id": "gid://shopify/Product/1234567890"
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign product = result.data.inventoryItem.variant.product %}
+
+  {% comment %}
+    -- get all variants (up to 2K) for this product and their "incoming" inventory levels (up to 200 locations)
+  {% endcomment %}
+
+  {% assign qualifies_to_be_tagged = nil %}
   {% assign cursor = nil %}
 
-  {% for n in (1..34) %}
+  {% for n in (1..8) %}
     {% capture query %}
       query {
-        product(id: {{ inventory_level.variant.product.admin_graphql_api_id | json }}) {
-          id
-          tags
+        product(id: {{ product.id | json }}) {
           variants(
-            first: 3
+            first: 250
             after: {{ cursor | json }}
           ) {
             pageInfo {
@@ -21,7 +63,7 @@
             }
             nodes {
               inventoryItem {
-                inventoryLevels(first: 100) {
+                inventoryLevels(first: 200) {
                   nodes {
                     quantities(names: "incoming") {
                       name
@@ -54,7 +96,7 @@
                             "quantities": [
                               {
                                 "name": "incoming",
-                                "quantity": 0
+                                "quantity": 1
                               }
                             ]
                           }
@@ -72,9 +114,11 @@
       {% assign result = result_json | parse_json %}
     {% endif %}
 
-    {% assign product = result.data.product %}
+    {% comment %}
+      -- the product qualifies if any of the variants' inventory levels have incoming inventory
+    {% endcomment %}
 
-    {% for variant in product.variants.nodes %}
+    {% for variant in result.data.product.variants.nodes %}
       {% for inventory_level in variant.inventoryItem.inventoryLevels.nodes %}
         {% if inventory_level.quantities.first.quantity > 0 %}
           {% assign qualifies_to_be_tagged = true %}
@@ -87,10 +131,10 @@
       {% endif %}
     {% endfor %}
 
-    {% if qualifies_to_be_tagged or product.variants.pageInfo.hasNextPage == false %}
+    {% if qualifies_to_be_tagged or result.data.product.variants.pageInfo.hasNextPage == false %}
       {% break %}
     {% else %}
-      {% assign cursor = product.variants.pageInfo.endCursor %}
+      {% assign cursor = result.data.product.variants.pageInfo.endCursor %}
     {% endif %}
   {% endfor %}
 
@@ -130,9 +174,15 @@
   {% endif %}
 
 {% elsif event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% comment %}
+    -- run bulk op query to get all active products in the shop, and their variants' "incoming" inventory levels
+  {% endcomment %}
+
   {% capture bulk_operation_query %}
     query {
-      products {
+      products(
+        query: "status:active"
+      ) {
         edges {
           node {
             __typename
