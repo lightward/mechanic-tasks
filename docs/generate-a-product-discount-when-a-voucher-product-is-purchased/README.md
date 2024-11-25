@@ -2,7 +2,7 @@
 
 Tags: Discounts, Products, Watch
 
-Use this task to generate discounts for future purchases. When a customer buys a "voucher" product, they will be emailed a single-use discount code for a fixed amount of money off a purchase on a corresponding "entitled" product".
+Use this task to generate discounts for future purchases. When a customer buys a "voucher" product, they will be emailed a single-use discount code for either a fixed amount of money or percentage off a purchase on a corresponding "entitled" product".
 
 * View in the task library: [tasks.mechanic.dev/generate-a-product-discount-when-a-voucher-product-is-purchased](https://tasks.mechanic.dev/generate-a-product-discount-when-a-voucher-product-is-purchased)
 * Task JSON, for direct import: [task.json](../../tasks/generate-a-product-discount-when-a-voucher-product-is-purchased.json)
@@ -33,7 +33,7 @@ mechanic/actions/perform
 
 ## Documentation
 
-Use this task to generate discounts for future purchases. When a customer buys a "voucher" product, they will be emailed a single-use discount code for a fixed amount of money off a purchase on a corresponding "entitled" product".
+Use this task to generate discounts for future purchases. When a customer buys a "voucher" product, they will be emailed a single-use discount code for either a fixed amount of money or percentage off a purchase on a corresponding "entitled" product".
 
 If a customer purchases more than one voucher product, they will receive more than one email, each containing a unique discount code.
 
@@ -41,7 +41,8 @@ If a customer purchases more than one voucher product, they will receive more th
 
 - **Voucher product IDs and entitled product IDs:** Enter the IDs of the voucher products you're selling on the left, and the IDs of products you want to be discounted on the right. ([Learn how to find the product IDs.](https://learn.mechanic.dev/techniques/finding-a-resource-id))
 - **Discount code prefix:** A small piece of text to add to the beginning of the generated discount code.
-- **Discount value:** The money value to be subtracted.
+- **Discount fixed amount:** The money value to be subtracted. If you choose this option, you cannot choose a discount percentage.
+- **Discount percentage:** The percentage to be subtracted (e.g. 15). If you choose this option, you cannot choose a fixed discount amount.
 - **Email subject, body:** The content to email to the customer. May use the following variables:
   - CUSTOMER_FIRST_NAME
   - DISCOUNT_CODE
