@@ -25,7 +25,6 @@ Either triggered manually, or configured to run daily, this task will look for t
 
 ```liquid
 mechanic/user/trigger
-
 {% if options.run_daily__boolean %}
   mechanic/scheduler/daily
 {% endif %}
@@ -37,7 +36,11 @@ mechanic/user/trigger
 
 Either triggered manually, or configured to run daily, this task will look for the oldest products in the collection of your choice, and delete as many of them as you wish.
 
-This task requires a collection ID - [learn how to find yours](https://help.usemechanic.com/en/articles/2946120-how-do-i-find-an-id-for-a-product-collection-order-or-something-else).
+**IMPORTANT**: When first configuring this task, run it manually once in "Test mode" to see a list of which products it would delete. Once verfied, be sure to uncheck this option to have the task make the deletions going forward.
+
+*Notes:*
+- The products will be deleted asycnronously by Shopify, which means they may appear in the products list of admin for a bit after a task run.
+- This task requires a collection ID - [learn how to locate common resource IDs](https://learn.mechanic.dev/techniques/finding-a-resource-id).
 
 ## Installing this task
 

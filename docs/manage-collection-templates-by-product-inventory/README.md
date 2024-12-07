@@ -40,6 +40,8 @@ Use this task to automatically switch collections over to an appropriate theme t
 
 This task can be run manually (using the "Run task" button), or be configured to run daily/hourly. If you encounter performance issues when running every time an inventory level is updated, disable this option.
 
+Note: For this task, products which do not track inventory in Shopify will be considered as in stock.
+
 ## Installing this task
 
 Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/manage-collection-templates-by-product-inventory), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/manage-collection-templates-by-product-inventory.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.

@@ -1,46 +1,93 @@
-{% assign collection = shop.collections[options.collection_id__number_required] %}
+{% assign collection_id = options.collection_id__number_required %}
+{% assign number_of_products_to_delete_at_once = options.number_of_products_to_delete_at_once__number_required %}
+{% assign test_mode = options.test_mode__boolean %}
 
-{% if event.preview != true and collection == nil %}
-  {"error": {{ options.collection_id__number_required | json | prepend: "Unable to find collection " | json }}}
+{% if number_of_products_to_delete_at_once > 250 %}
+  {% error "This task only supports deleting up to 250 products in a single task run." %}
 {% endif %}
 
-{% assign products = collection.products %}
+{% comment %}
+  -- get X oldest products that are in the collection
+{% endcomment %}
+
+{% capture query %}
+  query {
+    collection(id: {{ collection_id | prepend: "gid://shopify/Collection/" | json }}) {
+      products(
+        first: {{ number_of_products_to_delete_at_once }}
+        sortKey: CREATED
+      ) {
+        nodes {
+          id
+          title
+          createdAt
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
 
 {% if event.preview %}
-  {% assign products = array %}
-  {% assign products[0] = '{"id":12345,"created_at":"2000-01-01"}' | parse_json %}
+  {% capture result_json %}
+    {
+      "data": {
+        "collection": {
+          "products": {
+            "nodes": [
+              {
+                "id": "gid://shopify/Product/1234567890",
+                "createdAt": "2020-02-02T01:01:00Z"
+              }
+            ]
+          }
+        }
+      }
+    }
+  {% endcapture %}
 
-  {% comment %}
-    Uncomment me for more testing!
-    {% assign products[1] = '{"id":67890,"created_at":"2001-01-01"}' | parse_json %}
-  {% endcomment %}
+  {% assign result = result_json | parse_json %}
 {% endif %}
 
-{% assign products_sorted = products | sort: "created_at" %}
+{% assign collection = result.data.collection %}
+{% assign products = collection.products.nodes %}
 
-{% assign product_ids_to_delete = array %}
-{% for product in products_sorted %}
-  {% if forloop.index > options.number_of_products_to_delete_at_once__number_required %}
-    {% break %}
-  {% endif %}
+{% if collection == blank %}
+  {% error "Unable to find a collection by the configured ID in this shop." %}
+{% endif %}
 
-  {% assign product_ids_to_delete[product_ids_to_delete.size] = product.id %}
-{% endfor %}
+{% log products_to_delete: products %}
 
-{% if options.test_mode__boolean %}
-  {% action "echo" %}
-    {"product_ids_to_delete": {{ product_ids_to_delete | json }}}
+{% if test_mode %}
+  {% break %}
+{% endif %}
+
+{% comment %}
+  -- delete all returned products asynchronously in case they have many variants and/or media (which could cause an API timeout)
+{% endcomment %}
+
+{% for product in collection.products.nodes %}
+  {% action "shopify" %}
+    mutation {
+      productDelete(
+        input: {
+          id: {{ product.id | json }}
+        }
+        synchronous: false
+      ) {
+        productDeleteOperation {
+          id
+          product {
+            legacyResourceId
+            title
+          }
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
   {% endaction %}
-{% else %}
-  {% for product_id in product_ids_to_delete %}
-    {% action "shopify" %}
-      [
-        "delete",
-        [
-          "product",
-          {{ product_id | json  }}
-        ]
-      ]
-    {% endaction %}
-  {% endfor %}
-{% endif %}
+{% endfor %}
