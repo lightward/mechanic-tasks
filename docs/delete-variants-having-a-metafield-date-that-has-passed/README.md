@@ -24,6 +24,7 @@ Do you sell tickets to recurring events? Do you use a new product variant for ea
 ```liquid
 mechanic/user/trigger
 mechanic/scheduler/daily
+mechanic/shopify/bulk_operation
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)

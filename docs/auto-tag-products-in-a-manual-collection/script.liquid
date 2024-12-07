@@ -1,116 +1,183 @@
 {% assign collection_tag = options.collection_tag__required %}
+{% assign collection_id = options.collection_id__number_required %}
 
-{% assign collection_qualifies = false %}
+{% assign collection_tag_lower = collection_tag | downcase %}
 
-{% if event.topic contains "shopify/collections/" and collection.id == options.collection_id__number_required %}
-  {% assign collection_qualifies = true %}
+{% if event.topic == "shopify/collections/update" %}
+  {% comment %}
+    -- on collection update, exit if this is not the configured collection
+  {% endcomment %}
 
-{% elsif event.topic == "mechanic/user/trigger" %}
-  {% assign collection_qualifies = true %}
-  {% assign collection = shop.collections[options.collection_id__number_required] %}
+  {% unless collection.id == collection_id or event.preview %}
+    {% break %}
+  {% endunless %}
 {% endif %}
 
-{% if collection_qualifies or event.preview %}
-  {% assign collection_product_ids = collection.products | map: "admin_graphql_api_id" %}
+{% comment %}
+  -- get all of the product IDs currently in the collection
+{% endcomment %}
 
-  {% assign cursor = nil %}
-  {% assign tagged_product_ids = array %}
+{% assign cursor = nil %}
+{% assign collection_product_ids = array %}
 
-  {% for n in (0..100) %}
-    {% capture query %}
-      query {
+{% for n in (1..100) %}
+  {% capture query %}
+    query {
+      collection(id: {{ collection_id | prepend: "gid://shopify/Collection/" | json }}) {
         products(
           first: 250
           after: {{ cursor | json }}
-          query: {{ collection_tag | json | prepend: "tag:" | json }}
         ) {
           pageInfo {
             hasNextPage
+            endCursor
           }
-          edges {
-            cursor
-            node {
-              id
+          nodes {
+            id
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "collection": {
+            "products": {
+              "nodes": [
+                {
+                  "id": "gid://shopify/Product/1234567890"
+                }
+              ]
             }
           }
         }
       }
     {% endcapture %}
 
-    {% assign result = query | shopify %}
+    {% assign result = result_json | parse_json %}
+  {% endif %}
 
-    {% if event.preview %}
-      {% assign collection_product_ids = array %}
-      {% assign collection_product_ids[0] = "gid://shopify/Product/1234567890" %}
-      {% assign collection_product_ids[1] = "gid://shopify/Product/2345678901" %}
+  {% assign collection_product_ids
+    = result.data.collection.products.nodes
+    | map: "id"
+    | concat: collection_product_ids
+  %}
 
-      {% capture result_json %}
-        {
-          "data": {
-            "products": {
-              "edges": [
-                {
-                  "node": {
-                    "id": "gid://shopify/Product/1234567890"
-                  }
-                },
-                {
-                  "node": {
-                    "id": "gid://shopify/Product/9876543210"
-                  }
-                }
-              ]
-            }
+  {% if result.data.collection.products.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.collection.products.pageInfo.endCursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% comment %}
+  -- get IDs for all products with collection tag
+{% endcomment %}
+
+{% assign cursor = nil %}
+{% assign tagged_product_ids = array %}
+
+{% for n in (0..100) %}
+  {% capture query %}
+    query {
+      products(
+        first: 250
+        after: {{ cursor | json }}
+        query: {{ collection_tag | json | prepend: "tag:" | json }}
+      ) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          id
+          tags
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "products": {
+            "nodes": [
+              {
+                "id": "gid://shopify/Product/2345678901",
+                "tags": {{ collection_tag | json }}
+              }
+            ]
           }
         }
-      {% endcapture %}
+      }
+    {% endcapture %}
 
-      {% assign result = result_json | parse_json %}
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% comment %}
+    -- double check that the collection tag exists on each product to avoid occasional query filter quirkiness
+  {% endcomment %}
+
+  {% for product in result.data.products.nodes %}
+    {% assign product_tags_lower = product.tags | json | downcase | parse_json %}
+
+    {% if product_tags_lower contains collection_tag_lower %}
+      {% assign tagged_product_ids = tagged_product_ids | push: product.id %}
     {% endif %}
-
-    {% assign products_result = result.data.products.edges | map: "node" | map: "id" %}
-    {% assign tagged_product_ids = tagged_product_ids | concat: products_result %}
-
-    {% if result.data.products.pageInfo.hasNextPage %}
-      {% assign cursor = result.data.products.edges.last.cursor %}
-    {% else %}
-      {% break %}
-    {% endif %}
   {% endfor %}
 
-  {% for collection_product_id in collection_product_ids %}
-    {% unless tagged_product_ids contains collection_product_id %}
-      {% action "shopify" %}
-        mutation {
-          tagsAdd(
-            id: {{ collection_product_id | json }}
-            tags: {{ collection_tag | json }}
-          ) {
-            userErrors {
-              field
-              message
-            }
+  {% if result.data.products.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.products.pageInfo.endCursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% comment %}
+  -- add and remove the collection tag from products
+{% endcomment %}
+
+{% for collection_product_id in collection_product_ids %}
+  {% unless tagged_product_ids contains collection_product_id %}
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {{ collection_product_id | json }}
+          tags: {{ collection_tag | json }}
+        ) {
+          userErrors {
+            field
+            message
           }
         }
-      {% endaction %}
-    {% endunless %}
-  {% endfor %}
+      }
+    {% endaction %}
+  {% endunless %}
+{% endfor %}
 
-  {% for tagged_product_id in tagged_product_ids %}
-    {% unless collection_product_ids contains tagged_product_id %}
-      {% action "shopify" %}
-        mutation {
-          tagsRemove(
-            id: {{ tagged_product_id | json }}
-            tags: {{ collection_tag | json }}
-          ) {
-            userErrors {
-              field
-              message
-            }
+{% for tagged_product_id in tagged_product_ids %}
+  {% unless collection_product_ids contains tagged_product_id %}
+    {% action "shopify" %}
+      mutation {
+        tagsRemove(
+          id: {{ tagged_product_id | json }}
+          tags: {{ collection_tag | json }}
+        ) {
+          userErrors {
+            field
+            message
           }
         }
-      {% endaction %}
-    {% endunless %}
-  {% endfor %}
-{% endif %}
+      }
+    {% endaction %}
+  {% endunless %}
+{% endfor %}

@@ -1,34 +1,108 @@
-{% if event.preview %}
-  {
-    "action": {
-      "type": "shopify",
-      "options": [
-        "delete",
-        ["variant", {{ variant.id | json }}]
-      ]
-    }
-  }
-{% else %}
-  {% assign today = "now" | date: "%Y-%m-%d" %}
+{% assign date_metafield_namespace = options.date_metafield_namespace__required %}
+{% assign date_metafield_key = options.date_metafield_key__required %}
 
-  {% for product in shop.products.published %}
-    {% if product.variants.size == 1 and product.variants[0].title == "Default Title" %}
-      {% continue %}
-    {% endif %}
+{% assign today = "now" | date: "%Y-%m-%d" %}
 
-    {% for variant in product.variants %}
-      {% assign expiration_date = variant.metafields[options.date_metafield_namespace__required][options.date_metafield_key__required] %}
-      {% if expiration_date != blank and expiration_date < today %}
-        {
-          "action": {
-            "type": "shopify",
-            "options": [
-              "delete",
-              ["variant", {{ variant.id | json }}]
-            ]
+{% if event.topic == "mechanic/user/trigger" or event.topic == "mechanic/scheduler/daily" %}
+  {% comment %}
+    -- get all active, published, multi-variant products in the shop
+  {% endcomment %}
+
+  {% capture bulk_operation_query %}
+    query {
+      products(
+        query: "status:active published_status:published has_only_default_variant:false"
+      ) {
+        edges {
+          node {
+            __typename
+            id
+            variants {
+              edges {
+                node {
+                  __typename
+                  id
+                  metafield(
+                    namespace: {{ date_metafield_namespace | json }}
+                    key: {{ date_metafield_key | json }}
+                  ) {
+                    value
+                  }
+                }
+              }
+            }
           }
         }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture jsonl_string %}
+      {"__typename":"Product","id":"gid://shopify/Product/1234567890"}
+      {"__typename":"ProductVariant","id":"gid://shopify/ProductVariant/1234567890","metafield":{"value":"2020-02-02"},"__parentId":"gid://shopify/Product/1234567890"}
+      {"__typename":"ProductVariant","id":"gid://shopify/ProductVariant/2345678901","__parentId":"gid://shopify/Product/1234567890"}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = jsonl_string | parse_jsonl %}
+  {% endif %}
+
+  {% assign products = bulkOperation.objects | where: "__typename", "Product" %}
+  {% assign bulk_variants = bulkOperation.objects | where: "__typename", "ProductVariant" %}
+
+  {% comment %}
+    -- for each product, qualify and delete variants in bulk by metafield value
+  {% endcomment %}
+
+  {% for product in products %}
+    {% assign variants = bulk_variants | where: "__parentId", product.id %}
+
+    {% assign variant_ids_to_delete = array %}
+
+    {% for variant in variants %}
+      {% if variant.metafield != blank and variant.metafield.value < today %}
+        {% assign variant_ids_to_delete = variant_ids_to_delete | push: variant.id %}
       {% endif %}
     {% endfor %}
+
+    {% if variant_ids_to_delete != blank %}
+      {% action "shopify" %}
+        mutation {
+          productVariantsBulkDelete(
+            productId: {{ product.id | json }}
+            variantsIds: {{ variant_ids_to_delete | json }}
+          ) {
+            product {
+              id
+              title
+            }
+            userErrors {
+              code
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endif %}
   {% endfor %}
 {% endif %}
