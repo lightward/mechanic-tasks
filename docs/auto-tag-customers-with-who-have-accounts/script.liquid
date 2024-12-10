@@ -60,6 +60,7 @@
   {% endcomment %}
 
   {% assign customer_ids_to_tag = array %}
+  {% assign cursor = nil %}
 
   {%- capture search_query -%}
     customer_tags NOT CONTAINS '{{ customer_tag_to_apply }}' AND customer_account_status = 'ENABLED'
@@ -127,6 +128,7 @@
   {% endcomment %}
 
   {% assign customer_ids_to_untag = array %}
+  {% assign cursor = nil %}
 
   {%- capture search_query -%}
     customer_tags CONTAINS '{{ customer_tag_to_apply }}' AND customer_account_status != 'ENABLED'
