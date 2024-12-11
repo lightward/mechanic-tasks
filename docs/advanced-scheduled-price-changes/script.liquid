@@ -22,7 +22,7 @@
         key: {{ shop_metafield_key | json }}
       ) {
         id
-        value
+        jsonValue
       }
     }
   }
@@ -38,7 +38,25 @@
           "id": "gid://shopify/Shop/1234567890",
           "metafield": {
             "id": "gid://shopify/Metafield/9876543210",
-            "value": "\n{\n  \"price_change_event__1234567890\": {\n    \"status\": \"scheduled\",\n    \"start\": \"2021-12-30 08:00\",\n    \"end\": \"2021-12-31 20:00\",\n    \"set_compare_at_prices\": true,\n    \"collection_handles_and_discounts\": {\n      \"collection-alpha\": \"20%\",\n      \"collection-beta\": \"-10\",\n      \"collection-gamma\": \"20\"\n    },\n    \"skus_to_include\": [],\n    \"sku_discount\": \"\",\n    \"skus_to_exclude\": [],\n    \"exclude_products_tagged_with\": [\n      \"clearance\"\n    ]\n  }\n}\n"
+            "jsonValue": {
+              "price_change_event__1234567890": {
+                "status": "scheduled",
+                "start": "2021-12-30 08:00",
+                "end": "2021-12-31 20:00",
+                "set_compare_at_prices": true,
+                "collection_handles_and_discounts": {
+                  "collection-alpha": "20%",
+                  "collection-beta": "-10",
+                  "collection-gamma": "20"
+                },
+                "skus_to_include": [],
+                "sku_discount": "",
+                "skus_to_exclude": [],
+                "exclude_products_tagged_with": [
+                  "clearance"
+                ]
+              }
+            }
           }
         }
       }
@@ -49,7 +67,7 @@
 {% endif %}
 
 {% assign shop = shop_result.data.shop %}
-{% assign price_change_events = shop.metafield.value | default: "{}" | parse_json %}
+{% assign price_change_events = shop.metafield.jsonValue | default: hash %}
 
 {% if event.topic == "mechanic/user/text" %}
   {% comment %}
@@ -208,7 +226,7 @@
               namespace
               key
               type
-              value
+              jsonValue
               owner {
                 ... on Shop {
                   id
@@ -374,7 +392,7 @@
                   namespace
                   key
                   type
-                  value
+                  jsonValue
                   owner {
                     ... on Shop {
                       id
@@ -546,11 +564,11 @@
 
   {% assign cursor = nil %}
 
-  {% for n in (1..10000) %}
+  {% for n in (1..200) %}
     {% capture products_query %}
       query {
         products(
-          first: 4
+          first: 250
           after: {{ cursor | json }}
           query: {{ query_filter | json }}
         ) {
@@ -575,7 +593,7 @@
                       namespace: {{ variant_metafield_namespace | json }}
                       key: {{ variant_metafield_key | json }}
                     ) {
-                      value
+                      jsonValue
                     }
                   }
                 }
@@ -793,7 +811,7 @@
                   namespace: {{ variant_metafield_namespace | json }}
                   key: {{ variant_metafield_key | json }}
                 ) {
-                  value
+                  jsonValue
                 }
               }
               userErrors {
@@ -856,39 +874,39 @@
     }
   {% endaction %}
 
-    {% capture email_subject %}A scheduled price change event has started ({{ price_change_event_id }}){% endcapture %}
+  {% capture email_subject %}A scheduled price change event has started ({{ price_change_event_id }}){% endcapture %}
 
-    {% capture email_body %}
-      A scheduled price change event has started, using the {{ task_admin_link }} task within the Mechanic app.
+  {% capture email_body %}
+    A scheduled price change event has started, using the {{ task_admin_link }} task within the Mechanic app.
 
-      <strong>Price change event ID:</strong> {{ price_change_event_id }}
-      <strong>Status:</strong> {{ price_change_event["status"] }}
-      <strong>Event start:</strong> {{ price_change_event["start"] | date: "%F %H:%M %z" }}
-      <strong>Event end:</strong> {{ price_change_event["end"] | date: "%F %H:%M %z" }}
-      <strong>Set compare at price to original price during event:</strong> {{ price_change_event["set_compare_at_prices"] }}
-      <strong>Collection handles and discounts:</strong>
-      {% for keyval in price_change_event["collection_handles_and_discounts"] -%}
-      - {{ keyval[0] }}: {{ keyval[1] }}
-      {% else -%}
-        n/a
-      {%- endfor %}
-      <strong>SKUs to include:</strong> {{ price_change_event["skus_to_include"] | join: ", " | default: "n/a" }}
-      <strong>SKU discount:</strong> {{ price_change_event["sku_discount"] | default: "n/a" }},
-      <strong>SKUs to exclude:</strong> {{ price_change_event["skus_to_exclude"] | join: ", " | default: "n/a" }}
-      <strong>Exclude products tagged with:</strong> {{ price_change_event["exclude_products_tagged_with"] | join: ", " | default: "n/a" }}
+    <strong>Price change event ID:</strong> {{ price_change_event_id }}
+    <strong>Status:</strong> {{ price_change_event["status"] }}
+    <strong>Event start:</strong> {{ price_change_event["start"] | date: "%F %H:%M %z" }}
+    <strong>Event end:</strong> {{ price_change_event["end"] | date: "%F %H:%M %z" }}
+    <strong>Set compare at price to original price during event:</strong> {{ price_change_event["set_compare_at_prices"] }}
+    <strong>Collection handles and discounts:</strong>
+    {% for keyval in price_change_event["collection_handles_and_discounts"] -%}
+    - {{ keyval[0] }}: {{ keyval[1] }}
+    {% else -%}
+      n/a
+    {%- endfor %}
+    <strong>SKUs to include:</strong> {{ price_change_event["skus_to_include"] | join: ", " | default: "n/a" }}
+    <strong>SKU discount:</strong> {{ price_change_event["sku_discount"] | default: "n/a" }},
+    <strong>SKUs to exclude:</strong> {{ price_change_event["skus_to_exclude"] | join: ", " | default: "n/a" }}
+    <strong>Exclude products tagged with:</strong> {{ price_change_event["exclude_products_tagged_with"] | join: ", " | default: "n/a" }}
 
-      <em><strong>Note:</strong> To cancel this event while it is ongoing, use the "cancel" keyword along with the price change event ID when running the task.</em>
-    {% endcapture %}
+    <em><strong>Note:</strong> To cancel this event while it is ongoing, use the "cancel" keyword along with the price change event ID when running the task.</em>
+  {% endcapture %}
 
-    {% action "email" %}
-      {
-        "to": {{ email_recipients | json }},
-        "subject": {{ email_subject | json }},
-        "body": {{ email_body | newline_to_br | json }},
-        "reply_to": {{ shop.customer_email | json }},
-        "from_display_name": {{ shop.name | json }}
-      }
-    {% endaction %}
+  {% action "email" %}
+    {
+      "to": {{ email_recipients | json }},
+      "subject": {{ email_subject | json }},
+      "body": {{ email_body | newline_to_br | json }},
+      "reply_to": {{ shop.customer_email | json }},
+      "from_display_name": {{ shop.name | json }}
+    }
+  {% endaction %}
 
 {% elsif event.topic == "user/price_changes/end" %}
   {% assign price_change_event_id = event.data.price_change_event_id %}
@@ -932,11 +950,11 @@
 
   {% assign cursor = nil %}
 
-  {% for n in (1..10000) %}
+  {% for n in (1..200) %}
     {% capture products_query %}
       query {
         products(
-          first: 4
+          first: 250
           after: {{ cursor | json }}
         ) {
           pageInfo {
@@ -961,7 +979,7 @@
                       key: {{ variant_metafield_key | json }}
                     ) {
                       id
-                      value
+                      jsonValue
                     }
                   }
                 }
@@ -993,7 +1011,14 @@
                             "compareAtPrice": "10.00",
                             "metafield": {
                               "id": "gid://shopify/Metafield/9876543210",
-                              "value": "\n{\n  \"price_change_event_id\": \"01234567-89ab-cdef\",\n  \"discount_to_apply\": \"25%\",\n  \"original_compare_at_price\": \"15.00\",\n  \"compare_at_price_to_set\": 7.50,\n  \"original_price\": \"10.00\",\n  \"price_to_set\": 7.50\n}\n"
+                              "jsonValue": {
+                                "price_change_event_id": "01234567-89ab-cdef",
+                                "discount_to_apply": "25%",
+                                "original_compare_at_price": "15.00",
+                                "compare_at_price_to_set": 7.50,
+                                "original_price": "10.00",
+                                "price_to_set": 7.50
+                              }
                             }
                           }
                         }
@@ -1019,7 +1044,7 @@
       {% assign variants_with_metafield = product.variants.edges | map: "node" | where: "metafield" %}
 
       {% for variant in variants_with_metafield %}
-        {% assign metafield = variant.metafield.value | parse_json %}
+        {% assign metafield = variant.metafield.jsonValue %}
 
         {% if metafield.price_change_event_id == price_change_event_id %}
           {% comment %}
@@ -1036,8 +1061,8 @@
 
           {% assign metafield_to_delete = hash %}
           {% assign metafield_to_delete["ownerId"] = variant.id %}
-          {% assign metafield_to_delete["namespace"] = variant_metafield_namespace | json %}
-          {% assign metafield_to_delete["key"] = variant_metafield_key | json %}
+          {% assign metafield_to_delete["namespace"] = variant_metafield_namespace %}
+          {% assign metafield_to_delete["key"] = variant_metafield_key %}
           {% assign metafields_to_delete = metafields_to_delete | push: metafield_to_delete %}
         {% endif %}
       {% endfor %}
@@ -1185,11 +1210,11 @@
 
   {% assign cursor = nil %}
 
-  {% for n in (1..10000) %}
+  {% for n in (1..200) %}
     {% capture products_query %}
       query {
         products(
-          first: 4
+          first: 250
           after: {{ cursor | json }}
         ) {
           pageInfo {
@@ -1214,7 +1239,7 @@
                       key: {{ variant_metafield_key | json }}
                     ) {
                       id
-                      value
+                      jsonValue
                     }
                   }
                 }
@@ -1246,7 +1271,14 @@
                             "compareAtPrice": "10.00",
                             "metafield": {
                               "id": "gid://shopify/Metafield/9876543210",
-                              "value": "\n{\n  \"price_change_event_id\": \"01234567-89ab-cdef\",\n  \"discount_to_apply\": \"25%\",\n  \"original_compare_at_price\": \"15.00\",\n  \"compare_at_price_to_set\": 7.50,\n  \"original_price\": \"10.00\",\n  \"price_to_set\": 7.50\n}\n"
+                              "jsonValue": {
+                                "price_change_event_id": "01234567-89ab-cdef",
+                                "discount_to_apply": "25%",
+                                "original_compare_at_price": "15.00",
+                                "compare_at_price_to_set": 7.50,
+                                "original_price": "10.00",
+                                "price_to_set": 7.50
+                              }
                             }
                           }
                         }
@@ -1278,7 +1310,7 @@
       %}
 
       {% for variant in variants_with_metafield %}
-        {% assign metafield = variant.metafield.value | parse_json %}
+        {% assign metafield = variant.metafield.jsonValue %}
 
         {% comment %}
           -- revert the prices on this variant and delete the metafield
@@ -1294,8 +1326,8 @@
 
         {% assign metafield_to_delete = hash %}
         {% assign metafield_to_delete["ownerId"] = variant.id %}
-        {% assign metafield_to_delete["namespace"] = variant_metafield_namespace | json %}
-        {% assign metafield_to_delete["key"] = variant_metafield_key | json %}
+        {% assign metafield_to_delete["namespace"] = variant_metafield_namespace %}
+        {% assign metafield_to_delete["key"] = variant_metafield_key %}
         {% assign metafields_to_delete = metafields_to_delete | push: metafield_to_delete %}
       {% endfor %}
 
