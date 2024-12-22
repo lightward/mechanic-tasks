@@ -20,9 +20,10 @@ Use this task to schedule adding and/or removing tags for specific products, wit
     "2019-08-24": "friday",
     "2019-08-23": "thursday"
   },
-  "product_ids__array_number_required": [
+  "product_ids__array_number": [
     "1234567890"
   ],
+  "product_tag_to_monitor": null,
   "use_hour_specificity__boolean": false,
   "test_mode__boolean": false
 }
@@ -40,7 +41,6 @@ Use this task to schedule adding and/or removing tags for specific products, wit
     mechanic/scheduler/daily
   {% endif %}
 {% endunless %}
-
 mechanic/user/trigger
 ```
 
@@ -50,7 +50,7 @@ mechanic/user/trigger
 
 Use this task to schedule adding and/or removing tags for specific products, with support for scheduling by date, or by date and hour.
 
-Use the "Product IDs" option to choose which products this task will tag. [Learn how to find product IDs here.](https://learn.mechanic.dev/techniques/finding-a-resource-id)
+Either use the "Product IDs" option to choose which products this task will tag, or enter a "Product tag to monitor". If you need to monitor more than 250 products, then you must use the "Product tag to monitor" option. [Learn how to find product IDs here.](https://learn.mechanic.dev/techniques/finding-a-resource-id)
 
 Fill in the "Dates and tags to add" and/or "Dates and tags to remove" options with dates (including year, month, and day) on the left, and product tags on the right.
 
