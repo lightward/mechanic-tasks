@@ -1,6 +1,7 @@
 {% assign dates_and_tags_to_add = options.dates_and_tags_to_add__keyval %}
 {% assign dates_and_tags_to_remove = options.dates_and_tags_to_remove__keyval %}
-{% assign product_ids = options.product_ids__array_number_required %}
+{% assign product_ids = options.product_ids__array_number %}
+{% assign product_tag_to_monitor = options.product_tag_to_monitor %}
 {% assign use_hour_specificity = options.use_hour_specificity__boolean %}
 {% assign test_mode = options.test_mode__boolean %}
 
@@ -8,12 +9,24 @@
   {% error "Fill in at least one of 'Dates and tags to add' and 'Dates and tags to remove'. :)" %}
 {% endif %}
 
+{% if product_ids == blank and product_tag_to_monitor == blank %}
+  {% error "Fill in either 'Product IDs' or 'Product tag to monitor'." %}
+
+{% elsif product_ids != blank and product_tag_to_monitor != blank %}
+  {% error "Fill in either 'Product IDs' or 'Product tag to monitor', but not both." %}
+{% endif %}
+
+{% if product_ids.size > 250 %}
+  {% log product_ids_count: product_ids.size %}
+  {% error "If you need to enter more than 250 product IDs, use the 'Product tag to monitor' option instead." %}
+{% endif %}
+
 {% comment %}
-  -- determine which tags will be added and/or removed on this task run
+  -- determine which tags should be added and/or removed on this task run
 {% endcomment %}
 
-{% assign tags_to_add = array %}
-{% assign tags_to_remove = array %}
+{% assign configured_tags_to_add = array %}
+{% assign configured_tags_to_remove = array %}
 
 {% if use_hour_specificity %}
   {% assign time_format = "%Y-%m-%d %I%p" %}
@@ -28,7 +41,7 @@
   {% assign some_time = keyval[0] | date: time_format %}
 
   {% if some_time == now_time %}
-    {% assign tags_to_add[tags_to_add.size] = keyval[1] %}
+    {% assign configured_tags_to_add = configured_tags_to_add | push: keyval[1] %}
   {% endif %}
 
   {% if full_schedule[some_time] == nil %}
@@ -43,7 +56,7 @@
   {% assign some_time = keyval[0] | date: time_format %}
 
   {% if some_time == now_time %}
-    {% assign tags_to_remove[tags_to_remove.size] = keyval[1] %}
+    {% assign configured_tags_to_remove = configured_tags_to_remove | push: keyval[1] %}
   {% endif %}
 
   {% if full_schedule[some_time] == nil %}
@@ -54,65 +67,101 @@
   {% assign full_schedule[some_time][n] = "remove: " | append: keyval[1] %}
 {% endfor %}
 
+{% if event.preview %}
+  {% comment %}
+    -- add preview values for tags since configured dates are unlikely to align when task is previewed
+  {% endcomment %}
+
+  {% assign configured_tags_to_add[0] = "preview-add" %}
+  {% assign configured_tags_to_remove[0] = "preview-remove" %}
+{% endif %}
+
+{% if configured_tags_to_add == blank and configured_tags_to_remove == blank %}
+  {% log
+    message: "No tags to add or remove on this task run based on configured schedule.",
+    now: now_time,
+    schedule: full_schedule
+  %}
+  {% break %}
+{% endif %}
+
+{% if product_ids != blank %}
+  {% assign search_query_parts = array %}
+
+  {% for product_id in product_ids %}
+    {% assign search_query_parts[search_query_parts.size] = product_id | prepend: "id:" %}
+  {% endfor %}
+
+  {% assign search_query = search_query_parts | join: " OR " %}
+
+{% else %}
+  {% assign search_query = product_tag_to_monitor | json | prepend: "tag:" %}
+{% endif %}
+
 {% comment %}
-  -- get data for the configured product IDs (if more than 250 are configured, this can be changed to a paginated query)
+  -- get data for the products (up to 25K)
 {% endcomment %}
 
-{% assign search_query_parts = array %}
+{% assign cursor = nil %}
+{% assign products = array %}
 
-{% for product_id in product_ids %}
-  {% assign search_query_parts[search_query_parts.size] = product_id | prepend: "id:" %}
-{% endfor %}
-
-{% capture query %}
-  query {
-    products(
-      first: 250
-      query: {{ search_query_parts | join: " OR " | json }}
-    ) {
-      nodes {
-        id
-        handle
-        tags
-      }
-    }
-  }
-{% endcapture %}
-
-{% assign result = query | shopify %}
-
-{% if event.preview %}
-  {% capture result_json %}
-    {
-      "data": {
-        "products": {
-          "nodes": [
-            {
-              "id": "gid://shopify/Product/1234567890",
-              "handle": "preview-product"
-            }
-          ]
+{% for n in (1..100) %}
+  {% capture query %}
+    query {
+      products(
+        first: 250
+        after: {{ cursor | json }}
+        query: {{ search_query | json }}
+      ) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          id
+          handle
+          tags
         }
       }
     }
   {% endcapture %}
 
-  {% assign result = result_json | parse_json %}
+  {% assign result = query | shopify %}
 
-  {% comment %}
-    -- add preview values for tags since configured dates are unlikely to align when task is previewed
-  {% endcomment %}
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "products": {
+            "nodes": [
+              {
+                "id": "gid://shopify/Product/1234567890",
+                "handle": "preview-product"
+              }
+            ]
+          }
+        }
+      }
+    {% endcapture %}
 
-  {% assign tags_to_add[0] = "preview-add" %}
-  {% assign tags_to_remove[0] = "preview-remove" %}
-{% endif %}
+    {% assign result = result_json | parse_json %}
+  {% endif %}
 
-{% assign products = result.data.products.nodes %}
-{% assign product_handles = products | map: "handle"  %}
+  {% assign products = products | concat: result.data.products.nodes %}
+
+  {% if result.data.products.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.products.pageInfo.endCursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% assign product_handles = products | map: "handle" | sort %}
 
 {% log
   now: now_time,
   schedule: full_schedule,
+  product_tag_to_monitor: product_tag_to_monitor,
   configured_product_ids: product_ids,
   matched_product_handles: product_handles
 %}
@@ -121,36 +170,48 @@
   {% break %}
 {% endif %}
 
-{% if tags_to_add == blank and tags_to_remove == blank %}
-  {% log "No tags to add or remove on this task run based on configured schedule." %}
-  {% break %}
-{% endif %}
-
 {% for product in products %}
-  {% action "shopify" %}
-    mutation {
-      {% if tags_to_add != blank %}
-        tagsAdd(
-          id: {{ product.id | json }}
-          tags: {{ tags_to_add | json }}
-        ) {
-          userErrors {
-            field
-            message
+  {% assign tags_to_add = array %}
+  {% assign tags_to_remove = array %}
+
+  {% for tag in configured_tags_to_add %}
+    {% unless product.tags contains tag %}
+      {% assign tags_to_add = tags_to_add | push: tag %}
+    {% endunless %}
+  {% endfor %}
+
+  {% for tag in configured_tags_to_remove %}
+    {% if product.tags contains tag %}
+      {% assign tags_to_remove = tags_to_remove | push: tag %}
+    {% endif %}
+  {% endfor %}
+
+  {% if tags_to_add != blank or tags_to_remove != blank %}
+    {% action "shopify" %}
+      mutation {
+        {% if tags_to_add != blank %}
+          tagsAdd(
+            id: {{ product.id | json }}
+            tags: {{ tags_to_add | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
           }
-        }
-      {% endif %}
-      {% if tags_to_remove != blank %}
-        tagsRemove(
-          id: {{ product.id | json }}
-          tags: {{ tags_to_remove | json }}
-        ) {
-          userErrors {
-            field
-            message
+        {% endif %}
+        {% if tags_to_remove != blank %}
+          tagsRemove(
+            id: {{ product.id | json }}
+            tags: {{ tags_to_remove | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
           }
-        }
-      {% endif %}
-    }
-  {% endaction %}
+        {% endif %}
+      }
+    {% endaction %}
+  {% endif %}
 {% endfor %}
