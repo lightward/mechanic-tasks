@@ -1,17 +1,15 @@
-{% assign collection = shop.collections[options.collection_id__required] %}
+{% assign collection_id = options.collection_id__required %}
 
-{% if collection == blank and event.preview != true %}
-  {% error message: "Collection ID does not exist in this shop. Refer to task notes for help on locating Shopify object IDs.", collection_id: options.collection_id__required %}
-{% endif %}
+{% comment %}
+  - get online store publication ID
+{% endcomment %}
 
 {% capture query %}
   query {
     publications(first: 250) {
-      edges {
-        node {
-          id
-          name
-        }
+      nodes {
+        id
+        name
       }
     }
   }
@@ -24,12 +22,10 @@
     {
       "data": {
         "publications": {
-          "edges": [
+          "nodes": [
             {
-              "node": {
-                "id": "gid://shopify/Publication/1234567890",
-                "name": "Online Store"
-              }
+              "id": "gid://shopify/Publication/1234567890",
+              "name": "Online Store"
             }
           ]
         }
@@ -38,27 +34,84 @@
   {% endcapture %}
 
   {% assign result = result_json | parse_json %}
+{% endif %}
 
-  {% capture collection_json %}
-    {
-      "products": [
-        {
-          "admin_graphql_api_id": "gid://shopify/Product/1234567890"
+{% assign online_store_publication = result.data.publications.nodes | where: "name", "Online Store" | first %}
+
+{% comment %}
+  -- get IDs of published products in the collection
+{% endcomment %}
+
+{% assign cursor = nil %}
+{% assign product_ids = array %}
+
+{% for n in (1..100) %}
+  {% capture query %}
+    query {
+      collection(id: {{ collection_id | prepend: "gid://shopify/Collection/" | json }}) {
+        products(
+          first: 250
+          after: {{ cursor | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            publishedAt
+          }
         }
-      ]
+      }
     }
   {% endcapture %}
 
-  {% assign collection = collection_json | parse_json %}
-{% endif %}
+  {% assign result = query | shopify %}
 
-{% assign online_store_publication = result.data.publications.edges | map: "node" | where: "name", "Online Store" | first %}
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "collection": {
+            "products": {
+              "nodes": [
+                {
+                  "id": "gid://shopify/Product/1234567890",
+                  "publishedAt": "2020-12-12T12:00:00Z"
+                }
+              ]
+            }
+          }
+        }
+      }
+    {% endcapture %}
 
-{% for product in collection.products %}
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign product_ids
+    = result.data.collection.products.nodes
+    | where: "publishedAt"
+    | map: "id"
+    | concat: product_ids
+  %}
+
+  {% if result.data.collection.products.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.collection.products.pageInfo.endCursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% comment %}
+  -- unpublish qualifying products from online store
+{% endcomment %}
+
+{% for product_id in product_ids %}
   {% action "shopify" %}
     mutation {
       publishableUnpublish(
-        id: {{ product.admin_graphql_api_id | json }}
+        id: {{ product_id | json }}
         input: {
           publicationId: {{ online_store_publication.id | json }}
         }

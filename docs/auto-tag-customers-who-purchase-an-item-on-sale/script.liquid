@@ -1,87 +1,258 @@
-{% if event.preview %}
-  {
-    "action": {
-      "type": "shopify",
-      "options": [
-        "update",
-        [
-          "customer",
-          1234567890
-        ],
-        {
-          "tags": {{ options.tag_to_add__required | json }}
+{% assign tag_to_add = options.tag_to_add__required %}
+
+{% if event.topic contains "shopify/orders/" %}
+  {% comment %}
+    -- get order and customer data
+  {% endcomment %}
+
+  {% capture query %}
+    query {
+      order(id: {{ order.admin_graphql_api_id | json }}) {
+        id
+        customer {
+          id
+          tags
         }
-      ]
+        lineItems(first: 250) {
+          nodes {
+            variant {
+              compareAtPrice
+            }
+          }
+        }
+      }
     }
-  }
-{% elsif event.topic contains "shopify/orders/" %}
-  {% assign customer = order.customer.reload %}
+  {% endcapture %}
 
-  {% assign purchase_includes_compare_at_pricing = false %}
+  {% assign result = query | shopify %}
 
-  {% for line_item in order.line_items %}
-    {% if line_item.variant.compare_at_price != blank %}
-      {% assign purchase_includes_compare_at_pricing = true %}
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "order": {
+            "id": "gid://shopify/Order/1234567890",
+            "customer": {
+              "id": "gid://shopify/Customer/1234567890"
+            },
+            "lineItems": {
+              "nodes": [
+                {
+                  "variant": {
+                    "compareAtPrice": "100.0"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign order = result.data.order %}
+  {% assign customer = order.customer %}
+
+  {% if customer == blank %}
+    {% break %}
+  {% endif %}
+
+  {% comment %}
+    -- if any line item has a variant with a compare at price set, then tag the customer
+  {% endcomment %}
+
+  {% for line_item in order.lineItems.nodes %}
+    {% if line_item.variant.compareAtPrice != blank %}
+      {% unless customer.tags contains tag_to_add %}
+        {% action "shopify" %}
+          mutation {
+            tagsAdd(
+              id: {{ customer.id | json }}
+              tags: {{ tag_to_add | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+      {% endunless %}
+
       {% break %}
     {% endif %}
   {% endfor %}
 
-  {% if purchase_includes_compare_at_pricing %}
-    {% assign customer_tags_to_save = customer.tags | add_tag: options.tag_to_add__required %}
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% comment %}
+    -- get all customers who do not yet have the tag and who have placed at least one order
+  {% endcomment %}
 
-    {% if customer.tags != customer_tags_to_save %}
-      {
-        "action": {
-          "type": "shopify",
-          "options": [
-            "update",
-            [
-              "customer",
-              {{ customer.id | json }}
-            ],
-            {
-              "tags": {{ customer_tags_to_save | json }}
+  {% assign cursor = nil %}
+  {% assign customer_ids = array %}
+
+  {% for n in (1..100) %}
+    {% capture query %}
+      query {
+        customerSegmentMembers(
+          first: 1000
+          after: {{ cursor | json }}
+          query: "customer_tags NOT CONTAINS '{{ tag_to_add }}' AND number_of_orders > 0"
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          edges {
+            node {
+              id
             }
-          ]
+          }
         }
       }
-    {% endif %}
-  {% endif %}
-{% elsif event.topic == "mechanic/user/trigger" %}
-  {% for customer in shop.customers %}
-    {% assign customer_tags_to_save = customer.tags %}
-    {% assign purchase_includes_compare_at_pricing = false %}
+    {% endcapture %}
 
-    {% for order in customer.orders.any %}
-      {% for line_item in order.line_items %}
-        {% if line_item.variant.compare_at_price != blank %}
-          {% assign purchase_includes_compare_at_pricing = true %}
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "customerSegmentMembers": {
+              "edges": [
+                {
+                  "node": {
+                    "id": "gid://shopify/customerSegmentMember/1234567890"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% for edge in result.data.customerSegmentMembers.edges %}
+      {% assign customer_ids[customer_ids.size] = edge.node.id | remove: "SegmentMember" %}
+    {% endfor %}
+
+    {% if result.data.customerSegmentMembers.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.customerSegmentMembers.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+{% for customer_id in customer_ids %}
+  {% assign customer_qualifies = nil %}
+
+  {% comment %}
+    -- get uncancelled orders data for customer
+  {% endcomment %}
+
+  {% assign cursor = nil %}
+
+  {% for n in (1..100) %}
+    {% capture query %}
+      query {
+        customer(id: {{ customer_id | json }}) {
+          orders(
+            first: 50
+            after: {{ cursor | json }}
+            query: "-status:cancelled"
+          ) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              lineItems(first: 250) {
+                nodes {
+                  variant {
+                    compareAtPrice
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "customer": {
+              "orders": {
+                "nodes": [
+                  {
+                    "lineItems": {
+                      "nodes": [
+                        {
+                          "variant": {
+                            "compareAtPrice": "100.0"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% comment %}
+      -- break out of orders loop as soon as customer qualifies
+    {% endcomment %}
+
+    {% for order in result.data.customer.orders.nodes %}
+      {% for line_item in order.lineItems.nodes %}
+        {% if line_item.variant.compareAtPrice != blank %}
+          {% assign customer_qualifies = true %}
           {% break %}
         {% endif %}
       {% endfor %}
 
-      {% if purchase_includes_compare_at_pricing %}
-        {% assign customer_tags_to_save = customer.tags | add_tag: options.tag_to_add__required %}
+      {% if customer_qualifies %}
         {% break %}
       {% endif %}
     {% endfor %}
 
-    {% if customer_tags_to_save != customer.tags %}
-      {
-        "action": {
-          "type": "shopify",
-          "options": [
-            "update",
-            [
-              "customer",
-              {{ customer.id | json }}
-            ],
-            {
-              "tags": {{ customer_tags_to_save | json }}
-            }
-          ]
-        }
-      }
+    {% if result.data.customer.orders.pageInfo.hasNextPage and customer_qualifies != true %}
+      {% assign cursor = result.data.customer.orders.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
     {% endif %}
   {% endfor %}
-{% endif %}
+
+  {% if customer_qualifies %}
+    {% unless customer.tags contains tag_to_add %}
+      {% action "shopify" %}
+        mutation {
+          tagsAdd(
+            id: {{ customer_id | json }}
+            tags: {{ tag_to_add | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endunless %}
+  {% endif %}
+{% endfor %}
