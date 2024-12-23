@@ -31,7 +31,7 @@ shopify/products/update
 
 Just as it says. Useful for collections that can't be configured for automatic products, but still should have some products pulled in automatically.
 
-This task runs in response to products being tagged. Configure the "Product tags and collection IDs" option with product tags on the left (case-insensitive), and collection IDs on the right. The collection _must_ be a custom collection - one that has its products chosen manually. ([Learn how to find the collection ID](https://help.usemechanic.com/en/articles/2946120-how-do-i-find-an-id-for-a-product-collection-order-or-something-else).)
+This task runs in response to products being tagged. Configure the "Product tags and collection IDs" option with product tags on the left (case-insensitive), each paired with a collection ID on the right. The collection _must_ be a custom collection - one that has its products chosen manually. [Learn how to find collection IDs here.](https://learn.mechanic.dev/techniques/finding-a-resource-id)
 
 ## Installing this task
 

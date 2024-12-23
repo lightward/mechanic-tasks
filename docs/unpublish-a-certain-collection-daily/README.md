@@ -36,11 +36,13 @@ mechanic/scheduler/sunday+14.hours
 
 Use this task with the companion publishing task (see this task's documentation) to make a certain collection of products available on a schedule, and unavailable on another schedule.
 
-For best results, pair this task with [Publish a certain collection, daily](https://usemechanic.com/task/publish-a-certain-collection-daily), from our task library.
+For best results, pair this task with [Publish a certain collection, daily](https://tasks.mechanic.dev/publish-a-certain-collection-daily), from our task library.
 
-To configure this task, enter the "Collection ID" for the collection you wish to unpublish. Refer to this [article](https://docs.usemechanic.com/article/360-how-do-i-find-an-id-for-a-product-collection-order-or-something-else) for assistance on finding Shopify object IDs.
+To configure this task, enter the "Collection ID" for the collection you wish to unpublish. Refer to this [article](https://learn.mechanic.dev/techniques/finding-a-resource-id) for assistance on finding Shopify resource IDs.
 
-Out of the box, this task will unpublish everything in this collection at 6pm on weekdays, and 2pm on weekends. To adjust this, click the "Show Advanced" link, and tweak the "Subscriptions" setting to taste. Each line represents midnight in your shop's local timezone, plus whatever number of hours you prefer. For example, `mechanic/scheduler/tuesday+13.hours` would mean Tuesday at 1pm.
+Out of the box, this task will unpublish everything in this collection at 6pm on weekdays, and 2pm on weekends. To adjust this, switch to "Advanced mode", and tweak the "Subscriptions" setting to taste. Each line represents midnight in your shop's local timezone, plus whatever number of offset hours you prefer. For example, `mechanic/scheduler/tuesday+13.hours` would mean Tuesday at 1pm.
+
+**Note:** This task only unpublishes products from the 'Online Store'.
 
 ## Installing this task
 

@@ -1,62 +1,77 @@
+{% assign product_tags_and_collection_ids = options.product_tags_and_collection_ids__keyval_number_required %}
+{% assign collection_ids = product_tags_and_collection_ids | values %}
+
+{% comment %}
+  -- get product tags and collection memberships
+{% endcomment %}
+
+{% capture query %}
+  query {
+    product(id: {{ product.admin_graphql_api_id | json }}) {
+      id
+      tags
+      {% for collection_id in collection_ids %}
+        in_collection_{{ collection_id }}: inCollection(id: {{ collection_id | prepend: "gid://shopify/Collection/" | json }})
+      {% endfor %}
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
 {% if event.preview %}
-  {% capture product_json %}
+  {% capture result_json %}
     {
-      "admin_graphql_api_id": "gid://shopify/Product/1234567890",
-      "collects": [],
-      "tags": {{ options.product_tags_and_collection_ids__keyval_number_required.first[0] | json }}
+      "data": {
+        "product": {
+          "id": "gid://shopify/Product/1234567890",
+          "tags": {{ product_tags_and_collection_ids | keys | json }}
+        }
+      }
     }
   {% endcapture %}
 
-  {% assign product = product_json | parse_json %}
+  {% assign result = result_json | parse_json %}
 {% endif %}
 
-{% assign product_tags_to_match = product.tags | downcase | split: ", " %}
+{% assign product = result.data.product %}
+{% assign product_tags_lower = product.tags | json | downcase | parse_json %}
 
-{% assign collection_ids = product.collects | map: "collection_id" %}
+{% comment %}
+  -- check for product tag matches to configured values
+{% endcomment %}
 
 {% assign collection_ids_to_join = array %}
 
-{% for keyval in options.product_tags_and_collection_ids__keyval_number_required %}
+{% for keyval in product_tags_and_collection_ids %}
   {% assign product_tag_to_match = keyval[0] | downcase %}
-  {% assign collection_id_to_join = keyval[1] | round %}
+  {% assign collection_id = keyval[1] %}
+  {% assign collection_gid = collection_id | prepend: "gid://shopify/Collection/" %}
+  {% assign collection_alias = "in_collection_" | append: collection_id %}
 
-  {% if product_tags_to_match contains product_tag_to_match %}
-    {% if collection_ids contains collection_id_to_join %}
-      {% log %}
-        {{ "This product is already in collection " | append: collection_id_to_join | append: "; skipping" | json }}
-      {% endlog %}
-    {% else %}
-      {% assign collection_ids_to_join[collection_ids_to_join.size] = collection_id_to_join %}
-    {% endif %}
+  {% if product_tags_lower contains product_tag_to_match %}
+    {% unless product[collection_alias] %}
+      {% assign collection_ids_to_join = collection_ids_to_join | push: collection_gid %}
+    {% endunless %}
   {% endif %}
 {% endfor %}
 
-{% if collection_ids_to_join != empty %}
-  {% for collection_id_to_join in collection_ids_to_join %}
-    {% if event.preview %}
-      {% assign collection_admin_graphql_api_id = "gid://shopify/Collection/1234567890" %}
-    {% else %}
-      {% assign collection_admin_graphql_api_id = shop.collections[collection_id_to_join].admin_graphql_api_id %}
-    {% endif %}
+{% comment %}
+  -- add product to any qualifying collections
+{% endcomment %}
 
-    {% if collection_admin_graphql_api_id == nil %}
-      {% error %}
-        {{ collection_id_to_join | append: " did not resolve to an existing collection." | json }}
-      {% enderror %}
-    {% else %}
-      {% action "shopify" %}
-        mutation {
-          collectionAddProducts(
-            id: {{ collection_admin_graphql_api_id | json }}
-            productIds: [{{ product.admin_graphql_api_id | json }}]
-          ) {
-            userErrors {
-              field
-              message
-            }
-          }
+{% for collection_id_to_join in collection_ids_to_join %}
+  {% action "shopify" %}
+    mutation {
+      collectionAddProducts(
+        id: {{ collection_id_to_join | json }}
+        productIds: {{ array | push: product.id | json }}
+      ) {
+        userErrors {
+          field
+          message
         }
-      {% endaction %}
-    {% endif %}
-  {% endfor %}
-{% endif %}
+      }
+    }
+  {% endaction %}
+{% endfor %}
