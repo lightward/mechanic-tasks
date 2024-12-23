@@ -6,7 +6,7 @@
   -- for product create/update, filter the products query with the product ID that caused the event
 {% endcomment %}
 
-{% if event.topic == "shopify/products/update" %}
+{% if event.topic contains "shopify/products/" %}
   {% assign search_query = product.id | prepend: "id:" %}
 {% endif %}
 
