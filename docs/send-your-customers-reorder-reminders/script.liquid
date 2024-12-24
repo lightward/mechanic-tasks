@@ -1,22 +1,35 @@
+{% assign only_include_customers_having_this_tag = options.only_include_customers_having_this_tag %}
+{% assign interval_d = options.number_of_days_to_wait_between_emails__number_required %}
+{% assign email_subject = options.email_subject__required %}
+{% assign email_body = options.email_body__multiline_required %}
+{% assign test_mode = options.test_mode__boolean %}
+
+{%- capture cutoff_days -%}
+  -{{ interval_d }} days
+{%- endcapture -%}
+{% assign cutoff_date = "now" | date: "%F", advance: cutoff_days %}
+
 {% if event.topic contains "mechanic/scheduler/" or event.topic == "mechanic/user/trigger" %}
-  {% assign query = "orders_count:>0" %}
-  {% if options.only_include_customers_having_this_tag != blank %}
-    {% assign query = options.only_include_customers_having_this_tag | json | prepend: "tag:" | append: " " | append: query %}
-  {% endif %}
+  {%- capture search_query -%}
+    last_order_date <= {{ cutoff_date }}
+    {%- if only_include_customers_having_this_tag != blank %} AND customer_tags CONTAINS '{{ only_include_customers_having_this_tag }}'{%- endif -%}
+  {%- endcapture -%}
+
+  {% log customers_search_query: search_query %}
 
   {% capture bulk_operation_query %}
     query {
-      customers(
-        query: {{ query | json }}
+      customerSegmentMembers(
+        query: {{ search_query | json }}
       ) {
         edges {
           node {
-            email
-            lastOrder {
-              email
-              name
-              processedAt
+            __typename
+            id
+            defaultEmailAddress {
+              emailAddress
             }
+            lastOrderId
           }
         }
       }
@@ -39,54 +52,81 @@
       }
     }
   {% endaction %}
-{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
-  {% assign now_s = "now" | date: "%s" | times: 1 %}
-  {% assign interval_d = options.number_of_days_to_wait_between_emails__number_required %}
 
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
   {% if event.preview %}
-    {% capture object_json %}
-      {
-        "email": "customer@example.com",
-        "lastOrder": {
-          "email": "customer+fallback@example.com",
-          "name": "#1234",
-          "processedAt": {{ interval_d | times: 24 | times: 60 | times: 60 | times: -1 | plus: now_s | date: "%FT%T%:z" | json }}
+    {% capture jsonl_string %}
+      {"__typename":"CustomerSegmentMember","id":"gid://shopify/CustomerSegmentMember/1234567890","lastOrderId":"gid://shopify/Order/1234567890"}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = jsonl_string | parse_jsonl %}
+  {% endif %}
+
+  {% assign customers = bulkOperation.objects | where: "__typename", "CustomerSegmentMember" %}
+
+  {% for customer in customers %}
+    {% comment %}
+      -- get additional data from this customer's last order
+    {% endcomment %}
+
+    {% capture query %}
+      query {
+        order(id: {{ customer.lastOrderId | json }}) {
+          email
+          name
+          processedAt
         }
       }
     {% endcapture %}
 
-    {% assign bulkOperation = hash %}
-    {% assign bulkOperation["objects"] = array %}
-    {% assign bulkOperation["objects"][0] = object_json | parse_json %}
-  {% endif %}
+    {% assign result = query | shopify %}
 
-  {% for customer in bulkOperation.objects %}
-    {% if customer.lastOrder == nil %}
-      {% continue %}
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "order": {
+              "email": "preview@example.com",
+              "name": "%PREVIEW",
+              "processedAt": {{ cutoff_date | json }}
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
     {% endif %}
 
-    {% assign processed_at_s = customer.lastOrder.processedAt | date: "%s" | times: 1 %}
-    {% assign age_d = now_s | minus: processed_at_s | divided_by: 60 | divided_by: 60 | divided_by: 24 | round %}
+    {% assign order = result.data.order %}
+    {% assign customer_email = customer.defaultEmailAddress.emailAddress | default: order.email %}
+
+    {% assign processed_at_s = order.processedAt | date: "%s" | times: 1 %}
+    {% assign age_d = "now" | date: "%s" | times: 1 | minus: processed_at_s | divided_by: 86400 | round %}
     {% assign age_d_modulo = age_d | modulo: interval_d %}
 
     {% if age_d == 0 %}
       {% continue %}
+
     {% elsif age_d_modulo != 0 %}
       {% capture message -%}
-        Order {{ customer.lastOrder.name }} ({{ customer.email | default: customer.lastOrder.email }}) was placed on {{ customer.lastOrder.processedAt }}. Next email is due in {{ interval_d | minus: age_d_modulo }} day(s).
+        Order {{ order.name }} ({{ customer_email }}) was placed on {{ processed_at_s | date: "%F" }}. Next email is due in {{ interval_d | minus: age_d_modulo }} day(s).
       {%- endcapture %}
+
       {% log message %}
+
       {% continue %}
+
     {% else %}
       {% assign email_options = hash %}
-      {% assign email_options["to"] = customer.email | default: customer.lastOrder.email %}
-      {% assign email_options["subject"] = options.email_subject__required | replace: "ORDER_NUMBER", customer.lastOrder.name %}
-      {% assign email_options["body"] = options.email_body__multiline_required | replace: "ORDER_NUMBER", customer.lastOrder.name | strip | newline_to_br %}
+      {% assign email_options["to"] = customer_email %}
+      {% assign email_options["subject"] = email_subject | replace: "ORDER_NUMBER", order.name %}
+      {% assign email_options["body"] = email_body | replace: "ORDER_NUMBER", order.name | strip | newline_to_br %}
       {% assign email_options["reply_to"] = shop.customer_email %}
       {% assign email_options["from_display_name"] = shop.name %}
 
-      {% if options.test_mode__boolean %}
-        {% action "echo" email_options %}
+      {% if test_mode %}
+        {% log email_options %}
       {% else %}
         {% action "email" email_options %}
       {% endif %}

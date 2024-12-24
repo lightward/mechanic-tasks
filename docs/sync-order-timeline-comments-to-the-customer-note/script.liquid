@@ -1,3 +1,10 @@
+{% assign add_new_comments_to_the_beginning = options.add_new_comments_to_the_beginning__boolean %}
+{% assign do_not_add_removed_comments_back_in = options.do_not_add_removed_comments_back_in__boolean %}
+{% assign comment_date_format = options.comment_date_format__required %}
+{% assign automatically_trim_notes_after_a_one_day_warning = options.automatically_trim_notes_after_a_one_day_warning__boolean %}
+{% assign send_errors_to_slack = options.send_errors_to_slack__boolean %}
+{% assign slack_incoming_webhook_url = options.slack_incoming_webhook_url %}
+
 {% assign mistaken_order_name_constants = array %}
 {% assign mistaken_order_name_constants[0] = "" %}
 {% assign mistaken_order_name_constants[1] = "N001388836" %}
@@ -6,15 +13,14 @@
 {% if event.topic contains "mechanic/scheduler/" or event.topic == "mechanic/user/trigger" %}
   {% capture bulk_operation_query %}
     query {
-      customers(
-        query: {{ options.only_process_customers_matching_this_query | json }}
-      ) {
+      customers {
         edges {
           node {
             __typename
             id
             legacyResourceId
             email
+            displayName
             note
             orders {
               edges {
@@ -60,6 +66,7 @@
       }
     }
   {% endaction %}
+
 {% elsif event.topic == "mechanic/shopify/bulk_operation" %}
   {% assign customers = array %}
   {% assign customer_ids_and_order_comments = hash %}
@@ -81,6 +88,7 @@
 
       {% assign _order_comments_count = customer_ids_and_order_comments[customer.id].size %}
       {% assign customer_ids_and_order_comments[customer.id][_order_comments_count] = order_comment %}
+
     {% when "Customer" %}
       {% assign customers[customers.size] = object %}
     {% endcase %}
@@ -101,19 +109,24 @@
   {% for customer in customers %}
     {% assign new_order_comments_formatted = array %}
     {% assign reused_note = customer.note %}
+    {% assign customer_email_or_name = customer.email | default: customer.displayName %}
 
     {% comment %}
       If we've previously hit the note's max length, there should be a timestamp recorded in the note,
       marking the point in time from which we should start looking for new comments.
     {% endcomment %}
+
     {% assign minimum_order_comment_created_at_s = nil %}
     {% assign note_lines = customer.note | split: newline %}
+
     {% for note_line in note_lines %}
       {% assign note_line_parts = note_line | split: ":" %}
+
       {% if note_line_parts[0] == "mechanic" and note_line_parts[1] == "timestamp" %}
         {% assign reused_note = reused_note | replace: note_line, "" | strip %}
 
         {% assign minimum_order_comment_created_at_s = note_line_parts[2] | times: 1 %}
+
         {% if minimum_order_comment_created_at_s == 0 %}
           {% assign minimum_order_comment_created_at_s = nil %}
         {% else %}
@@ -125,14 +138,15 @@
     {% assign newest_order_comment_created_at_s = nil %}
 
     {% assign order_comments_sorted = customer_ids_and_order_comments[customer.id] | sort: "created_at" %}
-    {% if options.add_new_comments_to_the_beginning__boolean %}
+
+    {% if add_new_comments_to_the_beginning %}
       {% assign order_comments_sorted = order_comments_sorted | reverse %}
     {% endif %}
 
     {% for order_comment in order_comments_sorted %}
       {% assign order_comment_created_at_s = order_comment.created_at | date: "%s" | times: 1 %}
 
-      {% if options.do_not_add_removed_comments_back_in__boolean %}
+      {% if do_not_add_removed_comments_back_in %}
         {% if minimum_order_comment_created_at_s != nil and minimum_order_comment_created_at_s >= order_comment_created_at_s %}
           {% continue %}
         {% endif %}
@@ -143,12 +157,13 @@
       {% endif %}
 
       {% assign order_comment_message_formatted = order_comment.message | strip | strip_html | prepend: '"' | append: '"' %}
-      {% assign order_comment_date_formatted = order_comment.created_at | date: options.comment_date_format__required %}
+      {% assign order_comment_date_formatted = order_comment.created_at | date: comment_date_format %}
 
       {% assign order_comment_formatted = order_comment_date_formatted | append: " - " | append: order_comment_message_formatted | append: " (" | append: order_comment.order_name | append: ")" %}
 
       {% comment %}fix up places where we mistakenly used a constant order name{% endcomment %}
       {% assign tail_with_order_name = '" (' | append: order_comment.order_name | append: ")" %}
+
       {% for mistaken_order_name_constant in mistaken_order_name_constants %}
         {% assign tail_with_constant = '" (' | append: mistaken_order_name_constant | append: ')' %}
         {% assign order_comment_formatted_with_constant_tail = order_comment_formatted | replace: tail_with_order_name, tail_with_constant %}
@@ -167,10 +182,11 @@
               {% assign replacement_note_pieces[replacement_note_pieces.size] = piece | strip %}
             {% endunless %}
 
-            {% if options.add_new_comments_to_the_beginning__boolean == true and forloop.last %}
+            {% if add_new_comments_to_the_beginning == true and forloop.last %}
               {% comment %}remove all but the last{% endcomment %}
               {% assign replacement_note_pieces[replacement_note_pieces.size] = order_comment_formatted %}
-            {% elsif options.add_new_comments_to_the_beginning__boolean == false and forloop.first %}
+
+            {% elsif add_new_comments_to_the_beginning == false and forloop.first %}
               {% comment %}remove all but the first{% endcomment %}
               {% assign replacement_note_pieces[replacement_note_pieces.size] = order_comment_formatted %}
             {% endif %}
@@ -178,12 +194,13 @@
 
           {% assign reused_note = replacement_note_pieces | join: double_newline %}
         {% endif %}
+
       {% else %}
         {% assign new_order_comments_formatted[new_order_comments_formatted.size] = order_comment_formatted | strip %}
       {% endif %}
     {% endfor %}
 
-    {% if options.add_new_comments_to_the_beginning__boolean %}
+    {% if add_new_comments_to_the_beginning %}
       {% assign updated_note = new_order_comments_formatted | join: double_newline | append: double_newline | append: reused_note | strip %}
     {% else %}
       {% assign updated_note = new_order_comments_formatted | join: double_newline | prepend: double_newline | prepend: reused_note | strip %}
@@ -193,48 +210,55 @@
       We perform this check twice. Here, it matters because we've added any new comments we wish to add.
       If none have actually been added, we can safely bail.
     {% endcomment %}
+
     {% if updated_note == customer.note %}
-      {% if options.only_process_customers_matching_this_query != blank %}
-        {"log": {{ customer.email | append: ": Customer note is unchanged; no new order comments found, and there was no timestamp on the note" | json }}}
-      {% endif %}
+      {% log %}
+        {{ customer_email_or_name | append: ": Customer note is unchanged; no new order comments found, and there was no timestamp on the note" | json }}
+      {% endlog %}
       {% continue %}
     {% endif %}
 
     {% assign cache_key = "flag-customer-for-note-trimming:" | append: customer.id %}
     {% assign cancel_update = false %}
 
-    {% if updated_note.size > 5000 and options.automatically_trim_notes_after_a_one_day_warning__boolean == false %}
+    {% if updated_note.size > 5000 and automatically_trim_notes_after_a_one_day_warning == false %}
       {% comment %}can't handle this automatically; alert slack{% endcomment %}
       {% assign cancel_update = true %}
       {% assign cancel_message = "could not have new order timeline comments added to their note; the new note would exceed 5000 characters" %}
+
     {% elsif updated_note.size > 6000 %}
       {% comment %}can't handle this automatically; alert slack{% endcomment %}
       {% assign cancel_update = true %}
       {% assign cancel_message = "could not have new order timeline comments added to their note; will not retry with trimming, since trimming would remove more than 1000 characters" %}
+
     {% elsif updated_note.size > 5000 and cache[cache_key] != true %}
       {% assign two_days_s = 60 | times: 60 | times: 24 | times: 2 %}
       {% action "cache", "setex", cache_key, two_days_s, true %}
       {% assign cancel_update = true %}
       {% comment %}will attempt to handle this automatically next time; alert slack{% endcomment %}
       {% assign cancel_message = "could not have new order timeline comments added to their note; will trim down to 5000 characters during the next scan" %}
+
     {% else %}
       {% comment %}
         If we're here, we're either under the character limit, or we're over it *and* we're clear to
         trim it. We add a timestamp noting the creation time of the newest comment; the next time we
         scan, we'll only look at comments that arrive after this timestamp.
       {% endcomment %}
+
       {% assign timestamp_line = newest_order_comment_created_at_s | default: minimum_order_comment_created_at_s | prepend: "mechanic:timestamp:" %}
 
       {% comment %}
         Perform slicing if necessary, but only if necessary - this action is destructive for strings
         under the limit, too.
       {% endcomment %}
+
       {% if updated_note.size > 5000 %}
         {% comment %}
           The timestamp line is 29 characters, plus a double newline is 31. From 5000, that leaves 4969.
           We trim *away* from the spot where new comments are added.
         {% endcomment %}
-        {% if options.add_new_comments_to_the_beginning__boolean %}
+
+        {% if add_new_comments_to_the_beginning %}
           {% assign updated_note = updated_note | slice: 0, 4969 %}
         {% else %}
           {% assign updated_note = updated_note | slice: -4969, 4969 %}
@@ -248,6 +272,7 @@
           This approval is only good once. If we're here, and this approval exists, we've used it and
           should clear it at this time.
         {% endcomment %}
+
         {% action "cache", "del", cache_key %}
       {% endif  %}
     {% endif %}
@@ -256,47 +281,50 @@
       The second check. Here, it matters because we've executed on any trimming-related activity
       necessary, and the result may not actually differ from the original note, rendering an update moot.
     {% endcomment %}
+
     {% if updated_note == customer.note %}
-      {% if options.only_process_customers_matching_this_query != blank %}
-        {"log": {{ customer.email | append: ": Customer note is unchanged" | json }}}
-      {% endif %}
+      {% log %}
+        {{ customer_email_or_name | append: ": Customer note is unchanged" | json }}
+      {% endlog %}
       {% continue %}
     {% endif %}
 
     {% if cancel_update %}
-      {
-        "log": {
-          "customer_id": {{ customer.id | json }},
-          "order_comments": {{ order_comments_sorted | json }},
-          "existing_note": {{ customer.note | json }},
-          "existing_note_size": {{ customer.note.size | json }},
-          "updated_note": {{ updated_note | json }},
-          "updated_note_size": {{ updated_note.size | json }}
-        }
-      }
+      {% log
+        customer_id: customer.id,
+        order_comments: order_comments_sorted,
+        existing_note: customer.note,
+        existing_note_size: customer.note.size,
+        updated_note: updated_note,
+        updated_note_size: updated_note.size
+      %}
 
-      {% assign message = "Notice for " | append: customer.email | append: ": " | append: cancel_message | append: newline | append: newline | append: "Manage this customer in Shopify: https://" | append: shop.domain | append: "/admin/customers/" | append: customer.legacyResourceId %}
+      {% assign message = "Notice for " | append: customer_email_or_name | append: ": " | append: cancel_message | append: newline | append: newline | append: "Manage this customer in Shopify: https://" | append: shop.domain | append: "/admin/customers/" | append: customer.legacyResourceId %}
 
-      {% if options.send_errors_to_slack__boolean and options.slack_incoming_webhook_url != blank %}
+      {% if send_errors_to_slack and slack_incoming_webhook_url != blank %}
         {% action "http" %}
           {
             "method": "post",
-            "url": {{ options.slack_incoming_webhook_url | json }},
+            "url": {{ slack_incoming_webhook_url | json }},
             "body": {
               "text": {{ message | json }}
             }
           }
         {% endaction %}
+
       {% else %}
-        {% action "echo" %}
-          {"error": {{ message | json  }}}
-        {% endaction %}
+        {% action "echo" __error: message %}
       {% endif %}
+
     {% else %}
       {% comment %}
         Just in case something goes horribly wrong, we record the existing customer note. :)
       {% endcomment %}
-      {"log": {"customer_id": {{ customer.id | json }}, "existing_note": {{ customer.note | json }}}}
+
+      {% log
+        customer_id: customer.id,
+        existing_note: customer.note
+      %}
 
       {% action "shopify" %}
         mutation {
