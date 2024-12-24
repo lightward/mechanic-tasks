@@ -2,7 +2,7 @@
 
 Tags: Customers, Email, Loyalty, Reminder
 
-Useful for customers who need recurring reminders to reorder. Optionally filtering by a customer tag, this task monitors the most recent order for each customer, and sends them reminders every x days since that order.
+Useful for customers who need recurring reminders to reorder. Optionally filtering by a customer tag, it monitors the most recent order for each customer, and sends them reminders every x days since that order.
 
 * View in the task library: [tasks.mechanic.dev/send-your-customers-reorder-reminders](https://tasks.mechanic.dev/send-your-customers-reorder-reminders)
 * Task JSON, for direct import: [task.json](../../tasks/send-your-customers-reorder-reminders.json)
@@ -28,7 +28,6 @@ Useful for customers who need recurring reminders to reorder. Optionally filteri
 {% if options.test_mode__boolean %}
   mechanic/user/trigger
 {% endif %}
-
 mechanic/scheduler/daily
 mechanic/shopify/bulk_operation
 ```
@@ -37,11 +36,9 @@ mechanic/shopify/bulk_operation
 
 ## Documentation
 
-Useful for customers who need recurring reminders to reorder. Optionally filtering by a customer tag, this task monitors the most recent order for each customer, and sends them reminders every x days since that order.
+Useful for customers who need recurring reminders to reorder. Optionally filtering by a customer tag, it monitors the most recent order for each customer, and sends them reminders every x days since that order.
 
-This task runs daily, at midnight in your store's timezone. Optionally filtering by a customer tag, it monitors the most recent order for each customer, and sends them reminders every x days since that order. The task will continue sending reorder reminders, every x days since each customer's latest order.
-
-This task will send emails to the address on file for the customer, falling back to the email on file for the order if the customer has no email address.
+This task runs daily, at midnight in your store's timezone. This task will send emails to the address on file for the customer, falling back to the email on file for the order if the customer has no email address.
 
 To test this task, enable test mode, and save. You'll find a new "Run task" button, which will report the emails that would be sent on the current date.
 
