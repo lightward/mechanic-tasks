@@ -5,7 +5,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Abandoned checkout emails](./abandoned-checkout-emails)
 * [Accept a maximum number of orders per day](./accept-a-maximum-number-of-orders-per-day)
 * [Accept a maximum number of orders per hour](./accept-a-maximum-number-of-orders-per-hour)
-* [Activate a discount when ISS passes overhead](./activate-a-discount-when-iss-passes-overhead)
 * [Add Option Name as a Variant Metafield for In Stock Variants](./add-option-names-as-variant-metafields-for-in-stock-variants)
 * [Add all products to a certain sales channel](./add-all-products-to-a-certain-sales-channel)
 * [Add fulfillment tracking when an order is tagged](./add-fulfillment-tracking-when-an-order-is-tagged)
@@ -15,7 +14,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Advanced: Scheduled section publishing](./advanced-scheduled-section-publishing)
 * [Archive free orders on fulfillment](./archive-free-orders-on-fulfillment)
 * [Archive orders on delivery](./archive-orders-on-delivery)
-* [Archive orders when fulfilled](./archive-orders-when-fulfilled)
 * [Archive orders when tagged](./archive-orders-when-tagged)
 * [Ask for reviews a week after order fulfillment](./ask-for-reviews-a-week-after-order-fulfillment)
 * [Auto create collections by metafield values](./auto-create-collections-by-metafield-values)
@@ -134,7 +132,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag orders with chargeback or inquiry activity](./auto-tag-orders-with-chargeback-or-inquiry-activity)
 * [Auto-tag orders with customer tags when new customer tags are added](./tag-orders-with-customer-tags-when-customer-is-tagged)
 * [Auto-tag orders with mismatching billing and shipping addresses](./auto-tag-orders-with-mismatching-billing-and-shipping-addresses)
-* [Auto-tag orders with product tags](./auto-tag-orders-with-product-tags)
 * [Auto-tag orders with product vendors](./auto-tag-orders-with-product-vendors)
 * [Auto-tag orders with their line item properties](./auto-tag-orders-with-their-line-item-properties)
 * [Auto-tag orders with their tracking numbers](./auto-tag-orders-with-their-tracking-numbers)
@@ -143,7 +140,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag products based on their publishing status](./auto-tag-products-based-on-their-publishing-status)
 * [Auto-tag products by "back in stock" age](./auto-tag-new-products-by-back-in-stock-age)
 * [Auto-tag products by age](./auto-tag-new-products-by-age)
-* [Auto-tag products by largest available size](./auto-tag-products-by-largest-available-size)
 * [Auto-tag products by their options](./auto-tag-products-by-their-options)
 * [Auto-tag products by their publish date](./auto-tag-products-by-their-publish-date)
 * [Auto-tag products in a manual collection](./auto-tag-products-in-a-manual-collection)
@@ -161,7 +157,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Automatically cancel high-risk orders](./automatically-cancel-high-risk-orders)
 * [Automatically cancel orders with certain risk indicators](./automatically-cancel-orders-with-certain-risk-indicators)
 * [Automatically mark new orders as ready for pickup](./automatically-mark-new-orders-as-ready-for-pickup)
-* [Automatically publish and unpublish on a monthly cycle](./automatically-publish-and-unpublish-on-a-monthly-cycle)
 * [Automatically send account invite to new customers](./automatically-send-account-invite-to-new-customers)
 * [Backup inventory to SFTP in Shopify CSV format](./backup-scheduled-inventory-exports-in-shopifys-csv-format)
 * [Bulk capture orders by order number](./bulk-capture-by-order-number)
@@ -173,13 +168,11 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Capture order payment upon fulfillment](./capture-order-payment-upon-fulfillment)
 * [Catalog update email](./catalog-update-email)
 * [Clean up draft orders](./clean-up-draft-orders)
-* [Copy draft order metafields to orders](./copy-draft-order-metafields-to-orders)
 * [Copy order and/or product tags to customers](./copy-order-tags-to-customers)
 * [Copy prefixed tags to metafields](./copy-prefixed-tags-to-metafields)
 * [Copy product metafields to each product's tags](./copy-product-metafields-to-each-products-tags)
 * [Create a draft order from the cart](./create-a-draft-order-from-the-cart)
 * [Create a product inventory CSV feed](./create-a-product-inventory-feed)
-* [Credit customers for sample orders](./credit-customers-for-sample-orders)
 * [Delete all products](./delete-all-products)
 * [Delete cancelled orders after 48 hours](./delete-cancelled-orders-after-48-hours)
 * [Delete customer metafields in bulk](./delete-customer-metafields-in-bulk)
@@ -234,7 +227,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Generate a product discount when a voucher product is purchased](./generate-a-product-discount-when-a-voucher-product-is-purchased)
 * [Generate a report of orders that still require payment](./generate-a-report-of-orders-that-still-require-payment)
 * [Generate a simple product catalog PDF](./generate-a-simple-product-catalog-pdf)
-* [Get email alerts for FBA failures](./get-email-alerts-for-fba-failures)
 * [Get email alerts for out of stock products](./get-email-alerts-for-out-of-stock-products)
 * [Hide out-of-stock products](./hide-out-of-stock-products)
 * [Import PayPal transactions as Shopify orders](./import-paypal-transactions-as-shopify-orders)
@@ -260,11 +252,9 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Partially auto-capture payments as orders are fulfilled](./partially-auto-capture-payments-as-orders-are-fulfilled)
 * [Publish a certain collection, daily](./publish-a-certain-collection-daily)
 * [Publish back-in-stock products](./publish-back-in-stock-products)
-* [Raise the price of a product after every sale](./raise-the-price-of-a-product-after-every-sale)
 * [Receive a nightly out-of-stock report](./receive-a-nightly-out-of-stock-report)
 * [Receive email alerts when inventory levels change](./receive-email-alerts-when-inventory-levels-change)
 * [Record Judge.me customer review counts](./record-judge-me-customer-review-counts)
-* [Redirect users based on input codes](./redirect-users-based-on-input-codes)
 * [Reissue single-use discount codes after order cancellation](./reissue-single-use-discount-codes-after-order-cancellation)
 * [Remind customers after x days about unpaid orders](./remind-customers-after-x-days-about-unpaid-orders)
 * [Remind customers that their order is on the way](./remind-customers-that-their-order-is-on-the-way)
@@ -279,10 +269,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Reset inventory levels daily](./reset-inventory-levels-daily)
 * [Reset inventory levels when they get too low](./reset-inventory-levels-when-they-get-too-low)
 * [Reset negative inventory levels to zero in bulk](./reset-negative-inventory-levels-to-zero-in-bulk)
-* [Rotate products through a featured collection](./rotate-products-through-a-featured-collection)
 * [Schedule a storefront banner](./schedule-a-storefront-banner)
-* [Schedule customer auto-tagging after a purchase](./schedule-customer-auto-tagging-after-a-purchase)
-* [Schedule product status to active](./schedule-product-status-to-active)
 * [Schedule product tags by date](./schedule-product-tags-by-date)
 * [Scheduled inventory adjustment](./scheduled-inventory-adjustment)
 * [Scheduled theme publishing](./scheduled-theme-publishing)
@@ -296,7 +283,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Send a staff notification email for each delivery](./send-a-staff-notification-email-for-each-delivery)
 * [Send a welcome email to new customers, in their language](./send-a-welcome-email-to-new-customers-in-their-language)
 * [Send account invites to all customers in bulk](./send-account-invites-to-all-customers-in-bulk)
-* [Send an SMS via Nexmo when a product is created](./send-an-sms-via-nexmo-when-a-product-is-created)
 * [Send an email alert if a new collection has no orders after x days](./send-an-email-alert-if-a-new-collection-has-no-orders-after-x-days)
 * [Send an email alert on fulfillment failure](./fulfillment-failure-email)
 * [Send an email alert when a customer changes state](./send-an-email-alert-when-a-customer-changes-state)
@@ -304,7 +290,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Send an email alert when a fulfillment is cancelled](./send-an-email-alert-when-a-fulfillment-is-cancelled)
 * [Send an email alert when a variant hits 0 total inventory](./send-an-email-alert-when-a-variant-hits-0-total-inventory)
 * [Send an email alert when an incoming Canadian order has an unsupported FSA](./send-an-email-alert-when-an-incoming-canadian-order-has-an-unsupported-fsa)
-* [Send an email to all customers](./send-an-email-to-all-customers)
 * [Send an email when a product's price goes below its cost](./send-an-email-when-a-products-price-goes-below-its-cost)
 * [Send an email when a purchase is made from a certain collection](./send-an-email-when-a-purchase-is-made-from-a-certain-collection)
 * [Send an email when a specific product is shipped](./send-an-email-when-a-specific-product-is-shipped)
@@ -316,7 +301,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Send email when an order comes in](./send-email-when-an-order-comes-in)
 * [Send email when an order is tagged](./send-email-when-an-order-is-tagged)
 * [Send follow-up emails after sending a draft order invoice](./send-follow-up-emails-after-sending-a-draft-order-invoice)
-* [Send new customer signups to IFTTT](./send-new-customer-signups-to-ifttt)
 * [Send recurring reminders about unpaid orders](./unpaid-order-reminders)
 * [Send tax receipts for donations](./send-tax-receipts-for-donations)
 * [Send your customers reorder reminders](./send-your-customers-reorder-reminders)
@@ -380,10 +364,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-verify customer email addresses](./auto-verify-customer-email-addresses)
 * [Send account invites to all customers in bulk](./send-account-invites-to-all-customers-in-bulk)
 
-### Active
-
-* [Schedule product status to active](./schedule-product-status-to-active)
-
 ### Address
 
 * [Auto-tag orders with mismatching billing and shipping addresses](./auto-tag-orders-with-mismatching-billing-and-shipping-addresses)
@@ -411,7 +391,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Email someone when a certain product is purchased](./email-someone-when-certain-product-purchased)
 * [Error reporter](./error-reporter)
 * [Flag orders that aren't fulfilled after several days](./flag-orders-that-arent-fulfilled-after-two-days)
-* [Get email alerts for FBA failures](./get-email-alerts-for-fba-failures)
 * [Get email alerts for out of stock products](./get-email-alerts-for-out-of-stock-products)
 * [Receive email alerts when inventory levels change](./receive-email-alerts-when-inventory-levels-change)
 * [Send a staff notification email for each delivery](./send-a-staff-notification-email-for-each-delivery)
@@ -428,7 +407,6 @@ This directory is built automatically. Each task's documentation is generated fr
 
 * [Archive free orders on fulfillment](./archive-free-orders-on-fulfillment)
 * [Archive orders on delivery](./archive-orders-on-delivery)
-* [Archive orders when fulfilled](./archive-orders-when-fulfilled)
 * [Archive orders when tagged](./archive-orders-when-tagged)
 * [Auto-archive orders after fulfillment](./auto-archive-orders-after-fulfillment)
 
@@ -502,7 +480,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag orders with chargeback or inquiry activity](./auto-tag-orders-with-chargeback-or-inquiry-activity)
 * [Auto-tag orders with customer tags when new customer tags are added](./tag-orders-with-customer-tags-when-customer-is-tagged)
 * [Auto-tag orders with mismatching billing and shipping addresses](./auto-tag-orders-with-mismatching-billing-and-shipping-addresses)
-* [Auto-tag orders with product tags](./auto-tag-orders-with-product-tags)
 * [Auto-tag orders with product vendors](./auto-tag-orders-with-product-vendors)
 * [Auto-tag orders with their line item properties](./auto-tag-orders-with-their-line-item-properties)
 * [Auto-tag orders with their tracking numbers](./auto-tag-orders-with-their-tracking-numbers)
@@ -511,7 +488,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag products based on their publishing status](./auto-tag-products-based-on-their-publishing-status)
 * [Auto-tag products by "back in stock" age](./auto-tag-new-products-by-back-in-stock-age)
 * [Auto-tag products by age](./auto-tag-new-products-by-age)
-* [Auto-tag products by largest available size](./auto-tag-products-by-largest-available-size)
 * [Auto-tag products by their options](./auto-tag-products-by-their-options)
 * [Auto-tag products by their publish date](./auto-tag-products-by-their-publish-date)
 * [Auto-tag products in a manual collection](./auto-tag-products-in-a-manual-collection)
@@ -525,7 +501,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag products without descriptions](./auto-tag-products-without-descriptions)
 * [Copy order and/or product tags to customers](./copy-order-tags-to-customers)
 * [Maintain a tag for orders processed today](./maintain-a-tag-for-orders-processed-today)
-* [Schedule customer auto-tagging after a purchase](./schedule-customer-auto-tagging-after-a-purchase)
 * [Schedule product tags by date](./schedule-product-tags-by-date)
 * [Sync an inverse customer tag](./sync-an-inverse-customer-tag)
 * [Sync an inverse order tag](./sync-an-inverse-order-tag)
@@ -635,7 +610,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Manage collection templates by product inventory](./manage-collection-templates-by-product-inventory)
 * [Move out-of-stock products to the end of a collection](./move-out-of-stock-products-to-the-end-of-a-collection)
 * [Publish a certain collection, daily](./publish-a-certain-collection-daily)
-* [Rotate products through a featured collection](./rotate-products-through-a-featured-collection)
 * [Send an email alert if a new collection has no orders after x days](./send-an-email-alert-if-a-new-collection-has-no-orders-after-x-days)
 * [Send an email when a purchase is made from a certain collection](./send-an-email-when-a-purchase-is-made-from-a-certain-collection)
 * [Unpublish a certain collection, daily](./unpublish-a-certain-collection-daily)
@@ -708,7 +682,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Automatically send account invite to new customers](./automatically-send-account-invite-to-new-customers)
 * [Copy order and/or product tags to customers](./copy-order-tags-to-customers)
 * [Copy prefixed tags to metafields](./copy-prefixed-tags-to-metafields)
-* [Credit customers for sample orders](./credit-customers-for-sample-orders)
 * [Delete customer metafields in bulk](./delete-customer-metafields-in-bulk)
 * [Email a report of customers who haven't ordered in X days](./email-a-report-of-customers-who-havent-ordered-in-x-days)
 * [Email all customers who made a purchase](./email-customers-who-purchased-product)
@@ -724,16 +697,13 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Record Judge.me customer review counts](./record-judge-me-customer-review-counts)
 * [Remind customers after x days about unpaid orders](./remind-customers-after-x-days-about-unpaid-orders)
 * [Remove a customer tag when another tag is added](./remove-a-customer-tag-when-another-tag-is-added)
-* [Schedule customer auto-tagging after a purchase](./schedule-customer-auto-tagging-after-a-purchase)
 * [Send a customer signup email](./customer-signup-email)
 * [Send a follow-up email to customers after purchasing from a certain vendor](./send-a-follow-up-email-to-customers-after-purchasing-from-a-certain-vendor)
 * [Send a welcome email to new customers, in their language](./send-a-welcome-email-to-new-customers-in-their-language)
 * [Send account invites to all customers in bulk](./send-account-invites-to-all-customers-in-bulk)
 * [Send an email alert when a customer changes state](./send-an-email-alert-when-a-customer-changes-state)
-* [Send an email to all customers](./send-an-email-to-all-customers)
 * [Send customers a reorder link X days after ordering](./send-customers-a-reorder-link-x-days-after-ordering)
 * [Send follow-up emails after sending a draft order invoice](./send-follow-up-emails-after-sending-a-draft-order-invoice)
-* [Send new customer signups to IFTTT](./send-new-customer-signups-to-ifttt)
 * [Send your customers reorder reminders](./send-your-customers-reorder-reminders)
 * [Sync an inverse customer tag](./sync-an-inverse-customer-tag)
 * [Tag and segment customers by days since last order](./tag-and-segment-customers-by-days-since-last-order)
@@ -787,7 +757,6 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Discounts
 
-* [Activate a discount when ISS passes overhead](./activate-a-discount-when-iss-passes-overhead)
 * [Advanced: Scheduled Price Changes](./advanced-scheduled-price-changes)
 * [Auto-price products based on their compare-at prices](./auto-price-products-based-on-their-compare-at-prices)
 * [Auto-tag customers based on discount codes used](./auto-tag-customers-based-on-discount-codes-used)
@@ -813,7 +782,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag new draft orders](./auto-tag-new-draft-orders)
 * [Auto-tag orders created from drafts](./auto-tag-orders-created-from-drafts)
 * [Clean up draft orders](./clean-up-draft-orders)
-* [Copy draft order metafields to orders](./copy-draft-order-metafields-to-orders)
 * [Create a draft order from the cart](./create-a-draft-order-from-the-cart)
 * [Delete draft orders older than 30 days](./delete-draft-orders-older-than-30-days)
 * [Delete draft orders](./delete-draft-orders)
@@ -849,7 +817,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Email vendors when their products are ordered](./email-vendors-when-their-products-are-ordered)
 * [Email your customers after a quiet period of no orders](./email-your-customers-after-a-quiet-period-of-no-orders)
 * [Forward incoming email to another address](./forward-incoming-email-to-another-address)
-* [Get email alerts for FBA failures](./get-email-alerts-for-fba-failures)
 * [Get email alerts for out of stock products](./get-email-alerts-for-out-of-stock-products)
 * [Notify a team when a tagged product is ordered](./notify-a-team-when-a-tagged-product-is-ordered)
 * [Receive a nightly out-of-stock report](./receive-a-nightly-out-of-stock-report)
@@ -871,7 +838,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Send an email alert when a fulfillment is cancelled](./send-an-email-alert-when-a-fulfillment-is-cancelled)
 * [Send an email alert when a variant hits 0 total inventory](./send-an-email-alert-when-a-variant-hits-0-total-inventory)
 * [Send an email alert when an incoming Canadian order has an unsupported FSA](./send-an-email-alert-when-an-incoming-canadian-order-has-an-unsupported-fsa)
-* [Send an email to all customers](./send-an-email-to-all-customers)
 * [Send an email when a product's price goes below its cost](./send-an-email-when-a-products-price-goes-below-its-cost)
 * [Send an email when a purchase is made from a certain collection](./send-an-email-when-a-purchase-is-made-from-a-certain-collection)
 * [Send an email when a specific product is shipped](./send-an-email-when-a-specific-product-is-shipped)
@@ -912,10 +878,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Backup inventory to SFTP in Shopify CSV format](./backup-scheduled-inventory-exports-in-shopifys-csv-format)
 * [Export all products to SFTP, as a Shopify-friendly CSV](./export-all-products-to-sftp-as-a-shopify-friendly-csv)
 
-### Featured
-
-* [Rotate products through a featured collection](./rotate-products-through-a-featured-collection)
-
 ### Feeds
 
 * [Create a product inventory CSV feed](./create-a-product-inventory-feed)
@@ -937,7 +899,6 @@ This directory is built automatically. Each task's documentation is generated fr
 
 * [Add fulfillment tracking when an order is tagged](./add-fulfillment-tracking-when-an-order-is-tagged)
 * [Add note to new orders with their fulfillment locations](./note-new-orders-with-their-fulfillment-locations)
-* [Archive orders when fulfilled](./archive-orders-when-fulfilled)
 * [Ask for reviews a week after order fulfillment](./ask-for-reviews-a-week-after-order-fulfillment)
 * [Auto-add phone numbers to unfulfilled orders, when the customer is updated](./auto-add-phone-numbers-to-unfulfilled-orders-when-the-customer-is-updated)
 * [Auto-archive orders after fulfillment](./auto-archive-orders-after-fulfillment)
@@ -953,7 +914,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Capture order payment upon fulfillment](./capture-order-payment-upon-fulfillment)
 * [Demonstration: Fulfillment order move](./demonstration-fulfillment-order-move)
 * [Flag orders that aren't fulfilled after several days](./flag-orders-that-arent-fulfilled-after-two-days)
-* [Get email alerts for FBA failures](./get-email-alerts-for-fba-failures)
 * [Manage fulfillment shipment status using order tags](./manage-fulfillment-status-using-order-tags)
 * [Partially auto-capture payments as orders are fulfilled](./partially-auto-capture-payments-as-orders-are-fulfilled)
 * [Send an email alert on fulfillment failure](./fulfillment-failure-email)
@@ -972,10 +932,6 @@ This directory is built automatically. Each task's documentation is generated fr
 ### HTTP
 
 * [Demonstration, Tutorial: Fetch data from a shared Google sheet](./demonstration-fetch-data-from-a-shared-google-sheet)
-
-### IFTTT
-
-* [Send new customer signups to IFTTT](./send-new-customer-signups-to-ifttt)
 
 ### Images
 
@@ -1120,7 +1076,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag new orders with company metafield values](./auto-tag-new-orders-with-company-metafield-values)
 * [Auto-tag new orders with customer metafield values](./auto-tag-new-orders-with-customer-metafield-values)
 * [Auto-tag new orders with order metafield values](./auto-tag-new-orders-with-order-metafield-values)
-* [Copy draft order metafields to orders](./copy-draft-order-metafields-to-orders)
 * [Copy prefixed tags to metafields](./copy-prefixed-tags-to-metafields)
 * [Copy product metafields to each product's tags](./copy-product-metafields-to-each-products-tags)
 * [Delete customer metafields in bulk](./delete-customer-metafields-in-bulk)
@@ -1176,7 +1131,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Add note to new orders with their fulfillment locations](./note-new-orders-with-their-fulfillment-locations)
 * [Archive free orders on fulfillment](./archive-free-orders-on-fulfillment)
 * [Archive orders on delivery](./archive-orders-on-delivery)
-* [Archive orders when fulfilled](./archive-orders-when-fulfilled)
 * [Archive orders when tagged](./archive-orders-when-tagged)
 * [Ask for reviews a week after order fulfillment](./ask-for-reviews-a-week-after-order-fulfillment)
 * [Auto-add a note for new orders having a certain tag](./auto-add-order-note-for-new-tagged-orders)
@@ -1242,7 +1196,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag orders with a cart attribute](./auto-tag-orders-with-a-cart-attribute)
 * [Auto-tag orders with chargeback or inquiry activity](./auto-tag-orders-with-chargeback-or-inquiry-activity)
 * [Auto-tag orders with customer tags when new customer tags are added](./tag-orders-with-customer-tags-when-customer-is-tagged)
-* [Auto-tag orders with product tags](./auto-tag-orders-with-product-tags)
 * [Auto-tag orders with product vendors](./auto-tag-orders-with-product-vendors)
 * [Auto-tag orders with their line item properties](./auto-tag-orders-with-their-line-item-properties)
 * [Auto-tag orders with their tracking numbers](./auto-tag-orders-with-their-tracking-numbers)
@@ -1254,9 +1207,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Cancel and close unpaid orders after x hours/days](./cancel-and-close-unpaid-orders-after-two-days)
 * [Cancel fulfillments when an order is fully refunded](./cancel-fulfillments-when-an-order-is-fully-refunded)
 * [Clean up draft orders](./clean-up-draft-orders)
-* [Copy draft order metafields to orders](./copy-draft-order-metafields-to-orders)
 * [Copy prefixed tags to metafields](./copy-prefixed-tags-to-metafields)
-* [Credit customers for sample orders](./credit-customers-for-sample-orders)
 * [Delete cancelled orders after 48 hours](./delete-cancelled-orders-after-48-hours)
 * [Demonstration: Add new orders to a Google Sheet](./demonstration-add-new-orders-to-google-sheet)
 * [Demonstration: Auto-tag new orders, with scheduled reconciliation](./demonstration-auto-tag-new-orders-with-reconciliation)
@@ -1281,7 +1232,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Partially auto-capture payments as orders are fulfilled](./partially-auto-capture-payments-as-orders-are-fulfilled)
 * [Reissue single-use discount codes after order cancellation](./reissue-single-use-discount-codes-after-order-cancellation)
 * [Remove an order tag when another tag is added](./remove-a-order-tag-when-another-tag-is-added)
-* [Schedule customer auto-tagging after a purchase](./schedule-customer-auto-tagging-after-a-purchase)
 * [Send a PDF invoice when an order is created](./send-a-pdf-invoice-when-an-order-is-created)
 * [Send a follow-up email after order cancellation](./send-a-follow-up-email-after-order-cancellation)
 * [Send a new-order email to someone based on a cart attribute](./send-a-new-order-email-to-someone-based-on-a-cart-attribute)
@@ -1349,7 +1299,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Advanced: Scheduled Price Changes](./advanced-scheduled-price-changes)
 * [Auto-price products based on their compare-at prices](./auto-price-products-based-on-their-compare-at-prices)
 * [Maintain discount percentage filters in variant metafields](./maintain-discount-percentage-filters-in-variant-metafields)
-* [Raise the price of a product after every sale](./raise-the-price-of-a-product-after-every-sale)
 * [Send an email when a product's price goes below its cost](./send-an-email-when-a-products-price-goes-below-its-cost)
 * [Tag products by their price ranges](./tag-products-by-their-price-ranges)
 
@@ -1376,14 +1325,12 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag orders that contain a matching product](./auto-tag-orders-that-contain-a-matching-product)
 * [Auto-tag orders that contain subscription products](./auto-tag-orders-that-contain-subscription-products)
 * [Auto-tag orders using product tags](./auto-tag-orders-using-product-tags)
-* [Auto-tag orders with product tags](./auto-tag-orders-with-product-tags)
 * [Auto-tag orders with product vendors](./auto-tag-orders-with-product-vendors)
 * [Auto-tag out-of-stock products](./auto-tag-out-of-stock-products)
 * [Auto-tag products based on their product type](./auto-tag-products-based-on-their-product-type)
 * [Auto-tag products based on their publishing status](./auto-tag-products-based-on-their-publishing-status)
 * [Auto-tag products by "back in stock" age](./auto-tag-new-products-by-back-in-stock-age)
 * [Auto-tag products by age](./auto-tag-new-products-by-age)
-* [Auto-tag products by largest available size](./auto-tag-products-by-largest-available-size)
 * [Auto-tag products by their options](./auto-tag-products-by-their-options)
 * [Auto-tag products by their publish date](./auto-tag-products-by-their-publish-date)
 * [Auto-tag products in a manual collection](./auto-tag-products-in-a-manual-collection)
@@ -1396,7 +1343,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag products with their vendors](./auto-tag-products-with-their-vendors)
 * [Auto-tag products without descriptions](./auto-tag-products-without-descriptions)
 * [Auto-update inventory policy based on a "preorder" tag](./auto-update-inventory-policy-based-on-a-preorder-tag)
-* [Automatically publish and unpublish on a monthly cycle](./automatically-publish-and-unpublish-on-a-monthly-cycle)
 * [Calculate total quantities purchased by SKU](./calculate-total-quantities-purchased-by-sku)
 * [Catalog update email](./catalog-update-email)
 * [Copy prefixed tags to metafields](./copy-prefixed-tags-to-metafields)
@@ -1429,14 +1375,10 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Manage tagging for a time-limited membership product](./manage-tagging-for-a-time-limited-membership-product)
 * [Notify a team when a tagged product is ordered](./notify-a-team-when-a-tagged-product-is-ordered)
 * [Publish back-in-stock products](./publish-back-in-stock-products)
-* [Raise the price of a product after every sale](./raise-the-price-of-a-product-after-every-sale)
 * [Remove a product tag when another tag is added](./remove-a-product-tag-when-another-tag-is-added)
 * [Remove matched tags from all products](./remove-specified-tags-from-all-products)
-* [Rotate products through a featured collection](./rotate-products-through-a-featured-collection)
-* [Schedule product status to active](./schedule-product-status-to-active)
 * [Schedule product tags by date](./schedule-product-tags-by-date)
 * [Scheduled inventory adjustment](./scheduled-inventory-adjustment)
-* [Send an SMS via Nexmo when a product is created](./send-an-sms-via-nexmo-when-a-product-is-created)
 * [Send an email alert if a new collection has no orders after x days](./send-an-email-alert-if-a-new-collection-has-no-orders-after-x-days)
 * [Send an email alert when a variant hits 0 total inventory](./send-an-email-alert-when-a-variant-hits-0-total-inventory)
 * [Send an email when a product's price goes below its cost](./send-an-email-when-a-products-price-goes-below-its-cost)
@@ -1467,7 +1409,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-publish products tagged with the current day](./auto-publish-products-tagged-with-the-current-day)
 * [Auto-tag products based on their publishing status](./auto-tag-products-based-on-their-publishing-status)
 * [Auto-tag products by their publish date](./auto-tag-products-by-their-publish-date)
-* [Automatically publish and unpublish on a monthly cycle](./automatically-publish-and-unpublish-on-a-monthly-cycle)
 * [Manage product market access by location stock status](./manage-product-market-access-by-location-stock-status)
 * [Publish a certain collection, daily](./publish-a-certain-collection-daily)
 * [Publish back-in-stock products](./publish-back-in-stock-products)
@@ -1480,10 +1421,6 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Recurring
 
 * [Auto-recurring draft orders](./auto-recurring-draft-orders)
-
-### Redirects
-
-* [Redirect users based on input codes](./redirect-users-based-on-input-codes)
 
 ### Referral
 
@@ -1565,10 +1502,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Maintain inventory for a product bundle](./maintain-inventory-for-a-product-bundle)
 * [Sync inventory for shared SKUs](./sync-inventory-for-shared-skus)
 
-### SMS
-
-* [Send an SMS via Nexmo when a product is created](./send-an-sms-via-nexmo-when-a-product-is-created)
-
 ### Sale
 
 * [Advanced: Scheduled Price Changes](./advanced-scheduled-price-changes)
@@ -1583,7 +1516,6 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Schedule
 
-* [Activate a discount when ISS passes overhead](./activate-a-discount-when-iss-passes-overhead)
 * [Advanced: Scheduled Price Changes](./advanced-scheduled-price-changes)
 * [Advanced: Scheduled section publishing](./advanced-scheduled-section-publishing)
 * [Auto-capture order payment after x days](./auto-capture-order-payment-after-x-days)
@@ -1597,8 +1529,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Remind customers after x days about unpaid orders](./remind-customers-after-x-days-about-unpaid-orders)
 * [Reset inventory levels daily](./reset-inventory-levels-daily)
 * [Schedule a storefront banner](./schedule-a-storefront-banner)
-* [Schedule customer auto-tagging after a purchase](./schedule-customer-auto-tagging-after-a-purchase)
-* [Schedule product status to active](./schedule-product-status-to-active)
 * [Schedule product tags by date](./schedule-product-tags-by-date)
 * [Scheduled inventory adjustment](./scheduled-inventory-adjustment)
 * [Scheduled theme publishing](./scheduled-theme-publishing)
@@ -1673,10 +1603,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag draft orders by originating staff member](./auto-tag-draft-orders-by-originating-staff-member)
 * [Auto-tag new orders by staff member](./auto-tag-new-orders-by-staff-member)
 * [Auto-tag orders by originating staff member](./auto-tag-orders-by-originating-staff-member)
-
-### Status
-
-* [Schedule product status to active](./schedule-product-status-to-active)
 
 ### Storefront
 
@@ -1794,7 +1720,6 @@ This directory is built automatically. Each task's documentation is generated fr
 
 * [Advanced: Scheduled section publishing](./advanced-scheduled-section-publishing)
 * [Auto publish products by tag](./auto-publish-products-by-tag)
-* [Automatically publish and unpublish on a monthly cycle](./automatically-publish-and-unpublish-on-a-monthly-cycle)
 * [Hide out-of-stock products](./hide-out-of-stock-products)
 * [Make products unavailable, after the date/time stored in product metafields](./make-products-unavailable-after-the-date-time-stored-in-product-metafields)
 * [Manage product market access by location stock status](./manage-product-market-access-by-location-stock-status)
@@ -1818,7 +1743,6 @@ This directory is built automatically. Each task's documentation is generated fr
 
 * [Add Option Name as a Variant Metafield for In Stock Variants](./add-option-names-as-variant-metafields-for-in-stock-variants)
 * [Auto-associate variants with a delivery profile, by metafield value](./auto-associate-variants-with-a-delivery-profile-by-metafield-value)
-* [Auto-tag products by largest available size](./auto-tag-products-by-largest-available-size)
 * [Auto-tag products when their variants change](./auto-tag-products-when-their-skus-change)
 * [Delete product or product variant metafields in bulk](./delete-product-or-product-variant-metafields-in-bulk)
 * [Demonstration: Trigger a custom event for specific product or variant changes](./demonstration-trigger-a-custom-event-for-specific-product-or-variant-changes)
