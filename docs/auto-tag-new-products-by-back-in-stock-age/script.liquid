@@ -1,7 +1,11 @@
 {% assign back_in_stock_inventory_level = options.back_in_stock_inventory_level__number_required %}
 {% assign product_tags_and_maximum_age_in_days = options.product_tags_and_maximum_age_in_days__keyval_number_required %}
+{% comment %}{{ options.include_new_products__boolean }}{% endcomment %}
+{% comment %}{{ options.run_hourly__boolean }}{% endcomment %}
+{% comment %}{{ options.run_daily__boolean }}{% endcomment %}
+{% assign force_usage_of_creation_date = options.force_usage_of_creation_date_on_manual_runs__boolean %}
 
-{% assign now_s = "now" | date: "%s"%}
+{% assign now_s = "now" | date: "%s" %}
 
 {% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler" %}
   {% comment %}
@@ -15,6 +19,7 @@
           node {
             __typename
             id
+            createdAt
             title
             tags
             totalInventory
@@ -63,6 +68,47 @@
 
     {% assign bulkOperation = hash %}
     {% assign bulkOperation["objects"] = bulkOperation_objects_jsonl | parse_jsonl %}
+  {% endif %}
+
+  {% if force_usage_of_creation_date and event.parent.topic == "mechanic/user/trigger" %}
+    {% comment %}
+      -- set the first seen data to be the created date of each product
+      -- this is primarily to support shops which have upgraded from an earlier version of this task and want to preserve existing back in stock tags
+    {% endcomment %}
+
+    {% log "This task was run manually with the 'force usage of creation date' option. It will use the creation date of each product to set the 'first seen date' metafield. No tagging operations will be made on this run." %}
+
+    {% assign metafield_inputs = array %}
+
+    {% for product in bulkOperation.objects %}
+      {% assign metafield_input = hash %}
+      {% assign metafield_input["ownerId"] = product.id %}
+      {% assign metafield_input["namespace"] = "mechanic" %}
+      {% assign metafield_input["key"] = "back_in_stock_first_seen_s" %}
+      {% assign metafield_input["type"] = "number_integer" %}
+      {% assign metafield_input["value"] = product.createdAt | date: "%s" | times: 1 | json %}
+      {% assign metafield_inputs = metafield_inputs | push: metafield_input %}
+    {% endfor %}
+
+    {% assign groups_of_metafield_inputs = metafield_inputs | in_groups_of: 25, fill_with: false %}
+
+    {% for group_of_metafield_inputs in groups_of_metafield_inputs %}
+      {% action "shopify" %}
+        mutation {
+          metafieldsSet(
+            metafields: {{ group_of_metafield_inputs | graphql_arguments }}
+          ) {
+            userErrors {
+              code
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endfor %}
+
+    {% break %}
   {% endif %}
 
   {% comment %}
@@ -261,6 +307,7 @@
 
   {% if product.back_in_stock_first_seen_metafield == blank %}
     {% assign metafield_to_set = hash %}
+    {% assign metafield_to_set["ownerId"] = product.id %}
     {% assign metafield_to_set["namespace"] = "mechanic" %}
     {% assign metafield_to_set["key"] = "back_in_stock_first_seen_s" %}
     {% assign metafield_to_set["type"] = "number_integer" %}
@@ -275,6 +322,7 @@
 
     {% if product.back_in_stock_metafield == blank %}
       {% assign metafield_to_set = hash %}
+      {% assign metafield_to_set["ownerId"] = product.id %}
       {% assign metafield_to_set["namespace"] = "mechanic" %}
       {% assign metafield_to_set["key"] = "back_in_stock_s" %}
       {% assign metafield_to_set["type"] = "number_integer" %}
@@ -344,6 +392,7 @@
 {% elsif event.topic contains "shopify/products/create" %}
   {% comment %}
     -- for new products, set the first seen metafield value using the product created date
+    -- tag conditions will be checked on the next inventory update or scheduled task run (if enabled)
   {% endcomment %}
 
   {% action "shopify" %}
