@@ -24,7 +24,6 @@ Use this task to send out account invitations to all the customers you already h
 
 ```liquid
 mechanic/user/trigger
-mechanic/shopify/bulk_operation
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
