@@ -8,7 +8,7 @@
   {% endif %}
 
   {% assign cursor = nil %}
-  {% assign customers = array %}
+  {% assign customer_ids = array %}
 
   {% comment %}
     -- can query 1000 segment members at a time
@@ -57,14 +57,12 @@
       {% assign result = result_json | parse_json %}
     {% endif %}
 
-    {% assign customers
-      = result.data.customerSegmentMembers.edges
-      | map: "node"
-      | concat: customers
-    %}
+    {% for edge in result.data.customerSegmentMembers.edges %}
+      {% assign customer_ids[customer_ids.size] = edge.node.id | remove: "gid://shopify/CustomerSegmentMember/" %}
+    {% endfor %}
 
-    {% if result.data.customers.pageInfo.hasNextPage %}
-      {% assign cursor = result.data.customers.pageInfo.endCursor %}
+    {% if result.data.customerSegmentMembers.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.customerSegmentMembers.pageInfo.endCursor %}
     {% else %}
       {% break %}
     {% endif %}
@@ -74,11 +72,11 @@
     -- send invite to all customers with disabled accounts using REST (there is no equivalent GraphQL mutation)
   {% endcomment %}
 
-  {% for customer in customers %}
+  {% for customer_id in customer_ids %}
     {% action "shopify" %}
       [
         "post",
-        "/admin/customers/{{ customer.id | remove: "gid://shopify/CustomerSegmentMember/" }}/send_invite.json",
+        "/admin/customers/{{ customer_id }}/send_invite.json",
         {
           "customer_invite": {
             "subject": {{ options.custom_subject | json }},
