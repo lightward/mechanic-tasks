@@ -2,12 +2,27 @@
 {% assign products_query = options.only_publish_products_matching_this_query %}
 {% assign test_mode = options.test_mode__boolean %}
 
+{% comment %}
+  -- get all of the sales channel names (i.e. publications aka app catalogs) in the shop
+{% endcomment %}
+
 {% capture query %}
   query {
-    publications(first: 250) {
+    publications(
+      first: 250
+      catalogType:APP
+    ) {
       nodes {
         id
-        name
+        catalog {
+          ... on AppCatalog {
+            apps(first: 1) {
+              nodes {
+                title
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -15,32 +30,76 @@
 
 {% assign result = query | shopify %}
 
-{% assign publications = array %}
-
-{% for publication in result.data.publications.nodes %}
-  {% if sales_channel_names contains publication.name %}
-    {% assign publications[publications.size] = publication %}
-  {% endif %}
-{% endfor%}
-
 {% if event.preview %}
-  {% assign publications[0] = hash %}
-  {% assign publications[0]["id"] = "gid://shopify/Publication/1234567890" %}
-  {% assign publications[0]["name"] = sales_channel_names.first %}
+  {% capture result_json %}
+    {
+      "data": {
+        "publications": {
+          "nodes": [
+            {
+              "id": "gid://shopify/Publication/1234567890",
+              "catalog": {
+                "apps": {
+                  "nodes": [
+                    {
+                      "title": {{ sales_channel_names.first | json }}
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
 {% endif %}
 
-{% if publications.size != sales_channel_names.size %}
-  {% unless event.preview %}
-    {% log
-      publications_named: sales_channel_names,
-      publications_available: result.data.publications.nodes,
-      publications_matched: publications
-    %}
-    {% error "Unable to find all configured publications. Double-check your task configuration." %}
-  {% endunless %}
+{% comment %}
+  -- save the publication IDs for all of the configured sales channel names
+{% endcomment %}
+
+{% assign publication_ids = array %}
+{% assign available_sales_channel_names = array %}
+
+{% for publication in result.data.publications.nodes %}
+  {% assign publication_name = publication.catalog.apps.nodes.first.title %}
+
+  {% assign available_sales_channel_names = available_sales_channel_names | push: publication_name %}
+
+  {% if sales_channel_names contains publication_name %}
+    {% assign publication_ids = publication_ids | push: publication.id %}
+  {% endif %}
+{% endfor %}
+
+{% if publication_ids == blank  %}
+  {% error
+    message: "None of the sales channel configured in this task exist in the shop. Check the list of available channels and verify each configured channel exists.",
+    configured_sales_channel_names: sales_channel_names,
+    available_sales_channel_names: available_sales_channel_names
+  %}
+
+  {% break %}
+
+{% elsif publication_ids.size != sales_channel_names.size %}
+  {% comment %}
+    -- using action error here so the task will continue with any other configured and matched sales channels
+  {% endcomment %}
+
+  {% action "echo"
+    __error: "One or more configured sales channel names do not match any of the publication names available in this shop.",
+    configured_sales_channel_names: sales_channel_names,
+    available_sales_channel_names: available_sales_channel_names
+  %}
 {% endif %}
 
 {% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% comment %}
+    -- get all active products in the shop; optionally filter the products with configured query
+  {% endcomment %}
+
   {% unless products_query contains "status:active" %}
     {% assign products_query = products_query | append: " status:active" | strip %}
   {% endunless %}
@@ -54,9 +113,9 @@
           node {
             __typename
             id
-            {% for publication in publications %}
+            {% for publication_id in publication_ids %}
               publishedOnPublication{{ forloop.index }}: publishedOnPublication(
-                publicationId: {{ publication.id | json }}
+                publicationId: {{ publication_id | json }}
               )
             {% endfor %}
           }
@@ -95,15 +154,16 @@
   {% assign products = bulkOperation.objects | where: "__typename", "Product" %}
   {% assign product_ids_and_publication_ids = array %}
 
+  {% comment %}
+    -- process all products returned by the bulk op query
+  {% endcomment %}
+
   {% for product in products %}
-    {% for publication in publications %}
+    {% for publication_id in publication_ids %}
       {% assign published_key = "publishedOnPublication" | append: forloop.index %}
 
       {% unless product[published_key] %}
-        {% assign pair = array %}
-        {% assign pair[0] = product.id %}
-        {% assign pair[1] = publication.id %}
-        {% assign product_ids_and_publication_ids[product_ids_and_publication_ids.size] = pair %}
+        {% assign product_ids_and_publication_ids[product_ids_and_publication_ids.size] = array | push: product.id, publication_id %}
       {% endunless %}
     {% endfor %}
   {% endfor %}
@@ -114,24 +174,24 @@
       publishing_actions_count: product_ids_and_publication_ids.size,
       product_ids_and_publication_ids: product_ids_and_publication_ids
     %}
+    {% break %}
+  {% endif %}
 
-  {% else %}
-    {% for keyval in product_ids_and_publication_ids %}
-      {% action "shopify" %}
-        mutation {
-          publishablePublish(
-            id: {{ keyval[0] | json }}
-            input: {
-              publicationId: {{ keyval[1] | json }}
-            }
-          ) {
-            userErrors {
-              field
-              message
-            }
+  {% for keyval in product_ids_and_publication_ids %}
+    {% action "shopify" %}
+      mutation {
+        publishablePublish(
+          id: {{ keyval[0] | json }}
+          input: {
+            publicationId: {{ keyval[1] | json }}
+          }
+        ) {
+          userErrors {
+            field
+            message
           }
         }
-      {% endaction %}
-    {% endfor %}
-  {% endif %}
+      }
+    {% endaction %}
+  {% endfor %}
 {% endif %}

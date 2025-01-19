@@ -21,7 +21,6 @@
       inventoryLevel(
         id: {{ inventory_level.admin_graphql_api_id | json }}
       ) {
-        id
         item {
           variant {
             product {
@@ -32,7 +31,6 @@
                 namespace: "mechanic"
                 key: "out_of_stock_at"
               ) {
-                id
                 value
               }
             }
@@ -49,14 +47,12 @@
       {
         "data": {
           "inventoryLevel": {
-            "id": "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890",
             "item": {
               "variant": {
                 "product": {
                   "id": "gid://shopify/Product/1234567890",
                   "title": "Short sleeve t-shirt",
-                  "totalInventory": 0,
-                  "metafield": null
+                  "totalInventory": 0
                 }
               }
             }
@@ -70,10 +66,12 @@
 
   {% assign product = result.data.inventoryLevel.item.variant.product %}
 
-  {% if product.totalInventory <= 0 and product.metafield == nil %}
+  {% if product.totalInventory <= 0 and product.metafield == blank %}
     {% if test_mode %}
       {% log %}
-        {% capture message %}Product {{ product.title | json }} ({{ product.id }}) is out of stock. Its out-of-stock time should be recorded.{% endcapture %}
+        {%- capture message -%}
+          Product {{ product.title | json }} ({{ product.id }}) is out of stock. Its out-of-stock time should be recorded.
+        {%- endcapture -%}
         {{ message | json }}
       {% endlog %}
 
@@ -114,10 +112,12 @@
       {% endaction %}
     {% endif %}
 
-  {% elsif product.totalInventory > 0 and product.metafield != nil %}
+  {% elsif product.totalInventory > 0 and product.metafield != blank %}
     {% if test_mode %}
       {% log %}
-        {% capture message %}Product {{ product.title | json }} ({{ product.id }}) is back in stock. Its out-of-stock time should be cleared.{% endcapture %}
+        {%- capture message -%}
+          Product {{ product.title | json }} ({{ product.id }}) is back in stock. Its out-of-stock time should be cleared.
+        {%- endcapture -%}
         {{ message | json }}
       {% endlog %}
 
@@ -152,12 +152,27 @@
   {% assign now_s = "now" | date: "%s" | times: 1 %}
   {% assign minimum_out_of_stock_at_distance_s = number_of_days_to_wait_before_unpublishing | times: 24 | times: 60 | times: 60 %}
 
+  {% comment %}
+    -- get all of the sales channel names (i.e. publications aka app catalogs) in the shop
+  {% endcomment %}
+
   {% capture query %}
     query {
-      publications(first: 250) {
+      publications(
+        first: 250
+        catalogType:APP
+      ) {
         nodes {
           id
-          name
+          catalog {
+            ... on AppCatalog {
+              apps(first: 1) {
+                nodes {
+                  title
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -165,40 +180,90 @@
 
   {% assign result = query | shopify %}
 
-  {% assign publications = array %}
-  {% assign metafields_to_set = array %}
-
-  {% for publication in result.data.publications.nodes %}
-    {% if sales_channel_names contains publication.name %}
-      {% assign publications[publications.size] = publication %}
-    {% endif %}
-  {% endfor%}
-
   {% if event.preview %}
-    {% assign publications[0] = hash %}
-    {% assign publications[0]["id"] = "gid://shopify/Publication/1234567890" %}
+    {% capture result_json %}
+      {
+        "data": {
+          "publications": {
+            "nodes": [
+              {
+                "id": "gid://shopify/Publication/1234567890",
+                "catalog": {
+                  "apps": {
+                    "nodes": [
+                      {
+                        "title": {{ sales_channel_names.first | json }}
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    {% endcapture %}
 
-  {% elsif publications.size != sales_channel_names.size %}
-    {% log
-      publications_named: sales_channel_names,
-      publications_available: result.data.publications.nodes,
-      publications_matched: publications
-    %}
-    {% error "Unable to find all named publications. Double-check your task configuration." %}
+    {% assign result = result_json | parse_json %}
   {% endif %}
 
-  {% assign search_query = "inventory_total:<=0" %}
+  {% comment %}
+    -- save the publication IDs for all of the configured sales channel names
+  {% endcomment %}
+
+  {% assign publication_ids = array %}
+  {% assign available_sales_channel_names = array %}
+
+  {% for publication in result.data.publications.nodes %}
+    {% assign publication_name = publication.catalog.apps.nodes.first.title %}
+
+    {% assign available_sales_channel_names = available_sales_channel_names | push: publication_name %}
+
+    {% if sales_channel_names contains publication_name %}
+      {% assign publication_ids = publication_ids | push: publication.id %}
+    {% endif %}
+  {% endfor %}
+
+  {% if publication_ids == blank  %}
+    {% error
+      message: "None of the sales channels configured in this task exist in the shop. Check the list of available channels and verify each configured channel exists.",
+      configured_sales_channel_names: sales_channel_names,
+      available_sales_channel_names: available_sales_channel_names
+    %}
+
+    {% break %}
+
+  {% elsif publication_ids.size != sales_channel_names.size %}
+    {% comment %}
+      -- using action error here so the task will continue with any other configured and matched sales channels
+    {% endcomment %}
+
+    {% action "echo"
+      __error: "One or more configured sales channel names do not match any of the publication names available in this shop.",
+      configured_sales_channel_names: sales_channel_names,
+      available_sales_channel_names: available_sales_channel_names
+    %}
+  {% endif %}
+
+  {% comment %}
+    -- query for all active, out of stock products (up to 25K); optionally filter the products with configured query
+  {% endcomment %}
+
+  {% assign search_query = "status:active AND inventory_total:<=0" %}
 
   {% if only_include_products_matching_this_search_query != blank %}
-    {% capture search_query -%}
+    {%- capture search_query -%}
       {{ search_query }} AND ({{ only_include_products_matching_this_search_query }})
-    {%- endcapture %}
+    {%- endcapture -%}
+
     {% log search_query: search_query %}
   {% endif %}
 
   {% assign cursor = nil %}
+  {% assign products = array %}
+  {% assign metafields_to_set = array %}
 
-  {% for n in (0..100) %}
+  {% for n in (1..100) %}
     {% capture query %}
       query {
         products(
@@ -214,8 +279,8 @@
             id
             title
             totalInventory
-            {% for publication in publications %}
-              publishedOnPublication{{ forloop.index }}: publishedOnPublication(publicationId: {{ publication.id | json }})
+            {% for publication_id in publication_ids %}
+              publishedOnPublication{{ forloop.index }}: publishedOnPublication(publicationId: {{ publication_id | json }})
             {% endfor %}
             metafield(
               namespace: "mechanic"
@@ -241,9 +306,7 @@
                   "id": "gid://shopify/Product/1234567890",
                   "title": "Short sleeve t-shirt",
                   "totalInventory": 0,
-                  {% for publication in publications %}
-                    {{ "publishedOnPublication" | append: forloop.index | json }}: true,
-                  {% endfor %}
+                  "publishedOnPublication1": true,
                   "metafield": {
                     "value": {{ now_s | minus: minimum_out_of_stock_at_distance_s | minus: 1 | append: "" | json }}
                   }
@@ -257,81 +320,7 @@
       {% assign result = result_json | parse_json %}
     {% endif %}
 
-    {% for product in result.data.products.nodes %}
-      {% if product.metafield == nil %}
-        {% log %}
-          {% capture message %}Product {{ product.id }} is out of stock, but its out-of-stock time was not recorded. This product will not be unpublished now, but its out-of-stock time will be set to the current time.{% endcapture %}
-          {{ message | json }}
-        {% endlog %}
-
-        {% assign metafield_to_set = hash %}
-        {% assign metafield_to_set["ownerId"] = product.id %}
-        {% assign metafield_to_set["namespace"] = "mechanic" %}
-        {% assign metafield_to_set["key"] = "out_of_stock_at" %}
-        {% assign metafield_to_set["type"] = "date_time" %}
-        {% assign metafield_to_set["value"] = "now" | date: time_format %}
-        {% assign metafields_to_set = metafields_to_set | push: metafield_to_set %}
-
-        {% continue %}
-      {% endif %}
-
-      {% assign out_of_stock_at_s = product.metafield.value | date: "%s" | times: 1 %}
-      {% assign out_of_stock_at_distance_s = now_s | minus: out_of_stock_at_s %}
-
-      {% assign unpublishings = array %}
-
-      {% for publication in publications %}
-        {% assign key = "publishedOnPublication" | append: forloop.index %}
-        {% if product[key] %}
-          {% assign unpublishing = array %}
-          {% assign unpublishing[0] = product.id %}
-          {% assign unpublishing[1] = publication.id %}
-          {% assign unpublishings[unpublishings.size] = unpublishing %}
-        {% endif %}
-      {% endfor %}
-
-      {% if unpublishings == empty %}
-        {% log %}
-          {% capture message %}Product {{ product.title | json }} ({{ product.id }}) has been out of stock for {{ out_of_stock_at_distance_s | divided_by: 60 | divided_by: 60 | divided_by: 24 | round: 2 }} day(s), but is not published - nothing to do.{% endcapture %}
-          {{ message | json }}
-        {% endlog %}
-        {% continue %}
-      {% endif %}
-
-      {% if out_of_stock_at_distance_s < minimum_out_of_stock_at_distance_s %}
-        {% log %}
-          {% capture message %}Product {{ product.title | json }} ({{ product.id }}) is out of stock, and is published, but has only been out of stock for {{ out_of_stock_at_distance_s | divided_by: 60 | divided_by: 60 | divided_by: 24 | round: 2 }} day(s).{% endcapture %}
-          {{ message | json }}
-        {% endlog %}
-        {% continue %}
-      {% endif %}
-
-      {% if test_mode %}
-        {% log %}
-          {% capture message %}Product {{ product.title | json }} ({{ product.id }}) is out of stock, and has been out of stock for {{ out_of_stock_at_distance_s | divided_by: 60 | divided_by: 60 | divided_by: 24 | round: 2 }} day(s). It should be unpublished.{% endcapture %}
-          {{ message | json }}
-        {% endlog %}
-
-      {% else %}
-        {% action "shopify" %}
-          mutation {
-            {% for unpublishing in unpublishings %}
-              publishableUnpublish{{ forloop.index }}: publishableUnpublish(
-                id: {{ unpublishing[0] | json }}
-                input: {
-                  publicationId: {{ unpublishing[1] | json }}
-                }
-              ) {
-                userErrors {
-                  field
-                  message
-                }
-              }
-            {% endfor %}
-          }
-        {% endaction %}
-      {% endif %}
-    {% endfor %}
+    {% assign products = products | concat: result.data.products.nodes %}
 
     {% if result.data.products.pageInfo.hasNextPage %}
       {% assign cursor = result.data.products.pageInfo.endCursor %}
@@ -339,45 +328,124 @@
       {% break %}
     {% endif %}
   {% endfor %}
-{% endif %}
 
-{% if metafields_to_set != blank %}
-  {% if test_mode %}
-    {% log %}
-      "Found {{ metafields_to_set.size }} out of stock products which do not yet have their out of stock time recorded. This task has test mode enabled, so these metafields will not be set on this task run."
-    {% endlog %}
+  {% for product in products %}
+    {% if product.metafield == blank %}
+      {% log %}
+        "Product {{ product.id }} is out of stock, but its out-of-stock time was not recorded. This product will not be unpublished now, but its out-of-stock time will be set to the current time."
+      {% endlog %}
 
-    {% break %}
-  {% endif %}
+      {% assign metafield_to_set = hash %}
+      {% assign metafield_to_set["ownerId"] = product.id %}
+      {% assign metafield_to_set["namespace"] = "mechanic" %}
+      {% assign metafield_to_set["key"] = "out_of_stock_at" %}
+      {% assign metafield_to_set["type"] = "date_time" %}
+      {% assign metafield_to_set["value"] = "now" | date: time_format %}
+      {% assign metafields_to_set = metafields_to_set | push: metafield_to_set %}
 
-  {% assign groups_of_metafields_to_set = metafields_to_set | in_groups_of: 25, fill_with: false %}
+      {% continue %}
+    {% endif %}
 
-  {% for group_of_metafields_to_set in groups_of_metafields_to_set %}
-    {% action "shopify" %}
-      mutation {
-        metafieldsSet(
-          metafields: {{ group_of_metafields_to_set | graphql_arguments }}
-        ) {
-          metafields {
-            id
-            namespace
-            key
-            type
-            value
-            owner {
-              ... on Product {
-                id
-                title
+    {% assign out_of_stock_at_s = product.metafield.value | date: "%s" | times: 1 %}
+    {% assign out_of_stock_at_distance_s = now_s | minus: out_of_stock_at_s %}
+
+    {% assign unpublishings = array %}
+
+    {% for publication_id in publication_ids %}
+      {% assign key = "publishedOnPublication" | append: forloop.index %}
+
+      {% if product[key] %}
+        {% assign unpublishings[unpublishings.size] = array | push: product.id, publication_id %}
+      {% endif %}
+    {% endfor %}
+
+    {% if unpublishings == blank %}
+      {% log %}
+        {%- capture message -%}
+          Product {{ product.title | json }} ({{ product.id }}) has been out of stock for {{ out_of_stock_at_distance_s | divided_by: 86400 | round: 2 }} day(s), but is not published - nothing to do.
+        {%- endcapture -%}
+        {{ message | json }}
+      {% endlog %}
+      {% continue %}
+    {% endif %}
+
+    {% if out_of_stock_at_distance_s < minimum_out_of_stock_at_distance_s %}
+      {% log %}
+        {%- capture message -%}
+          Product {{ product.title | json }} ({{ product.id }}) is out of stock, and is published, but has only been out of stock for {{ out_of_stock_at_distance_s | divided_by: 86400 | round: 2 }} day(s).
+        {%- endcapture -%}
+        {{ message | json }}
+      {% endlog %}
+      {% continue %}
+    {% endif %}
+
+    {% if test_mode %}
+      {% log %}
+        {%- capture message -%}
+          Product {{ product.title | json }} ({{ product.id }}) is out of stock, and has been out of stock for {{ out_of_stock_at_distance_s | divided_by: 86400 | round: 2 }} day(s). It should be unpublished.
+        {%- endcapture -%}
+        {{ message | json }}
+      {% endlog %}
+
+    {% else %}
+      {% action "shopify" %}
+        mutation {
+          {% for unpublishing in unpublishings %}
+            publishableUnpublish{{ forloop.index }}: publishableUnpublish(
+              id: {{ unpublishing[0] | json }}
+              input: {
+                publicationId: {{ unpublishing[1] | json }}
+              }
+            ) {
+              userErrors {
+                field
+                message
               }
             }
-          }
-          userErrors {
-            code
-            field
-            message
+          {% endfor %}
+        }
+      {% endaction %}
+    {% endif %}
+  {% endfor %}
+
+  {% if metafields_to_set != blank %}
+    {% if test_mode %}
+      {% log %}
+        "Found {{ metafields_to_set.size }} out of stock products which do not yet have their out of stock time recorded. This task has test mode enabled, so these metafields will not be set on this task run."
+      {% endlog %}
+
+      {% break %}
+    {% endif %}
+
+    {% assign groups_of_metafields_to_set = metafields_to_set | in_groups_of: 25, fill_with: false %}
+
+    {% for group_of_metafields_to_set in groups_of_metafields_to_set %}
+      {% action "shopify" %}
+        mutation {
+          metafieldsSet(
+            metafields: {{ group_of_metafields_to_set | graphql_arguments }}
+          ) {
+            metafields {
+              id
+              namespace
+              key
+              type
+              value
+              owner {
+                ... on Product {
+                  id
+                  title
+                }
+              }
+            }
+            userErrors {
+              code
+              field
+              message
+            }
           }
         }
-      }
-    {% endaction %}
-  {% endfor %}
+      {% endaction %}
+    {% endfor %}
+  {% endif %}
 {% endif %}

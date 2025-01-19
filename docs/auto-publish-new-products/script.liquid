@@ -1,122 +1,164 @@
-{% if event.preview %}
-  {% assign product = hash %}
-  {% assign product["admin_graphql_api_id"] = "gid://shopify/Product/1234567890" %}
-{% endif %}
+{% assign sales_channel_names = options.sales_channel_names__array_required %}
 
-{% assign publication_ids = array %}
+{% comment %}
+  -- get all of the sales channel names (i.e. publications aka app catalogs) in the shop
+{% endcomment %}
 
-{% capture publication_query %}
+{% capture query %}
   query {
-    publications(first: 250) {
-      edges {
-        node {
-          id
-          name
+    publications(
+      first: 250
+      catalogType:APP
+    ) {
+      nodes {
+        id
+        catalog {
+          ... on AppCatalog {
+            apps(first: 1) {
+              nodes {
+                title
+              }
+            }
+          }
         }
       }
     }
   }
 {% endcapture %}
 
-{% assign publication_result = publication_query | shopify %}
+{% assign result = query | shopify %}
 
 {% if event.preview %}
-  {% capture publication_result_json %}
+  {% capture result_json %}
     {
       "data": {
         "publications": {
-          "edges": [
-            {% for name in options.sales_channel_names__array_required %}
-              {
-                "node": {
-                  "id": "gid://shopify/Publication/1234567890",
-                  "name": {{ name | json }}
+          "nodes": [
+            {
+              "id": "gid://shopify/Publication/1234567890",
+              "catalog": {
+                "apps": {
+                  "nodes": [
+                    {
+                      "title": {{ sales_channel_names.first | json }}
+                    }
+                  ]
                 }
               }
-              {% unless forloop.last %}
-                ,
-              {% endunless %}
-            {% endfor %}
+            }
           ]
         }
       }
     }
   {% endcapture %}
 
-  {% assign publication_result = publication_result_json | parse_json %}
+  {% assign result = result_json | parse_json %}
 {% endif %}
 
-{% for publication_edge in publication_result.data.publications.edges %}
-  {% if options.sales_channel_names__array_required contains publication_edge.node.name %}
-    {% assign publication_ids[publication_ids.size] = publication_edge.node.id %}
+{% comment %}
+  -- add the configured publication names into a hash for use in lookups
+{% endcomment %}
+
+{% assign publication_ids = array %}
+{% assign publication_names_by_id = hash %}
+{% assign available_sales_channel_names = array %}
+
+{% for publication in result.data.publications.nodes %}
+  {% assign publication_name = publication.catalog.apps.nodes.first.title %}
+
+  {% assign available_sales_channel_names = available_sales_channel_names | push: publication_name %}
+
+  {% if sales_channel_names contains publication_name %}
+    {% assign publication_ids = publication_ids | push: publication.id %}
+    {% assign publication_names_by_id[publication.id] = publication_name %}
   {% endif %}
 {% endfor %}
 
-{% if publication_ids.size != options.sales_channel_names__array_required.size %}
-  {% error %}
-    {{ "Only found " | append: publication_ids.size | append: " existing sales channels - check your task configuration, and fix any incorrect names. :)" | json }}
-  {% enderror %}
-{% else %}
-  {% capture product_query %}
-    query {
-      product(id: {{ product.admin_graphql_api_id | json }}) {
-        {% for publication_id in publication_ids %}
-          publishedOnPublication{{ forloop.index }}: publishedOnPublication(publicationId: {{ publication_id | json }})
-        {% endfor %}
+{% comment %}
+  -- make sure the configured sales channel names match what is in the shop
+{% endcomment %}
+
+{% if publication_ids == blank  %}
+  {% error
+    message: "None of the sales channel configured in this task exist in the shop. Check the list of available channels and verify each configured channel exists.",
+    configured_sales_channel_names: sales_channel_names,
+    available_sales_channel_names: available_sales_channel_names
+  %}
+
+  {% break %}
+
+{% elsif publication_ids.size != sales_channel_names.size %}
+  {% comment %}
+    -- using action error here so the task will continue with any other configured and matched sales channels
+  {% endcomment %}
+
+  {% action "echo"
+    __error: "One or more configured sales channel names do not match any of the publication names available in this shop.",
+    configured_sales_channel_names: sales_channel_names,
+    available_sales_channel_names: available_sales_channel_names
+  %}
+{% endif %}
+
+{% comment %}
+  -- check which publications the product is published on
+{% endcomment %}
+
+{% capture product_query %}
+  query {
+    product(id: {{ product.admin_graphql_api_id | json }}) {
+      {% for publication_id in publication_ids %}
+        publishedOnPublication{{ forloop.index }}: publishedOnPublication(publicationId: {{ publication_id | json }})
+      {% endfor %}
+    }
+  }
+{% endcapture %}
+
+{% assign product_result = product_query | shopify %}
+
+{% if event.preview %}
+  {% capture product_result_json %}
+    {
+      "data": {
+        "product": {
+          "publishedOnPublication1": false
+        }
       }
     }
   {% endcapture %}
 
-  {% assign product_result = product_query | shopify %}
+  {% assign product_result = product_result_json | parse_json %}
+{% endif %}
 
-  {% if event.preview %}
-    {% capture product_result_json %}
-      {
-        "data": {
-          "product": {
-            {% for publication_id in publication_ids %}
-              "publishedOnPublication{{ forloop.index }}": false
-              {% unless forloop.last %}
-                ,
-              {% endunless %}
-            {% endfor %}
-          }
+{% assign publication_ids_for_publishing = array %}
+
+{% for publication_id in publication_ids %}
+  {% assign key = "publishedOnPublication" | append: forloop.index %}
+  {% assign published = product_result.data.product[key] %}
+
+  {% unless published %}
+    {% assign publication_ids_for_publishing = publication_ids_for_publishing | push: publication_id %}
+  {% endunless %}
+{% endfor %}
+
+{% if publication_ids_for_publishing == blank %}
+  {% log "Product was already published on all configured sales channel(s). :)" %}
+  {% break %}
+{% endif %}
+
+{% action "shopify" %}
+  mutation {
+    {% for publication_id in publication_ids_for_publishing %}
+      publishablePublish{{ forloop.index }}: publishablePublish(
+        id: {{ product.admin_graphql_api_id | json }}
+        input: {
+          publicationId: {{ publication_id | json }}
+        }
+      ) {
+        userErrors {
+          field
+          message
         }
       }
-    {% endcapture %}
-
-    {% assign product_result = product_result_json | parse_json %}
-  {% endif %}
-
-  {% assign publication_ids_for_publishing = array %}
-
-  {% for publication_id in publication_ids %}
-    {% assign key = "publishedOnPublication" | append: forloop.index %}
-    {% assign published = product_result.data.product[key] %}
-    {% unless published %}
-      {% assign publication_ids_for_publishing[publication_ids_for_publishing.size] = publication_id %}
-    {% endunless %}
-  {% endfor %}
-
-  {% if publication_ids_for_publishing == empty %}
-    {% log "Product was already published on all configured sales channel(s). :)" %}
-  {% else %}
-    {% action "shopify" %}
-      mutation {
-        {% for publication_id in publication_ids_for_publishing %}
-          publishablePublish{{ forloop.index }}: publishablePublish(
-            id: {{ product.admin_graphql_api_id | json }}
-            input: {
-              publicationId: {{ publication_id | json }}
-            }
-          ) {
-            userErrors {
-              field
-              message
-            }
-          }
-        {% endfor %}
-      }
-    {% endaction %}
-  {% endif %}
-{% endif %}
+    {% endfor %}
+  }
+{% endaction %}

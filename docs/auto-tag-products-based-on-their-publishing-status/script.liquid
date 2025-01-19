@@ -1,14 +1,32 @@
-{% if options.tag_to_add_when_published == blank and options.tag_to_add_when_unpublished == blank %}
+{% assign tag_to_add_when_published = options.tag_to_add_when_published %}
+{% assign tag_to_add_when_unpublished = options.tag_to_add_when_unpublished %}
+{% assign sales_channel_name = options.sales_channel_name__required %}
+
+{% if tag_to_add_when_published == blank and tag_to_add_when_unpublished == blank %}
   {% error "Fill in at least one tag option to continue. :)" %}
 {% endif %}
 
+{% comment %}
+  -- get the ID for the configured sales channel
+  -- Note: title filter does work for app catalog titles, so have to get all publications
+{% endcomment %}
+
 {% capture query %}
   query {
-    publications(first: 250) {
-      edges {
-        node {
-          id
-          name
+    publications(
+      first: 250
+      catalogType:APP
+    ) {
+      nodes {
+        id
+        catalog {
+          ... on AppCatalog {
+            apps(first: 1) {
+              nodes {
+                title
+              }
+            }
+          }
         }
       }
     }
@@ -17,31 +35,84 @@
 
 {% assign result = query | shopify %}
 
-{% assign publications = result.data.publications.edges | map: "node" | where: "name", options.sales_channel_name__required | first %}
-{% assign publication = publications | where: "name", options.sales_channel_name__required | first %}
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "publications": {
+          "nodes": [
+            {
+              "id": "gid://shopify/Publication/1234567890",
+              "catalog": {
+                "apps": {
+                  "nodes": [
+                    {
+                      "title": {{ sales_channel_name | json }}
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% comment %}
+  -- make sure the configured sales channel name matches a publication in this shop
+{% endcomment %}
+
+{% assign publication_id = nil %}
+{% assign available_sales_channel_names = array %}
+
+{% for publication in result.data.publications.nodes %}
+  {% assign publication_name = publication.catalog.apps.nodes.first.title %}
+
+  {% assign available_sales_channel_names = available_sales_channel_names | push: publication_name %}
+
+  {% if sales_channel_name == publication_name %}
+    {% assign publication_id = publication.id %}
+  {% endif %}
+{% endfor %}
+
+{% if publication_id == blank %}
+  {% error
+    message: "The sales channel configured in this task must exist in the shop. Check the list of available channels.",
+    configured_sales_channel_name: sales_channel_name,
+    available_sales_channel_names: available_sales_channel_names
+  %}
+  {% break %}
+{% endif %}
+
+{% comment %}
+  -- get all active products in the shop (up to 25K)
+{% endcomment %}
 
 {% assign cursor = nil %}
-{% assign mutations = array %}
+{% assign products = array %}
 
-{% for n in (0..100) %}
+{% for n in (1..100) %}
   {% capture query %}
     query {
       products(
         first: 250
         after: {{ cursor | json }}
+        query: "status:active"
       ) {
         pageInfo {
           hasNextPage
+          endCursor
         }
-        edges {
-          cursor
-          node {
-            id
-            tags
-            published: publishedOnPublication(
-              publicationId: {{ publication.id | json }}
-            )
-          }
+        nodes {
+          id
+          tags
+          published: publishedOnPublication(
+            publicationId: {{ publication_id | json }}
+          )
         }
       }
     }
@@ -54,13 +125,10 @@
       {
         "data": {
           "products": {
-            "edges": [
+            "nodes": [
               {
-                "node": {
-                  "id": "gid://shopify/Product/1234567890",
-                  "tags": [],
-                  "published": {% if options.tag_to_add_when_published != blank %}true{% else %}false{% endif %}
-                }
+                "id": "gid://shopify/Product/1234567890",
+                "published": {% if tag_to_add_when_published != blank %}true{% else %}false{% endif %}
               }
             ]
           }
@@ -71,67 +139,74 @@
     {% assign result = result_json | parse_json %}
   {% endif %}
 
-  {% for product_edge in result.data.products.edges %}
-    {% assign product = product_edge.node %}
-    {% assign tag_to_add = nil %}
-    {% assign tag_to_remove = nil %}
-
-    {% if options.tag_to_add_when_published != blank %}
-      {% if product.published %}
-        {% unless product.tags contains options.tag_to_add_when_published %}
-          {% assign tag_to_add = options.tag_to_add_when_published %}
-        {% endunless %}
-      {% elsif product.tags contains options.tag_to_add_when_published %}
-        {% assign tag_to_remove = options.tag_to_add_when_published %}
-      {% endif %}
-    {% endif %}
-
-    {% if options.tag_to_add_when_unpublished != blank %}
-      {% if product.published == false %}
-        {% unless product.tags contains options.tag_to_add_when_unpublished %}
-          {% assign tag_to_add = options.tag_to_add_when_unpublished %}
-        {% endunless %}
-      {% elsif product.tags contains options.tag_to_add_when_unpublished %}
-        {% assign tag_to_remove = options.tag_to_add_when_unpublished %}
-      {% endif %}
-    {% endif %}
-
-    {% if tag_to_add or tag_to_remove %}
-      {% log product: product %}
-
-      {% action "shopify" %}
-        mutation {
-          {% if tag_to_add %}
-            tagsAdd(
-              id: {{ product.id | json }}
-              tags: {{ tag_to_add | json }}
-            ) {
-              userErrors {
-                field
-                message
-              }
-            }
-          {% endif %}
-
-          {% if tag_to_remove %}
-            tagsRemove(
-              id: {{ product.id | json }}
-              tags: {{ tag_to_remove | json }}
-            ) {
-              userErrors {
-                field
-                message
-              }
-            }
-          {% endif %}
-        }
-      {% endaction %}
-    {% endif %}
-  {% endfor %}
+  {% assign products = products | concat: result.data.products.nodes %}
 
   {% if result.data.products.pageInfo.hasNextPage %}
-    {% assign cursor = result.data.products.edges.last.cursor %}
+    {% assign cursor = result.data.products.pageInfo.endCursor %}
   {% else %}
     {% break %}
+  {% endif %}
+{% endfor %}
+
+{% comment %}
+  -- check and tag/untag products as needed
+{% endcomment %}
+
+{% for product in products %}
+  {% assign tag_to_add = nil %}
+  {% assign tag_to_remove = nil %}
+
+  {% if tag_to_add_when_published != blank %}
+    {% if product.published %}
+      {% unless product.tags contains tag_to_add_when_published %}
+        {% assign tag_to_add = tag_to_add_when_published %}
+      {% endunless %}
+
+    {% elsif product.tags contains tag_to_add_when_published %}
+      {% assign tag_to_remove = tag_to_add_when_published %}
+    {% endif %}
+  {% endif %}
+
+  {% if tag_to_add_when_unpublished != blank %}
+    {% if product.published == false %}
+      {% unless product.tags contains tag_to_add_when_unpublished %}
+        {% assign tag_to_add = tag_to_add_when_unpublished %}
+      {% endunless %}
+
+    {% elsif product.tags contains tag_to_add_when_unpublished %}
+      {% assign tag_to_remove = tag_to_add_when_unpublished %}
+    {% endif %}
+  {% endif %}
+
+  {% if tag_to_add or tag_to_remove %}
+    {% log product: product %}
+
+    {% action "shopify" %}
+      mutation {
+        {% if tag_to_add %}
+          tagsAdd(
+            id: {{ product.id | json }}
+            tags: {{ tag_to_add | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        {% endif %}
+
+        {% if tag_to_remove %}
+          tagsRemove(
+            id: {{ product.id | json }}
+            tags: {{ tag_to_remove | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        {% endif %}
+      }
+    {% endaction %}
   {% endif %}
 {% endfor %}

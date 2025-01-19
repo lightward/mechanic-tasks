@@ -1,15 +1,27 @@
 {% assign collection_id = options.collection_id__required %}
 
 {% comment %}
-  - get online store publication ID
+  -- get online store publication ID
+  -- Note: title filter does work for app catalog titles, so have to get all publications
 {% endcomment %}
 
 {% capture query %}
   query {
-    publications(first: 250) {
+    publications(
+      first: 250
+      catalogType:APP
+    ) {
       nodes {
         id
-        name
+        catalog {
+          ... on AppCatalog {
+            apps(first: 1) {
+              nodes {
+                title
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -25,7 +37,15 @@
           "nodes": [
             {
               "id": "gid://shopify/Publication/1234567890",
-              "name": "Online Store"
+              "catalog": {
+                "apps": {
+                  "nodes": [
+                    {
+                      "title": "Online Store"
+                    }
+                  ]
+                }
+              }
             }
           ]
         }
@@ -36,7 +56,15 @@
   {% assign result = result_json | parse_json %}
 {% endif %}
 
-{% assign online_store_publication = result.data.publications.nodes | where: "name", "Online Store" | first %}
+{% assign online_store_publication_id = nil %}
+
+{% for publication in result.data.publications.nodes %}
+  {% assign publication_name = publication.catalog.apps.nodes.first.title %}
+
+  {% if publication_name == "Online Store" %}
+    {% assign online_store_publication_id = publication.id %}
+  {% endif %}
+{% endfor %}
 
 {% comment %}
   -- get IDs of unpublished products in the collection
@@ -112,7 +140,7 @@
       publishablePublish(
         id: {{ product_id | json }}
         input: {
-          publicationId: {{ online_store_publication.id | json }}
+          publicationId: {{ online_store_publication_id | json }}
         }
       ) {
         userErrors {

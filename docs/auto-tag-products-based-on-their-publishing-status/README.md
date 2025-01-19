@@ -27,7 +27,6 @@ This task manages tagging for products, according to whether or not they're publ
 
 ```liquid
 mechanic/user/trigger
-
 {% if options.run_every_10_minutes__boolean %}
   mechanic/scheduler/10min
 {% elsif options.run_hourly__boolean %}

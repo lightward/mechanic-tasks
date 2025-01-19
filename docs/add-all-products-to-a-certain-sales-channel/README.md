@@ -42,7 +42,7 @@ mechanic/shopify/bulk_operation
 
 Does exactly as it says: this task will publish all active products to the sales channel(s) of your choice, on demand. Optionally, filter products by a search query, or choose to have this task run hourly or daily.
 
-Note: this task comes with a "test mode", which is enabled by default. Run the task at least once in this mode to make sure it would publish the products you expect, and then disbale the test mode.
+Note: this task comes with a "test mode", which is enabled by default. Run the task at least once in this mode to make sure it would publish the products you expect, and then disable the test mode.
 
 ## Installing this task
 

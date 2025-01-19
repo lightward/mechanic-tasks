@@ -17,14 +17,23 @@
       -- check if the configured sales channels exist in this shop by name; save the publication IDs for lookup later
     {% endcomment %}
 
-    {% assign publication_ids = array %}
-
     {% capture query %}
       query {
-        publications(first: 250) {
+        publications(
+          first: 250
+          catalogType:APP
+        ) {
           nodes {
             id
-            name
+            catalog {
+              ... on AppCatalog {
+                apps(first: 1) {
+                  nodes {
+                    title
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -40,7 +49,15 @@
               "nodes": [
                 {
                   "id": "gid://shopify/Publication/1234567890",
-                  "name": {{ sales_channel_names[0] | json }}
+                  "catalog": {
+                    "apps": {
+                      "nodes": [
+                        {
+                          "title": {{ sales_channel_names.first | json }}
+                        }
+                      ]
+                    }
+                  }
                 }
               ]
             }
@@ -51,28 +68,41 @@
       {% assign result = result_json | parse_json %}
     {% endif %}
 
-    {% assign publications = result.data.publications.nodes %}
-    {% assign publication_names = publications | map: "name" | sort %}
-    {% assign publications_indexed_by_name = publications | index_by: "name" %}
+    {% assign publication_ids = array %}
+    {% assign available_sales_channel_names = array %}
 
-    {% for sales_channel_name in sales_channel_names %}
-      {% if publication_names contains sales_channel_name %}
-        {% assign publication_ids = publication_ids | push: publications_indexed_by_name[sales_channel_name].id %}
+    {% for publication in result.data.publications.nodes %}
+      {% assign publication_name = publication.catalog.apps.nodes.first.title %}
 
-      {% else %}
-        {% unless event.preview %}
-          {% comment %}
-            -- using action error here so the task will continue with any other configured and matched sales channels
-          {% endcomment %}
+      {% assign available_sales_channel_names = available_sales_channel_names | push: publication_name %}
 
-          {% action "echo"
-            __error: "A configured sales channel name does not match any of the publication names available in this shop.",
-            sales_channel_name: sales_channel_name,
-            publication_names: publication_names
-          %}
-        {% endunless %}
+      {% if sales_channel_names contains publication_name %}
+        {% assign publication_ids = publication_ids | push: publication.id %}
       {% endif %}
     {% endfor %}
+
+    {% unless event.preview %}
+      {% if publication_ids == blank  %}
+        {% error
+          message: "None of the sales channel configured in this task exist in the shop. Check the list of available channels and verify each configured channel exists.",
+          configured_sales_channel_names: sales_channel_names,
+          available_sales_channel_names: available_sales_channel_names
+        %}
+
+        {% break %}
+
+      {% elsif publication_ids.size != sales_channel_names.size %}
+        {% comment %}
+          -- using action error here so the task will continue with any other configured and matched sales channels
+        {% endcomment %}
+
+        {% action "echo"
+          __error: "One or more configured sales channel names do not match any of the publication names available in this shop.",
+          configured_sales_channel_names: sales_channel_names,
+          available_sales_channel_names: available_sales_channel_names
+        %}
+      {% endif %}
+    {% endunless %}
   {% endif %}
 
   {% comment %}
