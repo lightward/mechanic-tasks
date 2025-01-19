@@ -2,7 +2,7 @@
 
 Tags: Products, Unpublish
 
-This task scans the last x days of orders, and unpublishes any products that haven't met your specified sales threshold during that time period, from whichever sales channel you select. By default, this task adds up the line item subtotals for each product (quantity times price), but it can also count by total quantity sold. This task only looks at products that were published before the time period being examined.
+This task scans the last x days of orders, and unpublishes any products that haven't met your specified sales threshold during that time period. By default, this task adds up the line item subtotals for each product (quantity times price), but it can also count by total quantity sold. This task only looks at products that were published before the time period being examined.
 
 * View in the task library: [tasks.mechanic.dev/unpublish-products-that-fall-below-a-rolling-sales-threshold](https://tasks.mechanic.dev/unpublish-products-that-fall-below-a-rolling-sales-threshold)
 * Task JSON, for direct import: [task.json](../../tasks/unpublish-products-that-fall-below-a-rolling-sales-threshold.json)
@@ -30,15 +30,12 @@ mechanic/user/trigger
 {% if options.run_daily__boolean %}
   mechanic/scheduler/daily
 {% endif %}
-
 mechanic/shopify/bulk_operation
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
-
-This task scans the last x days of orders, and unpublishes any products that haven't met your specified sales threshold during that time period, from whichever sales channel you select. By default, this task adds up the line item subtotals for each product (quantity times price), but it can also count by total quantity sold. This task only looks at products that were published before the time period being examined.
 
 This task scans the last x days of orders, and unpublishes any products that haven't met your specified sales threshold during that time period. By default, this task adds up the line item subtotals for each product (quantity times price), but it can also count by total quantity sold. This task only looks at products that were published before the time period being examined.
 

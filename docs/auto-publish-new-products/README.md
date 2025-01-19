@@ -30,8 +30,6 @@ shopify/products/create
 
 Use this task to automatically make add new products to the sales channels of your choice, making each product available on each channel immediately after the product is created.
 
-[YouTube: See the development video!](https://youtu.be/yCV17WpS1Kg)
-
 ## Installing this task
 
 Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-publish-new-products), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-publish-new-products.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.

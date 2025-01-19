@@ -6,16 +6,26 @@
 {% assign email_notification_recipient = options.email_notification_recipient__email %}
 
 {% comment %}
-  -- get all of the sales channels in the shop; no known sales channel limit, so just use query max of 250
-  -- NOTE: publication name is deprecated (as of Apil 2023), but the Shopify offered solution of using the catalog title currently returns null
+  -- get all of the sales channel names (i.e. publications aka app catalogs) in the shop
 {% endcomment %}
 
 {% capture query %}
   query {
-    publications(first: 250) {
+    publications(
+      first: 250
+      catalogType:APP
+    ) {
       nodes {
         id
-        name
+        catalog {
+          ... on AppCatalog {
+            apps(first: 1) {
+              nodes {
+                title
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -31,7 +41,15 @@
           "nodes": [
             {
               "id": "gid://shopify/Publication/1234567890",
-              "name": {{ sales_channel_names.first | json }}
+              "catalog": {
+                "apps": {
+                  "nodes": [
+                    {
+                      "title": {{ sales_channel_names.first | json }}
+                    }
+                  ]
+                }
+              }
             }
           ]
         }
@@ -42,17 +60,22 @@
   {% assign result = result_json | parse_json %}
 {% endif %}
 
-{% assign publication_ids = array %}
-{% assign publication_names_by_id = hash %}
-
 {% comment %}
   -- add the configured publication names into a hash for use in lookups
 {% endcomment %}
 
+{% assign publication_ids = array %}
+{% assign publication_names_by_id = hash %}
+{% assign available_sales_channel_names = array %}
+
 {% for publication in result.data.publications.nodes %}
-  {% if sales_channel_names contains publication.name %}
-    {% assign publication_ids[publication_ids.size] = publication.id %}
-    {% assign publication_names_by_id[publication.id] = publication.name %}
+  {% assign publication_name = publication.catalog.apps.nodes.first.title %}
+
+  {% assign available_sales_channel_names = available_sales_channel_names | push: publication_name %}
+
+  {% if sales_channel_names contains publication_name %}
+    {% assign publication_ids = publication_ids | push: publication.id %}
+    {% assign publication_names_by_id[publication.id] = publication_name %}
   {% endif %}
 {% endfor %}
 
@@ -61,13 +84,11 @@
 {% endcomment %}
 
 {% unless event.preview %}
-  {% assign available_channels = result.data.publications.nodes | map: "name" %}
-
   {% if publication_ids.size != sales_channel_names.size %}
     {% error
       message: "Each sales channel configured in this task must exist in the shop. Check the list of available channels and verify each configured channel exists.",
-      available_sales_channel_names: available_channels,
-      configured_sales_channel_names: sales_channel_names
+      configured_sales_channel_names: sales_channel_names,
+      available_sales_channel_names: available_sales_channel_names
     %}
 
     {% break %}
@@ -154,8 +175,8 @@
 
       {% error
         message: "Each location name configured in this task must exactly match a location name in the shop. Check the list of available locations and verify each configured location exists.",
-        available_location_names: available_location_names,
-        configured_location_names: location_names
+        configured_location_names: location_names,
+        available_location_names: available_location_names
       %}
 
       {% break %}
@@ -220,7 +241,7 @@
 
   {% assign search_query
     = array
-    | push: inventory_filter, inclusion_tag_filters, exclusion_tag_filters
+    | push: "status:active", inventory_filter, inclusion_tag_filters, exclusion_tag_filters
     | compact
     | join: " AND "
   %}
@@ -432,10 +453,16 @@
       query {
         product(id: {{ product.id | json }}) {
           id
-          variants(first: 100) {
+          variants(first: 2000) {
             nodes {
               inventoryItem {
-                id
+                {% for location_id in location_ids %}
+                  inventory_level_{{ forloop.index }}: inventoryLevel(locationId: {{ location_id | json }}) {
+                    quantities(names: "available") {
+                      quantity
+                    }
+                  }
+                {% endfor %}
               }
             }
           }
@@ -455,7 +482,13 @@
                 "nodes": [
                   {
                     "inventoryItem": {
-                      "id": "gid://shopify/InventoryItem/1234567890"
+                      "inventory_level_1": {
+                        "quantities": [
+                          {
+                            "quantity": 0
+                          }
+                        ]
+                      }
                     }
                   }
                 ]
@@ -468,55 +501,8 @@
       {% assign result = result_json | parse_json %}
     {% endif %}
 
-    {% assign inventory_item_ids
-      = result.data.product.variants.nodes
-      | map: "inventoryItem"
-      | map: "id"
-    %}
-
-    {% comment %}
-      -- loop through inventory items and get available quantity for each configured location
-    {% endcomment %}
-
-    {% for inventory_item_id in inventory_item_ids %}
-      {% capture query %}
-        query {
-          inventoryItem(id: {{ inventory_item_id | json }}) {
-            {% for location_id in location_ids %}
-              inventory_level_{{ forloop.index }}: inventoryLevel(locationId: {{ location_id | json }}) {
-                quantities(names: "available") {
-                  quantity
-                }
-              }
-            {% endfor %}
-          }
-        }
-      {% endcapture %}
-
-      {% assign result = query | shopify %}
-
-      {% if event.preview %}
-        {% capture result_json %}
-          {
-            "data": {
-              "inventoryItem": {
-                "inventory_level_1": {
-                  "quantities": [
-                    {
-                      "quantity": {{ back_in_stock_inventory_quantity }}
-                    }
-                  ]
-                },
-                "inventory_level_2": null
-              }
-            }
-          }
-        {% endcapture %}
-
-        {% assign result = result_json | parse_json %}
-      {% endif %}
-
-      {% for item in result.data.inventoryItem %}
+    {% for variant in result.data.product.variants.nodes %}
+      {% for item in variant.inventoryItem %}
         {% assign summed_inventory = summed_inventory | plus: item[1].quantities.first.quantity %}
       {% endfor %}
     {% endfor %}

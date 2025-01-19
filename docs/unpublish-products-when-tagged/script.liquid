@@ -1,139 +1,199 @@
+{% assign product_tags_to_watch_for = options.product_tags_to_watch_for__required_array %}
+{% assign require_all_tags = options.require_product_to_have_all_given_tags_before_unpublishing__boolean %}
+{% assign sales_channel_names = options.sales_channel_names__required_array %}
+
+{% comment %}
+  -- get all of the sales channel names (i.e. publications aka app catalogs) in the shop
+{% endcomment %}
+
+{% capture query %}
+  query {
+    publications(
+      first: 250
+      catalogType:APP
+    ) {
+      nodes {
+        id
+        catalog {
+          ... on AppCatalog {
+            apps(first: 1) {
+              nodes {
+                title
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
 {% if event.preview %}
-  {% assign product = hash %}
-  {% assign product["admin_graphql_api_id"] = "gid://shopify/Product/1234567890" %}
-  {% assign product["tags"] = options.product_tags_to_watch_for__required_array | join: ", " %}
+  {% capture result_json %}
+    {
+      "data": {
+        "publications": {
+          "nodes": [
+            {
+              "id": "gid://shopify/Publication/1234567890",
+              "catalog": {
+                "apps": {
+                  "nodes": [
+                    {
+                      "title": {{ sales_channel_names.first | json }}
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
 {% endif %}
 
-{% assign product_qualifies = false %}
-{% assign product_tags = product.tags | split: ", " %}
+{% comment %}
+  -- save the publication IDs for all of the configured sales channel names
+{% endcomment %}
 
-{% if options.require_product_to_have_all_given_tags_before_unpublishing__boolean %}
-  {% for tag in options.product_tags_to_watch_for__required_array %}
-    {% if product_tags contains tag %}
+{% assign publication_ids = array %}
+{% assign available_sales_channel_names = array %}
+
+{% for publication in result.data.publications.nodes %}
+  {% assign publication_name = publication.catalog.apps.nodes.first.title %}
+
+  {% assign available_sales_channel_names = available_sales_channel_names | push: publication_name %}
+
+  {% if sales_channel_names contains publication_name %}
+    {% assign publication_ids = publication_ids | push: publication.id %}
+  {% endif %}
+{% endfor %}
+
+{% if publication_ids == blank  %}
+  {% error
+    message: "None of the sales channels configured in this task exist in the shop. Check the list of available channels and verify each configured channel exists.",
+    configured_sales_channel_names: sales_channel_names,
+    available_sales_channel_names: available_sales_channel_names
+  %}
+
+  {% break %}
+
+{% elsif publication_ids.size != sales_channel_names.size %}
+  {% comment %}
+    -- using action error here so the task will continue with any other configured and matched sales channels
+  {% endcomment %}
+
+  {% action "echo"
+    __error: "One or more configured sales channel names do not match any of the publication names available in this shop.",
+    configured_sales_channel_names: sales_channel_names,
+    available_sales_channel_names: available_sales_channel_names
+  %}
+{% endif %}
+
+{% comment %}
+  -- get product data and current publication status(es)
+{% endcomment %}
+
+{% capture query %}
+  query {
+    product(id: {{ product.admin_graphql_api_id | json }}) {
+      id
+      tags
+      {% for publication_id in publication_ids %}
+        publishedOnPublication{{ forloop.index }}: publishedOnPublication(
+          publicationId: {{ publication_id | json }}
+        )
+      {% endfor %}
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "product": {
+          "id": "gid://shopify/Product/1234567890",
+          "tags": {{ product_tags_to_watch_for | json }},
+          "publishedOnPublication1": true
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% assign product = result.data.product %}
+
+{% comment %}
+  -- check if product has at least one or all of the configured tags as warranted
+{% endcomment %}
+
+{% assign product_qualifies = false %}
+
+{% if require_all_tags %}
+  {% for tag in product_tags_to_watch_for %}
+    {% if product.tags contains tag %}
       {% if forloop.last %}
         {% assign product_qualifies = true %}
       {% endif %}
+
     {% else %}
       {% break %}
     {% endif %}
   {% endfor %}
+
 {% else %}
-  {% for tag in options.product_tags_to_watch_for__required_array %}
-    {% if product_tags contains tag %}
+  {% for tag in product_tags_to_watch_for %}
+    {% if product.tags contains tag %}
       {% assign product_qualifies = true %}
       {% break %}
     {% endif %}
   {% endfor %}
 {% endif %}
 
-{% if product_qualifies %}
-  {% capture query %}
-    query {
-      publications(first: 250) {
-        edges {
-          node {
-            id
-            name
-          }
-        }
-      }
-    }
-  {% endcapture %}
+{% unless product_qualifies %}
+  {% break %}
+{% endunless %}
 
-  {% assign result = query | shopify %}
+{% assign publication_ids_for_unpublishing = array %}
 
-  {% if event.preview %}
-    {% capture result_json %}
-      {
-        "data": {
-          "publications": {
-            "edges": [
-              {
-                "node": {
-                  "id": "gid://shopify/Publication/1234567890",
-                  "name": {{ options.sales_channel_names__required_array.first | json }}
-                }
-              }
-            ]
-          }
-        }
-      }
-    {% endcapture %}
+{% for publication_id in publication_ids %}
+  {% assign key = "publishedOnPublication" | append: forloop.index %}
+  {% assign published = product[key] %}
 
-    {% assign result = result_json | parse_json %}
+  {% if product[key] %}
+    {% assign publication_ids_for_unpublishing = publication_ids_for_unpublishing | push: publication_id %}
   {% endif %}
+{% endfor %}
 
-  {% assign publications = array %}
-
-  {% for publication_edge in result.data.publications.edges %}
-    {% if options.sales_channel_names__required_array contains publication_edge.node.name %}
-      {% assign publications[publications.size] = publication_edge.node %}
-    {% endif %}
-  {% endfor%}
-
-  {% if event.preview != true and publications.size != options.sales_channel_names__required_array.size %}
-    {% log publications_named: options.sales_channel_names__required_array, publications_available: result.data.publications.edges,  publications_matched: publications %}
-    {% error "Unable to find all named publications. Double-check your task configuration." %}
-  {% endif %}
-
-  {% capture query %}
-    query {
-      product(id: {{ product.admin_graphql_api_id | json }}) {
-        tags
-        {% for publication in publications %}
-          publishedOnPublication{{ forloop.index0 }}: publishedOnPublication(publicationId: {{ publication.id | json }})
-        {% endfor %}
-      }
-    }
-  {% endcapture %}
-
-  {% assign result = query | shopify %}
-
-  {% if event.preview %}
-    {% capture result_json %}
-      {
-        "data": {
-          "product": {
-            "id": "gid://shopify/Product/1234567809",
-            "publishedOnPublication0": true
-          }
-        }
-      }
-    {% endcapture %}
-
-    {% assign result = result_json | parse_json %}
-
-  {% endif %}
-
-  {% assign publication_ids_to_unpublish_from = array %}
-
-  {% for publication in publications %}
-    {% assign key = "publishedOnPublication" | append: forloop.index0 %}
-
-    {% if result.data.product[key] == false %}
-      {% continue %}
-    {% endif %}
-
-    {% assign publication_ids_to_unpublish_from[publication_ids_to_unpublish_from.size] = publication.id %}
-  {% endfor %}
-
-  {% if publication_ids_to_unpublish_from != empty %}
-    {% action "shopify" %}
-      mutation {
-        {% for publication_id in publication_ids_to_unpublish_from %}
-          publishableUnpublish{{ forloop.index0 }}: publishableUnpublish(
-            id: {{ product.admin_graphql_api_id | json }}
-            input: {
-              publicationId: {{ publication_id | json }}
-            }
-          ) {
-            userErrors {
-              field
-              message
-            }
-          }
-        {% endfor %}
-      }
-    {% endaction %}
-  {% endif %}
+{% if publication_ids_for_unpublishing == blank %}
+  {% log "Product was already unpublished on all configured sales channel(s). :)" %}
+  {% break %}
 {% endif %}
+
+{% action "shopify" %}
+  mutation {
+    {% for publication_id in publication_ids_for_unpublishing %}
+      publishableUnpublish{{ forloop.index }}: publishableUnpublish(
+        id: {{ product.id | json }}
+        input: {
+          publicationId: {{ publication_id | json }}
+        }
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    {% endfor %}
+  }
+{% endaction %}

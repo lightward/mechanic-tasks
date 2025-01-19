@@ -2,7 +2,7 @@
 
 Tags: Products, Publish, Sales Channel, Unpublish
 
-This task runs when products are updated (which includes product creation) and manages publishing to the configured sales channels, according to whether or not the product has a certain tag. Products with the tag will be published on ALL of the configured sales channels; and those without the product tag will be unpublished from them.
+This task runs when products are created or updated and manages publishing to the configured sales channels, according to whether or not the product has a certain tag. Products with the tag will be published on ALL of the configured sales channels; and those without the product tag will be unpublished from them.
 
 * View in the task library: [tasks.mechanic.dev/auto-publish-products-by-tag](https://tasks.mechanic.dev/auto-publish-products-by-tag)
 * Task JSON, for direct import: [task.json](../../tasks/auto-publish-products-by-tag.json)
@@ -22,15 +22,17 @@ This task runs when products are updated (which includes product creation) and m
 ## Subscriptions
 
 ```liquid
+shopify/products/create
 shopify/products/update
 mechanic/user/trigger
+mechanic/shopify/bulk_operation
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
-This task runs when products are updated (which includes product creation) and manages publishing to the configured sales channels, according to whether or not the product has a certain tag. Products with the tag will be published on ALL of the configured sales channels; and those without the product tag will be unpublished from them.
+This task runs when products are created or updated and manages publishing to the configured sales channels, according to whether or not the product has a certain tag. Products with the tag will be published on ALL of the configured sales channels; and those without the product tag will be unpublished from them.
 
 Run this task manually to scan your entire product catalog, publishing and unpublishing products by the presence or absence of the configured product tag.
 

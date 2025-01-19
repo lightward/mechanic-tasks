@@ -11,45 +11,95 @@
 
 {% if event.topic == "mechanic/user/trigger" or event.topic == "shopify/products/update" %}
   {% if event.topic == "mechanic/user/trigger" %}
+    {% comment %}
+      -- get all product types and vendors in the shop
+    {% endcomment %}
+
     {% assign cursor = nil %}
 
-    {% for n in (1..1000) %}
+    {% for n in (1..10) %}
       {% capture query %}
         query {
-          products(
-            first: 250
+          productTypes(
+            first: 1000
             after: {{ cursor | json }}
           ) {
             pageInfo {
               hasNextPage
+              endCursor
             }
-            edges {
-              cursor
-              node {
-                productType
-                vendor
-              }
-            }
+            nodes
           }
         }
       {% endcapture %}
 
       {% assign result = query | shopify %}
 
-      {% assign products = result.data.products.edges | map: "node" %}
+      {% if event.preview %}
+        {% capture result_json %}
+          {
+            "data": {
+              "productTypes": {
+                "nodes": [
+                  "Widget"
+                ]
+              }
+            }
+          }
+        {% endcapture %}
 
-      {% for product in products %}
-        {% unless product.productType == blank or product_types contains product.productType %}
-          {% assign product_types = product_types | push: product.productType %}
-        {% endunless %}
+        {% assign result = result_json | parse_json %}
+      {% endif %}
 
-        {% unless product.vendor == blank or vendors contains product.vendor %}
-          {% assign vendors = vendors | push: product.vendor %}
-        {% endunless %}
-      {% endfor %}
+      {% assign product_types = product_types | concat: result.data.productTypes.nodes %}
 
-      {% if result.data.products.pageInfo.hasNextPage %}
-        {% assign cursor = result.data.products.edges.last.cursor %}
+      {% if result.data.productTypes.pageInfo.hasNextPage %}
+        {% assign cursor = result.data.productTypes.pageInfo.endCursor %}
+      {% else %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+
+    {% assign cursor = nil %}
+
+    {% for n in (1..10) %}
+      {% capture query %}
+        query {
+          productVendors(
+            first: 1000
+            after: {{ cursor | json }}
+          ) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = query | shopify %}
+
+      {% if event.preview %}
+        {% capture result_json %}
+          {
+            "data": {
+              "productVendors": {
+                "nodes": [
+                  "ACME"
+                ]
+              }
+            }
+          }
+        {% endcapture %}
+
+        {% assign result = result_json | parse_json %}
+      {% endif %}
+
+      {% assign vendors = vendors | concat: result.data.productVendors.nodes %}
+
+      {% if result.data.productVendors.pageInfo.hasNextPage %}
+        {% assign cursor = result.data.productVendors.pageInfo.endCursor %}
       {% else %}
         {% break %}
       {% endif %}
@@ -71,15 +121,26 @@
   {% endif %}
 
   {% if sales_channel_names != blank %}
-    {% assign publication_ids = array %}
+    {% comment %}
+      -- check if the configured sales channels exist in this shop by name; save the publication IDs for lookup later
+    {% endcomment %}
 
     {% capture query %}
       query {
-        publications(first: 250) {
-          edges {
-            node {
-              id
-              name
+        publications(
+          first: 250
+          catalogType:APP
+        ) {
+          nodes {
+            id
+            catalog {
+              ... on AppCatalog {
+                apps(first: 1) {
+                  nodes {
+                    title
+                  }
+                }
+              }
             }
           }
         }
@@ -93,11 +154,17 @@
         {
           "data": {
             "publications": {
-              "edges": [
+              "nodes": [
                 {
-                  "node": {
-                    "id": "gid://shopify/Publication/1234567890",
-                    "name": {{ sales_channel_names[0] | json }}
+                  "id": "gid://shopify/Publication/1234567890",
+                  "catalog": {
+                    "apps": {
+                      "nodes": [
+                        {
+                          "title": {{ sales_channel_names.first | json }}
+                        }
+                      ]
+                    }
                   }
                 }
               ]
@@ -109,24 +176,41 @@
       {% assign result = result_json | parse_json %}
     {% endif %}
 
-    {% assign publications = result.data.publications.edges | map: "node" %}
-    {% assign publication_names = publications | map: "name" | sort %}
-    {% assign publications_indexed_by_name = publications | index_by: "name" %}
+    {% assign publication_ids = array %}
+    {% assign available_sales_channel_names = array %}
 
-    {% for sales_channel_name in sales_channel_names %}
-      {% if publication_names contains sales_channel_name %}
-        {% assign publication_ids = publication_ids | push: publications_indexed_by_name[sales_channel_name].id %}
+    {% for publication in result.data.publications.nodes %}
+      {% assign publication_name = publication.catalog.apps.nodes.first.title %}
 
-      {% else %}
-        {% unless event.preview %}
-          {% error
-            message: "A configured sales channel name does not match any of the publication names available in this shop.",
-            sales_channel_name: sales_channel_name,
-            publication_names: publication_names
-          %}
-        {% endunless %}
+      {% assign available_sales_channel_names = available_sales_channel_names | push: publication_name %}
+
+      {% if sales_channel_names contains publication_name %}
+        {% assign publication_ids = publication_ids | push: publication.id %}
       {% endif %}
     {% endfor %}
+
+    {% unless event.preview %}
+      {% if publication_ids == blank  %}
+        {% error
+          message: "None of the sales channel configured in this task exist in the shop. Check the list of available channels and verify each configured channel exists.",
+          configured_sales_channel_names: sales_channel_names,
+          available_sales_channel_names: available_sales_channel_names
+        %}
+
+        {% break %}
+
+      {% elsif publication_ids.size != sales_channel_names.size %}
+        {% comment %}
+          -- using action error here so the task will continue with any other configured and matched sales channels
+        {% endcomment %}
+
+        {% action "echo"
+          __error: "One or more configured sales channel names do not match any of the publication names available in this shop.",
+          configured_sales_channel_names: sales_channel_names,
+          available_sales_channel_names: available_sales_channel_names
+        %}
+      {% endif %}
+    {% endunless %}
   {% endif %}
 
   {% if create_collections_by_product_type %}
@@ -137,12 +221,10 @@
             first: 1
             query: {{ product_type | json | prepend: "title:" | json }}
           ) {
-            edges {
-              node {
-                id
-                title
-                handle
-              }
+            nodes {
+              id
+              title
+              handle
             }
           }
         }
@@ -150,11 +232,11 @@
 
       {% assign result = query | shopify %}
 
-      {% if result.data.collections.edges != blank %}
+      {% if result.data.collections.nodes != blank %}
         {% log
           message: "A collection title matching this product type already exists; skipping.",
           product_type: product_type,
-          collection: result.data.collections.edges.first.node
+          collection: result.data.collections.nodes.first
         %}
 
       {% else %}
@@ -209,12 +291,10 @@
             first: 1
             query: {{ vendor | json | prepend: "title:" | json }}
           ) {
-            edges {
-              node {
-                id
-                title
-                handle
-              }
+            nodes {
+              id
+              title
+              handle
             }
           }
         }
@@ -222,11 +302,11 @@
 
       {% assign result = query | shopify %}
 
-      {% if result.data.collections.edges != blank %}
+      {% if result.data.collections.nodes != blank %}
         {% log
           message: "A collection title matching this vendor already exists; skipping.",
           vendor: vendor,
-          collection: result.data.collections.edges.first.node
+          collection: result.data.collections.nodes.first
         %}
 
       {% else %}
@@ -274,72 +354,53 @@
   {% endif %}
 
 {% elsif event.topic == "mechanic/actions/perform" %}
-  {% if event.preview %}
-    {% capture action_json %}
-      {
-        "type": "shopify",
-        "meta": {
-          "publication_ids": [
-            "gid://shopify/Publication/1234567890"
-          ]
-        },
-        "run": {
-          "ok": true,
-          "result": {
-            "data": {
-              "collectionCreate": {
-                "collection": {
-                  "id": "gid://shopify/Collection/1234567890",
-                  "title": "ACME",
-                  "handle": "acme"
-                }
-              }
-            }
+  {% comment %}
+    -- only respond to successful creation of collections
+  {% endcomment %}
+
+  {% unless action.type == "shopify" and action.run.ok and action.run.result.data.collectionCreate %}
+    {% break %}
+  {% endunless %}
+
+  {% assign collection_id = action.run.result.data.collectionCreate.collection.id %}
+  {% assign publication_ids = action.meta.publication_ids %}
+
+  {% comment %}
+    -- publish the new collection to all of the valid publications configured in the task
+  {% endcomment %}
+
+  {% assign mutations = array %}
+
+  {% for publication_id in publication_ids %}
+    {% capture mutation %}
+      publishablePublish{{ forloop.index }}: publishablePublish(
+        id: {{ collection_id | json }}
+        input: {
+          publicationId: {{ publication_id | json }}
+        }
+      ) {
+        publishable {
+          ... on Collection {
+            id
+            title
+            handle
           }
+        }
+        userErrors {
+          field
+          message
         }
       }
     {% endcapture %}
 
-    {% assign action = action_json | parse_json %}
-  {% endif %}
+    {% assign mutations = mutations | push: mutation %}
+  {% endfor %}
 
-  {% if action.run.ok %}
-    {% assign collection_id = action.run.result.data.collectionCreate.collection.id %}
-    {% assign publication_ids = action.meta.publication_ids %}
-
-    {% assign mutations = array %}
-
-    {% for publication_id in publication_ids %}
-      {% capture mutation %}
-          publishablePublish{{ forloop.index }}: publishablePublish(
-            id: {{ collection_id | json }}
-            input: {
-              publicationId: {{ publication_id | json }}
-            }
-          ) {
-            publishable {
-              ... on Collection {
-                id
-                title
-                handle
-              }
-            }
-            userErrors {
-              field
-              message
-            }
-          }
-        {% endcapture %}
-
-        {% assign mutations = mutations | push: mutation %}
-    {% endfor %}
-
-    {% if mutations != blank %}
-      {% action "shopify" %}
-        mutation {
-          {{ mutations | join: newline }}
-        }
-      {% endaction %}
-    {% endif %}
+  {% if mutations != blank %}
+    {% action "shopify" %}
+      mutation {
+        {{ mutations | join: newline }}
+      }
+    {% endaction %}
   {% endif %}
 {% endif %}

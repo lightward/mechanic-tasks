@@ -2,7 +2,7 @@
 
 Tags: Alert, Email, Inventory, Out of Stock, Products
 
-Use this task to receive an immediate email alert, whenever a variant's total inventory hits 0, when added up across all locations. You can limit alerts to a specific collection or publication (e.g. Online Store or POS). 
+Use this task to receive an immediate email alert, whenever a variant's total inventory hits 0, when added up across all locations. You can limit alerts to a specific collection or publication (e.g. Online Store or Point of Sale). 
 
 * View in the task library: [tasks.mechanic.dev/send-an-email-alert-when-a-variant-hits-0-total-inventory](https://tasks.mechanic.dev/send-an-email-alert-when-a-variant-hits-0-total-inventory)
 * Task JSON, for direct import: [task.json](../../tasks/send-an-email-alert-when-a-variant-hits-0-total-inventory.json)
@@ -33,7 +33,7 @@ mechanic/user/trigger
 
 ## Documentation
 
-Use this task to receive an immediate email alert, whenever a variant's total inventory hits 0, when added up across all locations. You can limit alerts to a specific collection or publication (e.g. Online Store or POS). 
+Use this task to receive an immediate email alert, whenever a variant's total inventory hits 0, when added up across all locations. You can limit alerts to a specific collection or publication (e.g. Online Store or Point of Sale). 
 
 **Notes:**
 - You can filter by collection or publication, not both at the same time.

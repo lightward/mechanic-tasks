@@ -1,4 +1,85 @@
+{% assign sales_channel_names_and_tags = options.sales_channel_names_and_tags__keyval_required %}
+{% assign test_mode = options.test_mode__boolean %}
+
+{% assign sales_channel_names = sales_channel_names_and_tags | keys %}
+
+{% comment %}
+  -- get all of the sales channel names (i.e. publications aka app catalogs) in the shop
+{% endcomment %}
+
+{% capture query %}
+  query {
+    publications(
+      first: 250
+      catalogType:APP
+    ) {
+      nodes {
+        id
+        catalog {
+          ... on AppCatalog {
+            apps(first: 1) {
+              nodes {
+                title
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "publications": {
+          "nodes": [
+            {
+              "id": "gid://shopify/Publication/1234567890",
+              "catalog": {
+                "apps": {
+                  "nodes": [
+                    {
+                      "title": {{ sales_channel_names.first | json }}
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% comment %}
+  -- add the configured publication names into a hash for use in lookups
+{% endcomment %}
+
+{% assign publication_ids = array %}
+{% assign publication_names_by_id = hash %}
+
+{% for publication in result.data.publications.nodes %}
+  {% assign publication_name = publication.catalog.apps.nodes.first.title %}
+
+  {% if sales_channel_names contains publication_name %}
+    {% assign publication_ids = publication_ids | push: publication.id %}
+    {% assign publication_names_by_id[publication.id] = publication_name %}
+  {% endif %}
+{% endfor %}
+
 {% if event.topic contains "shopify/orders/" %}
+  {% comment %}
+    -- get the publication ID (if any) that the order originated from
+    -- Note: publication.name is deprecated; publication IDs should be matched with app catalog titles instead
+  {% endcomment %}
+
   {% capture query %}
     query {
       order(id: {{ order.admin_graphql_api_id | json }}) {
@@ -7,7 +88,7 @@
           tags
         }
         publication {
-          name
+          id
         }
       }
     }
@@ -25,7 +106,7 @@
               "tags": []
             },
             "publication": {
-              "name": {{ options.sales_channel_names_and_tags__keyval_required.first.first | json }}
+              "id": {{ publication_ids.first | json }}
             }
           }
         }
@@ -35,15 +116,43 @@
     {% assign result = result_json | parse_json %}
   {% endif %}
 
-  {% assign publication_name = result.data.order.publication.name %}
-  {% assign tag_to_add = options.sales_channel_names_and_tags__keyval_required[publication_name] %}
+  {% assign order_publication_id = result.data.order.publication.id %}
+
+  {% if order_publication_id == blank %}
+    {% log
+      message: "This order did not originate from an app sales channel. Skipping.",
+      order: result.data.order
+    %}
+    {% break %}
+  {% endif %}
+
+  {% comment %}
+    -- tag the customer if the order's sales channel matches one configured in this task
+  {% endcomment %}
+
+  {% assign publication_name = publication_names_by_id[order_publication_id] %}
+  {% assign tag_to_add = sales_channel_names_and_tags[publication_name] %}
 
   {% if tag_to_add == blank %}
-    {% log message: "No tag found for this channel. Skipping.", publication_name: publication_name %}
+    {% log
+      message: "No tag found for this channel. Skipping.",
+      publication_name: publication_name
+    %}
+
   {% elsif result.data.order.customer.tags contains tag_to_add %}
-    {% log message: "The customer already has the tag for this channel. Skipping.", publication_name: publication_name, tag_to_add: tag_to_add %}
-  {% elsif options.test_mode__boolean %}
-    {% action "echo" customer_id: result.data.order.customer.id, customer_publication_name: publication_name, customer_tag_to_add: tag_to_add %}
+    {% log
+      message: "The customer already has the tag for this channel. Skipping.",
+      publication_name: publication_name,
+      tag_to_add: tag_to_add
+    %}
+
+  {% elsif test_mode %}
+    {% log
+      customer_id: result.data.order.customer.id,
+      publication_name: publication_name,
+      customer_tag_to_add: tag_to_add
+    %}
+
   {% else %}
     {% action "shopify" %}
       mutation {
@@ -59,7 +168,12 @@
       }
     {% endaction %}
   {% endif %}
+
 {% elsif event.topic == "mechanic/user/trigger" %}
+  {% comment %}
+    -- get all customers and their orders
+  {% endcomment %}
+
   {% capture bulk_operation_query %}
     query {
       customers {
@@ -73,7 +187,7 @@
                 node {
                   __typename
                   publication {
-                    name
+                    id
                   }
                 }
               }
@@ -100,39 +214,29 @@
       }
     }
   {% endaction %}
+
 {% elsif event.topic == "mechanic/shopify/bulk_operation" %}
   {% if event.preview %}
-    {% capture bulkOperation_json %}
-      {
-        "objects": [
-          {
-            "__typename": "Customer",
-            "id": "gid://shopify/Customer/1234567890",
-            "tags": []
-          },
-          {
-            "__typename": "Order",
-            "publication": {
-              "name": {{ options.sales_channel_names_and_tags__keyval_required.first.first | json }}
-            },
-            "__parentId": "gid://shopify/Customer/1234567890"
-          }
-        ]
-      }
+    {% capture jsonl_string %}
+      {"__typename":"Customer","id":"gid://shopify/Customer/1234567890"}
+      {"__typename":"Order","publication":{"id":"gid://shopify/Publication/1234567890"},"__parentId":"gid://shopify/Customer/1234567890"}
     {% endcapture %}
 
-    {% assign bulkOperation = bulkOperation_json | parse_json %}
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = jsonl_string | parse_jsonl %}
   {% endif %}
 
   {% assign customers = bulkOperation.objects | where: "__typename", "Customer" %}
   {% assign orders = bulkOperation.objects | where: "__typename", "Order" %}
+
   {% assign publication_counts = hash %}
 
   {% for order in orders %}
-    {% assign publication_name = order.publication.name %}
+    {% assign order_publication_id = order.publication.id %}
+    {% assign publication_name = publication_names_by_id[order_publication_id] %}
 
     {% if publication_name == blank %}
-      {% assign publication_name = "(not placed via sales channel)" %}
+      {% assign publication_name = "(not placed via a configured sales channel)" %}
     {% endif %}
 
     {% assign publication_counts[publication_name] = publication_counts[publication_name] | plus: 1 %}
@@ -140,32 +244,60 @@
 
   {% log publication_counts: publication_counts %}
 
-  {% if options.test_mode__boolean %}
+  {% if test_mode %}
     {% assign summaries = array %}
   {% endif %}
-          
+
+  {% comment %}
+    -- process customers to see which should be tagged
+  {% endcomment %}
+
   {% for customer in customers %}
     {% assign customer_orders = orders | where: "__parentId", customer.id %}
-    {% assign customer_publication_names = customer_orders | map: "publication" | map: "name" | compact | uniq %}
+
+    {% comment %}
+      -- determine all sales channels this customer has ordered through
+    {% endcomment %}
+
+    {% assign customer_publication_names = array %}
+
+    {% for order in customer_orders %}
+      {% assign order_publication_id = order.publication.id %}
+      {% assign publication_name = publication_names_by_id[order_publication_id] %}
+
+      {% if publication_name == blank %}
+        {% continue %}
+      {% endif %}
+
+      {% unless customer_publication_names contains publication_name %}
+        {% assign customer_publication_names = customer_publication_names | push: publication_name %}
+      {% endunless %}
+    {% endfor %}
+
+    {% comment %}
+      -- assign tags by configured sales channels
+    {% endcomment %}
 
     {% assign tags_to_add = array %}
-    {% for name in customer_publication_names %}
-      {% assign tag = options.sales_channel_names_and_tags__keyval_required[name] %}
+
+    {% for publication_name in customer_publication_names %}
+      {% assign tag = sales_channel_names_and_tags[publication_name] %}
 
       {% if tag == blank or customer.tags contains tag %}
         {% continue %}
       {% endif %}
 
-      {% assign tags_to_add[tags_to_add.size] = tag %}
+      {% assign tags_to_add = tags_to_add | push: tag %}
     {% endfor %}
 
-    {% if tags_to_add != empty %}
-      {% if options.test_mode__boolean %}
+    {% if tags_to_add != blank %}
+      {% if test_mode %}
         {% assign summary = hash %}
         {% assign summary["customer_id"] = customer.id %}
         {% assign summary["customer_publication_names"] = customer_publication_names %}
         {% assign summary["customer_tags_to_add"] = tags_to_add %}
-        {% assign summaries[summaries.size] = summary %}
+        {% assign summaries = summaries | push: summary %}
+
       {% else %}
         {% action "shopify" %}
           mutation {
@@ -184,7 +316,7 @@
     {% endif %}
   {% endfor %}
 
-  {% if options.test_mode__boolean %}
-    {% action "echo" summaries %}
+  {% if test_mode %}
+    {% log summaries %}
   {% endif %}
 {% endif %}

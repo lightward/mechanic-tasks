@@ -1,21 +1,31 @@
-{% comment %}
-  An opinion about option order:
+{% assign sales_channel_name = options.sales_channel_name__required %}
+{% assign number_of_days_back_to_look = options.number_of_days_back_to_look__number_required %}
+{% assign minimum_sales_threshold_for_staying_published = options.minimum_sales_threshold_for_staying_published__number_required %}
+{% assign use_total_quantity_instead_of_line_item_subtotals = options.use_total_quantity_instead_of_line_item_subtotals__boolean %}
+{% assign test_mode = options.test_mode__boolean %}
+{% assign run_daily = options.run_daily__boolean %}
 
-  {{ options.sales_channel_name__required }}
-  {{ options.number_of_days_back_to_look__number_required }}
-  {{ options.minimum_sales_threshold_for_staying_published__number_required }}
-  {{ options.use_total_quantity_instead_of_line_item_subtotals__boolean }}
-  {{ options.test_mode__boolean }}
-  {{ options.run_daily__boolean }}
+{% comment %}
+  -- get the ID for the configured sales channel
+  -- Note: title filter does work for app catalog titles, so have to get all publications
 {% endcomment %}
 
 {% capture query %}
   query {
-    publications(first: 250) {
-      edges {
-        node {
-          id
-          name
+    publications(
+      first: 250
+      catalogType:APP
+    ) {
+      nodes {
+        id
+        catalog {
+          ... on AppCatalog {
+            apps(first: 1) {
+              nodes {
+                title
+              }
+            }
+          }
         }
       }
     }
@@ -24,20 +34,69 @@
 
 {% assign result = query | shopify %}
 
-{% assign publications = result.data.publications.edges | map: "node" | where: "name", options.sales_channel_name__required | first %}
-{% assign publication = publications | where: "name", options.sales_channel_name__required | first %}
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "publications": {
+          "nodes": [
+            {
+              "id": "gid://shopify/Publication/1234567890",
+              "catalog": {
+                "apps": {
+                  "nodes": [
+                    {
+                      "title": {{ sales_channel_name | json }}
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  {% endcapture %}
 
-{% if event.preview != true and publication == nil %}
-  {"log": {{ publications | map: "name" | json }}}
-  {"error": {{ options.sales_channel_name__required | prepend: "No sales channel found called " | json }}}
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% comment %}
+  -- make sure the configured sales channel name matches a publication in this shop
+{% endcomment %}
+
+{% assign publication_id = nil %}
+{% assign available_sales_channel_names = array %}
+
+{% for publication in result.data.publications.nodes %}
+  {% assign publication_name = publication.catalog.apps.nodes.first.title %}
+
+  {% assign available_sales_channel_names = available_sales_channel_names | push: publication_name %}
+
+  {% if sales_channel_name == publication_name %}
+    {% assign publication_id = publication.id %}
+  {% endif %}
+{% endfor %}
+
+{% if publication_id == blank %}
+  {% error
+    message: "The sales channel configured in this task must exist in the shop. Check the list of available channels.",
+    configured_sales_channel_name: sales_channel_name,
+    available_sales_channel_names: available_sales_channel_names
+  %}
+  {% break %}
 {% endif %}
 
 {% assign now_s = "now" | date: "%s" | times: 1 %}
-{% assign time_interval_s = options.number_of_days_back_to_look__number_required | times: 24 | times: 60 | times: 60 %}
+{% assign time_interval_s = number_of_days_back_to_look | times: 24 | times: 60 | times: 60 %}
 {% assign starting_date_s = now_s | minus: time_interval_s %}
 {% assign starting_date = starting_date_s | date: "%Y-%m-%d" %}
 
 {% if event.topic == "mechanic/user/trigger" or event.topic == "mechanic/scheduler/daily" %}
+  {% comment %}
+    -- get all orders since the staring date
+  {% endcomment %}
+
   {% capture query %}
     query {
       orders(
@@ -45,11 +104,13 @@
       ) {
         edges {
           node {
+            __typename
             id
             name
             lineItems {
               edges {
                 node {
+                  __typename
                   id
                   quantity
                   originalTotalSet {
@@ -59,9 +120,7 @@
                   }
                   product {
                     id
-                    publishedOnPublication(
-                      publicationId: {{ publication.id | json }}
-                    )
+                    publishedOnPublication(publicationId: {{ publication_id | json }})
                   }
                 }
               }
@@ -88,25 +147,56 @@
       }
     }
   {% endaction %}
+
 {% elsif event.topic == "mechanic/shopify/bulk_operation" %}
-  {% if bulkOperation.objectCount == 0 %}
-    {"error": "No orders were found in this date range."}
+  {% if event.preview %}
+    {% capture jsonl_string %}
+      {"__typename":"Order","id":"gid://shopify/Order/1234567890"}
+      {"__typename":"LineItem","id":"gid://shopify/LineItem/1234567890","quantity":0,"originalTotalSet":{"shopMoney":{"amount":"0.0"}},"product":{"id":"gid://shopify/Product/1234567890","publishedOnPublication":true},"__parentId":"gid://shopify/Order/1234567890"}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = jsonl_string | parse_jsonl %}
   {% endif %}
+
+  {% assign orders = bulkOperation.objects | where: "__typename", "Order" %}
+  {% assign line_items = bulkOperation.objects | where: "__typename", "LineItem" %}
+
+  {% if orders == blank %}
+    {% error "No orders were found in this date range." %}
+    {% break %}
+  {% endif %}
+
+  {% comment %}
+    -- loop through all line items to tally sales by product ID for products currently published on the configured sales channel
+  {% endcomment %}
 
   {% assign sales_by_product_id = hash %}
 
-  {% for object in bulkOperation.objects %}
-    {% if object.id contains "gid://shopify/LineItem/" %}
-      {% assign product = object.product %}
-      {% if product.publishedOnPublication %}
-        {% if options.use_total_quantity_instead_of_line_item_subtotals__boolean %}
-          {% assign sales_by_product_id[product.id] = sales_by_product_id[product.id] | default: 0 | plus: object.quantity %}
-        {% else %}
-          {% assign sales_by_product_id[product.id] = sales_by_product_id[product.id] | default: 0.0 | plus: object.originalTotalSet.shopMoney.amount %}
-        {% endif %}
+  {% for line_item in line_items %}
+    {% assign product = line_item.product %}
+
+    {% if product.publishedOnPublication %}
+      {% if use_total_quantity_instead_of_line_item_subtotals %}
+        {% assign sales_by_product_id[product.id]
+          = sales_by_product_id[product.id]
+          | default: 0
+          | plus: line_item.quantity
+        %}
+
+      {% else %}
+        {% assign sales_by_product_id[product.id]
+          = sales_by_product_id[product.id]
+          | default: 0.0
+          | plus: line_item.originalTotalSet.shopMoney.amount
+        %}
       {% endif %}
     {% endif %}
   {% endfor %}
+
+  {% comment %}
+    -- filter products by the ones which have been published since before the cutoff date
+  {% endcomment %}
 
   {% assign cursor = nil %}
   {% assign published_product_ids = array %}
@@ -114,7 +204,7 @@
   {% for n in (0..100) %}
     {% capture query %}
       query {
-        publication(id: {{ publication.id | json }}) {
+        publication(id: {{ publication_id | json }}) {
           id
           productPublicationsV3(
             first: 250
@@ -122,16 +212,14 @@
           ) {
             pageInfo {
               hasNextPage
+              endCursor
             }
-            edges {
-              cursor
-              node {
-                isPublished
-                publishDate
-                publishable {
-                  ... on Product {
-                    id
-                  }
+            nodes {
+              isPublished
+              publishDate
+              publishable {
+                ... on Product {
+                  id
                 }
               }
             }
@@ -142,37 +230,68 @@
 
     {% assign result = query | shopify %}
 
-    {% assign some_product_publications = result.data.publication.productPublicationsV3.edges | map: "node" %}
-    {% for product_publication in some_product_publications %}
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "publication": {
+              "id": "gid://shopify/Publication/1234567890",
+              "productPublicationsV3": {
+                "nodes": [
+                  {
+                    "isPublished": true,
+                    "publishDate": "2000-02-02T00:00:00Z",
+                    "publishable": {
+                      "id": "gid://shopify/Product/1234567890"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% for product_publication in result.data.publication.productPublicationsV3.nodes %}
       {% if product_publication.isPublished == false %}
         {% continue %}
       {% endif %}
 
       {% assign publish_date_s = product_publication.publishDate | date: "%s" | times: 1 %}
+
       {% if publish_date_s > starting_date_s %}
-        {% if options.test_mode__boolean %}
-          {"log": "Ignoring product {{ product_publication.publishable.id }}; it was published after our starting date threshold."}
+        {% if test_mode %}
+          {% log %}
+            "Ignoring product {{ product_publication.publishable.id }}; it was published after our starting date threshold."
+          {% endlog %}
         {% endif %}
         {% continue %}
       {% endif %}
 
-      {% assign published_product_ids[published_product_ids.size] = product_publication.publishable.id %}
+      {% assign published_product_ids = published_product_ids | push: product_publication.publishable.id %}
     {% endfor %}
 
     {% if result.data.publication.productPublicationsV3.pageInfo.hasNextPage %}
-      {% assign cursor = result.data.publication.productPublicationsV3.edges.last.cursor %}
+      {% assign cursor = result.data.publication.productPublicationsV3.pageInfo.endCursor %}
     {% else %}
       {% break %}
     {% endif %}
   {% endfor %}
+
+  {% comment %}
+    WIP here
+  {% endcomment %}
 
   {% assign product_ids_to_unpublish = array %}
 
   {% for published_product_id in published_product_ids %}
     {% assign sales = sales_by_product_id[published_product_id] | default: 0 %}
 
-    {% if sales < options.minimum_sales_threshold_for_staying_published__number_required %}
-      {% assign product_ids_to_unpublish[product_ids_to_unpublish.size]= published_product_id %}
+    {% if sales < minimum_sales_threshold_for_staying_published %}
+      {% assign product_ids_to_unpublish = product_ids_to_unpublish | push: published_product_id %}
     {% endif %}
   {% endfor %}
 
@@ -181,15 +300,16 @@
     {% assign product_ids_to_unpublish[0] = "gid://shopify/Product/123457890" %}
   {% endif %}
 
-  {% if options.test_mode__boolean %}
-    {% action "echo" %}
+  {% if test_mode %}
+    {% log %}
       {
         "message": "Found {{ product_ids_to_unpublish.size }} products to unpublish, out of {{ published_product_ids.size }} total products on this sales channel",
         "published_product_ids": {{ published_product_ids | json }},
         "sales_by_product_id": {{ sales_by_product_id | json }},
         "product_ids_to_unpublish": {{ product_ids_to_unpublish | json }}
       }
-    {% endaction %}
+    {% endlog %}
+
   {% else %}
     {% for product_id_to_unpublish in product_ids_to_unpublish %}
       {% action "shopify" %}
@@ -197,7 +317,7 @@
           publishableUnpublish(
             id: {{ product_id_to_unpublish | json }}
             input: {
-              publicationId: {{ publication.id | json }}
+              publicationId: {{ publication_id | json }}
             }
           ) {
             userErrors {
