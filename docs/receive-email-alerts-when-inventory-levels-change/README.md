@@ -13,8 +13,8 @@ Use this task to receive immediate email notifications whenever inventory/stock 
 ```json
 {
   "email_recipient__email_required": "",
-  "email_subject__required": "DIFFERENCE inventory for {{ inventory_level.variant.sku }} {{ inventory_level.variant.product.title | default: \"(Product title)\" }} {% if inventory_level.variant.title != blank and inventory_level.variant.title != \"Default Title\" %}({{ inventory_level.variant.title }}) {% endif %}",
-  "email_body__required_multiline": "Currently available inventory: AVAILABLE\nChanged by: DIFFERENCE\nLocation: {{ inventory_level.location.name | default: \"(location)\" }}\n\n<a href=\"https://{{ shop.domain }}/admin/products/inventory/{{inventory_level.inventory_item_id}}/inventory_history?location_id={{ inventory_level.location_id }}\">View inventory history</a>\n<a href=\"https://{{ shop.domain }}/admin/products/{{ inventory_level.variant.product_id }}/variants/{{ inventory_level.variant.id }}\">Manage this variant</a>\n\nThanks,\n{{ shop.name }}"
+  "email_subject__required": "DIFFERENCE inventory for SKU TITLE",
+  "email_body__required_multiline": "Currently available inventory: AVAILABLE\nChanged by: DIFFERENCE\nLocation: LOCATION_NAME\n\nINVENTORY_HISTORY_LINK\nMANAGE_VARIANT_LINK\n\nThanks,\n{{ shop.name }}"
 }
 ```
 
@@ -34,6 +34,15 @@ shopify/inventory_levels/connect
 Use this task to receive immediate email notifications whenever inventory/stock levels are adjusted, whether manually or as a result of a transfer or customer order.
 
 Please note: Mechanic will start sending emails the _second_ time inventory is adjusted for a particular item.
+
+The following "replacement" variables are defined in the task code for usage within the email subject and body. If you wish to include any other additional information, then you will either need to modify the task code to create additional variables, or use a [GraphQL query directly in the task option field](https://learn.mechanic.dev/resources/converting-tasks-from-shopify-rest-to-graphql/conversion-resource-lookups-in-task-option-fields).
+- AVAILABLE
+- DIFFERENCE
+- INVENTORY_HISTORY_LINK
+- LOCATION_NAME
+- MANAGE_VARIANT_LINK
+- SKU
+- TITLE
 
 ## Installing this task
 

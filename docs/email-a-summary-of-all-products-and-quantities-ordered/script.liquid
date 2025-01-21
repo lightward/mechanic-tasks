@@ -1,76 +1,222 @@
-{% assign orders = shop.orders.any %}
-{% assign order_constraint_texts = array %}
+{% assign only_include_open_orders = options.only_include_open_orders__boolean %}
+{% assign only_include_fully_paid_orders = options.only_include_fully_paid_orders__boolean %}
+{% assign only_include_fully_unfulfilled_orders = options.only_include_fully_unfulfilled_orders__boolean %}
+{% assign count_quantities_by_variant = options.count_quantities_by_variant_instead_of_by_product__boolean %}
+{% assign email_recipient = options.email_recipient__email_required %}
+{% assign email_subject = options.email_subject__required %}
 
-{% if options.only_include_open_orders__boolean %}
-  {% assign orders = orders.open %}
+{% assign order_constraint_texts = array %}
+{% assign search_query_parts = array %}
+
+{% if only_include_open_orders %}
+  {% assign search_query_parts = search_query_parts | push: "status:open" %}
+
   {% assign order_constraint_texts[order_constraint_texts.size] = "open" %}
 {% endif %}
 
-{% if options.only_include_fully_paid_orders__boolean %}
-  {% assign orders = orders.paid %}
+{% if only_include_fully_paid_orders %}
+  {% assign search_query_parts = search_query_parts | push: "financial_status:paid" %}
   {% assign order_constraint_texts[order_constraint_texts.size] = "fully paid" %}
 {% endif %}
 
-{% if options.only_include_fully_unfulfilled_orders__boolean %}
-  {% assign orders = orders.unshipped %}
+{% if only_include_fully_unfulfilled_orders %}
+  {% assign search_query_parts = search_query_parts | push: "fulfillment_status:unshipped" %}
   {% assign order_constraint_texts[order_constraint_texts.size] = "fully unshipped" %}
 {% endif %}
 
-{% assign quantities_by_line_item = hash %}
-{% assign line_items = array %}
+{% assign search_query = search_query_parts | join: " " %}
+
+{% log search_query: search_query %}
+
+{% comment %}
+  -- get up to 25K orders filtered by task options (and potentially limited to last 60 days if read_all_orders scope not requested)
+{% endcomment %}
+
+{% assign cursor = nil %}
+{% assign orders = array %}
+
+{% for n in (1..100) %}
+  {% capture query %}
+    query {
+      orders(
+        first: 250
+        after: {{ cursor | json }}
+        query: {{ search_query | json }}
+      ) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          id
+          lineItems(first: 100) {
+            nodes {
+              name
+              title
+              currentQuantity
+              product {
+                legacyResourceId
+              }
+              variant {
+                legacyResourceId
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "orders": {
+            "nodes": [
+              {
+                "id": "gid://shopify/Order/1234567890",
+                "lineItems": {
+                  "nodes": [
+                    {
+                      "name": "Widget - Red",
+                      "title": "Widget",
+                      "currentQuantity": 2,
+                      "product": {
+                        "legacyResourceId": "1234567890"
+                      },
+                      "variant": {
+                        "legacyResourceId": "9876543210"
+                      }
+                    },
+                    {
+                      "name": "Sprocket - Large",
+                      "title": "Sprocket",
+                      "currentQuantity": 3,
+                      "product": {
+                        "legacyResourceId": "2345678901"
+                      },
+                      "variant": {
+                        "legacyResourceId": "8765432109"
+                      }
+                    },
+                    {
+                      "title": "Test Product",
+                      "currentQuantity": 4
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign orders = orders | concat: result.data.orders.nodes %}
+
+  {% if result.data.orders.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.orders.pageInfo.endCursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% comment %}
+  -- group and tally line items by ID or title (in cases where product does not exist)
+{% endcomment %}
+
+{% assign grouped_line_items = hash %}
 
 {% for order in orders %}
-  {% for line_item in order.line_items %}
-    {% if line_item.product_exists %}
-      {% if options.count_quantities_by_variant_instead_of_by_product__boolean %}
-        {% capture line_item_key %}<a href="https://{{ shop.domain }}/admin/products/{{ line_item.product.id }}/variants/{{ line_item.variant.id }}">{{ line_item.name }}</a>{% endcapture %}
+  {% for line_item in order.lineItems.nodes %}
+    {% if line_item.product != blank %}
+      {% if count_quantities_by_variant %}
+        {% assign line_item_key = line_item.variant.legacyResourceId %}
+        {% assign line_item_title = line_item.name %}
+
+        {%- capture line_item_link_or_text -%}
+          <a href="https://{{ shop.domain }}/admin/products/{{ line_item.product.legacyResourceId }}/variants/{{ line_item.variant.legacyResourceId }}">{{ line_item_title }}</a>
+        {%- endcapture -%}
+
       {% else %}
-        {% capture line_item_key %}<a href="https://{{ shop.domain }}/admin/products/{{ line_item.product.id }}">{{ line_item.product.title }}</a>{% endcapture %}
+        {% assign line_item_key = line_item.product.legacyResourceId %}
+        {% assign line_item_title = line_item.title %}
+
+        {%- capture line_item_link_or_text -%}
+          <a href="https://{{ shop.domain }}/admin/products/{{ line_item.product.legacyResourceId }}">{{ line_item_title }}</a>
+        {%- endcapture -%}
       {% endif %}
+
     {% else %}
       {% assign line_item_key = line_item.title %}
+      {% assign line_item_title = line_item.title %}
+
+      {%- capture line_item_link_or_text -%}
+        {{ line_item_title }}
+      {%- endcapture -%}
     {% endif %}
 
-    {% assign quantities_by_line_item[line_item_key] = quantities_by_line_item[line_item_key] | default: 0 | plus: line_item.quantity %}
-    {% assign line_items[line_items.size] = line_item_key %}
+    {% if grouped_line_items[line_item_key] == blank %}
+      {% assign grouped_line_items[line_item_key] = hash %}
+      {% assign grouped_line_items[line_item_key]["line_item_link_or_text"] = line_item_link_or_text %}
+      {% assign grouped_line_items[line_item_key]["title"] = line_item_title %}
+      {% assign grouped_line_items[line_item_key]["quantity"] = 0 %}
+    {% endif %}
+
+    {% assign grouped_line_items[line_item_key]["quantity"] = grouped_line_items[line_item_key]["quantity"] | plus: line_item.currentQuantity %}
   {% endfor %}
 {% endfor %}
 
-{% assign line_items = line_items | uniq | sort %}
+{% comment %}
+  -- convert the grouped hash into an array so the list output may be sorted by title
+{% endcomment %}
+
 {% assign list_items = array %}
 
-{% for line_item in line_items %}
-  {% capture list_item %}<li>{{ line_item }}: {{ quantities_by_line_item[line_item] }}</li>{% endcapture %}
-  {% assign list_items[list_items.size] = list_item %}
+{% for keyval in grouped_line_items %}
+  {% assign line_item_data = keyval[1] %}
+
+  {% unless line_item_data["quantity"] > 0 %}
+    {% continue %}
+  {% endunless %}
+
+  {% assign list_item = hash %}
+
+  {%- capture list_item_content -%}
+    <li>{{ line_item_data["line_item_link_or_text"] }}: {{ line_item_data["quantity"] }}</li>
+  {%- endcapture -%}
+  
+  {% assign list_item["content"] = list_item_content %}
+  {% assign list_item["title"] = line_item_data["title"] %}
+  {% assign list_items = list_items | push: list_item %}
 {% endfor %}
 
-{% if event.preview %}
-  {% assign list_items[0] = "<li>Alpha: 5</li>" %}
-  {% assign list_items[1] = "<li>Beta: 6</li>" %}
-  {% assign list_items[2] = "<li>Gamma: 7</li>" %}
-  {% assign list_items[3] = "<li>Delta: 8</li>" %}
-{% endif %}
+{% assign sorted_list_items = list_items | sort_naturally: "title" %}
 
 {% capture email_body %}
   Hi there,
 
   These are the products and ordered quantities, for all {{ order_constraint_texts | join: ", " }} orders:
-  
-  {{ list_items | join: "" }}
+
+  {% for list_item in sorted_list_items -%}
+    {{ list_item.content }}
+  {%- endfor %}
 
   Thanks,
   Mechanic (for {{ shop.name }})
 {% endcapture %}
 
-{
-  "action": {
-    "type": "email",
-    "options": {
-      "to": {{ options.email_recipient__email_required | json }},
-      "subject": {{ options.email_subject__required | json }},
-      "body": {{ email_body | unindent | newline_to_br | json }},
-      "reply_to": {{ shop.customer_email | json }},
-      "from_display_name": {{ shop.name | json }}
-    }
+{% action "email" %}
+  {
+    "to": {{ email_recipient | json }},
+    "subject": {{ email_subject | json }},
+    "body": {{ email_body | unindent | newline_to_br | json }},
+    "reply_to": {{ shop.customer_email | json }},
+    "from_display_name": {{ shop.name | json }}
   }
-}
+{% endaction %}
