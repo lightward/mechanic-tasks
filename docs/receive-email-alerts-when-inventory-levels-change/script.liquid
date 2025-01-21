@@ -1,9 +1,14 @@
+{% assign email_recipient = options.email_recipient__email_required %}
+{% assign email_subject = options.email_subject__required %}
+{% assign email_body = options.email_body__required_multiline %}
+
 {% if event.preview %}
   {% capture inventory_level_json %}
     {
-      "inventory_item_id": 271878346596884015,
-      "location_id": 48752903,
-      "available": 5
+      "inventory_item_id": 1234567890,
+      "location_id": 1234567890,
+      "available": 5,
+      "admin_graphql_api_id": "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890"
     }
   {% endcapture %}
 
@@ -14,28 +19,112 @@
 
 {% assign previous_available = cache[cache_key] %}
 
-{% if previous_available != nil %}
-  {% assign available_difference = inventory_level.available | minus: previous_available %}
-  {% if available_difference >= 0 %}
-    {% assign available_difference = "+" | append: available_difference %}
-  {% endif %}
-
-  {% action "email" %}
-    {
-      "to": {{ options.email_recipient__email_required | json }},
-      "subject": {{ options.email_subject__required | replace: "AVAILABLE", inventory_level.available | replace: "DIFFERENCE", available_difference | strip | json }},
-      "body": {{ options.email_body__required_multiline | replace: "AVAILABLE", inventory_level.available | replace: "DIFFERENCE", available_difference | strip | newline_to_br | json }},
-      "reply_to": {{ shop.customer_email | json }},
-      "from_display_name": {{ shop.name | json }}
-    }
-  {% endaction %}
+{% if event.preview %}
+  {% assign previous_available = 9 %}
 {% endif %}
 
-{% action "cache" %}
-  {
-    "set": {
-      "key": {{ cache_key | json }},
-      "value": {{ inventory_level.available }}
+{% action "cache", "set", cache_key, inventory_level.available %}
+
+{% if previous_available == blank %}
+  {% break %}
+{% endif %}
+
+{% assign available_difference = inventory_level.available | minus: previous_available %}
+
+{% if available_difference >= 0 %}
+  {% assign available_difference = "+" | append: available_difference %}
+{% endif %}
+
+{% comment %}
+  -- get additional data to be used in email content substitutions
+{% endcomment %}
+
+{% capture query %}
+  query {
+    inventoryLevel(id: {{ inventory_level.admin_graphql_api_id | json }}) {
+      location {
+        name
+      }
+      item {
+        inventoryHistoryUrl
+        sku
+        variant {
+          legacyResourceId
+          displayName
+          product {
+            legacyResourceId
+          }
+        }
+      }
     }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "inventoryLevel": {
+          "location": {
+            "name": "Warehouse A"
+          },
+          "item": {
+            "inventoryHistoryUrl": "https://preview-sample.myshopify.com/admin/products/inventory/1234567890/inventory_history",
+            "sku": "WDGT123",
+            "variant": {
+              "legacyResourceId": "1234567890",
+              "displayName": "Widget - Default Title",
+              "product": {
+                "legacyResourceId": "987654321"
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% assign location_name = result.data.inventoryLevel.location.name %}
+{% assign sku = result.data.inventoryLevel.item.sku %}
+{% assign title = result.data.inventoryLevel.item.variant.displayName | remove: " - Default Title" %}
+{% assign variant_id = result.data.inventoryLevel.item.variant.legacyResourceId %}
+{% assign product_id = result.data.inventoryLevel.item.variant.product.legacyResourceId %}
+
+{%- capture inventory_history_link -%}
+  <a href="{{ result.data.inventoryLevel.item.inventoryHistoryUrl }}?location_id={{ inventory_level.location_id }}">View inventory history</a>
+{%- endcapture -%}
+
+{%- capture manage_variant_link -%}
+  <a href="{{ shop.admin_url }}products/{{ product_id }}/variants/{{ variant_id }}">Manage this variant</a>
+{%- endcapture -%}
+
+{% assign email_subject
+  = email_subject
+  | replace: "DIFFERENCE", available_difference
+  | replace: "SKU", sku
+  | replace: "TITLE", title
+%}
+
+{% assign email_body
+  = email_body
+  | replace: "AVAILABLE", inventory_level.available
+  | replace: "DIFFERENCE", available_difference
+  | replace: "INVENTORY_HISTORY_LINK", inventory_history_link
+  | replace: "LOCATION_NAME", location_name
+  | replace: "MANAGE_VARIANT_LINK", manage_variant_link
+%}
+
+{% action "email" %}
+  {
+    "to": {{ email_recipient | json }},
+    "subject": {{ email_subject | strip | json }},
+    "body": {{ email_body | strip | newline_to_br | json }},
+    "reply_to": {{ shop.customer_email | json }},
+    "from_display_name": {{ shop.name | json }}
   }
 {% endaction %}

@@ -38,7 +38,7 @@ mechanic/scheduler/{{ options.day_of_week_to_send_email__required | default: "mo
 
 Use this task to send yourself a quick tally of everything currently waiting in your order list. Super simple: just a list of products, and how many of each were ordered.
 
-This task will scan all of your orders, by default. Configure the task to only look at open, and/or fully paid, and/or fully unshipped orders. This task does not filter orders by when they were placed - only by their status.
+Configure the task to only look at open, and/or fully paid, and/or fully unshipped orders. This task does not filter orders by when they were placed - only by their status.
 
 ## Installing this task
 
