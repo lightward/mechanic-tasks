@@ -226,11 +226,11 @@
       {% assign result = result_json | parse_json %}
     {% endif %}
 
-    {% assign collection = result.data.collection %}
+    {% assign collection = result.data.collection | except: "products" %}
     {% assign products = products | concat: result.data.collection.products.nodes %}
 
-    {% if result.data.products.pageInfo.hasNextPage %}
-      {% assign cursor = result.data.products.pageInfo.endCursor %}
+    {% if result.data.collection.products.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.collection.products.pageInfo.endCursor %}
     {% else %}
       {% break %}
     {% endif %}
