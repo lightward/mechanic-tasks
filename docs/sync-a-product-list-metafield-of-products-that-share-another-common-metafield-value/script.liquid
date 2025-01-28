@@ -1,0 +1,131 @@
+{% comment %}Set up the task options{% endcomment %}
+{% assign group_by_namespace = options.group_by_metafield_namespace__required %}
+{% assign group_by_key = options.group_by_metafield_key__required %}
+{% assign product_list_namespace = options.product_list_metafield_namespace__required %}
+{% assign product_list_key = options.product_list_metafield_key__required %}
+{% assign remove_out_of_stock = options.remove_out_of_stock_products__boolean %}
+{% assign include_current_product = options.include_current_product__boolean %}
+
+{% comment %}Run the bulk GraphQL query{% endcomment %}
+{% if event.topic == "mechanic/user/trigger" or event.topic == "mechanic/scheduler/daily" %}
+  {% capture bulk_operation_query %}
+    query {
+      products(query: "status:ACTIVE{% if remove_out_of_stock %} inventory_total:>0{% endif %}") {
+        edges {
+          node {
+            __typename
+            id
+            title
+            group: metafield(
+                namespace: {{ group_by_namespace | json }}
+                key: {{ group_by_key | json }}
+            ) {
+                value
+            }
+            product_list: metafield(
+                namespace: {{ product_list_namespace | json }}
+                key: {{ product_list_key | json }}
+            ) {
+                value
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% comment %}Preview data for debugging{% endcomment %}
+  {% if event.preview %}
+    {% capture jsonl_string %}
+      {"__typename":"Product","id":"gid:\/\/shopify\/Product\/7819883282585","title":"Sample Product 1","group":{"id":"gid:\/\/shopify\/Metafield\/39837328081049","value":"Converse"},"product_list":null}
+{"__typename":"Product","id":"gid:\/\/shopify\/Product\/7819883380889","title":"Sample Product 2","group":{"value":"Converse"},"product_list":{"value":"[\"gid:\/\/shopify\/Product\/7819883282585\",\"gid:\/\/shopify\/Product\/7819883380889\",\"gid:\/\/shopify\/Product\/7819883413657\"]"}}
+{"__typename":"Product","id":"gid:\/\/shopify\/Product\/7819883413657","title":"Sample Product 3","group":{"value":"Converse"},"product_list":null}
+    {% endcapture %}
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = jsonl_string | parse_jsonl %}
+  {% endif %}
+
+  {% comment %}Build a hash (object) keyed by unique values from the group by field, each element is an array of product ids with a matching group by value{% endcomment %}
+  {% assign products_to_process = bulkOperation.objects %}
+  {% assign products_groups = hash %}
+  {% for product in products_to_process %}
+    {% if product.group.value %}
+      {% unless products_groups[product.group.value] %}
+        {% assign products_groups[product.group.value] = array %}
+      {% endunless %}
+      {% assign products_groups[product.group.value] = products_groups[product.group.value] | push: product.id %}
+    {% endif %}
+  {% endfor %}
+
+  {% comment %}
+    Procees all products
+  {% endcomment %}
+  {% for current_product in products_to_process %}
+    {% if current_product.group.value %}
+      {% assign product_list = products_groups[current_product.group.value] %}
+      
+      {% unless include_current_product %}
+        {% comment %}
+          The array we built will contain the current product too so unless a user selects the 'Include Current Product' option we rebuild it without the current product in (there's no easy function for removing an item from an array in liquid/Mechanic)
+        {% endcomment %}
+        {% assign product_list_less_current = array %}
+        {% for product_list_item in products_groups[current_product.group.value] %}
+          {% unless product_list_item == current_product.id %}
+            {% assign product_list_less_current = product_list_less_current | push: product_list_item %}
+          {% endunless %}
+        {% endfor %}
+        {% assign product_list = product_list_less_current %}
+      {% endunless %}
+
+      {% comment %}
+        Check if the product list metafield value is already correct and update it if not
+      {% endcomment %}
+      {% assign product_list_json = product_list | json  %}
+      {% if current_product.product_list.value != product_list_json %}
+        {% action "shopify" %}
+          mutation {
+            metafieldsSet(
+              metafields: [{
+                ownerId: {{ current_product.id | json }},
+                namespace: {{ product_list_namespace | json }},
+                key: {{ product_list_key | json }},
+                value: {{ product_list | json | json }},
+                type: "list.product_reference"
+              }]
+            ) {
+              metafields {
+                namespace
+                key
+                value
+              }
+              userErrors {
+                code
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+        {% log message: "Updated product:", details: current_product.title %}
+      {% else %}
+        {% log message: "Metafield values match, skipped updating product:", details: current_product.title %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
