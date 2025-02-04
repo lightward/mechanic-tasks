@@ -149,6 +149,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag products when another tag is added](./auto-tag-products-when-another-tag-is-added)
 * [Auto-tag products when their variants change](./auto-tag-products-when-their-skus-change)
 * [Auto-tag products with incoming inventory](./auto-tag-products-with-incoming-inventory)
+* [Auto-tag products with their category](./auto-tag-products-with-their-category)
 * [Auto-tag products with their vendors](./auto-tag-products-with-their-vendors)
 * [Auto-tag products without descriptions](./auto-tag-products-without-descriptions)
 * [Auto-untag customers when a certain product is refunded](./auto-untag-customers-when-a-certain-product-is-refunded)
@@ -313,6 +314,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Sync an inverse customer tag](./sync-an-inverse-customer-tag)
 * [Sync an inverse order tag](./sync-an-inverse-order-tag)
 * [Sync an inverse product tag](./sync-an-inverse-product-tag)
+* [Sync in stock locations to a variant metafield](./sync-in-stock-locations-to-a-variant-metafield)
 * [Sync inventory across a product type](./sync-inventory-across-a-product-type)
 * [Sync inventory across product variants](./sync-inventory-across-product-variants)
 * [Sync inventory for shared SKUs](./sync-inventory-for-shared-skus)
@@ -332,6 +334,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Tag orders that have at least x of a certain product](./tag-orders-that-have-at-least-x-of-a-certain-product)
 * [Tag products as in- or out-of-stock, by location ID](./tag-products-as-in-or-out-of-stock-by-location-id)
 * [Tag products as in- or out-of-stock](./tag-products-as-in-or-out-of-stock)
+* [Tag products by metaobject reference field values](./tag-products-ny-metaobject-reference-field-values)
 * [Tag products by their price ranges](./tag-products-by-their-price-ranges)
 * [Tag products with no images](./tag-products-with-no-images)
 * [Temporarily add an order note](./temporarily-add-an-order-note)
@@ -498,6 +501,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag products when another tag is added](./auto-tag-products-when-another-tag-is-added)
 * [Auto-tag products when their variants change](./auto-tag-products-when-their-skus-change)
 * [Auto-tag products with incoming inventory](./auto-tag-products-with-incoming-inventory)
+* [Auto-tag products with their category](./auto-tag-products-with-their-category)
 * [Auto-tag products with their vendors](./auto-tag-products-with-their-vendors)
 * [Auto-tag products without descriptions](./auto-tag-products-without-descriptions)
 * [Copy order and/or product tags to customers](./copy-order-tags-to-customers)
@@ -595,6 +599,10 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Catalog
 
 * [Generate a simple product catalog PDF](./generate-a-simple-product-catalog-pdf)
+
+### Category
+
+* [Auto-tag products with their category](./auto-tag-products-with-their-category)
 
 ### Collections
 
@@ -1094,6 +1102,10 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Tag customers who reach a certain threshold of refunded orders](./tag-customers-who-reach-a-certain-threshold-of-refunded-orders)
 * [Track incoming donations in a store metafield](./track-incoming-donations-in-a-store-metafield)
 
+### Metaobjects
+
+* [Tag products by metaobject reference field values](./tag-products-ny-metaobject-reference-field-values)
+
 ### Multi-Location
 
 * [Auto-connect new products to all locations](./auto-connect-new-products-to-all-locations)
@@ -1343,6 +1355,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag products when another tag is added](./auto-tag-products-when-another-tag-is-added)
 * [Auto-tag products when their variants change](./auto-tag-products-when-their-skus-change)
 * [Auto-tag products with incoming inventory](./auto-tag-products-with-incoming-inventory)
+* [Auto-tag products with their category](./auto-tag-products-with-their-category)
 * [Auto-tag products with their vendors](./auto-tag-products-with-their-vendors)
 * [Auto-tag products without descriptions](./auto-tag-products-without-descriptions)
 * [Auto-update inventory policy based on a "preorder" tag](./auto-update-inventory-policy-based-on-a-preorder-tag)
@@ -1395,6 +1408,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Sync inventory levels to variant metafields](./sync-inventory-levels-to-variant-metafields)
 * [Sync variant inventory within a product by pack size](./sync-variant-inventory-within-a-product-by-pack-size)
 * [Tag products as in- or out-of-stock](./tag-products-as-in-or-out-of-stock)
+* [Tag products by metaobject reference field values](./tag-products-ny-metaobject-reference-field-values)
 * [Tag products by their price ranges](./tag-products-by-their-price-ranges)
 * [Tag products with no images](./tag-products-with-no-images)
 * [Track incoming donations in a store metafield](./track-incoming-donations-in-a-store-metafield)
@@ -1666,6 +1680,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Tag customers on the anniversary of their first order](./tag-customers-on-the-anniversary-of-their-first-order)
 * [Tag customers who reach a certain threshold of refunded orders](./tag-customers-who-reach-a-certain-threshold-of-refunded-orders)
 * [Tag new orders of customers with prior unpaid orders](./tag-new-orders-of-customers-with-prior-unpaid-orders)
+* [Tag products by metaobject reference field values](./tag-products-ny-metaobject-reference-field-values)
 * [Tag products with no images](./tag-products-with-no-images)
 * [Temporarily enable tax-exempt status when a customer is tagged](./temporarily-enable-tax-exempt-status-when-a-customer-is-tagged)
 * [Trigger order emails with a tag](./trigger-order-emails-with-a-tag)
@@ -1712,6 +1727,7 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Uncategorized
 
 * [Mechanic tour task](./mechanic-tour-task)
+* [Sync in stock locations to a variant metafield](./sync-in-stock-locations-to-a-variant-metafield)
 
 ### Unpaid
 

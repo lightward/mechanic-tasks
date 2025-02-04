@@ -1,0 +1,362 @@
+{% assign product_metafield = options.product_metafield__required %}
+{% assign metaobject_field_keys_and_tag_prefixes = options.metaobject_field_keys_and_tag_prefixes__keyval_required %}
+{% assign remove_outdated_prefixed_tags = options.remove_outdated_prefixed_tags__boolean %}
+{% assign run_daily = options.run_daily__boolean %}
+{% assign test_mode = options.test_mode__boolean %}
+
+{% assign metaobject_field_keys = metaobject_field_keys_and_tag_prefixes | keys %}
+
+{% unless event.preview %}
+  {% log
+    task_config: "for this task run...",
+    product_metafield: product_metafield,
+    metaobject_field_keys_and_tag_prefixes: metaobject_field_keys_and_tag_prefixes,
+    remove_outdated_prefixed_tags: remove_outdated_prefixed_tags,
+    run_daily: run_daily,
+    test_mode: test_mode
+  %}
+{% endunless %}
+
+{% comment %}
+  -- create hash of configured tag prefixes for lookups
+{% endcomment %}
+
+{% assign tag_prefixes_hash = hash %}
+
+{% for keyval in metaobject_field_keys_and_tag_prefixes %}
+  {% assign metaobject_field_key = keyval[0] %}
+  {% assign tag_prefix = keyval[1] %}
+
+  {% if tag_prefix != blank %}
+    {% assign tag_prefixes_hash[metaobject_field_key] = tag_prefix | lstrip %}
+  {% endif %}
+{% endfor %}
+
+{% assign tag_prefixes = tag_prefixes_hash | values %}
+
+{% assign products = array %}
+
+{% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% comment %}
+    -- get all active products in the shop (up to 25K)
+  {% endcomment %}
+
+  {% assign cursor = nil %}
+
+  {% for n in (1..100) %}
+    {% capture query %}
+      query {
+        products(
+          first: 250
+          after: {{ cursor | json }}
+          query: "status:active"
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            tags
+            metafield(key: {{ product_metafield | json }}) {
+              type
+              jsonValue
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% assign products
+      = result.data.products.nodes
+      | default: array
+      | concat: products
+    %}
+
+    {% if result.data.products.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.products.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+{% elsif event.topic contains "shopify/products/" %}
+  {% capture query %}
+    query {
+      product(id: {{ product.admin_graphql_api_id | json }}) {
+        id
+        tags
+        metafield(key: {{ product_metafield | json }}) {
+          type
+          jsonValue
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% assign products[0] = result.data.product %}
+{% endif %}
+
+{% if event.preview %}
+  {% capture products_json %}
+    [
+      {
+        "id": "gid://shopify/Product/1234567890",
+        "metafield": {
+          "type": "list.metaobject_reference",
+          "jsonValue": [
+            "gid://shopify/Metaobject/1234567890"
+          ]
+        }
+      }
+    ]
+  {% endcapture %}
+
+  {% assign products = products_json | parse_json %}
+{% endif %}
+
+{% assign product_ids_and_tags = hash %}
+{% assign seen_metaobjects = hash %}
+
+{% for product in products %}
+  {% assign tags_should_have = array %}
+  {% assign tags_to_add = array %}
+  {% assign tags_to_remove = array %}
+
+  {% if product.metafield == blank %}
+    {% continue %}
+  {% endif %}
+
+  {% unless product.metafield.type contains "metaobject_reference" %}
+    {% error
+      message: "The configured product metafield is neither a 'metaobject_reference' nor a 'list.metaobject_reference' type.",
+      product: product
+    %}
+    {% break %}
+  {% endunless %}
+
+  {% comment %}
+    -- jsonValue will return a string or array depending on metafield type; iterating over the value will work for both cases
+  {% endcomment %}
+
+  {% assign product_metaobject_ids = product.metafield.jsonValue %}
+
+  {% for product_metaobject_id in product_metaobject_ids %}
+    {% comment %}
+      -- get metaobject data if it hasn't been seen yet on this task run
+    {% endcomment %}
+
+    {% if seen_metaobjects[product_metaobject_id] == blank %}
+      {% capture query %}
+        query {
+          metaobject(id: {{ product_metaobject_id | json }}) {
+            id
+            handle
+            displayName
+            fields {
+              key
+              type
+              jsonValue
+            }
+          }
+        }
+
+      {% endcapture %}
+
+      {% assign result = query | shopify %}
+
+      {% if event.preview %}
+        {% capture result_json %}
+          {
+            "data": {
+              "metaobject": {
+                "id": "gid://shopify/Metaobject/1234567890",
+                "handle": "preview-sample",
+                "displayName": "Preview Sample",
+                "fields": [
+                  {
+                    "key": {{ metaobject_field_keys.first | json }},
+                    "type": "list.single_line_text_field",
+                    "jsonValue": [
+                      "Preview",
+                      "Sample"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        {% endcapture %}
+
+        {% assign result = result_json | parse_json %}
+      {% endif %}
+
+      {% assign seen_metaobjects[product_metaobject_id] = result.data.metaobject %}
+    {% endif %}
+
+    {% assign metaobject = seen_metaobjects[product_metaobject_id] %}
+
+    {% comment %}
+      -- get values from metaobject fields
+    {% endcomment %}
+
+    {% for metaobject_field_key in metaobject_field_keys %}
+      {% assign tag_prefix = tag_prefixes_hash[metaobject_field_key] %}
+      {% assign metaobject_field
+        = metaobject.fields
+        | where: "key", metaobject_field_key
+        | first
+      %}
+
+      {% if metaobject_field == blank %}
+        {% continue %}
+      {% endif %}
+
+      {% assign metaobject_field_type = metaobject_field.type | remove: "list." %}
+      {% assign metaobject_field_values = metaobject_field.jsonValue %}
+
+      {% for metaobject_field_value in metaobject_field.jsonValue %}
+        {% case metaobject_field_type %}
+          {% when "boolean" %}
+            {% capture tag %}{{ tag_prefix }}{{ metaobject_field_value }}{% endcapture %}
+            {% assign tags_should_have[tags_should_have.size] = tag | strip %}
+
+          {% when "color" %}
+            {% capture tag %}{{ tag_prefix }}{{ metaobject_field_value }}{% endcapture %}
+            {% assign tags_should_have[tags_should_have.size] = tag | strip %}
+
+          {% when "date" %}
+            {% capture tag %}{{ tag_prefix }}{{ metaobject_field_value }}{% endcapture %}
+            {% assign tags_should_have[tags_should_have.size] = tag | strip %}
+
+          {% when "date_time" %}
+            {% capture tag %}{{ tag_prefix }}{{ metaobject_field_value }}{% endcapture %}
+            {% assign tags_should_have[tags_should_have.size] = tag | strip %}
+
+          {% when "dimension" %}
+            {% capture tag %}{{ tag_prefix }}{{ metaobject_field_value.value }} {{ metaobject_field_value.unit }}{% endcapture %}
+            {% assign tags_should_have[tags_should_have.size] = tag | strip %}
+
+          {% when "number_decimal" %}
+            {% capture tag %}{{ tag_prefix }}{{ metaobject_field_value }}{% endcapture %}
+            {% assign tags_should_have[tags_should_have.size] = tag | strip %}
+
+          {% when "number_integer" %}
+            {% capture tag %}{{ tag_prefix }}{{ metaobject_field_value }}{% endcapture %}
+            {% assign tags_should_have[tags_should_have.size] = tag | strip %}
+
+          {% when "rating" %}
+            {% capture tag %}{{ tag_prefix }}{{ metaobject_field_value.value }} / {{ metaobject_field_value.scale_max }}{% endcapture %}
+            {% assign tags_should_have[tags_should_have.size] = tag | strip %}
+
+          {% when "single_line_text_field" %}
+            {% capture tag %}{{ tag_prefix }}{{ metaobject_field_value }}{% endcapture %}
+            {% assign tags_should_have[tags_should_have.size] = tag | strip %}
+
+          {% when "volume" %}
+            {% capture tag %}{{ tag_prefix }}{{ metaobject_field_value.value }} {{ metaobject_field_value.unit }}{% endcapture %}
+            {% assign tags_should_have[tags_should_have.size] = tag | strip %}
+
+          {% when "weight" %}
+            {% capture tag %}{{ tag_prefix }}{{ metaobject_field_value.value }} {{ metaobject_field_value.unit }}{% endcapture %}
+            {% assign tags_should_have[tags_should_have.size] = tag | strip %}
+
+          {% else %}
+            {% log
+              message: "Unsupported metaobject field type for this task",
+              metaobject_field_type: metaobject_field.type,
+              product_id: product.id
+            %}
+        {% endcase %}
+      {% endfor %}
+    {% endfor %}
+  {% endfor %}
+
+  {% if remove_outdated_prefixed_tags %}
+    {% for tag_prefix in tag_prefixes %}
+      {% assign tag_prefix_size = tag_prefix.size %}
+
+      {% for product_tag in product.tags %}
+        {% assign product_tag_slice = product_tag | slice: 0, tag_prefix_size %}
+
+        {% if product_tag.size > tag_prefix_size and product_tag_slice == tag_prefix %}
+          {% unless tags_should_have contains product_tag %}
+            {% assign tags_to_remove = tags_to_remove | push: product_tag %}
+          {% endunless %}
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+  {% endif %}
+
+  {% for tag_should_have in tags_should_have %}
+    {% unless product.tags contains tag_should_have %}
+      {% assign tags_to_add = tags_to_add | push: tag_should_have %}
+    {% endunless %}
+  {% endfor %}
+
+  {% if tags_to_add != blank or tags_to_remove != blank %}
+    {% assign product_ids_and_tags[product.id] = hash %}
+    {% assign product_ids_and_tags[product.id]["tags_to_add"] = tags_to_add %}
+    {% assign product_ids_and_tags[product.id]["tags_to_remove"] = tags_to_remove %}
+
+  {% else %}
+    {% log
+      message: "No tagging operations needed for this product with a metafield reference; skipping.",
+      product: product
+    %}
+  {% endif %}
+{% endfor %}
+
+{% unless event.preview %}
+  {% log metaobjects_seen_on_this_task_run: seen_metaobjects %}
+{% endunless %}
+
+{% if test_mode %}
+  {% log %}
+    {
+      "message": "Found {{ product_ids_and_tags.size }} tagging operations",
+      "product_ids_and_tags": {{ product_ids_and_tags | json }}
+    }
+  {% endlog %}
+
+  {% break %}
+{% endif %}
+
+{% for keyval in product_ids_and_tags %}
+  {% assign product_id = keyval[0] %}
+  {% assign tags_to_add = keyval[1].tags_to_add %}
+  {% assign tags_to_remove = keyval[1].tags_to_remove %}
+
+  {% if tags_to_add != blank or tags_to_remove != blank %}
+    {% action "shopify" %}
+      mutation {
+        {% if tags_to_add != blank %}
+          tagsAdd(
+            id: {{ product_id | json }}
+            tags: {{ tags_to_add | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        {% endif %}
+        {% if tags_to_remove != blank %}
+          tagsRemove(
+            id: {{ product_id | json }}
+            tags: {{ tags_to_remove | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        {% endif %}
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}
