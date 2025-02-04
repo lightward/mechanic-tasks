@@ -17,6 +17,7 @@ This task re-sorts your collections by the product property, product metafield, 
   "first_variant_property": "",
   "only_sort_these_collections__array": null,
   "reverse_sort__boolean": false,
+  "sort_naturally__boolean": false,
   "run_hourly__boolean": false,
   "run_daily__boolean": false
 }
@@ -43,7 +44,7 @@ user/collection_sort/complete
 
 This task re-sorts your collections by the product property, product metafield, or variant property that you choose. Use the "Product property" or "First variant property" options to control what attribute the task looks up. For example, using `publishedAt` in the "Product property" field will result in sorting by the date and time the product was published, while using `sku` in the "First variant property" field will result in sorting by the sku of the first variant of each product in the collection. Alternatively, enter a product metafield as "namespace.key" (e.g. `store.priority`), and the task will attempt to sort by the value of that metafield.
 
-Run this task manually to re-sort your collections on demand, or choose to run it hourly or nightly. This task will scan all collections in the shop on each run, unless you configure it to only sort certain collections using each collection's title, handle, or ID. Optionally, choose the "Reverse sort" option to have the results reversed, mainly useful for sorting by descending numeric values (e.g. `inventoryTotal`).
+Run this task manually to re-sort your collections on demand, or choose to run it hourly or nightly. This task will scan all collections in the shop on each run, unless you configure it to only sort certain collections using each collection's title, handle, or ID. Optionally, choose the "Reverse sort" option to have the results reversed, mainly useful for sorting by descending numeric values (e.g. `inventoryTotal`). If the property/metafield value contains numeric strings, consider using the ["Sort naturally"](https://learn.mechanic.dev/platform/liquid/filters#sort_naturally) task option.
 
 **Important:**
 

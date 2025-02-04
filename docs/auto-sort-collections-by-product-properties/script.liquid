@@ -3,6 +3,7 @@
 {% assign first_variant_property = options.first_variant_property %}
 {% assign only_sort_these_collections = options.only_sort_these_collections__array %}
 {% assign reverse_sort = options.reverse_sort__boolean %}
+{% assign sort_naturally = options.sort_naturally__boolean %}
 
 {% comment %}
   -- build the query fragment for the configured property
@@ -256,27 +257,55 @@
 
     {% comment %}
       -- make sure this is always a serializable/sortable object, defaulting to nil in the case of an empty string
-      -- values which are *either* nil or an empty string will always end up at the end of the list
     {% endcomment %}
 
     {% assign product_id_and_value["value"] = value | json | parse_json | default: nil %}
     {% assign product_ids_and_values[product_ids_and_values.size] = product_id_and_value %}
   {% endfor %}
 
-  {% assign sorted_product_values = product_ids_and_values | sort: "value" %}
-  {% assign sorted_product_ids = sorted_product_values | map: "id" %}
+  {% assign current_sort_product_ids = product_ids_and_values | map: "id" %}
+
+  {% comment %}
+    -- use sort_natural filter so the sort is case-insensitive
+    -- use sort_naturally when option chosen to sort numeric strings as humans might expect
+    -- exclude null values from the sort since sort_naturally leaves them in front
+  {% endcomment %}
+
+  {% if sort_naturally %}
+    {% assign sorted_product_values
+      = product_ids_and_values
+      | where: "value"
+      | sort_naturally: "value"
+    %}
+
+  {% else %}
+    {% assign sorted_product_values
+      = product_ids_and_values
+      | where: "value"
+      | sort_natural: "value"
+    %}
+  {% endif %}
+
+  {% log sorted_product_values: sorted_product_values %}
+
+  {% comment %}
+    -- concatenate nil values to end of sorted IDs regardless of whether the sort is reversed or not
+  {% endcomment %}
 
   {% if reverse_sort %}
-    {% comment %}
-      -- only reverse the order of products which have values, leaving nil values at the end
-    {% endcomment %}
-
     {% assign sorted_product_ids
       = sorted_product_values
-      | where: "value"
       | map: "id"
       | reverse
-      | concat: sorted_product_ids
+      | concat: current_sort_product_ids
+      | uniq
+    %}
+
+  {% else %}
+    {% assign sorted_product_ids
+      = sorted_product_values
+      | map: "id"
+      | concat: current_sort_product_ids
       | uniq
     %}
   {% endif %}
