@@ -1,0 +1,274 @@
+{% assign variant_metafield = options.variant_metafield__required %}
+{% assign include_location_names = options.include_location_names__array %}
+{% assign exclude_location_names = options.exclude_location_names__array %}
+
+{% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% comment %}
+    -- if this is a scheduled event run, then create a search query filter in relation to the scheduler interval
+  {% endcomment %}
+
+  {% if event.topic contains "mechanic/scheduler/" %}
+    {% if event.topic == "mechanic/scheduler/10min" %}
+      {% assign lookback = event.data | date: "%FT%TZ", tz: "UTC", advance: "-10 minutes" %}
+
+    {% elsif event.topic == "mechanic/scheduler/hourly" %}
+      {% assign lookback = event.data | date: "%FT%TZ", tz: "UTC", advance: "-1 hour" %}
+
+    {% elsif event.topic == "mechanic/scheduler/daily" %}
+      {% assign lookback = event.data | date: "%FT%TZ", tz: "UTC", advance: "-1 day" %}
+    {% endif %}
+
+    {% if lookback %}
+      {% assign search_query = lookback | json | prepend: "updated_at:>=" %}
+    {% endif %}
+
+    {% unless event.preview %}
+      {% log search_query: search_query %}
+    {% endunless %}
+  {% endif %}
+
+  {% comment %}
+    -- get all or recently updated variants in the shop, depending upon event topic
+  {% endcomment %}
+
+  {% assign cursor = nil %}
+  {% assign variants = array %}
+
+  {% for n in (1..100) %}
+    {% capture query %}
+      query {
+        productVariants(
+          first: 250
+          after: {{ cursor | json }}
+          query: {{ search_query | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            displayName
+            inventoryPolicy
+            metafield(key: {{ variant_metafield | json }}) {
+              jsonValue
+            }
+            inventoryItem {
+              tracked
+              inventoryLevels(
+                first: 200
+              ) {
+                nodes {
+                  location {
+                    name
+                  }
+                  quantities(names: "available") {
+                    quantity
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "productVariants": {
+              "nodes": [
+                {
+                  "id": "gid://shopify/ProductVariant/1234567890",
+                  "inventoryPolicy": "DENY",
+                  "metafield": {
+                    "jsonValue": [
+                      "Warehouse A"
+                    ]
+                  },
+                  "inventoryItem": {
+                    "tracked": true,
+                    "inventoryLevels": {
+                      "nodes": [
+                        {
+                          "location": {
+                            "name": "Warehouse A"
+                          },
+                          "quantities": [
+                            {
+                              "quantity": 0
+                            }
+                          ]
+                        },
+                        {
+                          "location": {
+                            "name": "Warehouse B"
+                          },
+                          "quantities": [
+                            {
+                              "quantity": 1
+                            }
+                          ]
+                        },
+                        {
+                          "location": {
+                            "name": "Warehouse C"
+                          },
+                          "quantities": [
+                            {
+                              "quantity": 1
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign variants = variants | concat: result.data.productVariants.nodes %}
+
+    {% if result.data.productVariants.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.productVariants.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% comment %}
+    -- check which locations are in stock for each variant (i.e. "available" > 0)
+    -- variants that are configured for overselling or are not tracked at a location are considered as in stock
+  {% endcomment %}
+
+  {% assign metafield_set_inputs = array %}
+  {% assign metafield_delete_inputs = array %}
+
+  {% for variant in variants %}
+    {% assign in_stock_location_names = array %}
+    {% assign current_metafield_value = variant.metafield.jsonValue %}
+
+    {% for inventory_level in variant.inventoryItem.inventoryLevels.nodes %}
+      {% assign location_name = inventory_level.location.name %}
+
+      {% if include_location_names != blank %}
+        {% unless include_location_names contains location_name %}
+          {% continue %}
+        {% endunless %}
+
+      {% elsif exclude_location_names != blank %}
+        {% if exclude_location_names contains location_name %}
+          {% continue %}
+        {% endif %}
+      {% endif %}
+
+      {% if variant.inventoryPolicy == "CONTINUE"
+        or variant.inventoryItem.tracked == false
+        or inventory_level.quantities.first.quantity > 0
+      %}
+        {% assign in_stock_location_names = in_stock_location_names | push: inventory_level.location.name %}
+      {% endif %}
+    {% endfor %}
+
+    {% comment %}
+      -- sort the in stock location names for comparison against current metafield value
+    {% endcomment %}
+
+    {% assign in_stock_location_names = in_stock_location_names | sort_naturally %}
+
+    {% if in_stock_location_names == blank %}
+      {% if variant.metafield != blank %}
+        {% log
+          out_of_stock_variant_to_clear: variant,
+          in_stock_location_names: in_stock_location_names
+        %}
+
+        {% assign metafield_delete_input = hash %}
+        {% assign metafield_delete_input["ownerId"] = variant.id %}
+        {% assign metafield_delete_input["namespace"] = variant_metafield | split: "." | first %}
+        {% assign metafield_delete_input["key"] = variant_metafield | split: "." | last %}
+        {% assign metafield_delete_inputs = metafield_delete_inputs | push: metafield_delete_input %}
+      {% endif %}
+
+    {% elsif in_stock_location_names != variant.metafield.jsonValue %}
+      {% log
+        in_stock_variant_to_update: variant,
+        in_stock_location_names: in_stock_location_names
+      %}
+
+      {% assign metafield_set_input = hash %}
+      {% assign metafield_set_input["ownerId"] = variant.id %}
+      {% assign metafield_set_input["namespace"] = variant_metafield | split: "." | first %}
+      {% assign metafield_set_input["key"] = variant_metafield | split: "." | last %}
+      {% assign metafield_set_input["type"] = "list.single_line_text_field" %}
+      {% assign metafield_set_input["value"] = in_stock_location_names | json %}
+      {% assign metafield_set_inputs = metafield_set_inputs | push: metafield_set_input %}
+    {% endif %}
+  {% endfor %}
+
+  {% if metafield_delete_inputs != blank %}
+    {% assign groups_of_metafield_delete_inputs = metafield_delete_inputs | in_groups_of: 250, fill_with: false %}
+
+    {% for group_of_metafield_delete_inputs in groups_of_metafield_delete_inputs %}
+      {% action "shopify" %}
+        mutation {
+          metafieldsDelete(
+            metafields: {{ group_of_metafield_delete_inputs | graphql_arguments }}
+          ) {
+            deletedMetafields {
+              ownerId
+              namespace
+              key
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endfor %}
+  {% endif %}
+
+  {% if metafield_set_inputs != blank %}
+    {% assign groups_of_metafield_set_inputs = metafield_set_inputs | in_groups_of: 25, fill_with: false %}
+
+    {% for group_of_metafield_set_inputs in groups_of_metafield_set_inputs %}
+      {% action "shopify" %}
+        mutation {
+          metafieldsSet(
+            metafields: {{ group_of_metafield_set_inputs | graphql_arguments }}
+          ) {
+            metafields {
+              id
+              namespace
+              key
+              type
+              value
+              owner {
+                ... on ProductVariant {
+                  id
+                  displayName
+                }
+              }
+            }
+            userErrors {
+              code
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endfor %}
+  {% endif %}
+{% endif %}

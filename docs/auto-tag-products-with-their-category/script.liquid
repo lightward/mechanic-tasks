@@ -1,0 +1,148 @@
+{% assign tag_prefix = options.apply_this_prefix_to_tags__required %}
+
+{% if event.topic == "mechanic/user/trigger" or event.topic == "mechanic/scheduler/daily" %}
+  {% assign search_query = "status:active" %}
+
+  {% comment %}
+    -- if this is a daily scheduled run, then create a search query filter to only get active products updated since previous day
+  {% endcomment %}
+
+  {% if event.topic contains "mechanic/scheduler/daily" %}
+    {% assign search_query
+      = event.data
+      | date: "%FT%TZ", tz: "UTC", advance: "-1 day"
+      | json
+      | prepend: "status:active updated_at:>="
+    %}
+  {% endif %}
+
+  {% unless event.preview %}
+    {% log search_query: search_query %}
+  {% endunless %}
+
+  {% comment %}
+    -- get all or recently updated active products in the shop, depending upon event topic
+  {% endcomment %}
+
+  {% assign cursor = nil %}
+  {% assign products = array %}
+
+  {% for n in (1..200) %}
+    {% capture query %}
+      query {
+        products(
+          first: 250
+          after: {{ cursor | json }}
+          query: {{ search_query | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            title
+            category {
+              name
+              isArchived
+            }
+            tags
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "products": {
+              "nodes": [
+                {
+                  "id": "gid://shopify/Product/1234567890",
+                  "category": {
+                    "name": "Shoes",
+                    "isArchived": false
+                  }
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign products = products | concat: result.data.products.nodes %}
+
+    {% if result.data.products.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.products.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% comment %}
+    -- process products to see which category tag to add, and which to remove
+  {% endcomment %}
+
+  {% for product in products %}
+    {% assign tag_should_have = nil %}
+    {% assign tag_to_add = nil %}
+    {% assign tags_to_remove = array %}
+
+    {% unless product.category == blank or product.category.isArchived %}
+      {% assign tag_should_have = product.category.name | prepend: tag_prefix %}
+    {% endunless %}
+
+    {% unless product.tags contains tag_should_have %}
+      {% assign tag_to_add = tag_should_have %}
+    {% endunless %}
+
+    {% for tag in product.tags %}
+      {% if tag == tag_should_have %}
+        {% continue %}
+      {% endif %}
+
+      {% if tag contains tag_prefix %}
+        {% assign tag_prefix_check = tag | slice: 0, tag_prefix.size %}
+
+        {% if tag_prefix_check == tag_prefix and tag.size > tag_prefix.size %}
+          {% assign tags_to_remove = tags_to_remove | push: tag %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+
+    {% if tag_to_add != blank or tags_to_remove != blank %}
+      {% action "shopify" %}
+        mutation {
+          {% if tag_to_add != blank %}
+            tagsAdd(
+              id: {{ product.id | json }}
+              tags: {{ tag_to_add | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          {% endif %}
+          {% if tags_to_remove != blank %}
+            tagsRemove(
+              id: {{ product.id | json }}
+              tags: {{ tags_to_remove | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          {% endif %}
+        }
+      {% endaction %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
