@@ -22,7 +22,8 @@ This advanced task allows you to schedule price change events for your store, us
   "skus_to_include__array": null,
   "sku_discount": null,
   "exclude_products_tagged_with__array": null,
-  "skus_to_exclude__array": null
+  "skus_to_exclude__array": null,
+  "do_not_restore_prices_on_reset__boolean": false
 }
 ```
 
@@ -84,6 +85,7 @@ This advanced task allows you to schedule price change events for your store, us
 - Just saving the task configuration will not schedule (or validate) a price change event. This must be done with the "schedule" keyword when run manually.
 - This task only manages variant prices. Product and theme publishing are not handled by this task.
 - Variants that are already part of an ongoing price change event will not be modified if targeted by a new price change event.
+- The "Do not restore prices on reset" option may be used when clearing out older price change events if there is a concern of reverting old pricing.
 
 ## Installing this task
 
