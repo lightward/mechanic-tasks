@@ -479,8 +479,8 @@
     {% capture price_change_event_json %}
       {
         "status": "scheduled",
-        "start": {{ "now + 1 day" | date: "%FT%H:%M%z" }},
-        "end": {{ "now + 2 days" | date: "%FT%H:%M%z" }},
+        "start": {{ "now + 1 day" | date: "%FT%H:%M%z" | json }},
+        "end": {{ "now + 2 days" | date: "%FT%H:%M%z" | json }},
         "set_compare_at_prices": false,
         "collection_handles_and_discounts": {
           "alpha-beta-gamma": "10%",
