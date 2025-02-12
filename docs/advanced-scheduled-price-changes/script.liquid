@@ -1,48 +1,51 @@
-{% assign shop_metafield_namespace = "mechanic" %}
-{% assign shop_metafield_key = "price_change_events" %}
-{% assign variant_metafield_namespace = "mechanic" %}
-{% assign variant_metafield_key = "price_change_event" %}
-
 {% assign email_recipients = options.notification_email_recipients__array_required %}
+{% assign event_start_datetime = options.event_start_datetime__required %}
+{% assign event_end_datetime = options.event_end_datetime__required %}
+{% assign set_compare_at_prices = options.set_compare_at_prices_to_original_price_during_event__boolean %}
+{% assign collection_handles_and_discounts = options.collection_handles_and_discounts__keyval %}
+{% assign skus_to_include = options.skus_to_include__array %}
+{% assign sku_discount = options.sku_discount %}
+{% assign exclude_products_tagged_with = options.exclude_products_tagged_with__array %}
+{% assign skus_to_exclude = options.skus_to_exclude__array %}
+{% assign do_not_restore_prices_on_reset = options.do_not_restore_prices_on_reset__boolean %}
 
-{% capture task_admin_link -%}
-<a href="https://{{ shop.myshopify_domain }}/admin/apps/mechanic/~/tasks/edit/{{ task.id }}">{{ task.name | remove: "ADVANCED: " }}</a>
-{%- endcapture %}
+{%- capture task_admin_link -%}
+  <a href="https://{{ shop.myshopify_domain }}/admin/apps/mechanic/~/tasks/edit/{{ task.id }}">{{ task.name | remove: "ADVANCED: " }}</a>
+{%- endcapture -%}
 
 {% comment %}
   -- query for shop data on every task run, since it will be needed for each valid action keyword and custom event
 {% endcomment %}
 
-{% capture shop_query %}
+{% capture query %}
   query {
     shop {
       id
-      metafield(
-        namespace: {{ shop_metafield_namespace | json }}
-        key: {{ shop_metafield_key | json }}
-      ) {
-        id
+      name
+      contactEmail
+      metafield(key: "mechanic.price_change_events") {
         jsonValue
       }
     }
   }
 {% endcapture %}
 
-{% assign shop_result = shop_query | shopify %}
+{% assign result = query | shopify %}
 
 {% if event.preview %}
-  {% capture shop_result_json %}
+  {% capture result_json %}
     {
       "data": {
         "shop": {
           "id": "gid://shopify/Shop/1234567890",
+          "name": "Shoplify",
+          "contactEmail": "info@example.com",
           "metafield": {
-            "id": "gid://shopify/Metafield/9876543210",
             "jsonValue": {
               "price_change_event__1234567890": {
                 "status": "scheduled",
-                "start": "2021-12-30 08:00",
-                "end": "2021-12-31 20:00",
+                "start": "2025-12-30 08:00",
+                "end": "2025-12-31 20:00",
                 "set_compare_at_prices": true,
                 "collection_handles_and_discounts": {
                   "collection-alpha": "20%",
@@ -63,10 +66,10 @@
     }
   {% endcapture %}
 
-  {% assign shop_result = shop_result_json | parse_json %}
+  {% assign result = result_json | parse_json %}
 {% endif %}
 
-{% assign shop = shop_result.data.shop %}
+{% assign shop = result.data.shop %}
 {% assign price_change_events = shop.metafield.jsonValue | default: hash %}
 
 {% if event.topic == "mechanic/user/text" %}
@@ -86,10 +89,10 @@
         -- NOTE: run scheduling logic here instead of in custom event like most other keywords, so user gets immediate feedback on any configuration errors
       {% endcomment %}
 
-      {% assign valid_start_datetime = options.event_start_datetime__required | parse_date: "%Y-%m-%d %H:%M" %}
+      {% assign valid_start_datetime = event_start_datetime | parse_date: "%Y-%m-%d %H:%M" %}
 
       {% if valid_start_datetime == blank %}
-        {% assign valid_start_datetime = options.event_start_datetime__required | parse_date: "%Y-%m-%d" %}
+        {% assign valid_start_datetime = event_start_datetime | parse_date: "%Y-%m-%d" %}
 
         {% if valid_start_datetime == blank %}
           {% unless event.preview %}
@@ -99,10 +102,10 @@
         {% endif %}
       {% endif %}
 
-      {% assign valid_end_datetime = options.event_end_datetime__required | parse_date: "%Y-%m-%d %H:%M" %}
+      {% assign valid_end_datetime = event_end_datetime | parse_date: "%Y-%m-%d %H:%M" %}
 
       {% if valid_end_datetime == blank %}
-        {% assign valid_end_datetime = options.event_end_datetime__required | parse_date: "%Y-%m-%d" %}
+        {% assign valid_end_datetime = event_end_datetime | parse_date: "%Y-%m-%d" %}
 
         {% if valid_end_datetime == blank %}
           {% unless event.preview %}
@@ -112,23 +115,16 @@
         {% endif %}
       {% endif %}
 
-      {% assign now = "now" | date: "%s" %}
-      {% assign start_datetime_s = options.event_start_datetime__required | date: "%s" %}
-      {% assign end_datetime_s = options.event_end_datetime__required | date: "%s" %}
+      {% assign now_s = "now" | date: "%s" %}
+      {% assign start_datetime_s = event_start_datetime | date: "%s" %}
+      {% assign end_datetime_s = event_end_datetime | date: "%s" %}
 
-      {% if start_datetime_s <= now or start_datetime_s >= end_datetime_s %}
+      {% if start_datetime_s <= now_s or start_datetime_s >= end_datetime_s %}
         {% unless event.preview %}
           {% error "The event start and end dates must be future dates and the start date must be before the end date. Please re-enter them (per the task documentation) and try scheduling the event again." %}
           {% break %}
         {% endunless %}
       {% endif %}
-
-      {% assign set_compare_at_prices = options.set_compare_at_prices_to_original_price_during_event__boolean %}
-      {% assign collection_handles_and_discounts = options.collection_handles_and_discounts__keyval %}
-      {% assign skus_to_include = options.skus_to_include__array %}
-      {% assign sku_discount = options.sku_discount %}
-      {% assign exclude_products_tagged_with = options.exclude_products_tagged_with__array %}
-      {% assign skus_to_exclude = options.skus_to_exclude__array %}
 
       {% comment %}
         -- validate discount entry formats: XX% (percentage discount), X.XX (fixed price), or -X.XX (fixed discount)
@@ -190,8 +186,8 @@
       {% assign price_change_event = hash %}
 
       {% assign price_change_event["status"] = "scheduled" %}
-      {% assign price_change_event["start"] = start_datetime_s %}
-      {% assign price_change_event["end"] = end_datetime_s %}
+      {% assign price_change_event["start"] = start_datetime_s | date: "%FT%H:%M%z" %}
+      {% assign price_change_event["end"] = end_datetime_s | date: "%FT%H:%M%z" %}
       {% assign price_change_event["set_compare_at_prices"] = set_compare_at_prices %}
       {% assign price_change_event["collection_handles_and_discounts"] = collection_handles_and_discounts %}
       {% assign price_change_event["skus_to_include"] = skus_to_include %}
@@ -214,8 +210,8 @@
             metafields: [
               {
                 ownerId: {{ shop.id | json }}
-                namespace: {{ shop_metafield_namespace | json }}
-                key: {{ shop_metafield_key | json }}
+                namespace: "mechanic"
+                key: "price_change_events"
                 value: {{ price_change_events | json | json }}
                 type: "json"
               }
@@ -277,8 +273,8 @@
 
         <strong>Price change event ID:</strong> {{ price_change_event_id }}
         <strong>Status:</strong> {{ price_change_event["status"] }}
-        <strong>Event start:</strong> {{ price_change_event["start"] | date: "%F %H:%M %z" }}
-        <strong>Event end:</strong> {{ price_change_event["end"] | date: "%F %H:%M %z" }}
+        <strong>Event start:</strong> {{ price_change_event["start"] | date: "%FT%H:%M%z" }}
+        <strong>Event end:</strong> {{ price_change_event["end"] | date: "%FT%H:%M%z" }}
         <strong>Set compare at price to original price during event:</strong> {{ price_change_event["set_compare_at_prices"] }}
         <strong>Collection handles and discounts:</strong>
         {% for keyval in price_change_event["collection_handles_and_discounts"] -%}
@@ -299,7 +295,7 @@
           "to": {{ email_recipients | json }},
           "subject": {{ email_subject | json }},
           "body": {{ email_body | newline_to_br | json }},
-          "reply_to": {{ shop.customer_email | json }},
+          "reply_to": {{ shop.contactEmail | json }},
           "from_display_name": {{ shop.name | json }}
         }
       {% endaction %}
@@ -320,8 +316,8 @@
             {%- assign price_change_event_data = price_change_event[1] -%}
             <strong>Price change event ID:</strong> {{ price_change_event_id }}
             <strong>Status:</strong> {{ price_change_event_data["status"] }}
-            <strong>Event start:</strong> {{ price_change_event_data["start"] | date: "%F %H:%M %z" }}
-            <strong>Event end:</strong> {{ price_change_event_data["end"] | date: "%F %H:%M %z" }}
+            <strong>Event start:</strong> {{ price_change_event_data["start"] | date: "%FT%H:%M%z" }}
+            <strong>Event end:</strong> {{ price_change_event_data["end"] | date: "%FT%H:%M%z" }}
             <strong>Set compare at price to original price during event:</strong> {{ price_change_event_data["set_compare_at_prices"] }}
             <strong>Collection handles and discounts:</strong>
             {% for keyval in price_change_event_data["collection_handles_and_discounts"] -%}
@@ -343,7 +339,7 @@
           "to": {{ email_recipients | json }},
           "subject": "All price change events as of {{ "now" | date: "%F" }}",
           "body": {{ email_body | newline_to_br | json }},
-          "reply_to": {{ shop.customer_email | json }},
+          "reply_to": {{ shop.contactEmail | json }},
           "from_display_name": {{ shop.name | json }}
         }
       {% endaction %}
@@ -380,8 +376,8 @@
                 metafields: [
                   {
                     ownerId: {{ shop.id | json }}
-                    namespace: {{ shop_metafield_namespace | json }}
-                    key: {{ shop_metafield_key | json }}
+                    namespace: "mechanic"
+                    key: "price_change_events"
                     value: {{ price_change_events | json | json }}
                     type: "json"
                   }
@@ -417,8 +413,8 @@
 
             <strong>Price change event ID:</strong> {{ price_change_event_id }}
             <strong>Status:</strong> {{ price_change_event["status"] }}
-            <strong>Event start:</strong> {{ price_change_event["start"] | date: "%F %H:%M %z" }}
-            <strong>Event end:</strong> {{ price_change_event["end"] | date: "%F %H:%M %z" }}
+            <strong>Event start:</strong> {{ price_change_event["start"] | date: "%FT%H:%M%z" }}
+            <strong>Event end:</strong> {{ price_change_event["end"] | date: "%FT%H:%M%z" }}
             <strong>Set compare at price to original price during event:</strong> {{ price_change_event["set_compare_at_prices"] }}
             <strong>Collection handles and discounts:</strong>
             {% for keyval in price_change_event["collection_handles_and_discounts"] -%}
@@ -437,7 +433,7 @@
               "to": {{ email_recipients | json }},
               "subject": {{ email_subject | json }},
               "body": {{ email_body | newline_to_br | json }},
-              "reply_to": {{ shop.customer_email | json }},
+              "reply_to": {{ shop.contactEmail | json }},
               "from_display_name": {{ shop.name | json }}
             }
           {% endaction %}
@@ -483,8 +479,8 @@
     {% capture price_change_event_json %}
       {
         "status": "scheduled",
-        "start": {{ "now + 1 day" | date: "%s" }},
-        "end": {{ "now + 2 days" | date: "%s" }},
+        "start": {{ "now + 1 day" | date: "%FT%H:%M%z" }},
+        "end": {{ "now + 2 days" | date: "%FT%H:%M%z" }},
         "set_compare_at_prices": false,
         "collection_handles_and_discounts": {
           "alpha-beta-gamma": "10%",
@@ -531,7 +527,7 @@
   {% assign in_collection_checks = array %}
 
   {% for keyval in collection_handles_and_discounts %}
-    {% capture collection_query %}
+    {% capture query %}
       query {
         collectionByHandle(handle: {{ keyval[0] | json }}) {
           id
@@ -540,8 +536,9 @@
       }
     {% endcapture %}
 
-    {% assign collection_result = collection_query | shopify %}
-    {% assign collection = collection_result.data.collectionByHandle %}
+    {% assign result = query | shopify %}
+
+    {% assign collection = result.data.collectionByHandle %}
 
     {% if collection != blank %}
       {% capture in_collection_check -%}
@@ -552,85 +549,77 @@
     {% endif %}
   {% endfor %}
 
-  {% assign query_filter = "gift_card:false" %}
+  {% comment %}
+    -- get all products in the shop (up to 50K), unless excluded by tag
+  {% endcomment %}
+
+  {% assign search_query = "gift_card:false" %}
 
   {% for tag in exclude_products_tagged_with %}
-    {% assign query_filter = tag | json | prepend: " tag_not:" | prepend: query_filter  %}
+    {% assign search_query = tag | json | prepend: " tag_not:" | prepend: search_query  %}
   {% endfor %}
 
-  {% log query_filter: query_filter %}
+  {% log search_query: search_query %}
 
   {% assign products = array %}
-
   {% assign cursor = nil %}
 
   {% for n in (1..200) %}
-    {% capture products_query %}
+    {% capture query %}
       query {
         products(
           first: 250
           after: {{ cursor | json }}
-          query: {{ query_filter | json }}
+          query: {{ search_query | json }}
         ) {
           pageInfo {
             hasNextPage
+            endCursor
           }
-          edges {
-            cursor
-            node {
-              id
-              title
-              tags
-              variants(first: 100) {
-                edges {
-                  node {
-                    id
-                    title
-                    sku
-                    price
-                    compareAtPrice
-                    metafield(
-                      namespace: {{ variant_metafield_namespace | json }}
-                      key: {{ variant_metafield_key | json }}
-                    ) {
-                      jsonValue
-                    }
-                  }
+          nodes {
+            id
+            title
+            tags
+            variants(first: 100) {
+              nodes {
+                id
+                displayName
+                sku
+                price
+                compareAtPrice
+                metafield(key: "mechanic.price_change_event") {
+                  jsonValue
                 }
               }
-              {{ in_collection_checks | join: newline }}
             }
+            {{ in_collection_checks | join: newline }}
           }
         }
       }
     {% endcapture %}
 
-    {% assign products_result = products_query | shopify %}
+    {% assign result = query | shopify %}
 
     {% if event.preview %}
-      {% capture products_result_json %}
+      {% capture result_json %}
         {
           "data": {
             "products": {
-              "edges": [
+              "nodes": [
                 {
-                  "node": {
-                    "id": "gid://shopify/Product/1234567890",
-                    "variants": {
-                      "edges": [
-                        {
-                          "node": {
-                            "id": "gid://shopify/ProductVariant/1234567890",
-                            "sku": "ACME-BRICK-RED",
-                            "price": "10.00",
-                            "compareAtPrice": "15.00",
-                            "metafield": null
-                          }
-                        }
-                      ]
-                    },
-                    "inCollection_{{ collection_handles_and_discounts.first.first | replace: "-", "_" | default: "sample" }}": true
-                  }
+                  "id": "gid://shopify/Product/1234567890",
+                  "variants": {
+                    "nodes": [
+                      {
+                        "id": "gid://shopify/ProductVariant/1234567890",
+                        "sku": "ACME-BRICK-RED",
+                        "price": "10.00",
+                        "compareAtPrice": "15.00",
+                        "metafield": null
+                      }
+                    ]
+                  },
+                  "inCollection_{{ collection_handles_and_discounts.first.first | replace: "-", "_" | default: "sample" }}": true
                 }
               ]
             }
@@ -638,197 +627,222 @@
         }
       {% endcapture %}
 
-      {% assign products_result = products_result_json | parse_json %}
+      {% assign result = result_json | parse_json %}
     {% endif %}
 
-    {% assign products = products_result.data.products.edges | map: "node" %}
+    {% assign products = products | concat: result.data.products.nodes %}
 
-    {% for product in products %}
+    {% if result.data.products.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.products.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% comment %}
+    -- process products to see which qualify for metafield and variant updates
+  {% endcomment %}
+
+  {% assign metafield_set_inputs = array %}
+  {% assign variant_inputs_by_product = hash %}
+
+  {% for product in products %}
+    {% comment %}
+      -- For each product, match to a collection discount if applicable, then, if needed, loop through variants to see if there are any overrides
+    {% endcomment %}
+
+    {% assign product_level_discount = nil %}
+
+    {% for keyval in collection_handles_and_discounts %}
+      {% assign in_collection_label
+        = "inCollection_"
+        | append: keyval[0]
+        | replace: "-", "_"
+      %}
+
+      {% if product[in_collection_label] %}
+        {% assign product_level_discount = keyval[1] %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+
+    {% if product_level_discount == blank and skus_to_include == blank and skus_to_exclude == blank %}
       {% comment %}
-        -- For each product, match to a collection discount if applicable, then, if needed, loop through variants to see if there are any overrides
+        -- skip the product if it is not in a configured collection and there are no inclusion/exclusion SKUs configured
       {% endcomment %}
 
-      {% assign product_level_discount = nil %}
+      {% continue %}
+    {% endif %}
 
-      {% for keyval in collection_handles_and_discounts %}
-        {% assign in_collection_label
-          = "inCollection_"
-          | append: keyval[0]
-          | replace: "-", "_"
-        %}
-
-        {% if product[in_collection_label] %}
-          {% assign product_level_discount = keyval[1] %}
-          {% break %}
-        {% endif %}
-      {% endfor %}
-
-      {% if product_level_discount == blank
-        and skus_to_include == blank
-        and skus_to_exclude == blank
-      %}
+    {% for variant in product.variants.nodes %}
+      {% if skus_to_exclude != blank and skus_to_exclude contains variant.sku %}
         {% log
-          message: "This product is not within any configured collections, nor does the price change event have any sku inclusion or exclusion settings; skipping. ",
-          product: product
+          message: "This variant was excluded by SKU",
+          variant: variant
         %}
         {% continue %}
       {% endif %}
 
-      {% assign variants = product.variants.edges | map: "node" %}
-
-      {% assign variant_updates = array %}
-
-      {% for variant in variants %}
-        {% if skus_to_exclude != blank and skus_to_exclude contains variant.sku %}
-          {% log
-            message: "This variant was excluded by SKU",
-            variant: variant
-          %}
-          {% continue %}
-        {% endif %}
-
-        {% if variant.metafield != blank %}
-          {% log
-            message: "This variant is already part of a price change event; skipping.",
-            variant: variant
-          %}
-          {% continue %}
-        {% endif %}
-
-        {% assign discount_to_apply = product_level_discount %}
-
-        {% if skus_to_include != blank and skus_to_include contains variant.sku %}
-          {% assign discount_to_apply = sku_discount %}
-        {% endif %}
-
+      {% if variant.metafield != blank %}
         {% log
-          product_title: product.title,
-          sku: variant.sku,
-          skus_to_include: skus_to_include,
-          sku_discount: sku_discount,
-          discount_to_apply: discount_to_apply
+          message: "This variant is already part of a price change event; skipping.",
+          variant: variant
+        %}
+        {% continue %}
+      {% endif %}
+
+      {% assign discount_to_apply = product_level_discount %}
+
+      {% if skus_to_include != blank and skus_to_include contains variant.sku %}
+        {% assign discount_to_apply = sku_discount %}
+      {% endif %}
+
+      {% if discount_to_apply == blank %}
+        {% continue %}
+      {% endif %}
+
+      {% comment %}
+        -- make sure prices are strings when being passed in GraphQL mutations
+      {% endcomment %}
+
+      {% assign price_to_set = nil %}
+      {% assign compare_at_price_to_set = nil %}
+
+      {% if discount_to_apply contains "%" %}
+        {% assign price_to_set
+          = discount_to_apply
+          | remove: "%"
+          | minus: 100
+          | abs
+          | times: variant.price
+          | divided_by: 100
+          | round: 2
+          | append: ""
         %}
 
-        {% if discount_to_apply == blank %}
-          {% log
-            message: "This variant's product is not within any configured collections, nor has this variant been specifically included by sku; skipping.",
-            variant: variant
-          %}
-          {% continue %}
-        {% endif %}
-
-        {% assign price_to_set = nil %}
-        {% assign compare_at_price_to_set = nil %}
-
-        {% if discount_to_apply contains "%" %}
-          {% assign price_to_set
-            = discount_to_apply
-            | remove: "%"
-            | minus: 100
-            | abs
-            | times: variant.price
-            | divided_by: 100
-            | round: 2
-          %}
-
-        {% elsif discount_to_apply contains "-" %}
-          {% assign price_to_set
-            = variant.price
-            | plus: discount_to_apply
-            | at_least: 0.0
-          %}
-
-        {% else %}
-          {% assign price_to_set = discount_to_apply %}
-        {% endif %}
-
-        {% if set_compare_at_prices %}
-          {% assign compare_at_price_to_set = variant.price %}
-        {% endif %}
-
-        {% log
-          product: product,
-          product_level_discount: product_level_discount,
-          variant: variant,
-          discount_to_apply: discount_to_apply,
-          price_to_set: price_to_set,
-          compare_at_price_to_set: compare_at_price_to_set
+      {% elsif discount_to_apply contains "-" %}
+        {% assign price_to_set
+          = variant.price
+          | plus: discount_to_apply
+          | at_least: 0.0
+          | append: ""
         %}
 
-        {% capture variant_metafield_value %}
-          {
-            "price_change_event_id": {{ price_change_event_id | json }},
-            "discount_to_apply": {{ discount_to_apply | json }},
-            {% if set_compare_at_prices %}
-              "original_compare_at_price": {{ variant.compareAtPrice | json }},
-              "compare_at_price_to_set": {{ compare_at_price_to_set | json }},
-            {% endif %}
-            "original_price": {{ variant.price | json }},
-            "price_to_set": {{ price_to_set | json }}
-          }
-        {% endcapture %}
+      {% else %}
+        {% assign price_to_set = discount_to_apply | append: "" %}
+      {% endif %}
 
-        {% capture variant_update %}
-          {
-            id: {{ variant.id | json}}
-            price: {{ price_to_set | json }}
-            {% if set_compare_at_prices %}compareAtPrice: {{ variant.price | json }}{% endif %}
-            metafields: [
-              {
-                key: {{ variant_metafield_key | json }}
-                namespace: {{ variant_metafield_namespace | json }}
-                type: "json"
-                value: {{ variant_metafield_value | json }}
-              }
-            ]
-          }
-        {% endcapture %}
+      {% if set_compare_at_prices %}
+        {% assign compare_at_price_to_set = variant.price %}
+      {% endif %}
 
-        {% assign variant_updates = variant_updates | push: variant_update %}
-      {% endfor %}
+      {% log
+        product: product.title,
+        product_level_discount: product_level_discount,
+        variant: variant.displayName,
+        discount_to_apply: discount_to_apply,
+        price_to_set: price_to_set,
+        compare_at_price_to_set: compare_at_price_to_set
+      %}
 
-      {% if variant_updates != blank %}
-        {% action "shopify" %}
-          mutation {
-            productVariantsBulkUpdate(
-              productId: {{ product.id | json }}
-              variants: [
-                {{ variant_updates | join: newline }}
-              ]
-            ) {
-              product {
-                id
-                title
-                tags
-              }
-              productVariants {
-                id
-                title
-                sku
-                price
-                compareAtPrice
-                metafield(
-                  namespace: {{ variant_metafield_namespace | json }}
-                  key: {{ variant_metafield_key | json }}
-                ) {
-                  jsonValue
+      {% assign price_change_event_data = hash %}
+      {% assign price_change_event_data["price_change_event_id"] = price_change_event_id %}
+      {% assign price_change_event_data["discount_to_apply"] = discount_to_apply %}
+      {% assign price_change_event_data["original_price"] = variant.price %}
+      {% assign price_change_event_data["price_to_set"] = price_to_set %}
+
+      {% if set_compare_at_prices %}
+        {% assign price_change_event_data["original_compare_at_price"] = variant.compareAtPrice %}
+        {% assign price_change_event_data["compare_at_price_to_set"] = compare_at_price_to_set %}
+      {% endif %}
+
+      {% assign metafield_set_input = hash %}
+      {% assign metafield_set_input["ownerId"] = variant.id %}
+      {% assign metafield_set_input["namespace"] = "mechanic" %}
+      {% assign metafield_set_input["key"] = "price_change_event" %}
+      {% assign metafield_set_input["type"] = "json" %}
+      {% assign metafield_set_input["value"] = price_change_event_data | json %}
+      {% assign metafield_set_inputs = metafield_set_inputs | push: metafield_set_input %}
+
+      {% assign variant_input = hash %}
+      {% assign variant_input["id"] = variant.id %}
+      {% assign variant_input["price"] = price_to_set %}
+
+      {% if set_compare_at_prices %}
+        {% assign variant_input["compareAtPrice"] = variant.price %}
+      {% endif %}
+
+      {% assign variant_inputs_by_product[product.id]
+        = variant_inputs_by_product[product.id]
+        | default: array
+        | push: variant_input
+      %}
+    {% endfor %}
+  {% endfor %}
+
+  {% comment %}
+    -- set metafields and then update variants in bulk
+  {% endcomment %}
+
+  {% if metafield_set_inputs != blank %}
+    {% assign groups_of_metafield_set_inputs = metafield_set_inputs | in_groups_of: 25, fill_with: false %}
+
+    {% for group_of_metafield_set_inputs in groups_of_metafield_set_inputs %}
+      {% action "shopify" %}
+        mutation {
+          metafieldsSet(
+            metafields: {{ group_of_metafield_set_inputs | graphql_arguments }}
+          ) {
+            metafields {
+              id
+              namespace
+              key
+              type
+              jsonValue
+              owner {
+                ... on ProductVariant {
+                  id
+                  displayName
                 }
               }
-              userErrors {
-                field
-                message
-              }
+            }
+            userErrors {
+              code
+              field
+              message
             }
           }
-        {% endaction %}
-      {% endif %}
+        }
+      {% endaction %}
     {% endfor %}
+  {% endif %}
 
-    {% if products_result.data.products.pageInfo.hasNextPage %}
-      {% assign cursor = products_result.data.products.edges.last.cursor %}
-    {% else %}
-      {% break %}
-    {% endif %}
+  {% for keyval in variant_inputs_by_product %}
+    {% action "shopify" %}
+      mutation {
+        productVariantsBulkUpdate(
+          productId: {{ keyval[0] | json }}
+          variants: {{ keyval[1] | graphql_arguments }}
+        ) {
+          product {
+            id
+            title
+            tags
+          }
+          productVariants {
+            id
+            displayName
+            sku
+            price
+            compareAtPrice
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
   {% endfor %}
 
   {% comment %}
@@ -844,8 +858,8 @@
         metafields: [
           {
             ownerId: {{ shop.id | json }}
-            namespace: {{ shop_metafield_namespace | json }}
-            key: {{ shop_metafield_key | json }}
+            namespace: "mechanic"
+            key: "price_change_events"
             value: {{ price_change_events | json | json }}
             type: "json"
           }
@@ -856,7 +870,7 @@
           namespace
           key
           type
-          value
+          jsonValue
           owner {
             ... on Shop {
               id
@@ -881,8 +895,8 @@
 
     <strong>Price change event ID:</strong> {{ price_change_event_id }}
     <strong>Status:</strong> {{ price_change_event["status"] }}
-    <strong>Event start:</strong> {{ price_change_event["start"] | date: "%F %H:%M %z" }}
-    <strong>Event end:</strong> {{ price_change_event["end"] | date: "%F %H:%M %z" }}
+    <strong>Event start:</strong> {{ price_change_event["start"] | date: "%FT%H:%M%z" }}
+    <strong>Event end:</strong> {{ price_change_event["end"] | date: "%FT%H:%M%z" }}
     <strong>Set compare at price to original price during event:</strong> {{ price_change_event["set_compare_at_prices"] }}
     <strong>Collection handles and discounts:</strong>
     {% for keyval in price_change_event["collection_handles_and_discounts"] -%}
@@ -903,7 +917,7 @@
       "to": {{ email_recipients | json }},
       "subject": {{ email_subject | json }},
       "body": {{ email_body | newline_to_br | json }},
-      "reply_to": {{ shop.customer_email | json }},
+      "reply_to": {{ shop.contactEmail | json }},
       "from_display_name": {{ shop.name | json }}
     }
   {% endaction %}
@@ -943,45 +957,36 @@
 
   {% comment %}
     -- To revert the price change event, check every variant in the shop to see if the metafield exists and contains this price change event ID
-    -- Note: Query from the product level so that productVariantsBulkUpdate can be used, causing only one product update event to fire
   {% endcomment %}
 
   {% assign products = array %}
-
   {% assign cursor = nil %}
 
   {% for n in (1..200) %}
-    {% capture products_query %}
+    {% capture query %}
       query {
         products(
           first: 250
           after: {{ cursor | json }}
+          query: "gift_card:false"
         ) {
           pageInfo {
             hasNextPage
+            endCursor
           }
-          edges {
-            cursor
-            node {
-              id
-              title
-              tags
-              variants(first: 100) {
-                edges {
-                  node {
-                    id
-                    title
-                    sku
-                    price
-                    compareAtPrice
-                    metafield(
-                      namespace: {{ variant_metafield_namespace | json }}
-                      key: {{ variant_metafield_key | json }}
-                    ) {
-                      id
-                      jsonValue
-                    }
-                  }
+          nodes {
+            id
+            title
+            tags
+            variants(first: 100) {
+              nodes {
+                id
+                displayName
+                sku
+                price
+                compareAtPrice
+                metafield(key: "mechanic.price_change_event") {
+                  jsonValue
                 }
               }
             }
@@ -990,40 +995,36 @@
       }
     {% endcapture %}
 
-    {% assign products_result = products_query | shopify %}
+    {% assign result = query | shopify %}
 
     {% if event.preview %}
-      {% capture products_result_json %}
+      {% capture result_json %}
         {
           "data": {
             "products": {
-              "edges": [
+              "nodes": [
                 {
-                  "node": {
-                    "id": "gid://shopify/Product/1234567890",
-                    "variants": {
-                      "edges": [
-                        {
-                          "node": {
-                            "id": "gid://shopify/ProductVariant/1234567890",
-                            "sku": "ACME-BRICK-RED",
-                            "price": "7.50",
-                            "compareAtPrice": "10.00",
-                            "metafield": {
-                              "id": "gid://shopify/Metafield/9876543210",
-                              "jsonValue": {
-                                "price_change_event_id": "01234567-89ab-cdef",
-                                "discount_to_apply": "25%",
-                                "original_compare_at_price": "15.00",
-                                "compare_at_price_to_set": 7.50,
-                                "original_price": "10.00",
-                                "price_to_set": 7.50
-                              }
-                            }
+                  "id": "gid://shopify/Product/1234567890",
+                  "variants": {
+                    "nodes": [
+                      {
+                        "id": "gid://shopify/ProductVariant/1234567890",
+                        "sku": "ACME-BRICK-RED",
+                        "price": "7.50",
+                        "compareAtPrice": "10.00",
+                        "metafield": {
+                          "id": "gid://shopify/Metafield/9876543210",
+                          "jsonValue": {
+                            "price_change_event_id": "01234567-89ab-cdef",
+                            "discount_to_apply": "25%",
+                            "original_price": "10.00",
+                            "price_to_set": "7.50",
+                            "original_compare_at_price": "15.00",
+                            "compare_at_price_to_set": "7.50"
                           }
                         }
-                      ]
-                    }
+                      }
+                    ]
                   }
                 }
               ]
@@ -1032,95 +1033,124 @@
         }
       {% endcapture %}
 
-      {% assign products_result = products_result_json | parse_json %}
+      {% assign result = result_json | parse_json %}
     {% endif %}
 
-    {% assign products = products_result.data.products.edges | map: "node" %}
+    {% assign products = products | concat: result.data.products.nodes %}
 
-    {% for product in products %}
-      {% assign variant_updates = array %}
-      {% assign metafields_to_delete = array %}
-
-      {% assign variants_with_metafield = product.variants.edges | map: "node" | where: "metafield" %}
-
-      {% for variant in variants_with_metafield %}
-        {% assign metafield = variant.metafield.jsonValue %}
-
-        {% if metafield.price_change_event_id == price_change_event_id %}
-          {% comment %}
-            -- revert the prices on this variant and delete the metafield
-          {% endcomment %}
-
-          {% assign variant_update = hash %}
-          {% assign variant_update["id"] = variant.id %}
-          {% assign variant_update["price"] = metafield.original_price %}
-          {% if metafield.original_compare_at_price %}
-            {% assign variant_update["compareAtPrice"] = metafield.original_compare_at_price %}
-          {% endif %}
-          {% assign variant_updates = variant_updates | push: variant_update %}
-
-          {% assign metafield_to_delete = hash %}
-          {% assign metafield_to_delete["ownerId"] = variant.id %}
-          {% assign metafield_to_delete["namespace"] = variant_metafield_namespace %}
-          {% assign metafield_to_delete["key"] = variant_metafield_key %}
-          {% assign metafields_to_delete = metafields_to_delete | push: metafield_to_delete %}
-        {% endif %}
-      {% endfor %}
-
-      {% if metafields_to_delete != blank %}
-        {% action "shopify" %}
-          mutation {
-            metafieldsDelete(
-              metafields: {{ metafields_to_delete | graphql_arguments }}
-            ) {
-              deletedMetafields {
-                ownerId
-                namespace
-                key
-              }
-              userErrors {
-                field
-                message
-              }
-            }
-          }
-        {% endaction %}
-      {% endif %}
-
-      {% if variant_updates != blank %}
-        {% action "shopify" %}
-          mutation {
-            productVariantsBulkUpdate(
-              productId: {{ product.id | json }}
-              variants: {{ variant_updates | graphql_arguments }}
-            ) {
-              product {
-                id
-                title
-              }
-              productVariants {
-                id
-                displayName
-                sku
-                price
-                compareAtPrice
-              }
-              userErrors {
-                field
-                message
-              }
-            }
-          }
-        {% endaction %}
-      {% endif %}
-    {% endfor %}
-
-    {% if products_result.data.products.pageInfo.hasNextPage %}
-      {% assign cursor = products_result.data.products.edges.last.cursor %}
+    {% if result.data.products.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.products.pageInfo.endCursor %}
     {% else %}
       {% break %}
     {% endif %}
   {% endfor %}
+
+  {% comment %}
+    -- process products to see which qualify for metafield deletion and variant price reversion
+  {% endcomment %}
+
+  {% assign metafield_delete_inputs = array %}
+  {% assign variant_inputs_by_product = hash %}
+
+  {% for product in products %}
+    {% assign variants_with_metafield = product.variants.nodes | where: "metafield" %}
+
+    {% for variant in variants_with_metafield %}
+      {% assign price_change_event_data = variant.metafield.jsonValue %}
+
+      {% unless price_change_event_data.price_change_event_id == price_change_event_id %}
+        {% log
+          message: "This variant is part of a separate price change event; skipping.",
+          variant: variant
+        %}
+        {% continue %}
+      {% endunless %}
+
+      {% assign metafield_delete_input = hash %}
+      {% assign metafield_delete_input["ownerId"] = variant.id %}
+      {% assign metafield_delete_input["namespace"] = "mechanic" %}
+      {% assign metafield_delete_input["key"] = "price_change_event" %}
+      {% assign metafield_delete_inputs = metafield_delete_inputs | push: metafield_delete_input %}
+
+      {% assign variant_input = hash %}
+      {% assign variant_input["id"] = variant.id %}
+
+      {% assign original_price = price_change_event_data.original_price | append: "" %}
+      {% assign original_compare_at_price = price_change_event_data.original_compare_at_price | append: "" %}
+
+      {% if original_price != variant.price %}
+        {% assign variant_input["price"] = original_price %}
+      {% endif %}
+
+      {% if original_compare_at_price != blank and original_compare_at_price != variant.compareAtPrice %}
+        {% assign variant_input["compareAtPrice"] = original_compare_at_price %}
+      {% endif %}
+
+      {% if variant_input["price"] or variant_input["compareAtPrice"] %}
+        {% assign variant_inputs_by_product[product.id]
+          = variant_inputs_by_product[product.id]
+          | default: array
+          | push: variant_input
+        %}
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+
+  {% comment %}
+    -- update variants in bulk and then delete the price change event metafields
+  {% endcomment %}
+
+  {% for keyval in variant_inputs_by_product %}
+    {% action "shopify" %}
+      mutation {
+        productVariantsBulkUpdate(
+          productId: {{ keyval[0] | json }}
+          variants: {{ keyval[1] | graphql_arguments }}
+        ) {
+          product {
+            id
+            title
+            tags
+          }
+          productVariants {
+            id
+            displayName
+            sku
+            price
+            compareAtPrice
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endfor %}
+
+  {% if metafield_delete_inputs != blank %}
+    {% assign groups_of_metafield_delete_inputs = metafield_delete_inputs | in_groups_of: 250, fill_with: false %}
+
+    {% for group_of_metafield_delete_inputs in groups_of_metafield_delete_inputs %}
+      {% action "shopify" %}
+        mutation {
+          metafieldsDelete(
+            metafields: {{ group_of_metafield_delete_inputs | graphql_arguments }}
+          ) {
+            deletedMetafields {
+              ownerId
+              namespace
+              key
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endfor %}
+  {% endif %}
 
   {% comment %}
     -- update the price change event
@@ -1134,8 +1164,8 @@
         metafields: [
           {
             ownerId: {{ shop.id | json }}
-            namespace: {{ shop_metafield_namespace | json }}
-            key: {{ shop_metafield_key | json }}
+            namespace: "mechanic"
+            key: "price_change_events"
             value: {{ price_change_events | json | json }}
             type: "json"
           }
@@ -1175,8 +1205,8 @@
 
     <strong>Price change event ID:</strong> {{ price_change_event_id }}
     <strong>Status:</strong> {{ price_change_event["status"] }}
-    <strong>Event start:</strong> {{ price_change_event["start"] | date: "%F %H:%M %z" }}
-    <strong>Event end:</strong> {{ price_change_event["end"] | date: "%F %H:%M %z" }}
+    <strong>Event start:</strong> {{ price_change_event["start"] | date: "%FT%H:%M%z" }}
+    <strong>Event end:</strong> {{ price_change_event["end"] | date: "%FT%H:%M%z" }}
     <strong>Set compare at price to original price during event:</strong> {{ price_change_event["set_compare_at_prices"] }}
     <strong>Collection handles and discounts:</strong>
     {% for keyval in price_change_event["collection_handles_and_discounts"] -%}
@@ -1195,7 +1225,7 @@
       "to": {{ email_recipients | json }},
       "subject": {{ email_subject | json }},
       "body": {{ email_body | newline_to_br | json }},
-      "reply_to": {{ shop.customer_email | json }},
+      "reply_to": {{ shop.contactEmail | json }},
       "from_display_name": {{ shop.name | json }}
     }
   {% endaction %}
@@ -1203,45 +1233,36 @@
 {% elsif event.topic == "user/price_changes/reset" %}
   {% comment %}
     -- To reset price change events, check every variant in the shop to see if the price change event metafield exists
-    -- Note: Query from the product level so that productVariantsBulkUpdate can be used, causing only one product update event to fire
   {% endcomment %}
 
   {% assign products = array %}
-
   {% assign cursor = nil %}
 
   {% for n in (1..200) %}
-    {% capture products_query %}
+    {% capture query %}
       query {
         products(
           first: 250
           after: {{ cursor | json }}
+          query: "gift_card:false"
         ) {
           pageInfo {
             hasNextPage
+            endCursor
           }
-          edges {
-            cursor
-            node {
-              id
-              title
-              tags
-              variants(first: 100) {
-                edges {
-                  node {
-                    id
-                    title
-                    sku
-                    price
-                    compareAtPrice
-                    metafield(
-                      namespace: {{ variant_metafield_namespace | json }}
-                      key: {{ variant_metafield_key | json }}
-                    ) {
-                      id
-                      jsonValue
-                    }
-                  }
+          nodes {
+            id
+            title
+            tags
+            variants(first: 100) {
+              nodes {
+                id
+                displayName
+                sku
+                price
+                compareAtPrice
+                metafield(key: "mechanic.price_change_event") {
+                  jsonValue
                 }
               }
             }
@@ -1250,40 +1271,36 @@
       }
     {% endcapture %}
 
-    {% assign products_result = products_query | shopify %}
+    {% assign result = query | shopify %}
 
     {% if event.preview %}
-      {% capture products_result_json %}
+      {% capture result_json %}
         {
           "data": {
             "products": {
-              "edges": [
+              "nodes": [
                 {
-                  "node": {
-                    "id": "gid://shopify/Product/1234567890",
-                    "variants": {
-                      "edges": [
-                        {
-                          "node": {
-                            "id": "gid://shopify/ProductVariant/1234567890",
-                            "sku": "ACME-BRICK-RED",
-                            "price": "7.50",
-                            "compareAtPrice": "10.00",
-                            "metafield": {
-                              "id": "gid://shopify/Metafield/9876543210",
-                              "jsonValue": {
-                                "price_change_event_id": "01234567-89ab-cdef",
-                                "discount_to_apply": "25%",
-                                "original_compare_at_price": "15.00",
-                                "compare_at_price_to_set": 7.50,
-                                "original_price": "10.00",
-                                "price_to_set": 7.50
-                              }
-                            }
+                  "id": "gid://shopify/Product/1234567890",
+                  "variants": {
+                    "nodes": [
+                      {
+                        "id": "gid://shopify/ProductVariant/1234567890",
+                        "sku": "ACME-BRICK-RED",
+                        "price": "7.50",
+                        "compareAtPrice": "10.00",
+                        "metafield": {
+                          "id": "gid://shopify/Metafield/9876543210",
+                          "jsonValue": {
+                            "price_change_event_id": "01234567-89ab-cdef",
+                            "discount_to_apply": "25%",
+                            "original_price": "10.00",
+                            "price_to_set": "7.50",
+                            "original_compare_at_price": "15.00",
+                            "compare_at_price_to_set": "7.50"
                           }
                         }
-                      ]
-                    }
+                      }
+                    ]
                   }
                 }
               ]
@@ -1292,127 +1309,160 @@
         }
       {% endcapture %}
 
-      {% assign products_result = products_result_json | parse_json %}
+      {% assign result = result_json | parse_json %}
     {% endif %}
 
-    {% assign products = products_result.data.products.edges | map: "node" %}
+    {% assign products = products | concat: result.data.products.nodes %}
 
-    {% for product in products %}
-      {% assign variant_updates = array %}
-      {% assign metafields_to_delete = array %}
-
-      {% assign variants_with_metafield = product.variants.edges | map: "node" | where: "metafield" %}
-
-      {% log
-        product_id: product.id,
-        variants_count: product.variants.edges.size,
-        variants_with_metafield: variants_with_metafield.size
-      %}
-
-      {% for variant in variants_with_metafield %}
-        {% assign metafield = variant.metafield.jsonValue %}
-
-        {% comment %}
-          -- revert the prices on this variant and delete the metafield
-        {% endcomment %}
-
-        {% assign variant_update = hash %}
-        {% assign variant_update["id"] = variant.id %}
-        {% assign variant_update["price"] = metafield.original_price %}
-        {% if metafield.original_compare_at_price %}
-          {% assign variant_update["compareAtPrice"] = metafield.original_compare_at_price %}
-        {% endif %}
-        {% assign variant_updates = variant_updates | push: variant_update %}
-
-        {% assign metafield_to_delete = hash %}
-        {% assign metafield_to_delete["ownerId"] = variant.id %}
-        {% assign metafield_to_delete["namespace"] = variant_metafield_namespace %}
-        {% assign metafield_to_delete["key"] = variant_metafield_key %}
-        {% assign metafields_to_delete = metafields_to_delete | push: metafield_to_delete %}
-      {% endfor %}
-
-      {% if metafields_to_delete != blank %}
-        {% action "shopify" %}
-          mutation {
-            metafieldsDelete(
-              metafields: {{ metafields_to_delete | graphql_arguments }}
-            ) {
-              deletedMetafields {
-                ownerId
-                namespace
-                key
-              }
-              userErrors {
-                field
-                message
-              }
-            }
-          }
-        {% endaction %}
-      {% endif %}
-
-      {% if variant_updates != blank %}
-        {% action "shopify" %}
-          mutation {
-            productVariantsBulkUpdate(
-              productId: {{ product.id | json }}
-              variants: {{ variant_updates | graphql_arguments }}
-            ) {
-              product {
-                id
-                title
-              }
-              productVariants {
-                id
-                displayName
-                sku
-                price
-                compareAtPrice
-              }
-              userErrors {
-                field
-                message
-              }
-            }
-          }
-        {% endaction %}
-      {% endif %}
-    {% endfor %}
-
-    {% if products_result.data.products.pageInfo.hasNextPage %}
-      {% assign cursor = products_result.data.products.edges.last.cursor %}
+    {% if result.data.products.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.products.pageInfo.endCursor %}
     {% else %}
       {% break %}
     {% endif %}
   {% endfor %}
 
   {% comment %}
-    -- delete the price change events shop metafield
+    -- process products to see which qualify for metafield deletion and variant price reversion
   {% endcomment %}
 
-  {% action "shopify" %}
-    mutation {
-      metafieldsDelete(
-        metafields: [
-          {
-            ownerId: {{ shop.id | json }}
-            namespace: {{ shop_metafield_namespace | json }}
-            key: {{ shop_metafield_key | json }}
+  {% assign metafield_delete_inputs = array %}
+  {% assign variant_inputs_by_product = hash %}
+  {% assign variants_with_prices_to_not_reset = array %}
+
+  {% for product in products %}
+    {% assign variants_with_metafield = product.variants.nodes | where: "metafield" %}
+
+    {% for variant in variants_with_metafield %}
+      {% assign price_change_event_data = variant.metafield.jsonValue %}
+
+      {% assign metafield_delete_input = hash %}
+      {% assign metafield_delete_input["ownerId"] = variant.id %}
+      {% assign metafield_delete_input["namespace"] = "mechanic" %}
+      {% assign metafield_delete_input["key"] = "price_change_event" %}
+      {% assign metafield_delete_inputs = metafield_delete_inputs | push: metafield_delete_input %}
+
+      {% if do_not_restore_prices_on_reset %}
+        {% assign variants_with_prices_to_not_reset = variants_with_prices_to_not_reset | push: variant %}
+        {% continue %}
+      {% endif %}
+
+      {% assign variant_input = hash %}
+      {% assign variant_input["id"] = variant.id %}
+
+      {% assign original_price = price_change_event_data.original_price | append: "" %}
+      {% assign original_compare_at_price = price_change_event_data.original_compare_at_price | append: "" %}
+
+      {% if original_price != variant.price %}
+        {% assign variant_input["price"] = original_price %}
+      {% endif %}
+
+      {% if original_compare_at_price != blank and original_compare_at_price != variant.compareAtPrice %}
+        {% assign variant_input["compareAtPrice"] = original_compare_at_price %}
+      {% endif %}
+
+      {% if variant_input["price"] or variant_input["compareAtPrice"] %}
+        {% assign variant_inputs_by_product[product.id]
+          = variant_inputs_by_product[product.id]
+          | default: array
+          | push: variant_input
+        %}
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+
+  {% comment %}
+    -- update variant prices in bulk (unless opting not to) and then delete the price change event metafields
+  {% endcomment %}
+
+  {% if do_not_restore_prices_on_reset %}
+    {% log
+      do_not_restore_prices_on_reset: do_not_restore_prices_on_reset,
+      variants_with_prices_to_not_reset: variants_with_prices_to_not_reset
+    %}
+
+  {% else %}
+    {% for keyval in variant_inputs_by_product %}
+      {% action "shopify" %}
+        mutation {
+          productVariantsBulkUpdate(
+            productId: {{ keyval[0] | json }}
+            variants: {{ keyval[1] | graphql_arguments }}
+          ) {
+            product {
+              id
+              title
+              tags
+            }
+            productVariants {
+              id
+              displayName
+              sku
+              price
+              compareAtPrice
+            }
+            userErrors {
+              field
+              message
+            }
           }
-        ]
-      ) {
-        deletedMetafields {
-          ownerId
-          namespace
-          key
         }
-        userErrors {
-          field
-          message
+      {% endaction %}
+    {% endfor %}
+  {% endif %}
+
+  {% if metafield_delete_inputs != blank %}
+    {% assign groups_of_metafield_delete_inputs = metafield_delete_inputs | in_groups_of: 250, fill_with: false %}
+
+    {% for group_of_metafield_delete_inputs in groups_of_metafield_delete_inputs %}
+      {% action "shopify" %}
+        mutation {
+          metafieldsDelete(
+            metafields: {{ group_of_metafield_delete_inputs | graphql_arguments }}
+          ) {
+            deletedMetafields {
+              ownerId
+              namespace
+              key
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endfor %}
+  {% endif %}
+
+  {% comment %}
+    -- delete the price change events shop metafield if needed
+  {% endcomment %}
+
+  {% if shop.metafield != blank %}
+    {% action "shopify" %}
+      mutation {
+        metafieldsDelete(
+          metafields: [
+            {
+              ownerId: {{ shop.id | json }}
+              namespace: "mechanic"
+              key: "price_change_events"
+            }
+          ]
+        ) {
+          deletedMetafields {
+            ownerId
+            namespace
+            key
+          }
+          userErrors {
+            field
+            message
+          }
         }
       }
-    }
-  {% endaction %}
+    {% endaction %}
+  {% endif %}
 
   {% comment %}
     -- send email notification about the price change events reset
@@ -1421,7 +1471,11 @@
   {% capture email_subject %}All price change events have been cleared{% endcapture %}
 
   {% capture email_body %}
-    All price change events have been reverted and cleared, using the {{ task_admin_link }} task within the Mechanic app.
+    {% if do_not_restore_prices_on_reset %}
+      All price change events have been cleared, using the {{ task_admin_link }} task within the Mechanic app.
+    {% else %}
+      All price change events have been cleared and related prices reset, using the {{ task_admin_link }} task within the Mechanic app.
+    {% endif %}
   {% endcapture %}
 
   {% action "email" %}
@@ -1429,7 +1483,7 @@
       "to": {{ email_recipients | json }},
       "subject": {{ email_subject | json }},
       "body": {{ email_body | newline_to_br | json }},
-      "reply_to": {{ shop.customer_email | json }},
+      "reply_to": {{ shop.contactEmail | json }},
       "from_display_name": {{ shop.name | json }}
     }
   {% endaction %}
