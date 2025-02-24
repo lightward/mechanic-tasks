@@ -327,6 +327,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Tag customers on the anniversary of their first order](./tag-customers-on-the-anniversary-of-their-first-order)
 * [Tag customers when their last order is before/after x days ago](./tag-customers-when-their-last-order-is-before-after-x-days-ago)
 * [Tag customers who reach a certain threshold of refunded orders](./tag-customers-who-reach-a-certain-threshold-of-refunded-orders)
+* [Tag customers with open draft orders](./tag-customers-with-open-draft-orders)
 * [Tag new orders of customers with prior unpaid orders](./tag-new-orders-of-customers-with-prior-unpaid-orders)
 * [Tag online orders by ?ls= Locksmith secret link used](./tag-orders-by-locksmith-secret-link)
 * [Tag online orders by their ?ref= referral codes](./tag-orders-by-url-referrer)
@@ -722,6 +723,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Tag customers on the anniversary of their first order](./tag-customers-on-the-anniversary-of-their-first-order)
 * [Tag customers when their last order is before/after x days ago](./tag-customers-when-their-last-order-is-before-after-x-days-ago)
 * [Tag customers who reach a certain threshold of refunded orders](./tag-customers-who-reach-a-certain-threshold-of-refunded-orders)
+* [Tag customers with open draft orders](./tag-customers-with-open-draft-orders)
 * [Temporarily enable tax-exempt status when a customer is tagged](./temporarily-enable-tax-exempt-status-when-a-customer-is-tagged)
 * [Update empty customer data from addresses](./update-empty-customer-data-from-addresses)
 
@@ -796,6 +798,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Delete draft orders older than 30 days](./delete-draft-orders-older-than-30-days)
 * [Delete draft orders](./delete-draft-orders)
 * [Send follow-up emails after sending a draft order invoice](./send-follow-up-emails-after-sending-a-draft-order-invoice)
+* [Tag customers with open draft orders](./tag-customers-with-open-draft-orders)
 
 ### Email
 
@@ -1679,6 +1682,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Tag customers in bulk by email address](./tag-customers-in-bulk-by-email-address)
 * [Tag customers on the anniversary of their first order](./tag-customers-on-the-anniversary-of-their-first-order)
 * [Tag customers who reach a certain threshold of refunded orders](./tag-customers-who-reach-a-certain-threshold-of-refunded-orders)
+* [Tag customers with open draft orders](./tag-customers-with-open-draft-orders)
 * [Tag new orders of customers with prior unpaid orders](./tag-new-orders-of-customers-with-prior-unpaid-orders)
 * [Tag products by metaobject reference field values](./tag-products-ny-metaobject-reference-field-values)
 * [Tag products with no images](./tag-products-with-no-images)

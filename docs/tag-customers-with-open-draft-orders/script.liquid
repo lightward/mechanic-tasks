@@ -1,0 +1,263 @@
+{% assign customer_tag_to_apply = options.customer_tag_to_apply__required %}
+
+{% if event.topic contains "shopify/draft_orders/" %}
+  {% if draft_order.customer == blank %}
+    {% unless event.preview %}
+      {% break %}
+    {% endunless %}
+  {% endif %}
+
+  {% comment %}
+    -- check if there are any open draft orders for this customer, and get their tags
+  {% endcomment %}
+
+  {% capture query %}
+    query {
+      customer(id: {{ draft_order.customer.admin_graphql_api_id | json }}) {
+        id
+        tags
+      }
+      draftOrders(
+        first: 1
+        query: "status:invoice_sent,open customer_id:{{ draft_order.customer.id }}"
+      ) {
+        nodes {
+          id
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "draftOrders": {
+            "nodes": [
+              {
+                "id": "gid://shopify/DraftOrder/1234567890"
+              }
+            ]
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign customer = result.data.customer %}
+  {% assign open_draft_orders = result.data.draftOrders.nodes %}
+
+  {% comment %}
+    -- add and remove the customer tag as needed
+  {% endcomment %}
+
+  {% if open_draft_orders != blank %}
+    {% unless customer.tags contains customer_tag_to_apply %}
+      {% action "shopify" %}
+        mutation {
+          tagsAdd(
+            id: {{ customer.id | json }}
+            tags: {{ customer_tag_to_apply | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endunless %}
+
+  {% else %}
+    {% if customer.tags contains customer_tag_to_apply %}
+      {% action "shopify" %}
+        mutation {
+          tagsRemove(
+            id: {{ customer.id | json }}
+            tags: {{ customer_tag_to_apply | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endif %}
+  {% endif %}
+
+{% elsif event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% comment %}
+    -- get all customers with open draft orders
+  {% endcomment %}
+
+  {% assign cursor = nil %}
+  {% assign customers_with_open_draft_orders = array %}
+
+  {% for n in (1..100) %}
+    {% capture query %}
+      query {
+        draftOrders(
+          first: 250
+          after: {{ cursor | json }}
+          query: "status:invoice_sent,open customer_id:*"
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            customer {
+              id
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "draftOrders": {
+              "nodes": [
+                {
+                  "customer": {
+                    "id": "gid://shopify/Customer/1234567890"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign customers_with_open_draft_orders
+      = result.data.draftOrders.nodes
+      | map: "customer"
+      | map: "id"
+      | concat: customers_with_open_draft_orders
+      | uniq
+    %}
+
+    {% if result.data.draftOrders.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.draftOrders.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% comment %}
+    -- get all customers with the tag
+  {% endcomment %}
+
+  {% assign cursor = nil %}
+  {% assign customers_with_tag = array %}
+
+  {%- capture search_query -%}
+    customer_tags CONTAINS '{{ customer_tag_to_apply }}'
+  {%- endcapture -%}
+
+  {% for n in (1..100) %}
+    {% capture query %}
+      query {
+        customerSegmentMembers(
+          first: 250
+          after: {{ cursor | json }}
+          query: {{ search_query | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          edges {
+            node {
+              id
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "customerSegmentMembers": {
+              "edges": [
+                {
+                  "node": {
+                    "id": "gid://shopify/CustomerSegmentMember/9876543210"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% for edge in result.data.customerSegmentMembers.edges %}
+      {% assign customers_with_tag[customers_with_tag.size] = edge.node.id | remove: "SegmentMember" %}
+    {% endfor %}
+
+    {% if result.data.customerSegmentMembers.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.customerSegmentMembers.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% comment %}
+    -- add and remove the customer tag as needed
+  {% endcomment %}
+
+  {% for customer_id in customers_with_open_draft_orders %}
+    {% unless customers_with_tag contains customer_id %}
+      {% action "shopify" %}
+        mutation {
+          tagsAdd(
+            id: {{ customer_id | json }}
+            tags: {{ customer_tag_to_apply | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endunless %}
+  {% endfor %}
+
+  {% for customer_id in customers_with_tag %}
+    {% unless customers_with_open_draft_orders contains customer_id %}
+      {% action "shopify" %}
+        mutation {
+          tagsRemove(
+            id: {{ customer_id | json }}
+            tags: {{ customer_tag_to_apply | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endunless %}
+  {% endfor %}
+{% endif %}
