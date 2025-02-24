@@ -335,7 +335,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Tag orders that have at least x of a certain product](./tag-orders-that-have-at-least-x-of-a-certain-product)
 * [Tag products as in- or out-of-stock, by location ID](./tag-products-as-in-or-out-of-stock-by-location-id)
 * [Tag products as in- or out-of-stock](./tag-products-as-in-or-out-of-stock)
-* [Tag products by metaobject reference field values](./tag-products-ny-metaobject-reference-field-values)
+* [Tag products by metaobject reference field values](./tag-products-by-metaobject-reference-field-values)
 * [Tag products by their price ranges](./tag-products-by-their-price-ranges)
 * [Tag products with no images](./tag-products-with-no-images)
 * [Temporarily add an order note](./temporarily-add-an-order-note)
@@ -1107,7 +1107,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Metaobjects
 
-* [Tag products by metaobject reference field values](./tag-products-ny-metaobject-reference-field-values)
+* [Tag products by metaobject reference field values](./tag-products-by-metaobject-reference-field-values)
 
 ### Multi-Location
 
@@ -1411,7 +1411,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Sync inventory levels to variant metafields](./sync-inventory-levels-to-variant-metafields)
 * [Sync variant inventory within a product by pack size](./sync-variant-inventory-within-a-product-by-pack-size)
 * [Tag products as in- or out-of-stock](./tag-products-as-in-or-out-of-stock)
-* [Tag products by metaobject reference field values](./tag-products-ny-metaobject-reference-field-values)
+* [Tag products by metaobject reference field values](./tag-products-by-metaobject-reference-field-values)
 * [Tag products by their price ranges](./tag-products-by-their-price-ranges)
 * [Tag products with no images](./tag-products-with-no-images)
 * [Track incoming donations in a store metafield](./track-incoming-donations-in-a-store-metafield)
@@ -1684,7 +1684,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Tag customers who reach a certain threshold of refunded orders](./tag-customers-who-reach-a-certain-threshold-of-refunded-orders)
 * [Tag customers with open draft orders](./tag-customers-with-open-draft-orders)
 * [Tag new orders of customers with prior unpaid orders](./tag-new-orders-of-customers-with-prior-unpaid-orders)
-* [Tag products by metaobject reference field values](./tag-products-ny-metaobject-reference-field-values)
+* [Tag products by metaobject reference field values](./tag-products-by-metaobject-reference-field-values)
 * [Tag products with no images](./tag-products-with-no-images)
 * [Temporarily enable tax-exempt status when a customer is tagged](./temporarily-enable-tax-exempt-status-when-a-customer-is-tagged)
 * [Trigger order emails with a tag](./trigger-order-emails-with-a-tag)
