@@ -4,8 +4,8 @@ Tags: Metaobjects, Products, Tag
 
 Use this task to copy metaobject field values to the referencing products' tags. Configure a product metafield that is a *metaobject_reference* type (or *list.metaobject_reference*), and add the metaobject field keys which contain the values to be added as tags, along with paired tag prefixes for each. Then run the task manually, or schedule it to run daily, and it will scan all active products in the shop on each run and tag them as needed.
 
-* View in the task library: [tasks.mechanic.dev/tag-products-ny-metaobject-reference-field-values](https://tasks.mechanic.dev/tag-products-ny-metaobject-reference-field-values)
-* Task JSON, for direct import: [task.json](../../tasks/tag-products-ny-metaobject-reference-field-values.json)
+* View in the task library: [tasks.mechanic.dev/tag-products-by-metaobject-reference-field-values](https://tasks.mechanic.dev/tag-products-by-metaobject-reference-field-values)
+* Task JSON, for direct import: [task.json](../../tasks/tag-products-by-metaobject-reference-field-values.json)
 * Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
@@ -49,7 +49,7 @@ A metaobject for "Book Authors" has a **name** field defined that you wish to ap
 
 ## Installing this task
 
-Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/tag-products-ny-metaobject-reference-field-values), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/tag-products-ny-metaobject-reference-field-values.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/tag-products-by-metaobject-reference-field-values), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/tag-products-by-metaobject-reference-field-values.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 
