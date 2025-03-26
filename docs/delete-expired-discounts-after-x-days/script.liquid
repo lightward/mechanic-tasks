@@ -1,0 +1,332 @@
+{% assign days_after_expiration = options.days_after_expiration_to_delete__number_required %}
+{% assign delete_automatic_discounts = options.delete_automatic_discounts__boolean %}
+{% assign delete_code_discounts = options.delete_code_discounts__boolean %}
+{% assign qualifying_apps = options.only_delete_discounts_created_by_these_apps__array %}
+
+{% unless delete_automatic_discounts or delete_code_discounts %}
+  {% error "Select at least one discount type to delete: automatic or code." %}
+{% endunless %}
+
+{%- capture lookback_period -%}
+  -{{ days_after_expiration | abs }} days
+{%- endcapture -%}
+
+{% assign cutoff_date = "now" | date: "%F", advance: lookback_period %}
+
+{% log cutoff_date: cutoff_date %}
+
+{% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% if delete_automatic_discounts %}
+    {% comment %}
+      -- get expired automatic discounts
+      -- cannot filter by the creating app in the query, so that will be done afterwards if there are any configured
+    {% endcomment %}
+
+    {% assign cursor = nil %}
+    {% assign discount_nodes = array %}
+
+    {% for n in (1..100) %}
+      {% capture query %}
+        query {
+          discountNodes(
+            first: 250
+            sortKey: ENDS_AT
+            query: "method:automatic status:expired"
+          ) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              id
+              events(
+                first: 1
+                query: "action:create"
+              ) {
+                nodes {
+                  appTitle
+                }
+              }
+              discount {
+                __typename
+                ... on DiscountAutomaticBasic {
+                  title
+                  summary
+                  status
+                  createdAt
+                  updatedAt
+                  endsAt
+                }
+                ... on DiscountAutomaticBxgy {
+                  title
+                  summary
+                  status
+                  createdAt
+                  updatedAt
+                  endsAt
+                }
+                ... on DiscountAutomaticFreeShipping {
+                  title
+                  summary
+                  status
+                  createdAt
+                  updatedAt
+                  endsAt
+                }
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = query | shopify %}
+
+      {% if event.preview %}
+        {% capture result_json %}
+          {
+            "data": {
+              "discountNodes": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/DiscountAutomaticNode/1234567890",
+                    "events": {
+                      "nodes": [
+                        {
+                          "appTitle": {{ qualifying_apps.first | default: "Shopify Web"  | json }}
+                        }
+                      ]
+                    },
+                    "discount": {
+                      "title": "ABCD",
+                      "summary": "$5.00 off Alpha Shoe • Applies to each eligible item per order • One use per customer",
+                      "status": "EXPIRED",
+                      "endsAt": "2020-02-02T12:00:00Z"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        {% endcapture %}
+
+        {% assign result = result_json | parse_json %}
+      {% endif %}
+
+      {% comment %}
+        -- verify that the code is expired and exceeds the cutoff date before marking for deletion
+      {% endcomment %}
+
+      {% for discount_node in result.data.discountNodes.nodes %}
+        {% assign discount_ends_at = discount_node.discount.endsAt | date: "%F" %}
+
+        {% unless discount_node.discount.status == "EXPIRED" and discount_ends_at <= cutoff_date %}
+          {% continue %}
+        {% endunless %}
+
+        {% if qualifying_apps == blank or qualifying_apps contains discount_node.events.nodes.first.appTitle %}
+          {% assign discount_nodes = discount_nodes | push: discount_node %}
+        {% endif %}
+      {% endfor %}
+
+      {% if result.data.discountNodes.pageInfo.hasNextPage %}
+        {% assign cursor = result.data.discountNodes.pageInfo.endCursor %}
+      {% else %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+
+    {% if discount_nodes == blank %}
+      {% log "No expired automatic discounts qualified to be deleted on this task run." %}
+
+    {% else %}
+      {% comment %}
+        -- group discount nodes into groups of 250 for bulk deletion
+      {% endcomment %}
+
+      {% assign groups_of_discount_nodes = discount_nodes | in_groups_of: 250, fill_with: false %}
+
+      {% for group_of_discount_nodes in groups_of_discount_nodes %}
+        {% log
+          message: "Deleting group of up to 250 automatic discounts.",
+          count_of_discount_nodes_in_group: group_of_discount_nodes.size,
+          discount_nodes_in_group: group_of_discount_nodes
+        %}
+
+        {% action "shopify" %}
+          mutation {
+            discountAutomaticBulkDelete(
+              ids: {{ group_of_discount_nodes | map: "id" | graphql_arguments }}
+            ) {
+              job {
+                id
+              }
+              userErrors {
+                code
+                extraInfo
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+      {% endfor %}
+    {% endif %}
+  {% endif %}
+
+  {% if delete_code_discounts %}
+    {% comment %}
+      -- get expired code discounts
+      -- cannot filter by the creating app in the query, so that will be done afterwards if there are any configured
+    {% endcomment %}
+
+    {% assign cursor = nil %}
+    {% assign discount_nodes = array %}
+
+    {% for n in (1..100) %}
+      {% capture query %}
+        query {
+          discountNodes(
+            first: 250
+            sortKey: ENDS_AT
+            query: "method:code status:expired"
+          ) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              id
+              events(
+                first: 1
+                query: "action:create"
+              ) {
+                nodes {
+                  appTitle
+                }
+              }
+              discount {
+                __typename
+                ... on DiscountCodeBasic {
+                  title
+                  summary
+                  status
+                  createdAt
+                  updatedAt
+                  endsAt
+                }
+                ... on DiscountCodeBxgy {
+                  title
+                  summary
+                  status
+                  createdAt
+                  updatedAt
+                  endsAt
+                }
+                ... on DiscountCodeFreeShipping {
+                  title
+                  summary
+                  status
+                  createdAt
+                  updatedAt
+                  endsAt
+                }
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = query | shopify %}
+
+      {% if event.preview %}
+        {% capture result_json %}
+          {
+            "data": {
+              "discountNodes": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/DiscountCodeNode/1234567890",
+                    "events": {
+                      "nodes": [
+                        {
+                          "appTitle": {{ qualifying_apps.first | default: "Shopify Web"  | json }}
+                        }
+                      ]
+                    },
+                    "discount": {
+                      "title": "ABCD",
+                      "summary": "$5.00 off Alpha Shoe • Applies to each eligible item per order • One use per customer",
+                      "status": "EXPIRED",
+                      "endsAt": "2020-02-02T12:00:00Z"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        {% endcapture %}
+
+        {% assign result = result_json | parse_json %}
+      {% endif %}
+
+      {% comment %}
+        -- verify that the code is expired and exceeds the cutoff date before marking for deletion
+      {% endcomment %}
+
+      {% for discount_node in result.data.discountNodes.nodes %}
+        {% assign discount_ends_at = discount_node.discount.endsAt | date: "%F" %}
+
+        {% unless discount_node.discount.status == "EXPIRED" and discount_ends_at <= cutoff_date %}
+          {% continue %}
+        {% endunless %}
+
+        {% if qualifying_apps == blank or qualifying_apps contains discount_node.events.nodes.first.appTitle %}
+          {% assign discount_nodes = discount_nodes | push: discount_node %}
+        {% endif %}
+      {% endfor %}
+
+      {% if result.data.discountNodes.pageInfo.hasNextPage %}
+        {% assign cursor = result.data.discountNodes.pageInfo.endCursor %}
+      {% else %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+
+    {% if discount_nodes == blank %}
+      {% log "No expired code discounts qualified to be deleted on this task run." %}
+
+    {% else %}
+      {% comment %}
+        -- group discount nodes into groups of 250 for bulk deletion
+      {% endcomment %}
+
+      {% assign groups_of_discount_nodes = discount_nodes | in_groups_of: 250, fill_with: false %}
+
+      {% for group_of_discount_nodes in groups_of_discount_nodes %}
+        {% log
+          message: "Deleting group of up to 250 code discounts.",
+          count_of_discount_nodes_in_group: group_of_discount_nodes.size,
+          discount_nodes_in_group: group_of_discount_nodes
+        %}
+
+        {% action "shopify" %}
+          mutation {
+            discountCodeBulkDelete(
+              ids: {{ group_of_discount_nodes | map: "id" | graphql_arguments }}
+            ) {
+              job {
+                id
+              }
+              userErrors {
+                code
+                extraInfo
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+      {% endfor %}
+    {% endif %}
+  {% endif %}
+{% endif %}
