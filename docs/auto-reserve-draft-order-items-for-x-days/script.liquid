@@ -1,9 +1,13 @@
-{% assign tag_to_watch_for = options.tag_to_watch_for__required %}
-{% assign amount_of_days_to_reserve = options.amount_of_days_to_reserve__number_required %}
-{% assign preserve_reservation_date = options.preserve_the_initial_reservation_date_if_line_items_change__boolean %}
+{% assign amount_of_days_to_reserve = options.amount_of_days_to_reserve__number_required | floor %}
+{% assign inclusion_tags = options.include_draft_orders_with_any_of_these_tags__array %}
+{% assign exclusion_tags = options.exclude_draft_orders_with_any_of_these_tags__array %}
 
 {% if amount_of_days_to_reserve < 1 %}
-  {% error "The amount of days to reserve must be a positive number" %}
+  {% error "The amount of days to reserve must be a positive number." %}
+{% endif %}
+
+{% if inclusion_tags != blank and exclusion_tags != blank %}
+  {% log "Exclusion tags will be ignored if any inclusion tags are configured." %}
 {% endif %}
 
 {% if event.topic == "shopify/draft_orders/create" or event.topic == "shopify/draft_orders/update" %}
@@ -18,12 +22,6 @@
         reserveInventoryUntil
         status
         tags
-        lineItems(first: 250) {
-          nodes {
-            id
-            quantity
-          }
-        }
       }
     }
   {% endcapture %}
@@ -36,15 +34,7 @@
         "data": {
           "draftOrder": {
             "id": "gid://shopify/DraftOrder/1234567890",
-            "tags": {{ tag_to_watch_for | json }},
-            "lineItems": {
-              "nodes": [
-                {
-                  "id": "gid://shopify/LineItem/1234567890",
-                  "quantity": 1
-                }
-              ]
-            }
+            "tags": {{ array | push: inclusion_tags.first | json }}
           }
         }
       }
@@ -54,67 +44,74 @@
   {% endif %}
 
   {% assign draft_order = result.data.draftOrder %}
-  {% assign cache_key = draft_order.id %}
-  {% assign draft_order_snapshot = cache[cache_key] %}
+  {% assign draft_order_tags_lowercase = draft_order.tags | json | downcase | parse_json %}
+
+  {% if draft_order.status == "COMPLETED" %}
+    {% log "This draft order has already been completed; skipping." %}
+    {% break %}
+  {% endif %}
+
+  {% if draft_order.reserveInventoryUntil != blank %}
+    {% log %}
+      "Draft order already has a reservation date set ({{ draft_order.reserveInventoryUntil | date: "%FT%T" }}); skipping."
+    {% endlog %}
+    {% break %}
+  {% endif %}
 
   {% comment %}
-    -- if draft order does not have the tag to watch for, has no line items, or has been completed, then skip it
+    -- first check if there are any inclusion tags configured, and if not then check for exclusion tags
   {% endcomment %}
 
-  {% unless draft_order.tags contains tag_to_watch_for
-    and draft_order.lineItems != blank
-    and draft_order.status != "COMPLETED"
-  %}
+  {% if inclusion_tags != blank %}
+    {% assign draft_order_qualifies = false %}
+    {% assign inclusion_tags_lowercase = inclusion_tags | json | downcase | parse_json %}
+
+    {% for inclusion_tag_lowercase in inclusion_tags_lowercase %}
+      {% if draft_order_tags_lowercase contains inclusion_tag_lowercase %}
+        {% assign draft_order_qualifies = true %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+
+  {% elsif exclusion_tags != blank %}
+    {% assign draft_order_qualifies = true %}
+    {% assign exclusion_tags_lowercase = exclusion_tags | json | downcase | parse_json %}
+
+    {% for inclusion_tag_lowercase in inclusion_tags_lowercase %}
+      {% if draft_order_tags_lowercase contains inclusion_tag_lowercase %}
+        {% assign draft_order_qualifies = false %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+
+  {% else %}
+    {% log "No inclusion or exclusion tags are configured; all draft orders will attempt to reserve inventory." %}
+    {% assign draft_order_qualifies = true %}
+  {% endif %}
+
+  {% unless draft_order_qualifies %}
+    {% log "This draft order either does not have an inclusion tag, or it has an exclusion tag; skipping." %}
     {% break %}
   {% endunless %}
 
   {% comment %}
-    -- create hash of draft order line items to be saved to cache
+    -- calculate the reserve date to be 1 minute before midnight on the calculated reserve date (local shop time)
+    -- this follows default convention used in Shopify admin
   {% endcomment %}
 
-  {% assign draft_order_hash = draft_order.lineItems.nodes | json | sha256 %}
+  {%- capture reserve_duration -%}
+    +{{ amount_of_days_to_reserve | plus: 1 }} days
+  {%- endcapture -%}
 
-  {% comment %}
-    -- if the draft order already has a reserve date AND there is no change in the line items from the cache snapshot, then exit
-  {% endcomment %}
-
-  {% if draft_order.reserveInventoryUntil != blank and draft_order_hash == draft_order_snapshot %}
-    {% log "Draft order already has a reservation date set, however no line items have changed since the last update; skipping" %}
-    {% break %}
-  {% endif %}
-
-  {% comment %}
-    -- calculate the reserve date to be midnight (local shop time) of the day following the future date
-  {% endcomment %}
-
-  {% assign reserve_duration_s
-    = amount_of_days_to_reserve
-    | plus: 1
-    | times: 86400
-  %}
   {% assign reserve_date
     = "now"
-    | date: "%s"
-    | plus: reserve_duration_s
-    | date: "%F"
-    | date: "%FT%TZ", tz: "UTC"
+    | date: "%F", advance: reserve_duration
+    | date: "%FT%T", advance: "-1 minute"
   %}
 
-  {% comment %}
-    -- re-apply an existing reservation date if the preserve option has been checked
-  {% endcomment %}
-
-  {% if preserve_reservation_date and draft_order.reserveInventoryUntil != blank %}
-    {% log "Draft order line items have changed since they were saved in the cache. The 'Preserve reservation date' option is checked, so the existing reservation date wil be re-applied to the draft order to make sure that all line items are properly reserved" %}
-
-    {% assign reserve_date = draft_order.reserveInventoryUntil %}
-  {% endif %}
-
-  {% comment %}
-    -- set the cache value so the draft order update event that fires will have the new hash value to check
-  {% endcomment %}
-
-  {% action "cache", "set", cache_key, draft_order_hash %}
+  {% log %}
+    "Reserve date to set: {{ reserve_date }}"
+  {% endlog %}
 
   {% comment %}
     -- update the draft order with the reserve date

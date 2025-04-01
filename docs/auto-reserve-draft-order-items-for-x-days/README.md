@@ -2,7 +2,7 @@
 
 Tags: Draft Orders, Products, Reserve
 
-Use this task to auto-reserve all of the line items for a set amount of time on any new or updated draft orders that contain a certain tag. A common use case is when you have an app or service that is creating draft orders on your behalf and you want to make sure that the inventory for those orders is set aside if possible.
+Use this task to auto-reserve all of the line items for a set amount of time on qualifying new or updated draft orders. A common use case is when you have an app or service that is creating draft orders on your behalf and you want to make sure that the inventory for those orders is set aside if possible.
 
 * View in the task library: [tasks.mechanic.dev/auto-reserve-draft-order-items-for-x-days](https://tasks.mechanic.dev/auto-reserve-draft-order-items-for-x-days)
 * Task JSON, for direct import: [task.json](../../tasks/auto-reserve-draft-order-items-for-x-days.json)
@@ -12,9 +12,11 @@ Use this task to auto-reserve all of the line items for a set amount of time on 
 
 ```json
 {
-  "tag_to_watch_for__required": null,
   "amount_of_days_to_reserve__number_required": null,
-  "preserve_the_initial_reservation_date_if_line_items_change__boolean": null
+  "exclude_draft_orders_with_any_of_these_tags__array": null,
+  "include_draft_orders_with_any_of_these_tags__array": [
+    "RESERVE"
+  ]
 }
 ```
 
@@ -24,22 +26,23 @@ Use this task to auto-reserve all of the line items for a set amount of time on 
 
 ```liquid
 shopify/draft_orders/create
-shopify/draft_orders/update+1.minute
+shopify/draft_orders/update+10.seconds
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
-Use this task to auto-reserve all of the line items for a set amount of time on any new or updated draft orders that contain a certain tag. A common use case is when you have an app or service that is creating draft orders on your behalf and you want to make sure that the inventory for those orders is set aside if possible.
+Use this task to auto-reserve all of the line items for a set amount of time on qualifying new or updated draft orders. A common use case is when you have an app or service that is creating draft orders on your behalf and you want to make sure that the inventory for those orders is set aside if possible.
 
-Configure the task with the "Tag to watch for" and the "Amount of days to reserve". Optionally, enabling the "Preserve the initial reservation date if line items change" will override the default behavior of resetting the reseve until date.
+Optionally, configure the task with one or more tags in the "Include draft orders with any of these tags" field, or configure the task with one or more tags in the "Exclude draft orders with any of these tags" field. Exclusion tags will be ignored if any inclusion tags are configured.
 
 **Important notes:**
 
+- **If no tags are configured, this task will attempt to reserve inventory on all new or updated draft orders**
 - This task does not check the inventory of any line items before reserving them
 - Line items can only be reserved at the default location configured in Shopify, since draft orders do not support location assignment
-- The one minute delay on the draft order update subscription and the enabled "Perform action runs in sequence" run time option should both be left as configured, to prevent interference with draft order completions and updates
+- The 10 second delay on the draft order update subscription should be left as configured to prevent interference with draft order completion events
 
 ## Installing this task
 
