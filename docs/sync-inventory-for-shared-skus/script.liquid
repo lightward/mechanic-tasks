@@ -1,6 +1,38 @@
 {% assign skus_to_monitor = options.product_skus_to_monitor__array_required %}
 {% assign primary_location = shop.locations[shop.primary_location_id] %}
 
+{% comment %}
+  -- clean up SKUs by skipping blanks, stripping outside spaces, and removing duplicates to prevent inventory over-adjustments
+{% endcomment %}
+
+{% assign cleaned_skus = array %}
+
+{% for sku in skus_to_monitor %}
+  {% assign cleaned_sku = sku | strip %}
+
+  {% unless cleaned_sku == blank or cleaned_skus contains cleaned_sku %}
+    {% assign cleaned_skus = cleaned_skus | push: cleaned_sku %}
+  {% endunless %}
+{% endfor %}
+
+{% if cleaned_skus == blank %}
+  {% error "Please enter one or more shared SKUs to sync." %}
+  {% break %}
+
+{% elsif cleaned_skus != skus_to_monitor %}
+  {% comment %}
+    -- log a warning if there are SKU list issues, but let task keep processing cleaned SKUs
+  {% endcomment %}
+
+  {% action "echo" __error: "There are duplicates, blanks, or extra spaces in the 'Product SKUs to monitor' list, which should be removed." %}
+{% endif %}
+
+{% assign skus_to_monitor = cleaned_skus %}
+
+{% log %}
+  "Processing {{ skus_to_monitor.size }} shared {{ skus_to_monitor.size | pluralize: "SKU", "SKUs" }}."
+{% endlog %}
+
 {% assign query_components = array %}
 
 {% for sku in skus_to_monitor %}
@@ -13,14 +45,10 @@
 
 {% log search_query: search_query %}
 
-{% if event.preview %}
-  {% assign skus_to_monitor = array | push: skus_to_monitor[0] %}
-{% endif %}
-
 {% assign variants_by_sku = hash %}
 {% assign cursor = nil %}
 
-{% for n in (0..200) %}
+{% for n in (1..200) %}
   {% capture query %}
     query {
       productVariants(
@@ -111,17 +139,24 @@
   {% endif %}
 {% endfor %}
 
+{% comment %}
+  -- filter out unmatched SKUs and display an alert, but let task keep processing the matched SKUs
+{% endcomment %}
+
 {% assign unmatched_skus = array %}
+{% assign skus_to_process = array %}
 
 {% for sku in skus_to_monitor %}
   {% if variants_by_sku[sku] == blank %}
     {% assign unmatched_skus = unmatched_skus | push: sku %}
+  {% else %}
+    {% assign skus_to_process = skus_to_process | push: sku %}
   {% endif %}
 {% endfor %}
 
 {% if unmatched_skus != blank %}
-  {% error
-    message: "One or more configured SKUs were not matched in this shop. Please check the task configuration and try again.",
+  {% action "echo"
+    __error: "One or more configured SKUs were not matched in this shop. Remove or correct these entries in the task configuration.",
     unmatched_skus: unmatched_skus
   %}
 {% endif %}
@@ -129,6 +164,10 @@
 {% log variants_by_sku: variants_by_sku %}
 
 {% if event.topic == "mechanic/user/trigger" %}
+  {% comment %}
+    -- manual runs are used to record leveled inventory in the cache
+  {% endcomment %}
+
   {% for pair in variants_by_sku %}
     {% assign sku = pair[0] %}
     {% assign variants = pair[1] %}
@@ -153,9 +192,13 @@
   {% endfor %}
 
 {% elsif event.topic contains "mechanic/scheduler/" %}
+  {% comment %}
+    -- process SKUs to see if any need adjustments
+  {% endcomment %}
+
   {% assign inventory_adjustments = array %}
 
-  {% for sku in skus_to_monitor %}
+  {% for sku in skus_to_process %}
     {% assign cache_key = task.id | append: "-" | append: sku | sha256 %}
     {% assign cached_inventory_quantity = cache[cache_key] %}
 
