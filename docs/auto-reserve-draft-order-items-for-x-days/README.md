@@ -13,10 +13,10 @@ Use this task to auto-reserve all of the line items for a set amount of time on 
 ```json
 {
   "amount_of_days_to_reserve__number_required": null,
-  "exclude_draft_orders_with_any_of_these_tags__array": null,
   "include_draft_orders_with_any_of_these_tags__array": [
     "RESERVE"
-  ]
+  ],
+  "exclude_draft_orders_with_any_of_these_tags__array": null
 }
 ```
 
