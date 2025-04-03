@@ -46,6 +46,8 @@
   {% assign draft_order = result.data.draftOrder %}
   {% assign draft_order_tags_lowercase = draft_order.tags | json | downcase | parse_json %}
 
+  {% log draft_order: draft_order %}
+
   {% if draft_order.status == "COMPLETED" %}
     {% log "This draft order has already been completed; skipping." %}
     {% break %}
@@ -77,8 +79,8 @@
     {% assign draft_order_qualifies = true %}
     {% assign exclusion_tags_lowercase = exclusion_tags | json | downcase | parse_json %}
 
-    {% for inclusion_tag_lowercase in inclusion_tags_lowercase %}
-      {% if draft_order_tags_lowercase contains inclusion_tag_lowercase %}
+    {% for exclusion_tag_lowercase in exclusion_tags_lowercase %}
+      {% if draft_order_tags_lowercase contains exclusion_tag_lowercase %}
         {% assign draft_order_qualifies = false %}
         {% break %}
       {% endif %}
@@ -106,11 +108,11 @@
   {% assign reserve_date
     = "now"
     | date: "%F", advance: reserve_duration
-    | date: "%FT%T", advance: "-1 minute"
+    | date: "%FT%TZ", tz: "UTC", advance: "-1 minute"
   %}
 
   {% log %}
-    "Reserve date to set: {{ reserve_date }}"
+    "Reserve until (local shop time): {{ reserve_date | date: "%FT%T" }}"
   {% endlog %}
 
   {% comment %}
