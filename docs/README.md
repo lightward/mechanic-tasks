@@ -8,6 +8,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Add Option Name as a Variant Metafield for In Stock Variants](./add-option-names-as-variant-metafields-for-in-stock-variants)
 * [Add all products to a certain sales channel](./add-all-products-to-a-certain-sales-channel)
 * [Add fulfillment tracking when an order is tagged](./add-fulfillment-tracking-when-an-order-is-tagged)
+* [Add new Shopify Forms submissions to a Google Sheet](./add-new-shopify-forms-submissions-to-a-google-sheet)
 * [Add new customers to GetResponse](./add-new-customers-to-getresponse)
 * [Add note to new orders with their fulfillment locations](./note-new-orders-with-their-fulfillment-locations)
 * [Advanced: Scheduled Price Changes](./advanced-scheduled-price-changes)
@@ -656,6 +657,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Customers
 
+* [Add new Shopify Forms submissions to a Google Sheet](./add-new-shopify-forms-submissions-to-a-google-sheet)
 * [Add new customers to GetResponse](./add-new-customers-to-getresponse)
 * [Auto-add an order note for customers having a certain tag](./auto-add-an-order-note-for-customers-having-a-certain-tag)
 * [Auto-add an order note for returning customers](./auto-add-an-order-note-for-returning-customers)
@@ -944,6 +946,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Google Sheets
 
+* [Add new Shopify Forms submissions to a Google Sheet](./add-new-shopify-forms-submissions-to-a-google-sheet)
 * [Demonstration: Add new orders to a Google Sheet](./demonstration-add-new-orders-to-google-sheet)
 
 ### HTTP
@@ -1600,6 +1603,10 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Demonstration: Shopify Flow integration](./demonstration-shopify-flow-integration)
 * [Trigger Shopify Flow with a time delay](./trigger-shopify-flow-with-a-time-delay)
 
+### Shopify Forms
+
+* [Add new Shopify Forms submissions to a Google Sheet](./add-new-shopify-forms-submissions-to-a-google-sheet)
+
 ### Signup
 
 * [Send a customer signup email](./customer-signup-email)
@@ -1797,6 +1804,7 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Watch
 
 * [Add fulfillment tracking when an order is tagged](./add-fulfillment-tracking-when-an-order-is-tagged)
+* [Add new Shopify Forms submissions to a Google Sheet](./add-new-shopify-forms-submissions-to-a-google-sheet)
 * [Auto-add products to a custom collection when tagged](./auto-add-products-to-a-custom-collection-when-tagged)
 * [Auto-cancel fulfillments when an order is tagged](./auto-cancel-fulfillments-when-an-order-is-tagged)
 * [Auto-invite customers when tagged](./auto-invite-customers-when-tagged)

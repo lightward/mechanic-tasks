@@ -1,0 +1,230 @@
+{% assign google_account = options.google_account__required %}
+{% assign spreadsheet_title = options.spreadsheet_title__required %}
+{% assign spreadsheet_id = options.spreadsheet_id %}
+{% assign form_id = options.form_id__number_required %}
+{% assign column_headers_and_customer_metafields = options.column_headers_and_customer_metafields__keyval_required %}
+
+{% assign tag_to_monitor = "shopify-forms-" | append: form_id %}
+
+{% comment %}
+  -- column headers start with customer name and email, followed by configured customer metafields
+{% endcomment %}
+
+{% assign column_headers
+  = column_headers_and_customer_metafields
+  | keys
+  | unshift: "Name", "Email"
+%}
+
+{% if event.topic == "shopify/customer/tags_added" %}
+  {% if spreadsheet_id == blank %}
+    {% error "Please run this task manually first to create a spreadsheet, then add the spreadsheet_id to the task options." %}
+  {% endif %}
+
+  {% comment %}
+    -- check tags before querying the customer with GraphQL, so we know if the monitored tag was just added
+    -- note: this webhook uses a tags array, unlike most other webhooks with tags
+  {% endcomment %}
+
+  {% if event.preview %}
+    {% capture customer_json %}
+      {
+        "customerId": "gid://shopify/Customer/1234567890",
+        "tags": {{ array | push: tag_to_monitor | json }},
+        "occurredAt": "2005-05-05T05:00:00.000Z"
+      }
+    {% endcapture %}
+
+    {% assign customer = customer_json | parse_json %}
+  {% endif %}
+
+  {% unless customer.tags contains tag_to_monitor %}
+    {% log %}
+      "The form tag being monitored, '{{ tag_to_monitor }}', was not added to this customer in this event."
+    {% endlog %}
+
+    {% break %}
+  {% endunless %}
+
+  {% comment %}
+    -- get customer data and metafields
+  {% endcomment %}
+
+  {% capture query %}
+    query {
+      customer(id: {{ customer.customerId | json }}) {
+        id
+        displayName
+        defaultEmailAddress {
+          emailAddress
+        }
+        metafields(first: 250) {
+          nodes {
+            namespace
+            key
+            type
+            jsonValue
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "customer": {
+            "id": "gid://shopify/Customer/1234567890",
+            "displayName": "Jean Deaux",
+            "defaultEmailAddress": {
+              "emailAddress": "jean.deaux@example.com"
+            },
+            "metafields": {
+              "nodes": [
+                {
+                  "namespace": {{ customer_metafields.first | split: "." | first | json }},
+                  "key": {{ customer_metafields.first | split: "." | last | json }},
+                  "jsonValue": "Lorem ipsum"
+                }
+              ]
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign customer = result.data.customer %}
+
+  {% assign row = array | push: customer.displayName, customer.defaultEmailAddress.emailAddress %}
+
+  {% assign metafields = column_headers_and_customer_metafields | values %}
+
+  {% for metafield in metafields %}
+    {% assign metafield_namespace = metafield | split: "." | first %}
+    {% assign metafield_key = metafield | split: "." | last %}
+    {% assign matched_metafield = customer.metafields.nodes
+      | where: "namespace", metafield_namespace
+      | where: "key", metafield_key
+      | first
+    %}
+
+    {% assign row_value = nil %}
+
+    {% if matched_metafield != blank %}
+      {% comment %}
+        -- to support lists, convert all metafield values to arrays for processing, and then back to comma-separated strings for the row value
+      {% endcomment %}
+
+      {% if matched_metafield.type contains "list." %}
+        {% assign matched_metafield_values = matched_metafield.jsonValue %}
+        {% assign matched_metafield_type = matched_metafield.type | remove: "list." %}
+
+      {% else %}
+        {% assign matched_metafield_values = array | push: matched_metafield.jsonValue %}
+        {% assign matched_metafield_type = matched_metafield.type %}
+      {% endif %}
+
+      {% case matched_metafield_type %}
+        {% when "boolean"
+          or "color"
+          or "date"
+          or "date_time"
+          or "number_decimal"
+          or "number_integer"
+          or "single_line_text_field"
+        %}
+          {% assign row_value = matched_metafield_values | join: ", " %}
+
+        {% when "dimension"
+          or "volume"
+          or "weight"
+        %}
+          {% assign row_value = array %}
+
+          {% for matched_metafield_value in matched_metafield_values %}
+            {% assign row_value[row_value.size]
+              = matched_metafield_value.value
+              | append: " "
+              | append: matched_metafield_value.unit
+            %}
+          {% endfor %}
+
+          {% assign row_value = row_value | join: ", " %}
+
+        {% when "money" %}
+          {% assign row_value = array %}
+
+          {% for matched_metafield_value in matched_metafield_values %}
+            {% assign row_value[row_value.size]
+              = matched_metafield_value.amount
+              | append: " "
+              | append: matched_metafield_value.currency_code
+            %}
+          {% endfor %}
+
+          {% assign row_value = row_value | join: ", " %}
+
+        {% when "rating" %}
+          {% assign row_value = array %}
+
+          {% for matched_metafield_value in matched_metafield_values %}
+            {% assign row_value[row_value.size]
+              = matched_metafield_value.value
+              | append: " / "
+              | append: matched_metafield_value.scale_max
+            %}
+          {% endfor %}
+
+          {% assign row_value = row_value | join: ", " %}
+
+        {% else %}
+          {% log
+            message: "Unsupported metafield type for this task",
+            matched_metafield: matched_metafield
+          %}
+      {% endcase %}
+    {% endif %}
+
+    {% comment %}
+      -- push nil when a metafield isn't matched or has an unsupported type, so an empty spot is properly added to the row to keep it aligned
+    {% endcomment %}
+
+    {% assign row = row | push: row_value %}
+  {% endfor %}
+
+  {% log
+    message: "Adding row to the Google Sheet, and expecting these column headers in order.",
+    column_headers: column_headers,
+    row: row
+  %}
+
+  {% action "google_sheets" %}
+    {
+      "account": {{ google_account | json }},
+      "operation": "append_rows",
+      "spreadsheet_id": {{ spreadsheet_id | json }},
+      "rows": {{ array | push: row | json }}
+    }
+  {% endaction %}
+
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% if spreadsheet_id != blank %}
+    {% log "Manual running of this task is used only to create a new Google sheet. If a spreadsheet ID is configured then a sheet has already been created for this task to add rows to." %}
+    {% break %}
+  {% endif %}
+
+  {% action "google_sheets" %}
+    {
+      "account": {{ google_account | json }},
+      "operation": "create_spreadsheet",
+      "title": {{ spreadsheet_title | json }},
+      "rows": {{ array | push: column_headers | json }}
+    }
+  {% endaction %}
+{% endif %}
