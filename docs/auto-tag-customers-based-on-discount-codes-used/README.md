@@ -25,6 +25,7 @@ Use this task to easily identify customers who used certain discount codes. This
 ```liquid
 shopify/orders/create
 mechanic/user/trigger
+mechanic/shopify/bulk_operation
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)

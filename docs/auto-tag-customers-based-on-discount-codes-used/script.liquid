@@ -1,67 +1,280 @@
-{% comment %}
-  Options order:
+{% assign discount_codes_and_tags = options.discount_codes_and_tags__keyval_required %}
+{% assign untag_customers_instead_of_tagging_them = options.untag_customers_instead_of_tagging_them__boolean %}
+{% assign allow_partial = options.allow_partial_matches_when_checking_for_discount_codes__boolean %}
 
-  {{ options.discount_codes_and_tags__keyval_required }}
-  {{ options.untag_customers_instead_of_tagging_them__boolean }}
-{% endcomment %}
+{% if event.topic == "shopify/orders/create" %}
+  {% comment %}
+    -- for new orders, only check discounts on that order, not all of a customer's orders
+  {% endcomment %}
 
-{% if options.untag_customers_instead_of_tagging_them__boolean %}
-  {% assign tagging_mutation_name = "tagsRemove" %}
-{% else %}
-  {% assign tagging_mutation_name = "tagsAdd" %}
-{% endif %}
+  {% capture query %}
+    query {
+      order(id: {{ order.admin_graphql_api_id | json }}) {
+        discountCodes
+        customer {
+          id
+          tags
+        }
+      }
+    }
+  {% endcapture %}
 
-{% if event.topic contains "shopify/orders/" %}
+  {% assign result = query | shopify %}
+
   {% if event.preview %}
-    {% capture order_json %}
+    {% capture result_json %}
       {
-        "discount_applications": [
-          {
-            "type": "discount_code",
-            "code": {{ options.discount_codes_and_tags__keyval_required.first[0] | json }}
+        "data": {
+          "order": {
+            "discountCodes": {{ discount_codes_and_tags | keys | json }},
+            "customer": {
+              "id": "gid://shopify/Customer/1234567890"
+            }
           }
-        ],
-        "customer": {
-          "admin_graphql_api_id": "gid://shopify/Customer/1234567890",
-          "tags": ""
         }
       }
     {% endcapture %}
 
-    {% assign order = order_json | parse_json %}
+    {% assign result = result_json | parse_json %}
   {% endif %}
 
+  {% assign order = result.data.order %}
+  {% assign customer = order.customer %}
+
+  {% if order.discountCodes == blank %}
+    {% log "No discount codes for this order; nothing to do." %}
+    {% break %}
+  {% endif %}
+
+  {% assign order_discount_codes_downcase
+    = order.discountCodes
+    | json
+    | downcase
+    | parse_json
+  %}
+
+  {% assign customer_tags_downcase
+    = customer.tags
+    | json
+    | downcase
+    | parse_json
+  %}
+
+  {% assign tags_to_add = array %}
+  {% assign tags_to_remove = array %}
+
   {% comment %}
-    Remember: only ever one discount code per order
+    -- use downcased strings for code and tag comparisons; however, add/remove tags using the configured values
   {% endcomment %}
-  {% assign discount_code = order.discount_applications | where: "type", "discount_code" | map: "code" | first %}
 
-  {% if discount_code == blank %}
-    {% log "No discount code for this order; nothing to do." %}
-  {% else %}
-    {% assign tags = array %}
+  {% for keyval in discount_codes_and_tags %}
+    {% assign discount_code_downcase = keyval[0] | downcase %}
+    {% assign tag_downcase = keyval[1] | downcase %}
 
-    {% if options.allow_partial_matches_when_checking_for_discount_codes__boolean %}
-      {% for pair in options.discount_codes_and_tags__keyval_required %}
-        {% assign some_discount_code_portion = pair[0] %}
-        {% assign some_tag = pair[1] %}
+    {% if allow_partial %}
+      {% for order_discount_code_downcase in order_discount_codes_downcase %}
+        {% if order_discount_code_downcase contains discount_code_downcase %}
+          {% if untag_customers_instead_of_tagging_them %}
+            {% if customer_tags_downcase contains tag_downcase %}
+              {% assign tags_to_remove = tags_to_remove | push: keyval[1] %}
+            {% endif %}
 
-        {% if discount_code contains some_discount_code_portion %}
-          {% assign tags[tags.size] = some_tag %}
+          {% else %}
+            {% unless customer_tags_downcase contains tag_downcase %}
+              {% assign tags_to_add = tags_to_add | push: keyval[1] %}
+            {% endunless %}
+          {% endif %}
+
+          {% break %}
         {% endif %}
       {% endfor %}
-    {% elsif options.discount_codes_and_tags__keyval_required[discount_code] != blank %}
-      {% assign tags[0] = options.discount_codes_and_tags__keyval_required[discount_code] %}
+
+    {% elsif order_discount_codes_downcase contains discount_code_downcase %}
+      {% if untag_customers_instead_of_tagging_them %}
+        {% if customer_tags_downcase contains tag_downcase %}
+          {% assign tags_to_remove = tags_to_remove | push: keyval[1] %}
+        {% endif %}
+
+      {% else %}
+        {% unless customer_tags_downcase contains tag_downcase %}
+          {% assign tags_to_add = tags_to_add | push: keyval[1] %}
+        {% endunless %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+
+  {% if tags_to_add != blank %}
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {{ customer.id | json }}
+          tags: {{ tags_to_add | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+
+  {% if tags_to_remove != blank %}
+    {% action "shopify" %}
+      mutation {
+        tagsRemove(
+          id: {{ customer.id | json }}
+          tags: {{ tags_to_remove | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% comment %}
+    -- get all customers who have placed an order, and each of their orders where one or more discount codes were used
+  {% endcomment %}
+
+  {% capture bulk_operation_query %}
+    query {
+      customers(query: "orders_count:>0") {
+        edges {
+          node {
+            __typename
+            id
+            tags
+            orders(query: "discount_code:*") {
+              edges {
+                node {
+                  __typename
+                  discountCodes
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture jsonl_string %}
+      {"__typename": "Customer","id": "gid://shopify/Customer/1234567890"}
+      {"__typename": "Order","discountCodes":{{ discount_codes_and_tags | keys | json }},"__parentId":"gid://shopify/Customer/1234567890"}
+      {"__typename": "Customer","id": "gid://shopify/Customer/2345678901","tags":{{ discount_codes_and_tags | values | json }}}
+      {"__typename": "Order","discountCodes":{{ discount_codes_and_tags | keys | json }},"__parentId":"gid://shopify/Customer/2345678901"}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = jsonl_string | parse_jsonl %}
+  {% endif %}
+
+  {% assign customers = bulkOperation.objects | where: "__typename", "Customer" %}
+  {% assign orders = bulkOperation.objects | where: "__typename", "Order" %}
+
+  {% comment %}
+    -- loop through customers to see which qualify for tag updates
+  {% endcomment %}
+
+  {% for customer in customers %}
+    {% assign customer_orders = orders | where: "__parentId", customer.id %}
+
+    {% if customer_orders == blank %}
+      {% continue %}
     {% endif %}
 
-    {% if tags == empty %}
-      {% log message: "No matching tags found; nothing to do", discount_code: discount_code %}
-    {% else %}
+    {% assign customer_discount_codes_downcase = array %}
+
+    {% for customer_order in customer_orders %}
+      {% assign customer_discount_codes_downcase
+        = customer_order.discountCodes
+        | json
+        | downcase
+        | parse_json
+        | concat: customer_discount_codes_downcase
+        | uniq
+      %}
+    {% endfor %}
+
+    {% assign customer_tags_downcase
+      = customer.tags
+      | json
+      | downcase
+      | parse_json
+    %}
+
+    {% assign tags_to_add = array %}
+    {% assign tags_to_remove = array %}
+
+    {% comment %}
+      -- use downcased strings for code and tag comparisons; however, add/remove tags using the configured values
+    {% endcomment %}
+
+    {% for keyval in discount_codes_and_tags %}
+      {% assign discount_code_downcase = keyval[0] | downcase %}
+      {% assign tag_downcase = keyval[1] | downcase %}
+
+      {% if allow_partial %}
+        {% for customer_discount_code_downcase in customer_discount_codes_downcase %}
+          {% if customer_discount_code_downcase contains discount_code_downcase %}
+            {% if untag_customers_instead_of_tagging_them %}
+              {% if customer_tags_downcase contains tag_downcase %}
+                {% assign tags_to_remove = tags_to_remove | push: keyval[1] %}
+              {% endif %}
+
+            {% else %}
+              {% unless customer_tags_downcase contains tag_downcase %}
+                {% assign tags_to_add = tags_to_add | push: keyval[1] %}
+              {% endunless %}
+            {% endif %}
+
+            {% break %}
+          {% endif %}
+        {% endfor %}
+
+      {% elsif customer_discount_codes_downcase contains discount_code_downcase %}
+        {% if untag_customers_instead_of_tagging_them %}
+          {% if customer_tags_downcase contains tag_downcase %}
+            {% assign tags_to_remove = tags_to_remove | push: keyval[1] %}
+          {% endif %}
+
+        {% else %}
+          {% unless customer_tags_downcase contains tag_downcase %}
+            {% assign tags_to_add = tags_to_add | push: keyval[1] %}
+          {% endunless %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+
+    {% if tags_to_add != blank %}
       {% action "shopify" %}
         mutation {
-          {{ tagging_mutation_name }}(
-            id: {{ order.customer.admin_graphql_api_id | json }}
-            tags: {{ tags | json }}
+          tagsAdd(
+            id: {{ customer.id | json }}
+            tags: {{ tags_to_add | uniq | json }}
           ) {
             userErrors {
               field
@@ -71,113 +284,21 @@
         }
       {% endaction %}
     {% endif %}
-  {% endif %}
-{% elsif event.topic == "mechanic/user/trigger" %}
-  {% assign query_parts = array %}
-  {% for keyval in options.discount_codes_and_tags__keyval_required %}
-    {% assign query_parts[query_parts.size] = keyval[0] | json | prepend: "discount_code:" %}
-  {% endfor %}
-  {% assign orders_query = query_parts | join: " OR " %}
 
-  {% log orders_query: orders_query %}
-
-  {% assign orders_cursor = nil %}
-  {% for n in (0..100) %}
-    {% capture query %}
-      query {
-        orders(
-          first: 250
-          after: {{ orders_cursor | json }}
-          query: {{ orders_query | json }}
-        ) {
-          pageInfo {
-            hasNextPage
-          }
-          edges {
-            cursor
-            node {
-              discountCode
-              customer {
-                id
-                tags
-              }
+    {% if tags_to_remove != blank %}
+      {% action "shopify" %}
+        mutation {
+          tagsRemove(
+            id: {{ customer.id | json }}
+            tags: {{ tags_to_remove | uniq | json }}
+          ) {
+            userErrors {
+              field
+              message
             }
           }
         }
-      }
-    {% endcapture %}
-
-    {% assign result = query | shopify %}
-
-    {% if event.preview %}
-      {% capture result_json %}
-        {
-          "data": {
-            "orders": {
-              "edges": [
-                {
-                  "node": {
-                    "discountCode": {{ options.discount_codes_and_tags__keyval_required.first[0] | json }},
-                    "customer": {
-                      "id": "gid://shopify/Customer/1234567890",
-                      "tags": []
-                    }
-                  }
-                }
-              ]
-            }
-          }
-        }
-      {% endcapture %}
-
-      {% assign result = result_json | parse_json %}
-    {% endif %}
-
-    {% for edge in result.data.orders.edges %}
-      {% assign order_node = edge.node %}
-      {% assign discount_code = order_node.discountCode %}
-
-      {% assign tags = array %}
-
-      {% if options.allow_partial_matches_when_checking_for_discount_codes__boolean %}
-        {% for pair in options.discount_codes_and_tags__keyval_required %}
-          {% assign some_discount_code_portion = pair[0] %}
-          {% assign some_tag = pair[1] %}
-
-          {% assign discount_code_downcase = discount_code | downcase %}
-          {% assign some_discount_code_portion_downcase = some_discount_code_portion | downcase %}
-
-          {% if discount_code_downcase contains some_discount_code_portion_downcase %}
-            {% unless order_node.customer.tags contains some_tag %}
-              {% assign tags[tags.size] = some_tag %}
-            {% endunless %}
-          {% endif %}
-        {% endfor %}
-      {% elsif options.discount_codes_and_tags__keyval_required[discount_code] != blank %}
-        {% assign tags[0] = options.discount_codes_and_tags__keyval_required[discount_code] %}
-      {% endif %}
-
-      {% if tags != empty %}
-        {% action "shopify" %}
-          mutation {
-            {{ tagging_mutation_name }}(
-              id: {{ order_node.customer.id | json }}
-              tags: {{ tags | json }}
-            ) {
-              userErrors {
-                field
-                message
-              }
-            }
-          }
-        {% endaction %}
-      {% endif %}
-    {% endfor %}
-
-    {% if result.data.orders.pageInfo.hasNextPage %}
-      {% assign orders_cursor = result.data.orders.edges.last.cursor %}
-    {% else %}
-      {% break %}
+      {% endaction %}
     {% endif %}
   {% endfor %}
 {% endif %}
