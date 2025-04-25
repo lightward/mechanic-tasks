@@ -1,0 +1,170 @@
+{% comment %}
+  -- using the DummyJSON service for this demonstration, with dummy data for 194 products
+  -- using a page limit of 50 should result in 4 calls to the API to get all of the products
+{% endcomment %}
+
+{% assign api_endpoint = "https://dummyjson.com/products" %}
+{% assign limit = 50 %}
+
+{% if event.topic == "mechanic/user/trigger" %}
+  {% comment %}
+    -- use query parameters to limit the results and only return the id (default), sku, and stock
+  {% endcomment %}
+
+  {%- capture api_endpoint_with_parameters -%}
+    {{ api_endpoint }}?select=sku,stock&limit={{ limit }}
+  {%- endcapture -%}
+
+  {% comment %}
+    -- make the first http get call to the external api
+    -- note: on this first call we can use the standard http action format since we don't yet need to pass meta values (e.g. products)
+  {% endcomment %}
+
+  {% action "http" %}
+    {
+      "method": "get",
+      "url": {{ api_endpoint_with_parameters | json }},
+      "verify": "true",
+      "error_on_5xx": "true"
+    }
+  {% endaction %}
+
+{% elsif event.topic == "mechanic/actions/perform" %}
+  {% comment %}
+    -- create preview stub data to simulate results that indicate there is more data to query
+  {% endcomment %}
+
+  {% if event.preview %}
+    {% capture action_json %}
+      {
+        "type": "http",
+        "meta": null,
+        "run": {
+          "ok": true,
+          "result": {
+            "status": 200,
+            "body": {
+              "products": [
+                {
+                  "id": 1,
+                  "sku": "RCH45Q1A",
+                  "stock": 5
+                }
+              ],
+              "total": 194,
+              "skip": 0,
+              "limit": 50
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign action = action_json | parse_json %}
+  {% endif %}
+
+  {% comment %}
+    -- for demonstration purposes, only process http actions that ran successfully
+    -- typically, some error checking would be done here on the status code to see if a different action should be taken (e.g. 429 - Too many requests)
+  {% endcomment %}
+
+  {% unless action.type == "http" and action.run.ok and action.run.result.status == 200 %}
+    {% break %}
+  {% endunless %}
+
+  {% comment %}
+    -- assign api results to variables
+  {% endcomment %}
+
+  {% assign result_products = action.run.result.body.products %}
+  {% assign result_total = action.run.result.body.total %}
+  {% assign result_skip = action.run.result.body.skip %}
+  {% assign result_limit = action.run.result.body.limit %}
+
+  {% comment %}
+    -- get products passed in meta if this is not the first call, otherwise default to an empty array
+  {% endcomment %}
+
+  {% assign fetched_products = action.meta.fetched_products | default: array %}
+
+  {% comment %}
+    -- concatenate the new results to the fetched products array
+  {% endcomment %}
+
+  {% assign fetched_products = fetched_products | concat: result_products %}
+
+  {% comment %}
+    -- check to see if another API call should be made
+    -- the DummyJSON API uses limit based pagination with a skip parameter, and the limit returned will indicate the current size
+    -- this means the total objects retrieved so far should be the sum of the returned skip and limit values
+  {% endcomment %}
+
+  {% assign count_products_retrieved = result_skip | plus: result_limit %}
+
+  {% if count_products_retrieved < result_total %}
+    {% comment %}
+      -- we do not yet have the full set of products; log out how many have been retrieved and make the next api call
+      -- note: when accessing an api with low rate limiting, then you may want to use a delay strategy [see tutorial for this demo task for more detail]
+    {% endcomment %}
+
+    {% log
+      count_products_retrieved: count_products_retrieved,
+      total_products_expected: result_total
+    %}
+
+    {%- capture api_endpoint_with_parameters -%}
+      {{ api_endpoint }}?select=sku,stock&limit={{ limit }}&skip={{ count_products_retrieved }}
+    {%- endcapture -%}
+
+    {% comment %}
+      -- in order to pass the array of products retrieved so far, we need to use the http action format that supports passing meta values
+    {% endcomment %}
+
+    {% action %}
+      {
+        "type": "http",
+        "options": {
+          "method": "get",
+          "url": {{ api_endpoint_with_parameters | json }},
+          "verify": "true",
+          "error_on_5xx": "true"
+        },
+        "meta": {
+          "fetched_products": {{ fetched_products | json }}
+        }
+      }
+    {% endaction %}
+
+    {% break %}
+  {% endif %}
+
+  {% comment %}
+    -- we've reached the end of the api results, pass the fetched products array to a custom event for additional processing
+    -- note: the products could be processed here, but using a custom event is a useful indicator in the event logs that the task has finished fetching products
+  {% endcomment %}
+
+  {% action "event" %}
+    {
+      "topic": "user/demo_paginated_api/fetched_products",
+      "task_id": {{ task.id | json }},
+      "data": {
+        "fetched_products":{{ fetched_products | json }}
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic == "user/demo_paginated_api/fetched_products" %}
+  {% comment %}
+    -- for this demo, just log out the fetched products
+  {% endcomment %}
+
+  {% assign fetched_products = event.data.fetched_products %}
+
+  {% log %}
+    "Fetched {{ fetched_products.size }} products from the external API."
+  {% endlog %}
+
+  {% log fetched_products: fetched_products %}
+
+  {% log "Fetched products would be processed here..." %}
+{% endif %}

@@ -194,6 +194,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Demonstration: Generating a file and uploading it to Shopify](./demonstration-generate-a-file-and-upload-to-shopify)
 * [Demonstration: Order editing](./demonstration-order-editing)
 * [Demonstration: Performing action runs in sequence](./demonstration-performing-action-runs-in-sequence)
+* [Demonstration: Query external paginated API](./demonstration-query-external-paginated-api)
 * [Demonstration: Shopify Flow integration](./demonstration-shopify-flow-integration)
 * [Demonstration: Trigger a custom event for specific product or variant changes](./demonstration-trigger-a-custom-event-for-specific-product-or-variant-changes)
 * [Demonstration: Upload files to Google Drive](./demonstration-upload-files-to-google-drive)
@@ -766,6 +767,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Demonstration: Generating a file and uploading it to Shopify](./demonstration-generate-a-file-and-upload-to-shopify)
 * [Demonstration: Order editing](./demonstration-order-editing)
 * [Demonstration: Performing action runs in sequence](./demonstration-performing-action-runs-in-sequence)
+* [Demonstration: Query external paginated API](./demonstration-query-external-paginated-api)
 * [Demonstration: Shopify Flow integration](./demonstration-shopify-flow-integration)
 * [Demonstration: Trigger a custom event for specific product or variant changes](./demonstration-trigger-a-custom-event-for-specific-product-or-variant-changes)
 * [Demonstration: Upload files to Google Drive](./demonstration-upload-files-to-google-drive)
@@ -887,6 +889,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 * [Add new customers to GetResponse](./add-new-customers-to-getresponse)
 * [Demonstration: Fetch an external configuration file](./demonstration-fetch-an-external-configuration-file)
+* [Demonstration: Query external paginated API](./demonstration-query-external-paginated-api)
 * [Import PayPal transactions as Shopify orders](./import-paypal-transactions-as-shopify-orders)
 * [Report Toaster: Pirate Ship Integration](./report-toaster-pirateship-integration)
 * [Report Toaster: ShipStation Integration](./report-toaster-shipstation-integration)
