@@ -155,10 +155,12 @@
 {% endfor %}
 
 {% if unmatched_skus != blank %}
-  {% action "echo"
-    __error: "One or more configured SKUs were not matched in this shop. Remove or correct these entries in the task configuration.",
-    unmatched_skus: unmatched_skus
-  %}
+  {% unless event.preview %}
+    {% action "echo"
+      __error: "One or more configured SKUs were not matched in this shop. Remove or correct these entries in the task configuration.",
+      unmatched_skus: unmatched_skus
+    %}
+  {% endunless %}
 {% endif %}
 
 {% log variants_by_sku: variants_by_sku %}
