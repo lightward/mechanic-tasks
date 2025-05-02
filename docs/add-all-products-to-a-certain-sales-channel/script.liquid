@@ -84,15 +84,17 @@
   {% break %}
 
 {% elsif publication_ids.size != sales_channel_names.size %}
-  {% comment %}
-    -- using action error here so the task will continue with any other configured and matched sales channels
-  {% endcomment %}
+  {% unless event.preview %}
+    {% comment %}
+      -- using action error here so the task will continue with any other configured and matched sales channels
+    {% endcomment %}
 
-  {% action "echo"
-    __error: "One or more configured sales channel names do not match any of the publication names available in this shop.",
-    configured_sales_channel_names: sales_channel_names,
-    available_sales_channel_names: available_sales_channel_names
-  %}
+    {% action "echo"
+      __error: "One or more configured sales channel names do not match any of the publication names available in this shop.",
+      configured_sales_channel_names: sales_channel_names,
+      available_sales_channel_names: available_sales_channel_names
+    %}
+  {% endunless %}
 {% endif %}
 
 {% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
