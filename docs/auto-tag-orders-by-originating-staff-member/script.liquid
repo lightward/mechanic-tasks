@@ -1,15 +1,21 @@
+{% assign tag_prefix = options.tag_prefix %}
+{% assign include_pos_orders = options.include_pos_orders__boolean %}
+
 {% if event.topic == "shopify/orders/create" %}
   {% capture query %}
     query {
       order(id: {{ order.admin_graphql_api_id | json }}) {
         id
+        name
+        sourceName
         tags
-        events(first: 1, sortKey: CREATED_AT) {
-          edges {
-            node {
-              attributeToUser
-              message
-            }
+        events(
+          first: 1
+          query: "action:placed"
+        ) {
+          nodes {
+            attributeToUser
+            message
           }
         }
       }
@@ -24,14 +30,11 @@
         "data": {
           "order": {
             "id": "gid://shopify/Order/1234567890",
-            "tags": [],
             "events": {
-              "edges": [
+              "nodes": [
                 {
-                  "node": {
-                    "attributeToUser": true,
-                    "message": "Sam Smith created this order."
-                  }
+                  "attributeToUser": true,
+                  "message": "Jean Deaux created this order."
                 }
               ]
             }
@@ -43,23 +46,33 @@
     {% assign result = result_json | parse_json %}
   {% endif %}
 
-  {% assign orderNode = result.data.order %}
-  {% assign eventNode = orderNode.events.edges.first.node %}
+  {% assign order = result.data.order %}
+  {% assign placed_event = order.events.nodes.first %}
   {% assign originator = nil %}
 
-  {% if eventNode.attributeToUser and eventNode.message contains " created " %}
-    {% assign originator = eventNode.message | split: " created " | first %}
-  {% elsif options.include_pos_orders__boolean and eventNode.attributeToUser == false and eventNode.message contains " processed this order on Shopify POS." %}
-    {% assign originator = eventNode.message | split: " processed " | first %}
+  {% comment %}
+    -- the event message will vary based on the order source (draft order vs. POS)
+  {% endcomment %}
+
+  {% if order.sourceName == "shopify_draft_order" %}
+    {% if placed_event.attributeToUser and placed_event.message contains " created " %}
+      {% assign originator = placed_event.message | split: " created " | first %}
+    {% endif %}
+
+  {% elsif order.sourceName == "pos" and include_pos_orders %}
+    {% if placed_event.message contains " processed this order" %}
+      {% assign originator = placed_event.message | split: " processed " | first %}
+    {% endif %}
   {% endif %}
 
   {% if originator %}
-    {% assign originator_tag = options.tag_prefix | append: originator %}
-    {% unless orderNode.tags contains originator_tag %}
+    {% assign originator_tag = tag_prefix | append: originator %}
+
+    {% unless order.tags contains originator_tag %}
       {% action "shopify" %}
         mutation {
           tagsAdd(
-            id: {{ orderNode.id | json }}
+            id: {{ order.id | json }}
             tags: {{ originator_tag | json }}
           ) {
             userErrors {
@@ -71,16 +84,28 @@
       {% endaction %}
     {% endunless %}
   {% endif %}
+
 {% elsif event.topic == "mechanic/user/trigger" %}
+  {% comment %}
+    -- get all orders created from draft or via POS
+  {% endcomment %}
+
   {% capture bulk_operation_query %}
     query {
-      orders {
+      orders(
+        query: "source_name:pos OR source_name:shopify_draft_order"
+      ) {
         edges {
           node {
             __typename
             id
+            name
+            sourceName
             tags
-            events(sortKey: CREATED_AT) {
+            events(
+              first: 1
+              query: "action:placed"
+            ) {
               edges {
                 node {
                   __typename
@@ -112,63 +137,46 @@
       }
     }
   {% endaction %}
+
 {% elsif event.topic == "mechanic/shopify/bulk_operation" %}
   {% if event.preview %}
-    {% assign bulkOperation = hash %}
-
-    {% capture objects_json %}
-      [
-        {
-          "__typename": "Order",
-          "id": "gid://shopify/Order/1234567890",
-          "tags": []
-        },
-        {
-          "__typename": "BasicEvent",
-          "id": "gid://shopify/BasicEvent/1234567890",
-          "attributeToUser": true,
-          "message": "Sam Smith created this order from draft order <a href=\"https://example.myshopify.com/admin/draft_orders/1234567890\">#D1</a>.",
-          "__parentId": "gid://shopify/Order/1234567890",
-          "__parent": {
-            "__typename": "Order",
-            "id": "gid://shopify/Order/1234567890",
-            "tags": []
-          }
-        },
-        {
-          "__typename": "BasicEvent",
-          "id": "gid://shopify/BasicEvent/2345678901",
-          "attributeToUser": false,
-          "message": "Received new order <a href=\"https://mechanic-demo.myshopify.com/admin/orders/1835132911651\">#1001</a>.",
-          "__parentId": "gid://shopify/Order/1234567890"
-        }
-      ]
+    {% capture jsonl_string %}
+      {"__typename":"Order","id":"gid://shopify/Order/1234567890","sourceName":"shopify_draft_order"}
+      {"__typename":"BasicEvent","attributeToUser":true,"message":"Jean Deaux created this order","__parentId":"gid://shopify/Order/1234567890"}
+      {"__typename":"Order","id":"gid://shopify/Order/2345678901","sourceName":"pos"}
+      {"__typename":"BasicEvent","attributeToUser":false,"message":"Jean Deaux processed this order","__parentId":"gid://shopify/Order/2345678901"}
     {% endcapture %}
 
-    {% assign bulkOperation["objects"] = objects_json | parse_json %}
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = jsonl_string | parse_jsonl %}
   {% endif %}
 
-  {% assign eventNodes = bulkOperation.objects | where: "__typename", "BasicEvent" %}
+  {% assign orders = bulkOperation.objects | where: "__typename", "Order" %}
+  {% assign events = bulkOperation.objects | where: "__typename", "BasicEvent" %}
 
-  {% for eventNode in eventNodes %}
+  {% for order in orders %}
+    {% assign placed_event = events | where: "__parentId", order.id | first %}
     {% assign originator = nil %}
 
-    {% if eventNode.attributeToUser and eventNode.message contains " created " %}
-      {% assign originator = eventNode.message | split: " created " | first %}
-    {% elsif options.include_pos_orders__boolean and eventNode.attributeToUser == false and eventNode.message contains " processed this order on Shopify POS." %}
-      {% assign originator = eventNode.message | split: " processed " | first %}
+    {% if order.sourceName == "shopify_draft_order" %}
+      {% if placed_event.attributeToUser and placed_event.message contains " created " %}
+        {% assign originator = placed_event.message | split: " created " | first %}
+      {% endif %}
+
+    {% elsif order.sourceName == "pos" and include_pos_orders %}
+      {% if placed_event.message contains " processed this order" %}
+        {% assign originator = placed_event.message | split: " processed " | first %}
+      {% endif %}
     {% endif %}
 
     {% if originator %}
-      {% assign originator_tag = options.tag_prefix | append: originator %}
+      {% assign originator_tag = tag_prefix | append: originator %}
 
-      {% assign orderNode = eventNode.__parent %}
-
-      {% unless orderNode.tags contains originator_tag %}
+      {% unless order.tags contains originator_tag %}
         {% action "shopify" %}
           mutation {
             tagsAdd(
-              id: {{ orderNode.id | json }}
+              id: {{ order.id | json }}
               tags: {{ originator_tag | json }}
             ) {
               userErrors {

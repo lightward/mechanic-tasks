@@ -1,15 +1,19 @@
+{% assign tag_prefix = options.tag_prefix %}
+
 {% if event.topic == "shopify/draft_orders/create" %}
   {% capture query %}
     query {
       draftOrder(id: {{ draft_order.admin_graphql_api_id | json }}) {
         id
+        name
         tags
-        events(first: 1, sortKey: CREATED_AT) {
-          edges {
-            node {
-              attributeToUser
-              message
-            }
+        events(
+          first: 1
+          query: "action:create"
+        ) {
+          nodes {
+            attributeToUser
+            message
           }
         }
       }
@@ -24,14 +28,11 @@
         "data": {
           "draftOrder": {
             "id": "gid://shopify/DraftOrder/1234567890",
-            "tags": [],
             "events": {
-              "edges": [
+              "nodes": [
                 {
-                  "node": {
-                    "attributeToUser": true,
-                    "message": "Sam Smith created this draft order."
-                  }
+                  "attributeToUser": true,
+                  "message": "Jean Deaux created this draft order."
                 }
               ]
             }
@@ -43,17 +44,18 @@
     {% assign result = result_json | parse_json %}
   {% endif %}
 
-  {% assign draftOrderNode = result.data.draftOrder %}
-  {% assign eventNode = draftOrderNode.events.edges.first.node %}
-  {% if eventNode.attributeToUser and eventNode.message contains " created " %}
-    {% assign originator = eventNode.message | split: " created " | first %}
-    {% assign originator_tag = options.tag_prefix | append: originator %}
+  {% assign draft_order = result.data.draftOrder %}
+  {% assign create_event = draft_order.events.nodes.first %}
 
-    {% unless draftOrderNode.tags contains originator_tag %}
+  {% if create_event.attributeToUser and create_event.message contains " created " %}
+    {% assign originator = create_event.message | split: " created " | first %}
+    {% assign originator_tag = tag_prefix | append: originator %}
+
+    {% unless draft_order.tags contains originator_tag %}
       {% action "shopify" %}
         mutation {
           tagsAdd(
-            id: {{ draftOrderNode.id | json }}
+            id: {{ draft_order.id | json }}
             tags: {{ originator_tag | json }}
           ) {
             userErrors {
@@ -65,7 +67,12 @@
       {% endaction %}
     {% endunless %}
   {% endif %}
+
 {% elsif event.topic == "mechanic/user/trigger" %}
+  {% comment %}
+    -- get all draft orders
+  {% endcomment %}
+
   {% capture bulk_operation_query %}
     query {
       draftOrders {
@@ -74,7 +81,10 @@
             __typename
             id
             tags
-            events(sortKey: CREATED_AT) {
+            events(
+              first: 1
+              query: "action:create"
+            ) {
               edges {
                 node {
                   __typename
@@ -106,61 +116,43 @@
       }
     }
   {% endaction %}
+
 {% elsif event.topic == "mechanic/shopify/bulk_operation" %}
   {% if event.preview %}
-    {% assign bulkOperation = hash %}
-
-    {% capture objects_json %}
-      [
-        {
-          "__typename": "DraftOrder",
-          "id": "gid://shopify/DraftOrder/1234567890",
-          "tags": []
-        },
-        {
-          "__typename": "BasicEvent",
-          "id": "gid://shopify/BasicEvent/1234567890",
-          "attributeToUser": true,
-          "message": "Sam Smith created this draft order.",
-          "__parentId": "gid://shopify/DraftOrder/1234567890",
-          "__parent": {
-            "__typename": "DraftOrder",
-            "id": "gid://shopify/DraftOrder/1234567890",
-            "tags": []
-          }
-        }
-      ]
+    {% capture jsonl_string %}
+      {"__typename":"DraftOrder","id":"gid://shopify/DraftOrder/1234567890"}
+      {"__typename":"BasicEvent","attributeToUser":true,"message":"Jean Deaux created this draft order","__parentId":"gid://shopify/DraftOrder/1234567890"}
     {% endcapture %}
 
-    {% assign bulkOperation["objects"] = objects_json | parse_json %}
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = jsonl_string | parse_jsonl %}
   {% endif %}
 
-  {% assign eventNodes = bulkOperation.objects | where: "__typename", "BasicEvent" | where: "attributeToUser", true %}
+  {% assign draft_orders = bulkOperation.objects | where: "__typename", "DraftOrder" %}
+  {% assign events = bulkOperation.objects | where: "__typename", "BasicEvent" %}
 
-  {% for eventNode in eventNodes %}
-    {% unless eventNode.message contains " created " %}
-      {% continue %}
-    {% endunless %}
+  {% for draft_order in draft_orders %}
+    {% assign create_event = events | where: "__parentId", draft_order.id | first %}
 
-    {% assign originator = eventNode.message | split: " created " | first %}
-    {% assign originator_tag = options.tag_prefix | append: originator %}
+    {% if create_event.attributeToUser and create_event.message contains " created " %}
+      {% assign originator = create_event.message | split: " created " | first %}
+      {% assign originator_tag = tag_prefix | append: originator %}
 
-    {% assign draftOrderNode = eventNode.__parent %}
-
-    {% unless draftOrderNode.tags contains originator_tag %}
-      {% action "shopify" %}
-        mutation {
-          tagsAdd(
-            id: {{ draftOrderNode.id | json }}
-            tags: {{ originator_tag | json }}
-          ) {
-            userErrors {
-              field
-              message
+      {% unless draft_order.tags contains originator_tag %}
+        {% action "shopify" %}
+          mutation {
+            tagsAdd(
+              id: {{ draft_order.id | json }}
+              tags: {{ originator_tag | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
             }
           }
-        }
-      {% endaction %}
-    {% endunless %}
+        {% endaction %}
+      {% endunless %}
+    {% endif %}
   {% endfor %}
 {% endif %}
