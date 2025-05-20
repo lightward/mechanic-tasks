@@ -1,226 +1,330 @@
 {% assign inclusion_tags = options.include_products_with_any_of_these_tags__array %}
 {% assign exclusion_tags = options.exclude_products_with_any_of_these_tags__array %}
+{% assign only_process_paid_orders = options.only_process_paid_orders__boolean %}
 {% assign wait_until_any_other_shippable_items_are_fulfilled = options.wait_until_any_other_shippable_items_are_fulfilled__boolean %}
 
-{% comment %}
-  -- get all open or in progress fulfillment orders
-{% endcomment %}
+{% if event.topic contains "shopify/orders/" %}
+  {% comment %}
+    -- get all open or in progress fulfillment orders
+  {% endcomment %}
 
-{% capture query %}
-  query {
-    order(id: {{ order.admin_graphql_api_id | json }}) {
-      id
-      fulfillmentOrders(
-        first: 10
-        query: "status:open OR status:in_progress"
-      ) {
-        nodes {
-          id
-          assignedLocation {
-            location {
-              id
-            }
-          }
-          lineItems(first: 30) {
-            nodes {
-              id
-              remainingQuantity
-              requiresShipping
-              variant {
-                product {
-                  tags
-                }
+  {% capture query %}
+    query {
+      order(id: {{ order.admin_graphql_api_id | json }}) {
+        id
+        name
+        displayFinancialStatus
+        displayFulfillmentStatus
+        fulfillmentOrders(
+          first: 10
+          query: "status:open OR status:in_progress"
+        ) {
+          nodes {
+            id
+            assignedLocation {
+              location {
+                id
               }
             }
-          }
-        }
-      }
-    }
-  }
-{% endcapture %}
-
-{% assign result = query | shopify %}
-
-{% if event.preview %}
-  {% capture result_json %}
-    {
-      "data": {
-        "order": {
-          "id": "gid://shopify/Order/1234567890",
-          "fulfillmentOrders": {
-            "nodes": [
-              {
-                "id": "gid://shopify/FulfillmentOrder/1234567890",
-                "assignedLocation": {
-                  "location": {
-                    "id": "gid://shopify/Location/1234567890"
+            lineItems(first: 50) {
+              nodes {
+                id
+                remainingQuantity
+                requiresShipping
+                variant {
+                  product {
+                    tags
                   }
-                },
-                "lineItems": {
-                  "nodes": [
-                    {
-                      "id": "gid://shopify/FulfillmentOrderLineItem/1234567890",
-                      "remainingQuantity": 1,
-                      "requiresShipping": false,
-                      "variant": {
-                        "product": {
-                          "tags": {{ inclusion_tags.first | json }}
-                        }
-                      }
-                    }
-                  ]
                 }
               }
-            ]
+            }
           }
         }
       }
     }
   {% endcapture %}
 
-  {% assign result = result_json | parse_json %}
-{% endif %}
+  {% assign result = query | shopify %}
+  {% assign orders = array | push: result.data.order %}
 
-{% assign fulfillment_orders = result.data.order.fulfillmentOrders.nodes %}
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% comment %}
+    -- get all open, unfulfilled orders (this includes partially fulfilled)
+    -- if option enabled, restrict query to paid orders
+  {% endcomment %}
 
-{% if fulfillment_orders == blank %}
-  {% log "There are no open fulfillment orders to fulfill on this order." %}
-  {% break %}
-{% endif %}
+  {% assign search_query = "status:open fulfillment_status:unfulfilled" %}
 
-{% comment %}
-  NOTE: fulfillments can only be created for one location at a time, so need to group fulfillment orders by location
-{% endcomment %}
+  {% if only_process_paid_orders %}
+    {% assign search_query = search_query | append: " financial_status:paid " %}
+  {% endif %}
 
-{% assign fulfillment_orders_by_location = hash %}
-{% assign has_unfulfilled_shippable_items = nil %}
+  {% assign cursor = nil %}
+  {% assign orders = array %}
 
-{% for fulfillment_order in fulfillment_orders %}
-  {% assign fulfillment_order_data = hash %}
-  {% assign fulfillment_order_data["fulfillment_order_id"] = fulfillment_order.id %}
+  {% for n in (1..100) %}
+    {% capture query %}
+      query {
+        orders(
+          first: 25
+          after: {{ cursor | json }}
+          query: {{ search_query | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            displayFinancialStatus
+            displayFulfillmentStatus
+            fulfillmentOrders(
+              first: 10
+              query: "status:open OR status:in_progress"
+            ) {
+              nodes {
+                id
+                assignedLocation {
+                  location {
+                    id
+                  }
+                }
+                lineItems(first: 50) {
+                  nodes {
+                    id
+                    remainingQuantity
+                    requiresShipping
+                    variant {
+                      product {
+                        tags
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
 
-  {% for fulfillment_order_line_item in fulfillment_order.lineItems.nodes %}
-    {% comment %}
-      -- skip items that do not require shipping, but set flag if any are unfulfilled
-    {% endcomment %}
+    {% assign result = query | shopify %}
 
-    {% if fulfillment_order_line_item.requiresShipping %}
-      {% if fulfillment_order_line_item.remainingQuantity > 0 %}
-        {% assign has_unfulfilled_shippable_items = true %}
-      {% endif %}
+    {% assign orders
+      = result.data.orders.nodes
+      | default: array
+      | concat: orders
+    %}
 
-      {% continue %}
+    {% if result.data.orders.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.orders.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
     {% endif %}
+  {% endfor %}
+{% endif %}
 
-    {% if inclusion_tags != blank or exclusion_tags != blank %}
-      {% assign has_exclusion_tag = nil %}
-      {% assign has_inclusion_tag = nil %}
+{% if event.preview %}
+  {% capture orders_json %}
+    [
+      {
+        "id": "gid://shopify/Order/1234567890",
+        "name": "PREVIEW",
+        "displayFinancialStatus": "PAID",
+        "displayFulfillmentStatus": "PARTIALLY_FULFILLED",
+        "fulfillmentOrders": {
+          "nodes": [
+            {
+              "id": "gid://shopify/FulfillmentOrder/1234567890",
+              "assignedLocation": {
+                "location": {
+                  "id": "gid://shopify/Location/1234567890"
+                }
+              },
+              "lineItems": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/FulfillmentOrderLineItem/1234567890",
+                    "remainingQuantity": 1,
+                    "requiresShipping": false,
+                    "variant": {
+                      "product": {
+                        "tags": {{ inclusion_tags.first | json }}
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  {% endcapture %}
 
-      {% assign product_tags = fulfillment_order_line_item.variant.product.tags %}
+  {% assign orders = orders_json | parse_json %}
+{% endif %}
 
-      {% for exclusion_tag in exclusion_tags %}
-        {% if product_tags contains exclusion_tag %}
-          {% assign has_exclusion_tag = true %}
-          {% break %}
-        {% endif %}
-      {% endfor %}
+{% for order in orders %}
+  {% assign fulfillment_orders = order.fulfillmentOrders.nodes %}
 
-      {% for inclusion_tag in inclusion_tags %}
-        {% if product_tags contains inclusion_tag %}
-          {% assign has_inclusion_tag = true %}
-          {% break %}
-        {% endif %}          
-      {% endfor %}
+  {% if fulfillment_orders == blank %}
+    {% log
+      message: "There are no open fulfillment orders to fulfill on this order.",
+      order: order
+    %}
+    {% continue %}
+  {% endif %}
 
+  {% if only_process_paid_orders and order.displayFinancialStatus != "PAID" %}
+    {% log
+      message: "This order does not have a status of PAID, and the 'Only process paid orders' option is checked.",
+      order: order
+    %}
+    {% continue %}
+  {% endif %}
+
+  {% comment %}
+    -- fulfillments can only be created for one location at a time, so need to group fulfillment orders by location
+  {% endcomment %}
+
+  {% assign fulfillment_orders_by_location = hash %}
+  {% assign has_unfulfilled_shippable_items = nil %}
+
+  {% for fulfillment_order in fulfillment_orders %}
+    {% assign fulfillment_order_data = hash %}
+    {% assign fulfillment_order_data["fulfillment_order_id"] = fulfillment_order.id %}
+
+    {% for fulfillment_order_line_item in fulfillment_order.lineItems.nodes %}
       {% comment %}
-        -- exclusion tags have priority over inclusion tags
+        -- skip items that do not require shipping, but set flag if any are unfulfilled
       {% endcomment %}
 
-      {% if has_exclusion_tag %}
-        {% log
-          message: "This line item's product has at least one of the configured exclusion tags; skipping",
-          fulfillment_order_line_item: fulfillment_order_line_item,
-          product_tags: product_tags,
-          exclusion_tags: exclusion_tags
-        %}
-        {% continue %}
+      {% if fulfillment_order_line_item.requiresShipping %}
+        {% if fulfillment_order_line_item.remainingQuantity > 0 %}
+          {% assign has_unfulfilled_shippable_items = true %}
+        {% endif %}
 
-      {% elsif inclusion_tags != blank %}
-        {% unless has_inclusion_tag %}
+        {% continue %}
+      {% endif %}
+
+      {% if inclusion_tags != blank or exclusion_tags != blank %}
+        {% assign has_exclusion_tag = nil %}
+        {% assign has_inclusion_tag = nil %}
+
+        {% assign product_tags = fulfillment_order_line_item.variant.product.tags %}
+
+        {% for exclusion_tag in exclusion_tags %}
+          {% if product_tags contains exclusion_tag %}
+            {% assign has_exclusion_tag = true %}
+            {% break %}
+          {% endif %}
+        {% endfor %}
+
+        {% for inclusion_tag in inclusion_tags %}
+          {% if product_tags contains inclusion_tag %}
+            {% assign has_inclusion_tag = true %}
+            {% break %}
+          {% endif %}
+        {% endfor %}
+
+        {% comment %}
+          -- exclusion tags have priority over inclusion tags
+        {% endcomment %}
+
+        {% if has_exclusion_tag %}
           {% log
-            message: "This line item's product does not contain any of the configured inclusion tags; skipping",
+            message: "This line item's product has at least one of the configured exclusion tags; skipping",
             fulfillment_order_line_item: fulfillment_order_line_item,
             product_tags: product_tags,
-            inclusion_tags: inclusion_tags
+            exclusion_tags: exclusion_tags
           %}
           {% continue %}
-        {% endunless %}
+
+        {% elsif inclusion_tags != blank %}
+          {% unless has_inclusion_tag %}
+            {% log
+              message: "This line item's product does not contain any of the configured inclusion tags; skipping",
+              fulfillment_order_line_item: fulfillment_order_line_item,
+              product_tags: product_tags,
+              inclusion_tags: inclusion_tags
+            %}
+            {% continue %}
+          {% endunless %}
+        {% endif %}
       {% endif %}
-    {% endif %}
+
+      {% comment %}
+        -- save unfulfilled line items that do not require shipping
+      {% endcomment %}
+
+      {% if fulfillment_order_line_item.remainingQuantity > 0 %}
+        {% assign fulfillment_order_data["unfulfilled_line_items"]
+          = fulfillment_order_data["unfulfilled_line_items"]
+          | default: array
+          | push: fulfillment_order_line_item
+        %}
+      {% endif %}
+    {% endfor %}
 
     {% comment %}
-      -- save unfulfilled line items that do not require shipping
+      -- group unfulfilled line items by location for fulfillment
     {% endcomment %}
 
-    {% if fulfillment_order_line_item.remainingQuantity > 0 %}
-      {% assign fulfillment_order_data["unfulfilled_line_items"]
-        = fulfillment_order_data["unfulfilled_line_items"]
+    {% if fulfillment_order_data.unfulfilled_line_items != blank %}
+      {% assign fulfillment_orders_by_location[fulfillment_order.assignedLocation.location.id]
+        = fulfillment_orders_by_location[fulfillment_order.assignedLocation.location.id]
         | default: array
-        | push: fulfillment_order_line_item
+        | push: fulfillment_order_data
       %}
     {% endif %}
   {% endfor %}
 
+  {% if wait_until_any_other_shippable_items_are_fulfilled and has_unfulfilled_shippable_items and fulfillment_orders_by_location != blank %}
+    {% log
+      message: "Unfulfilled shippable items exist on this order and the 'Wait until any other shippable items are fulfilled' option is checked; no auto fulfillments will be made in this task run.",
+      order: order
+    %}
+    {% continue %}
+  {% endif %}
+
   {% comment %}
-    -- group unfulfilled line items by location for fulfillment
+    -- fulfill the items that don't require shipping
   {% endcomment %}
 
-  {% if fulfillment_order_data.unfulfilled_line_items != blank %}
-    {% assign fulfillment_orders_by_location[fulfillment_order.assignedLocation.location.id]
-      = fulfillment_orders_by_location[fulfillment_order.assignedLocation.location.id]
-      | default: array
-      | push: fulfillment_order_data
-    %}
-  {% endif %}
-{% endfor %}
-
-{% if wait_until_any_other_shippable_items_are_fulfilled and has_unfulfilled_shippable_items %}
-  {% log "Unfulfilled shippable items exist on this order and the 'Wait until any other shippable items are fulfilled' option is checked; no auto fulfillments will be made in this task run." %}
-  {% break %}
-{% endif %}
-
-{% for keyval in fulfillment_orders_by_location %}
-  {% action "shopify" %}
-    mutation {
-      fulfillmentCreate(
-        fulfillment: {
-          lineItemsByFulfillmentOrder: [
-            {% for fulfillment_order_data in keyval[1] %}
-              {
-                fulfillmentOrderId: {{ fulfillment_order_data.fulfillment_order_id | json }}
-                fulfillmentOrderLineItems: [
-                  {% for unfulfilled_line_item in fulfillment_order_data.unfulfilled_line_items %}
-                    {
-                      id: {{ unfulfilled_line_item.id | json }}
-                      quantity: {{ unfulfilled_line_item.remainingQuantity }}
-                    }
-                  {% endfor %}
-                ]
-              }
-            {% endfor %}
-          ]
-          notifyCustomer: false
-        }
-      ) {
-        fulfillment {
-          id
-          status
-        }
-        userErrors {
-          field
-          message
+  {% for keyval in fulfillment_orders_by_location %}
+    {% action "shopify" %}
+      mutation {
+        fulfillmentCreate(
+          fulfillment: {
+            lineItemsByFulfillmentOrder: [
+              {% for fulfillment_order_data in keyval[1] %}
+                {
+                  fulfillmentOrderId: {{ fulfillment_order_data.fulfillment_order_id | json }}
+                  fulfillmentOrderLineItems: [
+                    {% for unfulfilled_line_item in fulfillment_order_data.unfulfilled_line_items %}
+                      {
+                        id: {{ unfulfilled_line_item.id | json }}
+                        quantity: {{ unfulfilled_line_item.remainingQuantity }}
+                      }
+                    {% endfor %}
+                  ]
+                }
+              {% endfor %}
+            ]
+            notifyCustomer: false
+          }
+        ) {
+          fulfillment {
+            id
+            status
+          }
+          userErrors {
+            field
+            message
+          }
         }
       }
-    }
-  {% endaction %}
+    {% endaction %}
+  {% endfor %}
 {% endfor %}
