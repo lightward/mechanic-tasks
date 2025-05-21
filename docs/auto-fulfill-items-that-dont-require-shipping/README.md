@@ -24,14 +24,8 @@ Useful for digital products, memberships, or anything else that needs to be fulf
 ## Subscriptions
 
 ```liquid
-{% if options.only_process_paid_orders__boolean %}
-  shopify/orders/paid
-{% else %}
-  shopify/orders/create
-{% endif %}
-{% if options.wait_until_any_other_shippable_items_are_fulfilled__boolean %}
-  shopify/orders/partially_fulfilled
-{% endif %}
+shopify/orders/create
+shopify/orders/updated+30.seconds
 mechanic/user/trigger
 ```
 
