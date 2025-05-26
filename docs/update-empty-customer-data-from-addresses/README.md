@@ -12,8 +12,7 @@ Running when a customer is updated, this task will fill empty customer names and
 
 ```json
 {
-  "update_customer_first_and_last_name__boolean": null,
-  "update_customer_phone__boolean": null,
+  "customer_data_to_update__multiselect_o1_first_and_last_name_o2_phone_required": null,
   "enable_manual_runs_to_scan_all_customers__boolean": false
 }
 ```

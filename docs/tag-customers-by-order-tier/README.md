@@ -17,8 +17,7 @@ Use this task to tag customers by tier, based on how many orders they've placed 
     "100-orders": "100"
   },
   "only_keep_the_customer_tag_for_the_highest_order_minimum__boolean": true,
-  "tag_customers_by_number_of_orders__boolean": true,
-  "tag_customers_by_sum_of_order_totals__boolean": null,
+  "tag_customers_by__choice_o1_count_of_orders_o2_sum_of_order_totals_required": "count_of_orders",
   "only_process_customers_matching_this_segment_query": "customer_account_status = 'ENABLED' AND customer_tags CONTAINS 'qualifies'",
   "only_count_orders_matching_this_query": "financial_status:paid created_at:>={{ \"now - 1 year\" | date: \"%Y-%m-%d\" }}",
   "run_hourly__boolean": null,
