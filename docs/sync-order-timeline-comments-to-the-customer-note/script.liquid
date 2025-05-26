@@ -19,7 +19,9 @@
             __typename
             id
             legacyResourceId
-            email
+            defaultEmailAddress {
+              emailAddress
+            }
             displayName
             note
             orders {
@@ -109,7 +111,7 @@
   {% for customer in customers %}
     {% assign new_order_comments_formatted = array %}
     {% assign reused_note = customer.note %}
-    {% assign customer_email_or_name = customer.email | default: customer.displayName %}
+    {% assign customer_email_or_name = customer.defaultEmailAddress.emailAddress | default: customer.displayName %}
 
     {% comment %}
       If we've previously hit the note's max length, there should be a timestamp recorded in the note,

@@ -1,46 +1,37 @@
-{% comment %}
-  Ordering the task options:
-
-  {{ options.search_query__required }}
-  {{ options.search_for_products__boolean }}
-  {{ options.search_for_product_variants__boolean }}
-  {{ options.customer_tags_to_apply__required_array }}
-  {{ options.test_mode__boolean }}
-{% endcomment %}
-
-{% if options.search_for_products__boolean and options.search_for_product_variants__boolean %}
-  {% error "Choose only one of 'Search for products' and 'Search for product variants'. :)" %}
-{% elsif options.search_for_products__boolean == false and options.search_for_product_variants__boolean == false %}
-  {% error "Choose either 'Search for products' and 'Search for product variants'." %}
-{% endif %}
+{% assign search_query = options.search_query__required %}
+{% assign search_for = options.search_for__choice_o1_products_o2_variants_required %}
+{% assign customer_tags_to_apply = options.customer_tags_to_apply__required_array %}
+{% assign test_mode = options.test_mode__boolean %}
 
 {% assign cursor = nil %}
 {% assign qualifier_resource_ids = array %}
 {% assign qualifier_resource_summaries = array %}
 {% assign jobs = array %}
 
-{% for n in (0..100) %}
+{% for n in (1..100) %}
   {% capture query %}
     query {
-      {% if options.search_for_products__boolean %}
+      {% if search_for == "products" %}
         resources: products(
       {% else %}
         resources: productVariants(
       {% endif %}
         first: 250
         after: {{ cursor | json }}
-        query: {{ options.search_query__required | json }}
+        query: {{ search_query | json }}
       ) {
-        edges {
-          node {
-            id
-            legacyResourceId
-            {% if options.search_for_products__boolean %}
-              displayName: title
-            {% else %}
-              displayName
-            {% endif %}
-          }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          id
+          legacyResourceId
+          {% if search_for == "products" %}
+            displayName: title
+          {% else %}
+            displayName
+          {% endif %}
         }
       }
     }
@@ -53,13 +44,11 @@
       {
         "data": {
           "resources": {
-            "edges": [
+            "nodes": [
               {
-                "node": {
-                  "id": "gid://shopify/Product/1234567890",
-                  "displayName": "Bundle",
-                  "legacyResourceId": "1234567890"
-                }
+                "id": "gid://shopify/Product/1234567890",
+                "displayName": "ACME Widget",
+                "legacyResourceId": "1234567890"
               }
             ]
           }
@@ -70,16 +59,16 @@
     {% assign result = result_json | parse_json %}
   {% endif %}
 
-  {% log %}
-    {
-      "qualifier_resources": {{ result.data.resources.edges | map: "node" | json }}
-    }
-  {% endlog %}
+  {% log qualifier_resources: result.data.resources.nodes %}
 
-  {% assign qualifier_resource_ids = result.data.resources.edges | map: "node" | map: "legacyResourceId" | concat: qualifier_resource_ids %}
+  {% assign qualifier_resource_ids
+    = result.data.resources.nodes
+    | map: "legacyResourceId"
+    | concat: qualifier_resource_ids
+  %}
 
   {% if result.data.resources.pageInfo.hasNextPage %}
-    {% assign cursor = result.data.resources.edges.last.cursor %}
+    {% assign cursor = result.data.resources.pageInfo.endCursor %}
   {% else %}
     {% break %}
   {% endif %}
@@ -100,7 +89,7 @@
           {
             "product_id": 1234567890,
             "variant_id": 1234567890,
-            "title": "IPod Nano - 8GB"
+            "title": "ACME Widget"
           }
         ]
       }
@@ -114,7 +103,7 @@
 
   {% if order.financial_status == "paid" and order.customer %}
     {% for line_item in order.line_items %}
-      {% if options.search_for_products__boolean %}
+      {% if search_for == "products" %}
         {% assign id = line_item.product_id | append: "" %}
       {% else %}
         {% assign id = line_item.variant_id | append: "" %}
@@ -145,11 +134,11 @@
           node {
             __typename
             id
-            email
+            defaultEmailAddress {
+              emailAddress
+            }
             tags
-            orders(
-              query: "financial_status:paid"
-            ) {
+            orders(query: "financial_status:paid") {
               edges {
                 node {
                   __typename
@@ -160,7 +149,7 @@
                       node {
                         __typename
                         id
-                        {% if options.search_for_products__boolean %}
+                        {% if search_for == "products" %}
                           resource: product {
                             legacyResourceId
                             displayName: title
@@ -199,42 +188,32 @@
       }
     }
   {% endaction %}
+
 {% elsif event.topic == "mechanic/shopify/bulk_operation" %}
   {% if event.preview %}
-    {% capture bulkOperation_json %}
-      {
-        "objects": [
-          {
-            "__typename": "LineItem",
-            "resource": {
-              "legacyResourceId": "1234567890",
-              "displayName": "IPod Nano - 8GB"
-            },
-            "__parent": {
-              "name": "#1234",
-              "__parent": {
-                "id": "gid://shopify/Customer/1234567890",
-                "email": "customer@example.com",
-                "tags": []
-              }
-            }
-          }
-        ]
-      }
+    {% capture jsonl_string %}
+      {"__typename":"LineItem","resource":{"legacyResourceId":"1234567890","displayName":"ACME Widget"},"__parent":{"name":"#1234","__parent":{"id": "gid://shopify/Customer/1234567890","defaultEmailAddress":{"emailAddress":"customer@example.com"}}}}
     {% endcapture %}
-    {% assign bulkOperation = bulkOperation_json | parse_json %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = jsonl_string | parse_jsonl %}
   {% endif %}
 
-  {% assign lineItems = bulkOperation.objects | where: "__typename", "LineItem" | where: "resource" %}
-  {% for lineItem in lineItems %}
-    {% assign resource = lineItem.resource %}
-    {% assign order = lineItem.__parent %}
+  {% assign line_items
+    = bulkOperation.objects
+    | where: "__typename", "LineItem"
+    | where: "resource"
+  %}
+
+  {% for line_item in line_items %}
+    {% assign resource = line_item.resource %}
+    {% assign order = line_item.__parent %}
     {% assign customer = order.__parent %}
 
     {% if qualifier_resource_ids contains resource.legacyResourceId %}
       {% assign job = hash %}
       {% assign job["customer_id"] = customer.id %}
-      {% assign job["customer_email"] = customer.email %}
+      {% assign job["customer_email"] = customer.defaultEmailAddress.emailAddress %}
       {% assign job["customer_existing_tags"] = customer.tags %}
       {% assign job["reason"] = resource.displayName | append: ", in order " | append: order.name %}
       {% assign jobs[jobs.size] = job %}
@@ -243,6 +222,7 @@
 {% endif %}
 
 {% assign customer_ids_with_jobs = jobs | map: "customer_id" | uniq %}
+
 {% for customer_id in customer_ids_with_jobs %}
   {% assign customer_jobs = jobs | where: "customer_id", customer_id %}
   {% assign customer_existing_tags = customer_jobs[0].customer_existing_tags %}
@@ -250,25 +230,27 @@
   {% assign reasons = customer_jobs | map: "reason" %}
 
   {% assign tags_to_add = array %}
+
   {% for tag in options.customer_tags_to_apply__required_array %}
     {% unless customer_existing_tags contains tag %}
-      {% assign tags_to_add[tags_to_add.size] = tag %}
+      {% assign tags_to_add = tags_to_add | push: tag %}
     {% endunless %}
   {% endfor %}
 
-  {% if options.test_mode__boolean %}
-    {% action "echo" %}
-      {
-        "customer_id": {{ customer_id | json }},
-        "customer_email": {{ customer_email | json }},
-        "customer_purchases": {{ reasons | json }},
-        "customer_existing_tags": {{ customer_existing_tags | json }},
-        "customer_tags_to_add": {{ tags_to_add | json }}
-      }
-    {% endaction %}
-  {% elsif tags_to_add == empty %}
-    {% capture log_message %}Customer {{ customer.id }} already has all applicable tags ({{ tags_applicable | join: ", " }}); nothing to do.{% endcapture %}
-    {% log log_message %}
+  {% if test_mode %}
+    {% log
+      customer_id: customer_id,
+      customer_email: customer_email,
+      customer_purchases: reasons,
+      customer_existing_tags: customer_existing_tags,
+      customer_tags_to_add: tags_to_add
+    %}
+
+  {% elsif tags_to_add == blank %}
+    {% log %}
+      "Customer {{ customer.id }} already has all applicable tags ({{ tags_applicable | join: ", " }}); nothing to do."
+    {% endlog %}
+
   {% else %}
     {% action "shopify" %}
       mutation {

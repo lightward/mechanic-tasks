@@ -1,9 +1,4 @@
-{% assign update_customer_first_and_last_name = options.update_customer_first_and_last_name__boolean %}
-{% assign update_customer_phone = options.update_customer_phone__boolean %}
-
-{% unless update_customer_first_and_last_name or update_customer_phone %}
-  {% error "Choose at least one of the update customer options." %}
-{% endunless %}
+{% assign customer_data_to_update = options.customer_data_to_update__multiselect_o1_first_and_last_name_o2_phone_required %}
 
 {% if event.topic == "shopify/customers/update" %}
   {% assign customers = array %}
@@ -14,7 +9,9 @@
         id
         firstName
         lastName
-        phone
+        defaultPhoneNumber {
+          phoneNumber
+        }
         defaultAddress {
           firstName
           lastName
@@ -42,7 +39,9 @@
             id
             firstName
             lastName
-            phone
+            defaultPhoneNumber {
+              phoneNumber
+            }
             defaultAddress {
               firstName
               lastName
@@ -85,7 +84,9 @@
     [
       {
         "id": "gid://shopify/Customer/1234567890",
-        "phone": null,
+        "defaultPhoneNumber": {
+          "phoneNumber": null
+        },
         "defaultAddress": {
           "firstName": "Jean",
           "lastName": "Deaux"
@@ -115,7 +116,7 @@
     | unshift: customer.defaultAddress
   %}
 
-  {% if update_customer_first_and_last_name %}
+  {% if customer_data_to_update contains "first_and_last_name" %}
     {% if customer.firstName == blank %}
       {% for customer_address in customer_addresses %}
         {% unless customer_address.firstName == blank %}
@@ -135,8 +136,8 @@
     {% endif %}
   {% endif %}
 
-  {% if update_customer_phone %}
-    {% if customer.phone == blank %}
+  {% if customer_data_to_update contains "phone" %}
+    {% if customer.defaultPhoneNumber.phoneNumber == blank %}
       {% for customer_address in customer_addresses %}
         {% unless customer_address.phone == blank %}
           {% assign phone = customer_address.phone %}
@@ -147,6 +148,8 @@
   {% endif %}
 
   {% if first_name or last_name or phone %}
+    {% log customer_before_update: customer %}
+    
     {% action "shopify" %}
       mutation {
         customerUpdate(
@@ -167,7 +170,9 @@
             id
             firstName
             lastName
-            phone
+            defaultPhoneNumber {
+              phoneNumber
+            }
           }
           userErrors {
             field

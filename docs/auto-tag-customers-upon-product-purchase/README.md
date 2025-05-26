@@ -13,9 +13,8 @@ Configure this task with search terms that describe certain products, and this t
 ```json
 {
   "search_query__required": "sku:ABC123",
-  "search_for_products__boolean": false,
-  "search_for_product_variants__boolean": true,
-  "customer_tags_to_apply__required_array": [],
+  "search_for__choice_o1_products_o2_variants_required": "variants",
+  "customer_tags_to_apply__required_array": null,
   "test_mode__boolean": true
 }
 ```

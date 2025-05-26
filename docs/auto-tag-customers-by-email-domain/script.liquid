@@ -45,7 +45,7 @@
   {% assign cursor = nil %}
 
   {% comment %}
-    -- customers resource no longer supports tag filters (JUL 2024), so need to use the customerSegmentMembers resource instead
+    -- start with the customerSegmentMembers resource since it supports a domain filter
   {% endcomment %}
 
   {% for n in (0..100) %}
@@ -106,7 +106,9 @@
         query {
           customer(id: {{ customer_segment_member_id | remove: "SegmentMember" | json }}) {
             id
-            email
+            defaultEmailAddress {
+              emailAddress
+            }
             tags
           }
         }
@@ -120,7 +122,9 @@
             "data": {
               "customer": {
                 "id": "gid://shopify/Customer/1234567890",
-                "email": {{ "test@" | append: customer_email_domains.first | json }}
+                "defaultEmailAddress": {
+                  "emailAddress": {{ "test@" | append: customer_email_domains.first | json }}
+                }
               }
             }
           }
@@ -130,7 +134,7 @@
       {% endif %}
 
       {% assign customer = result.data.customer %}
-      {% assign customer_email_domain = customer.email | split: "@" | last | downcase %}
+      {% assign customer_email_domain = customer.defaultEmailAddress.emailAddress | split: "@" | last | downcase %}
 
       {% if customer_email_domains contains customer_email_domain %}
         {% unless customer.tags contains customer_tag_to_apply %}

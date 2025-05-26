@@ -14,11 +14,11 @@
       customer(id: {{ customer.admin_graphql_api_id | json }}) {
         id
         tags
-        email
-        emailMarketingConsent {
-          consentUpdatedAt
-          marketingState
+        defaultEmailAddress {
+          emailAddress
+          marketingUpdatedAt
           marketingOptInLevel
+          marketingState
         }
       }
     }
@@ -36,11 +36,11 @@
             __typename
             id
             tags
-            email
-            emailMarketingConsent {
-              consentUpdatedAt
-              marketingState
+            defaultEmailAddress {
+              emailAddress
+              marketingUpdatedAt
               marketingOptInLevel
+              marketingState
             }
           }
         }
@@ -75,33 +75,33 @@
       {
         "id": "gid://shopify/Customer/1234567890",
         "tags": [],
-        "emailMarketingConsent": {
-          "marketingState": "SUBSCRIBED",
-          "marketingOptInLevel": "SINGLE_OPT_IN"
+        "defaultEmailAddress": {
+          "marketingOptInLevel": "SINGLE_OPT_IN",
+          "marketingState": "SUBSCRIBED"
         }
       },
       {
         "id": "gid://shopify/Customer/2345678901",
         "tags": [{{ customer_tag_to_add | json }}],
-        "emailMarketingConsent": {
-          "marketingState": "NOT_SUBSCRIBED",
-          "marketingOptInLevel": null
+        "defaultEmailAddress": {
+          "marketingOptInLevel": null,
+          "marketingState": "NOT_SUBSCRIBED"
         }
       },
       {
         "id": "gid://shopify/Customer/3456789012",
         "tags": [{{ customer_tag_to_add | json }}],
-        "emailMarketingConsent": {
-          "marketingState": "SUBSCRIBED",
-          "marketingOptInLevel": "SINGLE_OPT_IN"
+        "defaultEmailAddress": {
+          "marketingOptInLevel": "SINGLE_OPT_IN",
+          "marketingState": "SUBSCRIBED"
         }
       },
       {
         "id": "gid://shopify/Customer/4567890123",
         "tags": [],
-        "emailMarketingConsent": {
-          "marketingState": "SUBSCRIBED",
-          "marketingOptInLevel": "CONFIRMED_OPT_IN"
+        "defaultEmailAddress": {
+          "marketingOptInLevel": "CONFIRMED_OPT_IN",
+          "marketingState": "SUBSCRIBED"
         }
       }
     ]
@@ -114,20 +114,20 @@
   {% assign qualifies_for_tag = nil %}
 
   {% if only_tag_confirmed_opt_ins %}
-    {% if customer.emailMarketingConsent.marketingOptInLevel == "CONFIRMED_OPT_IN" %}
-      {% if customer.emailMarketingConsent.marketingState == "SUBSCRIBED" %}
+    {% if customer.defaultEmailAddress.marketingOptInLevel == "CONFIRMED_OPT_IN" %}
+      {% if customer.defaultEmailAddress.marketingState == "SUBSCRIBED" %}
         {% assign qualifies_for_tag = true %}
       {% endif %}
     {% endif %}
 
   {% elsif tag_both_single_and_confirmed_opt_ins %}
-    {% if customer.emailMarketingConsent.marketingOptInLevel == "CONFIRMED_OPT_IN" or customer.emailMarketingConsent.marketingOptInLevel == "SINGLE_OPT_IN" %}
-      {% if customer.emailMarketingConsent.marketingState == "SUBSCRIBED" %}
+    {% if customer.defaultEmailAddress.marketingOptInLevel == "CONFIRMED_OPT_IN" or customer.defaultEmailAddress.marketingOptInLevel == "SINGLE_OPT_IN" %}
+      {% if customer.defaultEmailAddress.marketingState == "SUBSCRIBED" %}
         {% assign qualifies_for_tag = true %}
       {% endif %}
     {% endif %}
 
-  {% elsif customer.emailMarketingConsent.marketingState == "SUBSCRIBED" %}
+  {% elsif customer.defaultEmailAddress.marketingState == "SUBSCRIBED" %}
     {% assign qualifies_for_tag = true %}
   {% endif %}
 
@@ -141,12 +141,12 @@
           ) {
             node {
               ... on Customer {
-                email
                 tags_after_add: tags
-                emailMarketingConsent {
-                  consentUpdatedAt
-                  marketingState
+                defaultEmailAddress {
+                  emailAddress
+                  marketingUpdatedAt
                   marketingOptInLevel
+                  marketingState
                 }
               }
             }
@@ -168,12 +168,12 @@
         ) {
           node {
             ... on Customer {
-              email
               tags_after_remove: tags
-              emailMarketingConsent {
-                consentUpdatedAt
-                marketingState
+              defaultEmailAddress {
+                emailAddress
+                marketingUpdatedAt
                 marketingOptInLevel
+                marketingState
               }
             }
           }
