@@ -26,7 +26,6 @@
 
 {% comment %}
   -- check to make sure all of the location names configured in the task match locations in this shop
-  -- Shopify supports 1000 locations (as of June 2023), so searching by name filter instead of paginating
 {% endcomment %}
 
 {% for location_name in location_names %}
@@ -99,74 +98,117 @@
 {% endfor %}
 
 {% comment %}
-  -- Shopify only supports 50 markets (as of June 2023) and has no query filters for them, so have to retrieve them all
-  -- each market has only a single catalog and publication, so we can map market names to publication IDs in a hash for quicker lookup
+  -- get all region markets, their catalogs, and linked publications and save in a hash for quicker lookup
 {% endcomment %}
 
+{% assign cursor = nil %}
 {% assign market_names_and_publication_ids = hash %}
+{% assign published_inputs = array %}
 
-{% capture query %}
-  query {
-    markets(first: 50) {
-      nodes {
-        name
-        catalogs(first: 1) {
-          nodes {
-            publication {
+{% for n in (1..100) %}
+  {% capture query %}
+    query {
+      markets(
+        first: 250
+        after: {{ cursor | json }}
+        type: REGION
+      ) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          id
+          name
+          status
+          catalogsCount {
+            count
+            precision
+          }
+          catalogs(first: 250) {
+            nodes {
               id
+              title
+              publication {
+                id
+              }
             }
           }
         }
       }
     }
-  }
-{% endcapture %}
-
-{% assign result = query | shopify %}
-
-{% if event.preview %}
-  {% capture result_json %}
-    {
-      "data": {
-        "markets": {
-          "nodes": [
-            {
-              "name": "International",
-              "catalogs": {
-                "nodes": [
-                  {
-                    "publication": {
-                      "id": "gid://shopify/Publication/1234567890"
-                    }
-                  }
-                ]
-              }
-            }
-          ]
-        }
-      }
-    }
   {% endcapture %}
 
-  {% assign result = result_json | parse_json %}
-{% endif %}
+  {% assign result = query | shopify %}
 
-{% assign published_inputs = array %}
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "markets": {
+            "nodes": [
+              {
+                "id": "gid://shopify/Market/1234567890",
+                "name": "International",
+                "status": "ACTIVE",
+                "type": "REGION",
+                "catalogsCount": {
+                  "count": 2,
+                  "precision": "EXACT"
+                },
+                "catalogs": {
+                  "nodes": [
+                    {
+                      "id": "gid://shopify/MarketCatalog/1234567890",
+                      "title": "International",
+                      "publication": {
+                        "id": "gid://shopify/Publication/1234567890"
+                      }
+                    },
+                    {
+                      "id": "gid://shopify/MarketCatalog/2345678901",
+                      "title": "International - VIP",
+                      "publication": {
+                        "id": "gid://shopify/Publication/2345678901"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    {% endcapture %}
 
-{% for market in result.data.markets.nodes %}
-  {% assign publication_id = market.catalogs.nodes.first.publication.id %}
-  {% assign market_names_and_publication_ids[market.name] = publication_id %}
+    {% assign result = result_json | parse_json %}
+  {% endif %}
 
-  {% comment %}
-    -- save published inputs for checking to see which publications a product is currently published to
-    -- have to set alias for the publishedOnPublication field because GraphQL requires field name uniqueness within each returned node
-  {% endcomment %}
+  {% assign markets = markets | concat: result.data.markets.nodes %}
 
-  {% capture published_input -%}
-    published_{{ publication_id | remove: "gid://shopify/Publication/" }}: publishedOnPublication(publicationId: {{ publication_id | json }})
-  {%- endcapture %}
+  {% for market in result.data.markets.nodes %}
+    {% assign publication_ids = market.catalogs.nodes | map: "publication" | map: "id" %}
+    {% assign market_names_and_publication_ids[market.name] = publication_ids %}
 
-  {% assign published_inputs = published_inputs | push: published_input %}
+    {% comment %}
+      -- save published inputs for checking to see which publications a product is currently published to
+      -- have to set alias for the publishedOnPublication field because GraphQL requires field name uniqueness within each returned node
+    {% endcomment %}
+
+    {% for publication_id in publication_ids %}
+      {% capture published_input -%}
+        published_{{ publication_id | remove: "gid://shopify/Publication/" }}: publishedOnPublication(publicationId: {{ publication_id | json }})
+      {%- endcapture %}
+
+      {% assign published_inputs = published_inputs | push: published_input %}
+    {% endfor %}
+  {% endfor %}
+
+  {% if result.data.markets.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.markets.pageInfo.endCursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
 {% endfor %}
 
 {% comment %}
@@ -184,7 +226,7 @@
 {% endfor %}
 
 {% comment %}
-  -- setting a variable that can be overriden on inventory level update to only check the relevant location
+  -- setting a variable that can be overridden on inventory level update to only check the relevant location
 {% endcomment %}
 
 {% assign location_names_to_process = location_names %}
@@ -399,6 +441,8 @@
   -- this loop will process all products returned by the bulk operation OR the single product which had an inventory level event
 {% endcomment %}
 
+{% assign publications_to_update = hash %}
+
 {% for product in products %}
   {% comment %}
     -- variants array depends on how this task run was initiated
@@ -484,16 +528,16 @@
     {% endfor %}
 
     {% comment %}
-      -- for each location market, add the paired publication ID to appropriate un/publish array based on location stock status
+      -- for each location market, add the associated publication IDs to appropriate un/publish array based on location stock status
     {% endcomment %}
 
     {% for location_market_name in location_market_names %}
-      {% assign publication_id = market_names_and_publication_ids[location_market_name] %}
+      {% assign publication_ids = market_names_and_publication_ids[location_market_name] %}
 
       {% if location_in_stock %}
-        {% assign publication_ids_that_should_be_published = publication_ids_that_should_be_published | push: publication_id %}
+        {% assign publication_ids_that_should_be_published = publication_ids_that_should_be_published | concat: publication_ids %}
       {% else %}
-        {% assign publication_ids_that_should_be_unpublished = publication_ids_that_should_be_unpublished | push: publication_id %}
+        {% assign publication_ids_that_should_be_unpublished = publication_ids_that_should_be_unpublished | concat: publication_ids %}
       {% endif %}
     {% endfor %}
   {% endfor %}
