@@ -1,0 +1,248 @@
+{% assign run_frequency = options.run_frequency__select_o1_10min_o2_15min_o3_20min_o4_30min_o5_hourly_o6_daily_required %}
+{% assign custom_event_topic = options.custom_event_topic__required %}
+{% assign collections_to_monitor = options.collections_to_monitor__picker_collection_array %}
+{% assign extra_logging = options.extra_logging__boolean %}
+
+{% if collections_to_monitor == blank or event.preview %}
+  {% comment %}
+    -- get IDs for all smart collections in shop
+    -- note: Shopify has a limit of 5000 smart collections per shop
+  {% endcomment %}
+
+  {% assign cursor = nil %}
+  {% assign collection_ids = array %}
+
+  {% for n in (1..20) %}
+    {% capture query %}
+      query {
+        collections(
+          first: 250
+          after: {{ cursor | json }}
+          query: "collection_type:smart"
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "collections": {
+              "nodes": [
+                {
+                  "id": "gid://shopify/Collection/1234567890"
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign collection_ids
+      = result.data.collections.nodes
+      | map: "id"
+      | concat: collection_ids
+    %}
+
+    {% if result.data.collections.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.collections.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+{% else %}
+  {% comment %}
+    -- add all configured collections to IDs array, but check each one later to make sure it is a smart collection
+  {% endcomment %}
+
+  {% assign collection_ids = collections_to_monitor %}
+{% endif %}
+
+{% comment %}
+  -- process each collection
+{% endcomment %}
+
+{% for collection_id in collection_ids %}
+  {% comment %}
+    -- make sure collection type is smart
+    -- get saved hash of sorted product IDs from collection metafield
+    -- get sorted product IDs in collection (up to 25K)
+  {% endcomment %}
+
+  {% assign cursor = nil %}
+  {% assign product_ids = array %}
+
+  {% for n in (1..100) %}
+    {% capture query %}
+      query {
+        collection(id: {{ collection_id | json }}) {
+          title
+          ruleSet {
+            __typename
+          }
+          metafield(key: "mechanic.product_ids_hash") {
+            value
+          }
+          products(
+            first: 250
+            after: {{ cursor | json }}
+            sortKey: ID
+          ) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              id
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "collection": {
+              "ruleSet": {
+                "__typename": "CollectionRuleSet"
+              },
+              "metafield": {
+                "value": "n0t5r35lh5sh"
+              },
+              "products": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/Product/1234567890"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign collection = result.data.collection | except: "products" %}
+    {% assign batch_product_ids = result.data.collection.products.nodes | map: "id" %}
+    {% assign product_ids = product_ids | concat: batch_product_ids %}
+
+    {% if result.data.collection.products.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.collection.products.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% comment %}
+    -- check for smart collection in case these collections were configured manually in the task
+  {% endcomment %}
+
+  {% if collection.ruleSet == blank %}
+    {% log
+      message: "This collection is not smart collection.",
+      collection: collection.title,
+      collection_id: collection_id
+    %}
+    {% continue %}
+  {% endif %}
+
+  {% if product_ids == blank and collection.metafield.value == blank %}
+    {% if extra_logging %}
+      {% log
+        message: "This collection has no products and no previously saved metafield value; skipping.",
+        collection: collection.title,
+        collection_id: collection_id
+      %}
+    {% endif %}
+
+    {% continue %}
+  {% endif %}
+
+  {% assign product_ids_hash = product_ids | md5 %}
+
+  {% if product_ids_hash == collection.metafield.value %}
+    {% if extra_logging %}
+      {% log
+        message: "This collection's products match the previously saved metafield value; nothing to do.",
+        collection: collection.title,
+        collection_id: collection_id
+      %}
+    {% endif %}
+
+    {% continue %}
+  {% endif %}
+
+  {% comment %}
+    -- set collection metafield
+  {% endcomment %}
+
+  {% action "shopify" %}
+    mutation {
+      metafieldsSet(
+        metafields: [
+          {
+            ownerId: {{ collection_id | json }},
+            namespace: "mechanic"
+            key: "product_ids_hash"
+            type: "single_line_text_field"
+            value: {{ product_ids_hash | json }}
+          }
+        ]
+      ) {
+        metafields {
+          id
+          namespace
+          key
+          type
+          value
+          owner {
+            ... on Collection {
+              id
+              title
+            }
+          }
+        }
+        userErrors {
+          code
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+  {% comment %}
+    -- fire custom event if there was a previously saved metafield value
+  {% endcomment %}
+
+  {% if collection.metafield.value != blank %}
+    {% action "event" %}
+      {
+        "topic": {{ custom_event_topic | json }},
+        "data": {
+          "collection_id": {{ collection_id | json }}
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}
