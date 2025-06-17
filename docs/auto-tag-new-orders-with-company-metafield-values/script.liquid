@@ -22,7 +22,10 @@
         tags
         purchasingEntity {
           __typename
-          ... on  PurchasingCompany {
+          ... on Customer {
+            id
+          }
+          ... on PurchasingCompany {
             company {
               metafields(
                 first: 250
