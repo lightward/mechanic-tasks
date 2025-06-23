@@ -925,6 +925,7 @@
 {% elsif event.topic == "user/price_changes/end" %}
   {% assign price_change_event_id = event.data.price_change_event_id %}
   {% assign price_change_event = price_change_events[price_change_event_id] %}
+  {% assign set_compare_at_prices = price_change_event.set_compare_at_prices %}
 
   {% if event.preview %}
     {% assign price_change_event_id = "01234567-89ab-cdef" %}
@@ -1082,8 +1083,14 @@
         {% assign variant_input["price"] = original_price %}
       {% endif %}
 
-      {% if original_compare_at_price != blank and original_compare_at_price != variant.compareAtPrice %}
-        {% assign variant_input["compareAtPrice"] = original_compare_at_price %}
+      {% comment %}
+        -- revert compare at price if the option was enabled for the event; this includes reverting to null if applicable
+      {% endcomment %}
+
+      {% if price_change_event["set_compare_at_prices"] %}
+        {% if original_compare_at_price != variant.compareAtPrice %}
+          {% assign variant_input["compareAtPrice"] = original_compare_at_price | default: nil %}
+        {% endif %}
       {% endif %}
 
       {% if variant_input["price"] or variant_input["compareAtPrice"] %}
