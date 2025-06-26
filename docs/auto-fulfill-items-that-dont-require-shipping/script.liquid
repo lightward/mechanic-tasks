@@ -2,10 +2,11 @@
 {% assign exclusion_tags = options.exclude_products_with_any_of_these_tags__array %}
 {% assign only_process_paid_orders = options.only_process_paid_orders__boolean %}
 {% assign wait_until_any_other_shippable_items_are_fulfilled = options.wait_until_any_other_shippable_items_are_fulfilled__boolean %}
+{% assign fulfill_gift_cards = options.fulfill_gift_cards__boolean %}
 
 {% if event.topic contains "shopify/orders/" %}
   {% comment %}
-    -- get all open or in progress fulfillment orders
+    -- get all open or in progress fulfillment orders for this order
   {% endcomment %}
 
   {% capture query %}
@@ -32,7 +33,11 @@
                 remainingQuantity
                 requiresShipping
                 variant {
+                  id
+                  displayName
                   product {
+                    id
+                    isGiftCard
                     tags
                   }
                 }
@@ -76,6 +81,7 @@
           }
           nodes {
             id
+            name
             displayFinancialStatus
             displayFulfillmentStatus
             fulfillmentOrders(
@@ -95,7 +101,11 @@
                     remainingQuantity
                     requiresShipping
                     variant {
+                      id
+                      displayName
                       product {
+                        id
+                        isGiftCard
                         tags
                       }
                     }
@@ -152,6 +162,16 @@
                         "tags": {{ inclusion_tags.first | json }}
                       }
                     }
+                  },
+                  {
+                    "id": "gid://shopify/FulfillmentOrderLineItem/2345678901",
+                    "remainingQuantity": 1,
+                    "requiresShipping": false,
+                    "variant": {
+                      "product": {
+                        "isGiftCard": true
+                      }
+                    }
                   }
                 ]
               }
@@ -186,6 +206,7 @@
 
   {% comment %}
     -- fulfillments can only be created for one location at a time, so need to group fulfillment orders by location
+    -- Shopify will also throw an error if gift cards are fulfilled with any other item types
   {% endcomment %}
 
   {% assign fulfillment_orders_by_location = hash %}
@@ -197,7 +218,7 @@
 
     {% for fulfillment_order_line_item in fulfillment_order.lineItems.nodes %}
       {% comment %}
-        -- skip items that do not require shipping, but set flag if any are unfulfilled
+        -- skip items that require shipping, but set flag if any are unfulfilled in case the option to wait on them is enabled
       {% endcomment %}
 
       {% if fulfillment_order_line_item.requiresShipping %}
@@ -255,23 +276,34 @@
       {% endif %}
 
       {% comment %}
-        -- save unfulfilled line items that do not require shipping
+        -- save unfulfilled line items that do not require shipping; gift cards must be grouped separately
       {% endcomment %}
 
       {% if fulfillment_order_line_item.remainingQuantity > 0 %}
-        {% assign fulfillment_order_data["unfulfilled_line_items"]
-          = fulfillment_order_data["unfulfilled_line_items"]
-          | default: array
-          | push: fulfillment_order_line_item
-        %}
+        {% if fulfillment_order_line_item.variant.product.isGiftCard %}
+          {% if fulfill_gift_cards %}
+            {% assign fulfillment_order_data["gift_cards_to_fulfill"]
+              = fulfillment_order_data["gift_cards_to_fulfill"]
+              | default: array
+              | push: fulfillment_order_line_item
+            %}
+          {% endif %}
+
+        {% else %}
+          {% assign fulfillment_order_data["line_items_to_fulfill"]
+            = fulfillment_order_data["line_items_to_fulfill"]
+            | default: array
+            | push: fulfillment_order_line_item
+          %}
+        {% endif %}
       {% endif %}
     {% endfor %}
 
     {% comment %}
-      -- group unfulfilled line items by location for fulfillment
+      -- group fulfillment orders by location
     {% endcomment %}
 
-    {% if fulfillment_order_data.unfulfilled_line_items != blank %}
+    {% if fulfillment_order_data.line_items_to_fulfill != blank or fulfillment_order_data.gift_cards_to_fulfill != blank %}
       {% assign fulfillment_orders_by_location[fulfillment_order.assignedLocation.location.id]
         = fulfillment_orders_by_location[fulfillment_order.assignedLocation.location.id]
         | default: array
@@ -280,7 +312,10 @@
     {% endif %}
   {% endfor %}
 
-  {% if wait_until_any_other_shippable_items_are_fulfilled and has_unfulfilled_shippable_items and fulfillment_orders_by_location != blank %}
+  {% if wait_until_any_other_shippable_items_are_fulfilled
+    and has_unfulfilled_shippable_items
+    and fulfillment_orders_by_location != blank
+  %}
     {% log
       message: "Unfulfilled shippable items exist on this order and the 'Wait until any other shippable items are fulfilled' option is checked; no auto fulfillments will be made in this task run.",
       order: order
@@ -289,42 +324,85 @@
   {% endif %}
 
   {% comment %}
-    -- fulfill the items that don't require shipping
+    -- fulfill the line items that don't require shipping; fulfill any gift cards separately
   {% endcomment %}
 
+  {% unless event.preview %}
+    {% log
+      order_name: order.name,
+      fulfillment_orders_by_location: fulfillment_orders_by_location
+    %}
+  {% endunless %}
+
   {% for keyval in fulfillment_orders_by_location %}
-    {% action "shopify" %}
-      mutation {
-        fulfillmentCreate(
-          fulfillment: {
-            lineItemsByFulfillmentOrder: [
-              {% for fulfillment_order_data in keyval[1] %}
-                {
-                  fulfillmentOrderId: {{ fulfillment_order_data.fulfillment_order_id | json }}
-                  fulfillmentOrderLineItems: [
-                    {% for unfulfilled_line_item in fulfillment_order_data.unfulfilled_line_items %}
-                      {
-                        id: {{ unfulfilled_line_item.id | json }}
-                        quantity: {{ unfulfilled_line_item.remainingQuantity }}
-                      }
-                    {% endfor %}
-                  ]
-                }
-              {% endfor %}
-            ]
-            notifyCustomer: false
+    {% for fulfillment_order_data in keyval[1] %}
+      {% if fulfillment_order_data.gift_cards_to_fulfill != blank %}
+        {% action "shopify" %}
+          mutation {
+            fulfillmentCreate(
+              fulfillment: {
+                lineItemsByFulfillmentOrder: [
+                  {
+                    fulfillmentOrderId: {{ fulfillment_order_data.fulfillment_order_id | json }}
+                    fulfillmentOrderLineItems: [
+                      {% for line_item in fulfillment_order_data.gift_cards_to_fulfill %}
+                        {
+                          id: {{ line_item.id | json }}
+                          quantity: {{ line_item.remainingQuantity }}
+                        }
+                      {% endfor %}
+                    ]
+                  }
+                ]
+                notifyCustomer: false
+              }
+            ) {
+              fulfillment {
+                id
+                status
+              }
+              userErrors {
+                field
+                message
+              }
+            }
           }
-        ) {
-          fulfillment {
-            id
-            status
+        {% endaction %}
+      {% endif %}
+
+      {% if fulfillment_order_data.line_items_to_fulfill != blank %}
+        {% action "shopify" %}
+          mutation {
+            fulfillmentCreate(
+              fulfillment: {
+                lineItemsByFulfillmentOrder: [
+                  {
+                    fulfillmentOrderId: {{ fulfillment_order_data.fulfillment_order_id | json }}
+                    fulfillmentOrderLineItems: [
+                      {% for line_item in fulfillment_order_data.line_items_to_fulfill %}
+                        {
+                          id: {{ line_item.id | json }}
+                          quantity: {{ line_item.remainingQuantity }}
+                        }
+                      {% endfor %}
+                    ]
+                  }
+                ]
+                notifyCustomer: false
+              }
+            ) {
+              fulfillment {
+                id
+                status
+              }
+              userErrors {
+                field
+                message
+              }
+            }
           }
-          userErrors {
-            field
-            message
-          }
-        }
-      }
-    {% endaction %}
+        {% endaction %}
+      {% endif %}
+    {% endfor %}
   {% endfor %}
 {% endfor %}
