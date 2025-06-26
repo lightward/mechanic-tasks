@@ -2,7 +2,7 @@
 
 Tags: Fulfillment, Orders
 
-Useful for digital products, memberships, or anything else that needs to be fulfilled instantly. This task watches for paid (or new) orders, and auto-fulfills all line items that don't require shipping.
+Useful for digital products, shipping insurance, gift cards, or anything else that needs to be fulfilled instantly. This task watches for new orders, and auto-fulfills all line items that don't require shipping.
 
 * View in the task library: [tasks.mechanic.dev/auto-fulfill-items-that-dont-require-shipping](https://tasks.mechanic.dev/auto-fulfill-items-that-dont-require-shipping)
 * Task JSON, for direct import: [task.json](../../tasks/auto-fulfill-items-that-dont-require-shipping.json)
@@ -15,7 +15,8 @@ Useful for digital products, memberships, or anything else that needs to be fulf
   "include_products_with_any_of_these_tags__array": null,
   "exclude_products_with_any_of_these_tags__array": null,
   "only_process_paid_orders__boolean": true,
-  "wait_until_any_other_shippable_items_are_fulfilled__boolean": false
+  "wait_until_any_other_shippable_items_are_fulfilled__boolean": false,
+  "fulfill_gift_cards__boolean": true
 }
 ```
 
@@ -33,13 +34,21 @@ mechanic/user/trigger
 
 ## Documentation
 
-Useful for digital products, memberships, or anything else that needs to be fulfilled instantly. This task watches for paid (or new) orders, and auto-fulfills all line items that don't require shipping.
+Useful for digital products, shipping insurance, gift cards, or anything else that needs to be fulfilled instantly. This task watches for new orders, and auto-fulfills all line items that don't require shipping.
 
-Optionally, choose to only process paid orders (default), to wait until other shippable items are fulfilled, and whether to include or exclude products by tag.
+Optionally, choose whether to:
+- Only process paid orders
+- Wait until other shippable items are fulfilled
+- Fulfill gift cards
+- Include or exclude products by tag
 
-**Note:** exclusion tags on a product will take priority over inclusion tags.
+This task may also be run manually to process existing open, unfulfilled orders.
 
-This task may also be run manually to process existing open, unfulfilled orders (checking for paid status or other shippable items as configured).
+**Important:**
+- Exclusion tags on a product will take priority over inclusion tags
+- Shopify has an optional admin setting to auto-fulfill gift cards when orders are paid. Depending on how this task is configured, that setting may need to be turned off to avoid fulfillment conflicts.
+
+
 
 ## Installing this task
 
