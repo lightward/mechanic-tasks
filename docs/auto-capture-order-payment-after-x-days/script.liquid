@@ -1,9 +1,24 @@
+{% comment %}
+  -- get GraphQL order and transaction data
+{% endcomment %}
+
 {% capture query %}
   query {
     order(id: {{ order.admin_graphql_api_id | json }}) {
       id
       name
       displayFinancialStatus
+      currentTotalPriceSet {
+        presentmentMoney {
+          amount
+        }
+      }
+      totalReceivedSet {
+        presentmentMoney {
+          amount
+          currencyCode
+        }
+      }
       transactions(capturable: true) {
         id
         kind
@@ -28,13 +43,28 @@
           "id": "gid://shopify/Order/1234567890",
           "name": "#SAMPLE",
           "displayFinancialStatus": "AUTHORIZED",
+          "currentTotalPriceSet": {
+            "presentmentMoney": {
+              "amount": "23.45"
+            }
+          },
           "transactions": [
             {
               "id": "gid://shopify/OrderTransaction/1234567890",
               "kind": "AUTHORIZATION",
               "totalUnsettledSet": {
                 "presentmentMoney": {
-                  "amount": "12.34",
+                  "amount": "20.00",
+                  "currencyCode": "USD"
+                }
+              }
+            },
+            {
+              "id": "gid://shopify/OrderTransaction/2345678901",
+              "kind": "AUTHORIZATION",
+              "totalUnsettledSet": {
+                "presentmentMoney": {
+                  "amount": "10.00",
                   "currencyCode": "USD"
                 }
               }
@@ -50,20 +80,60 @@
 
 {% assign order = result.data.order %}
 
+{% comment %}
+  -- the current total price will reflect changes made after the initial sale: discounts, shipping changes, item adjustments
+  -- reducing by total received (i.e. partially paid orders) is for payment gateways that support multiple captures (e.g. Shopify Payments)
+{% endcomment %}
+
+{% assign current_total_price = order.currentTotalPriceSet.presentmentMoney.amount | times: 1.0 %}
+{% assign total_received = order.totalReceivedSet.presentmentMoney.amount | times: 1.0 %}
+{% assign left_to_capture = current_total_price | minus: total_received %}
+
+{% unless event.preview %}
+  {% log
+    current_total_price: current_total_price,
+    total_received: total_received,
+    left_to_capture: left_to_capture
+  %}
+{% endunless %}
+
 {% if order.displayFinancialStatus == "AUTHORIZED" or order.displayFinancialStatus == "PARTIALLY_PAID" %}
   {% assign authorized_transactions = order.transactions | where: "kind", "AUTHORIZATION" %}
 
-  {% for transaction in authorized_transactions %}
-    {% assign unsettled_amount = transaction.totalUnsettledSet.presentmentMoney.amount | times: 1.0 %}
+  {% comment %}
+    -- multiple authorizations could be on the order due to upsells or item additions
+  {% endcomment %}
 
-    {% if unsettled_amount > 0 %}
+  {% for transaction in authorized_transactions %}
+    {% comment %}
+      -- capture the unsettled amount of this transaction without exceeding the amount left to capture
+    {% endcomment %}
+
+    {% assign unsettled_amount = transaction.totalUnsettledSet.presentmentMoney.amount | times: 1.0 %}
+    {% assign amount_to_capture = unsettled_amount | at_most: left_to_capture %}
+
+    {% unless event.preview %}
+      {% log
+        transaction_id: transaction.id,
+        unsettled_amount: unsettled_amount,
+        amount_to_capture: amount_to_capture
+      %}
+    {% endunless %}
+
+    {% if amount_to_capture > 0 %}
+      {% comment %}
+        -- reduce the amount left to capture by the amount captured for this transaction
+      {% endcomment %}
+
+      {% assign left_to_capture = left_to_capture | minus: amount_to_capture %}
+
       {% action "shopify" %}
         mutation {
           orderCapture(
             input: {
               id: {{ order.id | json }}
               parentTransactionId: {{ transaction.id | json }}
-              amount: {{ unsettled_amount | json }}
+              amount: {{ amount_to_capture | json }}
               currency: {{ transaction.totalUnsettledSet.presentmentMoney.currencyCode }}
             }
           ) {

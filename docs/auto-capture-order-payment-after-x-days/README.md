@@ -30,6 +30,8 @@ shopify/orders/create+{{ options.days_to_wait_before_capturing__number_required 
 
 After waiting 7 days (or another timespan of your choice), this task attempts to capture all open authorized payments for an order. (Multiple authorizations can exist on edited orders or with post-purchase upsells.)
 
+If the order is modified before capturing, due to applying discounts, changing shipping fees, and/or making item adjustments, then this task will only capture up to a maximum of the current order total. Refunds that are not associated with an item adjustment are not supported by this task.
+
 ## Installing this task
 
 Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-capture-order-payment-after-x-days), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-capture-order-payment-after-x-days.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
