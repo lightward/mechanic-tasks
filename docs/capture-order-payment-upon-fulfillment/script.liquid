@@ -1,3 +1,7 @@
+{% comment %}
+  -- get GraphQL order and transaction data
+{% endcomment %}
+
 {% capture query %}
   query {
     order(id: {{ order.admin_graphql_api_id | json }}) {
@@ -7,6 +11,12 @@
       currentTotalPriceSet {
         presentmentMoney {
           amount
+        }
+      }
+      totalReceivedSet {
+        presentmentMoney {
+          amount
+          currencyCode
         }
       }
       transactions(capturable: true) {
@@ -69,18 +79,54 @@
 {% endif %}
 
 {% assign order = result.data.order %}
-{% assign left_to_capture = order.currentTotalPriceSet.presentmentMoney.amount | times: 1.0 %}
+
+{% comment %}
+  -- the current total price will reflect changes made after the initial sale: discounts, shipping changes, item adjustments
+  -- reducing by total received (i.e. partially paid orders) is for payment gateways that support multiple captures (e.g. Shopify Payments)
+{% endcomment %}
+
+{% assign current_total_price = order.currentTotalPriceSet.presentmentMoney.amount | times: 1.0 %}
+{% assign total_received = order.totalReceivedSet.presentmentMoney.amount | times: 1.0 %}
+{% assign left_to_capture = current_total_price | minus: total_received %}
+
+{% unless event.preview %}
+  {% log
+    current_total_price: current_total_price,
+    total_received: total_received,
+    left_to_capture: left_to_capture
+  %}
+{% endunless %}
 
 {% if order.displayFinancialStatus == "AUTHORIZED" or order.displayFinancialStatus == "PARTIALLY_PAID" %}
   {% assign authorized_transactions = order.transactions | where: "kind", "AUTHORIZATION" %}
 
+  {% comment %}
+    -- multiple authorizations could be on the order due to upsells or item additions
+  {% endcomment %}
+
   {% for transaction in authorized_transactions %}
+    {% comment %}
+      -- capture the unsettled amount of this transaction without exceeding the amount left to capture
+    {% endcomment %}
+
     {% assign unsettled_amount = transaction.totalUnsettledSet.presentmentMoney.amount | times: 1.0 %}
     {% assign amount_to_capture = unsettled_amount | at_most: left_to_capture %}
 
+    {% unless event.preview %}
+      {% log
+        transaction_id: transaction.id,
+        unsettled_amount: unsettled_amount,
+        amount_to_capture: amount_to_capture
+      %}
+    {% endunless %}
+
     {% if amount_to_capture > 0 %}
+      {% comment %}
+        -- reduce the amount left to capture by the amount captured for this transaction
+      {% endcomment %}
+
       {% assign left_to_capture = left_to_capture | minus: amount_to_capture %}
-      
+
       {% action "shopify" %}
         mutation {
           orderCapture(

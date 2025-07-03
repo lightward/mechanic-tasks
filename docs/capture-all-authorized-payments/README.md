@@ -2,7 +2,7 @@
 
 Tags: Payment
 
-This task will scan for all orders that have a financial status of "authorized", and will capture payment for them. This task can be scheduled to run daily, and can be run on demand.
+This task will scan for all orders that have a financial status of "authorized" or optionally "partially paid", and will attempt to capture all open authorized payments for them. This task can be scheduled to run daily, and can be run on demand.
 
 * View in the task library: [tasks.mechanic.dev/capture-all-authorized-payments](https://tasks.mechanic.dev/capture-all-authorized-payments)
 * Task JSON, for direct import: [task.json](../../tasks/capture-all-authorized-payments.json)
@@ -14,7 +14,7 @@ This task will scan for all orders that have a financial status of "authorized",
 {
   "include_partially_paid_orders__boolean": false,
   "run_daily__boolean": false,
-  "hours_to_wait_after_midnight_when_running_daily__number": null
+  "hours_to_wait_after_midnight_when_running_daily__range_min0_max23_required": 0
 }
 ```
 
@@ -23,7 +23,9 @@ This task will scan for all orders that have a financial status of "authorized",
 ## Subscriptions
 
 ```liquid
-{% if options.run_daily__boolean %}mechanic/scheduler/daily{% if options.hours_to_wait_after_midnight_when_running_daily__number %}+{{ options.hours_to_wait_after_midnight_when_running_daily__number | times: 60 | round }}.minutes{% endif %}{% endif %}
+{% if options.run_daily__boolean %}
+  mechanic/scheduler/daily+{{ options.hours_to_wait_after_midnight_when_running_daily__range_min0_max23_required }}.hours
+{% endif %}
 mechanic/user/trigger
 ```
 
@@ -31,9 +33,9 @@ mechanic/user/trigger
 
 ## Documentation
 
-This task will scan for all orders that have a financial status of "authorized", and will capture payment for them. This task can be scheduled to run daily, and can be run on demand.
+This task will scan for all orders that have a financial status of "authorized" or optionally "partially paid", and will attempt to capture all open authorized payments for them. This task can be scheduled to run daily, and can be run on demand.
 
-This task will scan for all orders that have a financial status of "authorized", and will capture payment for them. Enable "Run daily" to perform this every day at midnight, or use the "Run task" button to perform this scan on demand.
+If an order is modified after creation but before capturing, due to applying discounts, changing shipping fees, and/or making item adjustments, then this task will only capture up to a maximum of the current order total. Refunds that are not associated with an item adjustment are not supported by this task.
 
 ## Installing this task
 

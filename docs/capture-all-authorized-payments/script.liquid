@@ -1,78 +1,195 @@
-{% if event.preview %}
-  {% action "shopify" %}
-    mutation {
-      orderCapture(
-        input: {
-          id: "gid://shopify/Order/1234567890"
-          parentTransactionId: "gid://shopify/OrderTransaction/1234567890"
-          amount: "10.00"
-          currency: {{ shop.currency }}
-        }
+{% assign include_partially_paid_orders = options.include_partially_paid_orders__boolean %}
+
+{% comment %}
+  -- get GraphQL order and transaction data for authorized, uncancelled orders (and optionally partially paid orders)
+{% endcomment %}
+
+{% assign search_query = "-status:cancelled financial_status:authorized" %}
+
+{% if include_partially_paid_orders %}
+  {% assign search_query = "-status:cancelled AND (financial_status:authorized OR financial_status:partially_paid)" %}
+{% endif %}
+
+{% assign cursor = nil %}
+{% assign orders = array %}
+
+{% for n in (1..100) %}
+  {% capture query %}
+    query {
+      orders(
+        first: 250
+        after: {{ cursor | json }}
+        query: {{ search_query | json }}
       ) {
-        userErrors {
-          field
-          message
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          id
+          name
+          displayFinancialStatus
+          currentTotalPriceSet {
+            presentmentMoney {
+              amount
+            }
+          }
+          totalReceivedSet {
+            presentmentMoney {
+              amount
+              currencyCode
+            }
+          }
+          transactions(capturable: true) {
+            id
+            kind
+            totalUnsettledSet {
+              presentmentMoney {
+                amount
+                currencyCode
+              }
+            }
+          }
         }
       }
     }
-  {% endaction %}
-{% else %}
-  {% assign cursor = nil %}
-  {% assign conditions = array %}
-  {% assign conditions[0] = "financial_status:authorized" %}
+  {% endcapture %}
 
-  {% if options.include_partially_paid_orders__boolean %}
-    {% assign conditions[1] = "financial_status:partially_paid" %}
-  {% endif %}
+  {% assign result = query | shopify %}
 
-  {% for n in (0..100) %}
-    {% capture query %}
-      query {
-        orders(
-          first: 200
-          after: {{ cursor | json }}
-          query: {{ conditions | join: " OR " | json }}
-        ) {
-          pageInfo {
-            hasNextPage
-          }
-          edges {
-            cursor
-            node {
-              id
-              transactions(
-                capturable: true
-              ) {
-                id
-                kind
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "orders": {
+            "nodes": [
+              {
+                "id": "gid://shopify/Order/1234567890",
+                "name": "#SAMPLE",
+                "displayFinancialStatus": "AUTHORIZED",
+                "currentTotalPriceSet": {
+                  "presentmentMoney": {
+                    "amount": "23.45"
+                  }
+                },
+                "transactions": [
+                  {
+                    "id": "gid://shopify/OrderTransaction/1234567890",
+                    "kind": "AUTHORIZATION",
+                    "totalUnsettledSet": {
+                      "presentmentMoney": {
+                        "amount": "20.00",
+                        "currencyCode": "USD"
+                      }
+                    }
+                  },
+                  {
+                    "id": "gid://shopify/OrderTransaction/2345678901",
+                    "kind": "AUTHORIZATION",
+                    "totalUnsettledSet": {
+                      "presentmentMoney": {
+                        "amount": "10.00",
+                        "currencyCode": "USD"
+                      }
+                    }
+                  }
+                ]
               }
-              totalCapturableSet {
-                presentmentMoney {
-                  amount
-                  currencyCode
-                }
-              }
-            }
+            ]
           }
         }
       }
     {% endcapture %}
 
-    {% assign result = query | shopify %}
+    {% assign result = result_json | parse_json %}
+  {% endif %}
 
-    {% for edge in result.data.orders.edges %}
-      {% assign transaction = edge.node.transactions | where: "kind", "AUTHORIZATION" | first %}
+  {% assign orders = orders | concat: result.data.orders.nodes %}
+
+  {% if result.data.orders.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.orders.pageInfo.endCursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% assign order_names = orders | map: "name" %}
+
+{% unless event.preview %}
+  {% log
+    count_orders_to_review: orders.size,
+    order_names: order_names
+  %}
+{% endunless %}
+
+{% for order in orders %}
+  {% comment %}
+    -- the current total price will reflect changes made after the initial sale: discounts, shipping changes, item adjustments
+    -- reducing by total received (i.e. partially paid orders) is for payment gateways that support multiple captures (e.g. Shopify Payments)
+  {% endcomment %}
+
+  {% assign current_total_price = order.currentTotalPriceSet.presentmentMoney.amount | times: 1.0 %}
+  {% assign total_received = order.totalReceivedSet.presentmentMoney.amount | times: 1.0 %}
+  {% assign left_to_capture = current_total_price | minus: total_received %}
+  {% assign authorized_transactions = order.transactions | where: "kind", "AUTHORIZATION" %}
+
+  {% unless event.preview %}
+    {% log
+      order_name: order.name,
+      current_total_price: current_total_price,
+      total_received: total_received,
+      left_to_capture: left_to_capture,
+      count_authorized_transactions: authorized_transactions.size
+    %}
+  {% endunless %}
+
+
+  {% comment %}
+    -- multiple authorizations could be on the order due to upsells or item additions
+  {% endcomment %}
+
+  {% for transaction in authorized_transactions %}
+    {% comment %}
+      -- capture the unsettled amount of this transaction without exceeding the amount left to capture
+    {% endcomment %}
+
+    {% assign unsettled_amount = transaction.totalUnsettledSet.presentmentMoney.amount | times: 1.0 %}
+    {% assign amount_to_capture = unsettled_amount | at_most: left_to_capture %}
+
+    {% unless event.preview %}
+      {% log
+        order_name: order.name,
+        transaction_id: transaction.id,
+        unsettled_amount: unsettled_amount,
+        amount_to_capture: amount_to_capture
+      %}
+    {% endunless %}
+
+    {% if amount_to_capture > 0 %}
+      {% comment %}
+        -- reduce the amount left to capture by the amount captured for this transaction
+      {% endcomment %}
+
+      {% assign left_to_capture = left_to_capture | minus: amount_to_capture %}
 
       {% action "shopify" %}
         mutation {
           orderCapture(
             input: {
-              id: {{ edge.node.id | json }}
+              id: {{ order.id | json }}
               parentTransactionId: {{ transaction.id | json }}
-              amount: {{ edge.node.totalCapturableSet.presentmentMoney.amount | json }}
-              currency: {{ edge.node.totalCapturableSet.presentmentMoney.currencyCode }}
+              amount: {{ amount_to_capture | json }}
+              currency: {{ transaction.totalUnsettledSet.presentmentMoney.currencyCode }}
             }
           ) {
+            transaction {
+              id
+              status
+              parentTransaction {
+                id
+                kind
+              }
+            }
             userErrors {
               field
               message
@@ -80,12 +197,6 @@
           }
         }
       {% endaction %}
-    {% endfor %}
-
-    {% if result.data.pageInfo.hasNextPage %}
-      {% assign cursor = result.data.orders.edges.last.cursor %}
-    {% else %}
-      {% break %}
     {% endif %}
   {% endfor %}
-{% endif %}
+{% endfor %}
