@@ -225,15 +225,14 @@
   {% endif %}
 {% endfor %}
 
-{% comment %}
-  -- setting a variable that can be overridden on inventory level update to only check the relevant location
-{% endcomment %}
-
-{% assign location_names_to_process = location_names %}
+{% log
+  location_names_and_ids: location_names_and_ids,
+  market_names_and_publication_ids: market_names_and_publication_ids
+%}
 
 {% if event.topic == "shopify/inventory_levels/update" %}
   {% comment %}
-    -- use the inventory level and location IDs from this event webhook to query available inventory for ALL of the product's variants at this location
+    -- use the inventory level to query available inventory for ALL of the product's variants at each configured location
     -- Shopify supports 100 variants per product (as of June 2023)
   {% endcomment %}
 
@@ -256,11 +255,7 @@
                   inventoryPolicy
                   inventoryItem {
                     tracked
-                    inventoryLevel(locationId: {{ inventory_level.location_id | prepend: "gid://shopify/Location/" | json }}) {
-                      quantities(names: "available") {
-                        quantity
-                      }
-                    }
+                    {{ inventory_level_inputs | join: newline }}
                   }
                 }
               }
@@ -294,10 +289,13 @@
                         "inventoryPolicy": "DENY",
                         "inventoryItem": {
                           "tracked": true,
-                          "inventoryLevel": {
+                          "location_1234567890": {
+                            "location": {
+                              "name": "International"
+                            },
                             "quantities": [
                               {
-                                "quantity": 0
+                                "quantity":0
                               }
                             ]
                           }
@@ -353,7 +351,6 @@
   {% endcomment %}
 
   {% assign products = array | push: product %}
-  {% assign location_names_to_process = array | push: location_name %}
 
 {% elsif event.topic == "mechanic/user/trigger" %}
   {% comment %}
@@ -458,8 +455,9 @@
   {% assign publication_ids_that_should_be_published = array %}
   {% assign publication_ids_that_should_be_unpublished = array %}
 
-  {% for location_name in location_names_to_process %}
-    {% assign location_id = location_names_and_ids[location_name] %}
+  {% for keyval in location_names_and_ids %}
+    {% assign location_name = keyval[0] %}
+    {% assign location_id = keyval[1] %}
     {% assign location_alias = location_id | replace: "gid://shopify/Location/", "location_" %}
     {% assign location_market_names = locations_and_market_names[location_name] | split: newline %}
 
@@ -475,10 +473,10 @@
 
     {% for variant in variants %}
       {% comment %}
-        -- on bulk runs, only proceed with inventory check if the variant is stocked at this location
+        -- only proceed with inventory check if the variant is stocked at this location
       {% endcomment %}
 
-      {% if event.topic == "mechanic/shopify/bulk_operation" and variant.inventoryItem[location_alias] == blank  %}
+      {% if variant.inventoryItem[location_alias] == blank  %}
         {% continue %}
       {% endif %}
 
@@ -510,16 +508,7 @@
         {% endif %}
       {% endif %}
 
-      {% comment %}
-        -- variant "available" quantity depends on how this task run was initiated
-      {% endcomment %}
-
-      {% if event.topic == "shopify/inventory_levels/update" %}
-        {% assign variant_available = variant.inventoryItem.inventoryLevel.quantities.first.quantity %}
-
-      {% elsif event.topic == "mechanic/shopify/bulk_operation" %}
-        {% assign variant_available = variant.inventoryItem[location_alias].quantities.first.quantity %}
-      {% endif %}
+      {% assign variant_available = variant.inventoryItem[location_alias].quantities.first.quantity %}
 
       {% if variant_available > 0 %}
         {% assign location_in_stock = true %}
