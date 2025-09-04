@@ -80,9 +80,11 @@
   {% for product in result.data.products.nodes %}
     {% if product.totalInventory <= out_of_stock_inventory_quantity %}
       {% if product.metafield == blank or event.topic == "mechanic/user/trigger" %}
-        {% log %}
-          "{{ product.title }} is out of stock."
-        {% endlog %}
+        {%- capture log_message -%}
+          {{ product.title }} is out of stock.
+        {%- endcapture -%}
+
+        {% log log_message %}
 
         {% assign out_of_stock_email_product_title = product.title %}
 
@@ -103,9 +105,11 @@
 
     {% else %}
       {% if product.metafield %}
-        {% log %}
-          "{{ product.title }} is back in stock."
-        {% endlog %}
+        {%- capture log_message -%}
+          {{ product.title }} is back in stock.
+        {%- endcapture -%}
+
+        {% log log_message %}
 
         {% assign newly_back_in_stock_email_product_title = product.title %}
         {% assign newly_back_in_stock_product_ids[newly_back_in_stock_product_ids.size] = product.id %}
