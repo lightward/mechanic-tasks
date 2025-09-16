@@ -1,19 +1,51 @@
 {% assign email_recipients = options.email_recipients__array_required %}
+{% assign include_pos_returns = options.include_pos_returns__boolean %}
 
 {% if event.topic == "shopify/returns/close" %}
+  {% if event.preview %}
+    {% capture return_json %}
+      {
+        "id": 1234567890,
+        "admin_graphql_api_id": "gid://shopify/Return/1234567890",
+        "order_id": 1234567890,
+        "status": "closed"
+      }
+    {% endcapture %}
+
+    {% assign return = return_json | parse_json %}
+  {% endif %}
+
+  {% comment %}
+    -- get return data from the order resource in case notifications for POS returns are enabled
+  {% endcomment %}
+
   {% capture query %}
     query {
-      return(id: {{ return.admin_graphql_api_id | json }}) {
+      order(id: {{ return.order_id | prepend: "gid://shopify/Order/" | json }}) {
+        id
         name
-        returnLineItems(first: 100) {
+        displayFinancialStatus
+        displayFulfillmentStatus
+        returnStatus
+        sourceName
+        returns(
+          first: 1
+          query: {{ return.id | prepend: "id:" | json }}
+        ) {
           nodes {
-            ... on ReturnLineItem {
-              quantity
-              returnReason
-              fulfillmentLineItem {
-                lineItem {
-                  name
-                  sku
+            id
+            name
+            returnLineItems(first: 100) {
+              nodes {
+                ... on ReturnLineItem {
+                  quantity
+                  returnReason
+                  fulfillmentLineItem {
+                    lineItem {
+                      name
+                      sku
+                    }
+                  }
                 }
               }
             }
@@ -29,18 +61,28 @@
     {% capture result_json %}
       {
         "data": {
-          "return": {
-            "name": "#PREVIEW-R1",
-            "returnLineItems": {
+          "order": {
+            "id": "gid://shopify/Order/1234567890",
+            "name": "#PREVIEW",
+            "sourceName": "pos",
+            "returns": {
               "nodes": [
                 {
-                  "quantity": 1,
-                  "returnReason": "STYLE",
-                  "fulfillmentLineItem": {
-                    "lineItem": {
-                      "name": "Widget - Chartreuse",
-                      "sku": "WDGT-CHRTRS"
-                    }
+                  "id": "gid://shopify/Return/10560471288",
+                  "name": "#PREVIEW-R1",
+                  "returnLineItems": {
+                    "nodes": [
+                      {
+                        "quantity": 1,
+                        "returnReason": "STYLE",
+                        "fulfillmentLineItem": {
+                          "lineItem": {
+                            "name": "Widget - Chartreuse",
+                            "sku": "WDGT-CHRTRS"
+                          }
+                        }
+                      }
+                    ]
                   }
                 }
               ]
@@ -53,17 +95,32 @@
     {% assign result = result_json | parse_json %}
   {% endif %}
 
-  {% assign return_line_items = result.data.return.returnLineItems.nodes %}
+  {% assign order = result.data.order %}
+
+  {% if order.sourceName == "pos" %}
+    {% unless include_pos_returns or event.preview %}
+      {% log "This return was made via POS, and the option to include them for notifications is disabled." %}
+      {% break %}
+    {% endunless %}
+  {% endif %}
+
+  {% assign return = order.returns.nodes.first %}
+
+  {% assign return_line_items = return.returnLineItems.nodes %}
 
   {% if return_line_items == blank %}
     {% log
       message: "No verified return line items were found on this return.",
-      return: result.data.return
+      return: return
     %}
     {% break %}
   {% endif %}
 
-  {% capture email_subject %}ALERT: New return {{ result.data.return.name }}{% endcapture %}
+  {% capture email_subject %}ALERT: New return {{ return.name }}{% endcapture %}
+
+  {% if include_pos_returns and order.sourceName == "pos" %}
+    {% assign email_subject = email_subject | append: " (via POS)" %}
+  {% endif %}
 
   {% capture email_body -%}
     Returned items
