@@ -12,7 +12,8 @@ Use this task to get an email alert with a list of the returned items whenever a
 
 ```json
 {
-  "email_recipients__array_required": null
+  "email_recipients__array_required": null,
+  "include_pos_returns__boolean": false
 }
 ```
 
@@ -30,7 +31,7 @@ shopify/returns/close
 
 Use this task to get an email alert with a list of the returned items whenever a return is marked as closed.
 
-Note: this event will not occur when returns or exchanges are made via a POS terminal.
+Optionally, enable "Include POS returns" if you would like return notifications for the Shopify Point of Sale channel as well.
 
 ## Installing this task
 
