@@ -1,6 +1,7 @@
+{% assign action_keywork = value %}
 {% assign email_recipients = options.notification_email_recipients__array_required %}
-{% assign event_start_datetime = options.event_start_datetime__required %}
-{% assign event_end_datetime = options.event_end_datetime__required %}
+{% assign event_start_datetime = options.event_start__datetime_futureonly_required %}
+{% assign event_end_datetime = options.event_end__datetime_futureonly_required %}
 {% assign set_compare_at_prices = options.set_compare_at_prices_to_original_price_during_event__boolean %}
 {% assign collection_handles_and_discounts = options.collection_handles_and_discounts__keyval %}
 {% assign skus_to_include = options.skus_to_include__array %}
@@ -10,7 +11,7 @@
 {% assign do_not_restore_prices_on_reset = options.do_not_restore_prices_on_reset__boolean %}
 
 {%- capture task_admin_link -%}
-  <a href="https://{{ shop.myshopify_domain }}/admin/apps/mechanic/~/tasks/edit/{{ task.id }}">{{ task.name | remove: "ADVANCED: " }}</a>
+  <a href="{{ shop.admin_url }}apps/mechanic/tasks/{{ task.id }}">{{ task.name }}</a>
 {%- endcapture -%}
 
 {% comment %}
@@ -89,39 +90,13 @@
         -- NOTE: run scheduling logic here instead of in custom event like most other keywords, so user gets immediate feedback on any configuration errors
       {% endcomment %}
 
-      {% assign valid_start_datetime = event_start_datetime | parse_date: "%Y-%m-%d %H:%M" %}
-
-      {% if valid_start_datetime == blank %}
-        {% assign valid_start_datetime = event_start_datetime | parse_date: "%Y-%m-%d" %}
-
-        {% if valid_start_datetime == blank %}
-          {% unless event.preview %}
-            {% error "The event start date is not a valid date. Please re-enter it (per the task documentation) and try scheduling the event again." %}
-            {% break %}
-          {% endunless %}
-        {% endif %}
-      {% endif %}
-
-      {% assign valid_end_datetime = event_end_datetime | parse_date: "%Y-%m-%d %H:%M" %}
-
-      {% if valid_end_datetime == blank %}
-        {% assign valid_end_datetime = event_end_datetime | parse_date: "%Y-%m-%d" %}
-
-        {% if valid_end_datetime == blank %}
-          {% unless event.preview %}
-            {% error "The event end date is not a valid date. Please re-enter it (per the task documentation) and try scheduling the event again." %}
-            {% break %}
-          {% endunless %}
-        {% endif %}
-      {% endif %}
-
       {% assign now_s = "now" | date: "%s" %}
       {% assign start_datetime_s = event_start_datetime | date: "%s" %}
       {% assign end_datetime_s = event_end_datetime | date: "%s" %}
 
       {% if start_datetime_s <= now_s or start_datetime_s >= end_datetime_s %}
         {% unless event.preview %}
-          {% error "The event start and end dates must be future dates and the start date must be before the end date. Please re-enter them (per the task documentation) and try scheduling the event again." %}
+          {% error "The event start and end dates must be future dates and the start date must be before the end date. Please re-enter them  and try scheduling the event again." %}
           {% break %}
         {% endunless %}
       {% endif %}
@@ -463,7 +438,7 @@
 
       {% else %}
         {% error
-          message: "Unrecognized action keyword. Action keyword must be one of 'schedule', 'list', 'email', or 'cancel'",
+          message: "Unrecognized action keyword. Action keyword must be one of 'schedule', 'list', 'email', 'cancel', or 'reset",
           action_keyword: action_keyword
         %}
       {% endif %}
@@ -529,7 +504,11 @@
   {% for keyval in collection_handles_and_discounts %}
     {% capture query %}
       query {
-        collectionByHandle(handle: {{ keyval[0] | json }}) {
+        collectionByIdentifier(
+          identifier: {
+            handle: {{ keyval[0] | json }}
+          }
+        ) {
           id
           handle
         }
@@ -538,7 +517,7 @@
 
     {% assign result = query | shopify %}
 
-    {% assign collection = result.data.collectionByHandle %}
+    {% assign collection = result.data.collectionByIdentifier %}
 
     {% if collection != blank %}
       {% capture in_collection_check -%}

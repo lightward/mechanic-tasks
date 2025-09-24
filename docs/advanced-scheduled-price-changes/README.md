@@ -15,8 +15,8 @@ This advanced task allows you to schedule price change events for your store, us
 ```json
 {
   "notification_email_recipients__array_required": null,
-  "event_start_datetime__required": null,
-  "event_end_datetime__required": null,
+  "event_start__datetime_futureonly_required": null,
+  "event_end__datetime_futureonly_required": null,
   "set_compare_at_prices_to_original_price_during_event__boolean": false,
   "collection_handles_and_discounts__keyval": null,
   "skus_to_include__array": null,
@@ -66,7 +66,7 @@ This advanced task allows you to schedule price change events for your store, us
 
 #### Price change event configuration notes
 
-- The event start and end datetimes must be valid dates in the form of _YYYY-MM-DD_ or _YYYY-MM-DD HH:MM_ (24 hour clock).
+- The event start and end datetimes must be valid dates in the form of _YYYY-MM-DD HH:MM_ (24 hour clock). The field date and time picker will enforce this constraint.
 - Collection handles and discounts are entered as key value pairs, with the collection handle on the left and the discount for it on the right.
 - If any SKUs are specifically included, then a SKU discount must be set to apply to them.
 - Discount formats:
