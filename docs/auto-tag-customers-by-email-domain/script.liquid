@@ -26,90 +26,57 @@
   {% endif %}
 
 {% elsif event.topic == "mechanic/user/trigger" %}
-  {% assign domain_query_parts = array %}
-
-  {% for email_domain in customer_email_domains %}
-    {% assign domain_query_parts[domain_query_parts.size]
-      = "customer_email_domain = '"
-      | append: email_domain
-      | append: "'"
-    %}
-  {% endfor %}
-
-  {% capture search_query -%}
-    customer_tags NOT CONTAINS '{{ customer_tag_to_apply }}' AND ({{ domain_query_parts | join: " OR " }})
-  {%- endcapture %}
-
-  {% log search_query: search_query %}
-
-  {% assign cursor = nil %}
-
   {% comment %}
-    -- start with the customerSegmentMembers resource since it supports a domain filter
+    -- customer segment queries support up to 10 filters, so group the email domains by 9 to avoid API errors
   {% endcomment %}
 
-  {% for n in (0..100) %}
-    {% capture query %}
-      query {
-        customerSegmentMembers(
-          first: 1000
-          after: {{ cursor | json }}
-          query: {{ search_query | json }}
-        ) {
-          pageInfo {
-            hasNextPage
-            endCursor
-          }
-          edges {
-            node {
-              id
-            }
-          }
-        }
-      }
-    {% endcapture %}
+  {% assign groups_of_email_domains = customer_email_domains | in_groups_of: 9, fill_with: false %}
 
-    {% assign result = query | shopify %}
+  {% for group_of_email_domains in groups_of_email_domains %}
+    {% assign domain_query_parts = array %}
 
-    {% if event.preview %}
-      {% capture result_json %}
-        {
-          "data": {
-            "customerSegmentMembers": {
-              "edges": [
-                {
-                  "node": {
-                    "id": "gid://shopify/CustomerSegmentMember/1234567890"
-                  }
-                }
-              ]
-            }
-          }
-        }
-      {% endcapture %}
+    {% for email_domain in group_of_email_domains %}
+      {% assign domain_query_parts[domain_query_parts.size]
+        = "customer_email_domain = '"
+        | append: email_domain
+        | append: "'"
+      %}
+    {% endfor %}
 
-      {% assign result = result_json | parse_json %}
-    {% endif %}
+    {% capture search_query -%}
+      customer_tags NOT CONTAINS '{{ customer_tag_to_apply }}' AND ({{ domain_query_parts | join: " OR " }})
+    {%- endcapture %}
 
-    {% assign customer_segment_member_ids
-      = result.data.customerSegmentMembers.edges
-      | map: "node"
-      | map: "id"
-    %}
+    {% unless event.preview %}
+      {% log
+        search_query: search_query,
+        groups_of_email_domains_loop: forloop.index
+      %}
+    {% endunless %}
 
-    {% for customer_segment_member_id in customer_segment_member_ids %}
-      {% comment %}
-        -- query the customer record in order to verify the domain and absence of the tag, in case the search query filter has "seepage"
-      {% endcomment %}
+    {% assign cursor = nil %}
 
+    {% comment %}
+      -- start with the customerSegmentMembers resource since it supports a domain filter
+    {% endcomment %}
+
+    {% for n in (0..100) %}
       {% capture query %}
         query {
-          customer(id: {{ customer_segment_member_id | remove: "SegmentMember" | json }}) {
-            id
-            defaultEmailAddress {
-              emailAddress
+          customerSegmentMembers(
+            first: 1000
+            after: {{ cursor | json }}
+            query: {{ search_query | json }}
+          ) {
+            pageInfo {
+              hasNextPage
+              endCursor
             }
-            tags
+            edges {
+              node {
+                id
+              }
+            }
           }
         }
       {% endcapture %}
@@ -120,11 +87,14 @@
         {% capture result_json %}
           {
             "data": {
-              "customer": {
-                "id": "gid://shopify/Customer/1234567890",
-                "defaultEmailAddress": {
-                  "emailAddress": {{ "test@" | append: customer_email_domains.first | json }}
-                }
+              "customerSegmentMembers": {
+                "edges": [
+                  {
+                    "node": {
+                      "id": "gid://shopify/CustomerSegmentMember/1234567890"
+                    }
+                  }
+                ]
               }
             }
           }
@@ -133,21 +103,64 @@
         {% assign result = result_json | parse_json %}
       {% endif %}
 
-      {% assign customer = result.data.customer %}
-      {% assign customer_email_domain = customer.defaultEmailAddress.emailAddress | split: "@" | last | downcase %}
+      {% assign customer_segment_member_ids
+        = result.data.customerSegmentMembers.edges
+        | map: "node"
+        | map: "id"
+      %}
 
-      {% if customer_email_domains contains customer_email_domain %}
-        {% unless customer.tags contains customer_tag_to_apply %}
-          {% assign customer_ids_to_tag = customer_ids_to_tag | push: customer.id %}
-        {% endunless %}
+      {% for customer_segment_member_id in customer_segment_member_ids %}
+        {% comment %}
+          -- query the customer record in order to verify the domain and absence of the tag, in case the search query filter has "seepage"
+        {% endcomment %}
+
+        {% capture query %}
+          query {
+            customer(id: {{ customer_segment_member_id | remove: "SegmentMember" | json }}) {
+              id
+              defaultEmailAddress {
+                emailAddress
+              }
+              tags
+            }
+          }
+        {% endcapture %}
+
+        {% assign result = query | shopify %}
+
+        {% if event.preview %}
+          {% capture result_json %}
+            {
+              "data": {
+                "customer": {
+                  "id": "gid://shopify/Customer/1234567890",
+                  "defaultEmailAddress": {
+                    "emailAddress": {{ "test@" | append: customer_email_domains.first | json }}
+                  }
+                }
+              }
+            }
+          {% endcapture %}
+
+          {% assign result = result_json | parse_json %}
+        {% endif %}
+
+        {% assign customer = result.data.customer %}
+        {% assign customer_email_domain = customer.defaultEmailAddress.emailAddress | split: "@" | last | downcase %}
+
+        {% if customer_email_domains contains customer_email_domain %}
+          {% unless customer.tags contains customer_tag_to_apply %}
+            {% assign customer_ids_to_tag = customer_ids_to_tag | push: customer.id %}
+          {% endunless %}
+        {% endif %}
+      {% endfor %}
+
+      {% if result.data.customerSegmentMembers.pageInfo.hasNextPage %}
+        {% assign cursor = result.data.customerSegmentMembers.pageInfo.endCursor %}
+      {% else %}
+        {% break %}
       {% endif %}
     {% endfor %}
-
-    {% if result.data.customers.pageInfo.hasNextPage %}
-      {% assign cursor = result.data.customers.pageInfo.endCursor %}
-    {% else %}
-      {% break %}
-    {% endif %}
   {% endfor %}
 {% endif %}
 
