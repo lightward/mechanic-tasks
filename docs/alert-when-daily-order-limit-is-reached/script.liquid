@@ -1,0 +1,204 @@
+{% comment %}
+  Options order:
+
+  {{ options.maximum_daily_orders__number_required }}
+  {{ options.notification_email_recipients__email_array_required }}
+  {{ options.only_count_orders_matching_this_query }}
+  {{ options.email_subject__required }}
+  {{ options.email_body__multiline_required }}
+{% endcomment %}
+
+{% if options.maximum_daily_orders__number_required <= 0 %}
+  {% error "'Maximum daily orders' must be at least 1." %}
+{% endif %}
+
+{% if options.notification_email_recipients__email_array_required == blank %}
+  {% error "At least one notification email recipient is required." %}
+{% endif %}
+
+{% comment %}
+  Cache key for tracking if alert was sent today
+{% endcomment %}
+{% assign alert_sent_cache_key = "alert_sent:" | append: task.id %}
+{% assign alert_already_sent = cache[alert_sent_cache_key] | default: false %}
+
+{% assign previous_midnight = "now" | date: "%Y-%m-%dT00:00:00%z" %}
+{% assign previous_midnight_s = previous_midnight | date: "%s" %}
+
+{% if event.topic == "shopify/orders/create" or event.topic == "mechanic/user/trigger" %}
+  {% comment %}
+    Count orders for today
+  {% endcomment %}
+  {% assign cursor = nil %}
+  {% assign orders_today = 0 %}
+  {% assign recent_orders = array %}
+
+  {% capture orders_query %}
+    created_at:>={{ previous_midnight | json }} {{ options.only_count_orders_matching_this_query }}
+  {% endcapture %}
+
+  {% assign orders_query = orders_query | strip %}
+
+  {% for n in (0..100) %}
+    {% capture query %}
+      query {
+        orders(
+          first: 250
+          after: {{ cursor | json }}
+          query: {{ orders_query | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            name
+            email
+            totalPriceSet {
+              shopMoney {
+                amount
+                currencyCode
+              }
+            }
+            createdAt
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% comment %}
+        Generate preview data to simulate reaching the limit
+      {% endcomment %}
+      {% assign alert_already_sent = false %}
+      {% assign orders_today = options.maximum_daily_orders__number_required %}
+      
+      {% capture result_json %}
+        {
+          "data": {
+            "orders": {
+              "pageInfo": {
+                "hasNextPage": false
+              },
+              "nodes": [
+                {
+                  "id": "gid://shopify/Order/1234567890",
+                  "name": "#1001",
+                  "email": "",
+                  "totalPriceSet": {
+                    "shopMoney": {
+                      "amount": "99.99",
+                      "currencyCode": "USD"
+                    }
+                  },
+                  "createdAt": "{{ previous_midnight | date: "%Y-%m-%dT%H:%M:%S%z" }}"
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+      {% break %}
+    {% endif %}
+
+    {% comment %}
+      Store the last 5 orders for inclusion in alerts if requested
+    {% endcomment %}
+    {% for order in result.data.orders.nodes %}
+      {% if recent_orders.size < 5 %}
+        {% assign recent_orders = recent_orders | push: order %}
+      {% endif %}
+    {% endfor %}
+
+    {% assign orders_today = orders_today | plus: result.data.orders.nodes.size %}
+
+    {% if result.data.orders.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.orders.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% log 
+    message: "Daily order count check",
+    orders_today: orders_today,
+    maximum_daily_orders: options.maximum_daily_orders__number_required,
+    percentage_of_limit: orders_today | times: 100.0 | divided_by: options.maximum_daily_orders__number_required,
+    orders_query: orders_query,
+    alert_already_sent: alert_already_sent
+  %}
+
+  {% comment %}
+    Check if we need to send the limit reached alert
+  {% endcomment %}
+  {% if orders_today >= options.maximum_daily_orders__number_required and alert_already_sent == false and event.topic == "shopify/orders/create" %}
+    {% comment %}
+      Get the current triggering order name (if available)
+    {% endcomment %}
+    {% assign order_number = order.name | default: recent_orders.last.name | default: "#" | append: orders_today %}
+    
+    {% comment %}
+      Replace placeholders in email templates
+    {% endcomment %}
+    {% assign orders_today_string = orders_today | json | remove: '"' %}
+    {% assign maximum_daily_orders_string = options.maximum_daily_orders__number_required | json | remove: '"' %}
+    
+    {% assign email_subject = options.email_subject__required | replace: "ORDERS_TODAY", orders_today_string | replace: "MAXIMUM_DAILY_ORDERS", maximum_daily_orders_string | replace: "ORDER_NUMBER", order_number %}
+    {% assign email_body = options.email_body__multiline_required | replace: "ORDERS_TODAY", orders_today_string | replace: "MAXIMUM_DAILY_ORDERS", maximum_daily_orders_string | replace: "ORDER_NUMBER", order_number %}
+
+    {% for email_recipient in options.notification_email_recipients__email_array_required %}
+      {% action "email" %}
+        {
+          "to": {{ email_recipient | json }},
+          "subject": {{ email_subject | strip | json }},
+          "body": {{ email_body | strip | newline_to_br | json }},
+          "from_display_name": {{ shop.name | json }},
+          "reply_to": {{ shop.customer_email | json }}
+        }
+      {% endaction %}
+    {% endfor %}
+
+    {% comment %}
+      Mark alert as sent for today
+    {% endcomment %}
+    {% action "cache", "set", alert_sent_cache_key, true %}
+  {% endif %}
+
+  {% if event.topic == "mechanic/user/trigger" %}
+    {% comment %}
+      Manual trigger - always send a status update
+    {% endcomment %}
+    {% assign percentage_of_limit = orders_today | times: 100.0 | divided_by: options.maximum_daily_orders__number_required %}
+    {% capture status_email_body %}
+      <h2>Current Daily Order Status</h2>
+      <p><strong>Orders today:</strong> {{ orders_today }} / {{ options.maximum_daily_orders__number_required }}</p>
+      <p><strong>Percentage:</strong> {{ percentage_of_limit | round: 1 }}%</p>
+      <p><strong>Alert sent today:</strong> {% if alert_already_sent %}Yes{% else %}No{% endif %}</p>
+      <p><strong>Time period:</strong> Since {{ previous_midnight | date: "%Y-%m-%d %H:%M" }}</p>
+      <p><em>Order query: {{ orders_query }}</em></p>
+    {% endcapture %}
+
+    {% for email_recipient in options.notification_email_recipients__email_array_required %}
+      {% action "email" %}
+        {
+          "to": {{ email_recipient | json }},
+          "subject": "Daily Order Status Report: {{ orders_today }} of {{ options.maximum_daily_orders__number_required }}",
+          "body": {{ status_email_body | json }},
+          "from_display_name": {{ shop.name | json }}
+        }
+      {% endaction %}
+    {% endfor %}
+  {% endif %}
+
+{% elsif event.topic == "mechanic/scheduler/daily" %}
+  {% comment %}
+    Daily reset - clear the alert sent cache
+  {% endcomment %}
+  {% action "cache", "del", alert_sent_cache_key %}
+  {% log message: "Daily order alert counter reset", cache_key_cleared: alert_sent_cache_key %}
+{% endif %}

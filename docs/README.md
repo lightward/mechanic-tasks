@@ -13,6 +13,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Add note to new orders with their fulfillment locations](./note-new-orders-with-their-fulfillment-locations)
 * [Advanced: Scheduled Price Changes](./advanced-scheduled-price-changes)
 * [Advanced: Scheduled section publishing](./advanced-scheduled-section-publishing)
+* [Alert when daily order limit is reached](./alert-when-daily-order-limit-is-reached)
 * [Archive free orders on fulfillment](./archive-free-orders-on-fulfillment)
 * [Archive orders on delivery](./archive-orders-on-delivery)
 * [Archive orders when tagged](./archive-orders-when-tagged)
@@ -395,6 +396,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Alert
 
+* [Alert when daily order limit is reached](./alert-when-daily-order-limit-is-reached)
 * [Catalog update email](./catalog-update-email)
 * [Email someone specific based on a new order's customer tags](./email-someone-specific-based-on-a-new-orders-customer-tags)
 * [Email someone when a certain product is purchased](./email-someone-when-certain-product-purchased)
@@ -813,6 +815,7 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Email
 
 * [Abandoned checkout emails](./abandoned-checkout-emails)
+* [Alert when daily order limit is reached](./alert-when-daily-order-limit-is-reached)
 * [Ask for reviews a week after order fulfillment](./ask-for-reviews-a-week-after-order-fulfillment)
 * [Auto-invite customers after an order](./auto-invite-customers-after-an-order)
 * [Auto-invite customers when tagged](./auto-invite-customers-when-tagged)
@@ -1159,6 +1162,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Accept a maximum number of orders per day](./accept-a-maximum-number-of-orders-per-day)
 * [Accept a maximum number of orders per hour](./accept-a-maximum-number-of-orders-per-hour)
 * [Add note to new orders with their fulfillment locations](./note-new-orders-with-their-fulfillment-locations)
+* [Alert when daily order limit is reached](./alert-when-daily-order-limit-is-reached)
 * [Archive free orders on fulfillment](./archive-free-orders-on-fulfillment)
 * [Archive orders on delivery](./archive-orders-on-delivery)
 * [Archive orders when tagged](./archive-orders-when-tagged)
