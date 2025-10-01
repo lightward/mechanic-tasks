@@ -43,19 +43,25 @@
     {% assign result = result_json | parse_json %}
   {% endif %}
 
-  {% assign draft_order = result.data.draftOrder %}
-  {% assign draft_order_tags_lowercase = draft_order.tags | json | downcase | parse_json %}
+  {% assign draft_order_data = result.data.draftOrder %}
 
-  {% log draft_order: draft_order %}
+  {% unless draft_order_data %}
+    {% log "Failed to fetch draft order data; skipping." %}
+    {% break %}
+  {% endunless %}
 
-  {% if draft_order.status == "COMPLETED" %}
+  {% assign draft_order_tags_lowercase = draft_order_data.tags | json | downcase | parse_json %}
+
+  {% log draft_order: draft_order_data %}
+
+  {% if draft_order_data.status == "COMPLETED" %}
     {% log "This draft order has already been completed; skipping." %}
     {% break %}
   {% endif %}
 
-  {% if draft_order.reserveInventoryUntil != blank %}
+  {% if draft_order_data.reserveInventoryUntil != blank %}
     {% log %}
-      "Draft order already has a reservation date set ({{ draft_order.reserveInventoryUntil | date: "%FT%T" }}); skipping."
+      "Draft order already has a reservation date set ({{ draft_order_data.reserveInventoryUntil | date: "%FT%T" }}); skipping."
     {% endlog %}
     {% break %}
   {% endif %}
@@ -119,10 +125,11 @@
     -- update the draft order with the reserve date
   {% endcomment %}
 
-  {% action "shopify" %}
+  {% unless draft_order_data == nil or draft_order_data.id == nil %}
+    {% action "shopify" %}
     mutation {
       draftOrderUpdate(
-        id: {{ draft_order.id | json }}
+        id: {{ draft_order_data.id | json }}
         input: {
           reserveInventoryUntil: {{ reserve_date | json }}
         }
@@ -137,5 +144,6 @@
         }
       }
     }
-  {% endaction %}
+    {% endaction %}
+  {% endunless %}
 {% endif %}
