@@ -1,44 +1,74 @@
 {% assign customer_id = options.customer_id__number_required %}
-{% assign metafield_namespace = options.metafield_namespace__required %}
-{% assign metafield_key = options.metafield_key__required %}
+{% assign customer_metafield = options.customer_metafield__required %}
 {% assign metafield_value = options.metafield_value__required %}
+{% assign mutation_choice = options.mutation_choice__choice_o1_customer_update_o2_metafields_set_required %}
 
-{% assign customer = shop.customers[customer_id] %}
-{% assign existing_metafield = customer.metafields | where: "namespace", metafield_namespace | where: "key", metafield_key | first %}
+{% comment %}
+  -- get customer metafield data
+{% endcomment %}
 
-{% if options.use_rest_api__boolean %}
-  {% action "shopify" %}
-    [
-      "update",
-      [
-        "customer",
-        {{ customer_id | json }}
-      ],
-      {
-        "metafields": [
-          {
-            "id": {{ existing_metafield.id | json }},
-            "namespace": {{ metafield_namespace | json }},
-            "key": {{ metafield_key | json }},
-            "value": {{ metafield_value | json }},
-            "type": "single_line_text_field"
-          }
-        ]
+{% capture query %}
+  query {
+    customer(id: {{ customer_id | prepend: "gid://shopify/Customer/" | json }}) {
+      id
+      metafield(key: {{ customer_metafield | json }}) {
+        id
+        value
       }
-    ]
-  {% endaction %}
+    }
+  }
+{% endcapture %}
 
-{% elsif options.use_graphql_api__boolean %}
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "customer": {
+          "id": "gid://shopify/Customer/1234567890",
+          "metafield": {
+            "id": "gid://shopify/Metafield/1234567890",
+            "value": "lorem"
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% assign customer = result.data.customer %}
+{% assign existing_metafield = customer.metafield.value %}
+
+{% if customer == blank %}
+  {% error %}
+    "Customer not found with customer ID ({{ customer_id }})."
+  {% enderror %}
+
+  {% break %}
+{% endif %}
+
+{% unless event.preview %}
+  {% log customer: customer %}
+{% endunless %}
+
+{% comment %}
+  -- update customer metafield using configured mutation choice
+{% endcomment %}
+
+{% if mutation_choice == "customer_update" %}
   {% action "shopify" %}
     mutation {
       customerUpdate(
         input: {
-          id: {{ customer.admin_graphql_api_id | json }}
+          id: {{ customer.id | json }}
           metafields: [
             {
-              id: {{ existing_metafield.admin_graphql_api_id | json }}
-              namespace: {{ metafield_namespace | json }}
-              key: {{ metafield_key | json }}
+              id: {{ existing_metafield.id | json }}
+              namespace: {{ customer_metafield | split: "." | first | json }}
+              key: {{ customer_metafield | split: "." | last | json }}
               value: {{ metafield_value | json }}
               type: "single_line_text_field"
             }
@@ -53,15 +83,15 @@
     }
   {% endaction %}
 
-{% elsif options.use_metafields_set_mutation__boolean %}
+{% elsif mutation_choice == "metafields_set" %}
   {% action "shopify" %}
     mutation {
       metafieldsSet(
         metafields: [
           {
-            ownerId: {{ customer.admin_graphql_api_id | json }}
-            namespace: {{ metafield_namespace | json }}
-            key: {{ metafield_key | json }}
+            ownerId: {{ customer.id | json }}
+            namespace: {{ customer_metafield | split: "." | first | json }}
+            key: {{ customer_metafield | split: "." | last | json }}
             value: {{ metafield_value | json }}
             type: "single_line_text_field"
           }
@@ -87,7 +117,10 @@
       }
     }
   {% endaction %}
-
-{% else %}
-  {% error "Choose at least one API option to continue. :)" %}
 {% endif %}
+
+{%- capture log_message -%}
+  Assuming a metafield definition has not been previously created for the metafield configured in this task, then you can find the 'unstructured' metafield using the following url: {{ shop.admin_url }}customers/{{ customer_id }}/metafields/unstructured
+{%- endcapture -%}
+
+{% log log_message %}
