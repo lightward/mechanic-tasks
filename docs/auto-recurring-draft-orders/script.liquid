@@ -28,75 +28,22 @@
 
 {% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
   {% assign run_qualifies = false %}
+  {% assign cycle_start_date = cycle_start_date %}
+  {% assign cycle_start_d    = cycle_start_date | date: "%s" | times: 1 | divided_by: 60 | divided_by: 60 | divided_by: 24 %}
+  {% assign now_d            = "now"            | date: "%s" | times: 1 | divided_by: 60 | divided_by: 60 | divided_by: 24 %}
+  {% assign day_gap          = now_d | minus: cycle_start_d | modulo: number_of_days_in_cycle %}
 
-  {% if event.preview %}
-    {% action "shopify" %}
-      mutation {
-        draftOrderCreate(
-          input: {
-            billingAddress: {
-              address1: "123 State St"
-              city: "Everyville"
-              company: "Widgets Inc"
-              countryCode: EE
-              firstName: "Victor"
-              lastName: "Juarez"
-              provinceCode: "PK"
-              zip: "54321"
-            }
-            purchasingEntity: {
-              customerId: "gid://shopify/Customer/1234567890"
-            }
-            email: "customer@example.com"
-            lineItems: [
-              {
-                weight: {
-                  unit: GRAMS
-                  value: 5
-                }
-                originalUnitPriceWithCurrency: {
-                  amount: "5.0"
-                  currencyCode: USD
-                }
-                quantity: 2
-                requiresShipping: false
-                sku: "123ABC"
-                taxable: true
-                title: "Widget, Our Best"
-              }
-            ]
-            tags: []
-            taxExempt: false
-            useCustomerDefaultAddress: false
-          }
-        ) {
-          draftOrder {
-            id
-          }
-          userErrors {
-            field
-            message
-          }
-        }
-      }
-    {% endaction %}
-
+  {% if day_gap == 0 or event.preview %}
+    {% assign run_qualifies = true %}
   {% else %}
-    {% assign cycle_start_date = cycle_start_date %}
-    {% assign cycle_start_d    = cycle_start_date | date: "%s" | times: 1 | divided_by: 60 | divided_by: 60 | divided_by: 24 %}
-    {% assign now_d            = "now"            | date: "%s" | times: 1 | divided_by: 60 | divided_by: 60 | divided_by: 24 %}
-    {% assign day_gap          = now_d | minus: cycle_start_d | modulo: number_of_days_in_cycle %}
-
-    {% if day_gap == 0 %}
-      {% assign run_qualifies = true %}
-    {% else %}
-      {% log %}
-        {{ number_of_days_in_cycle | minus: day_gap | prepend: "Waiting another " | append: " day(s) for cycle to complete" | json }}
-      {% endlog %}
-    {% endif %}
+    {% log %}
+      {{ number_of_days_in_cycle | minus: day_gap | prepend: "Waiting another " | append: " day(s) for cycle to complete" | json }}
+    {% endlog %}
   {% endif %}
 
   {% if run_qualifies %}
+    {% assign cursor = nil %}
+
     {% for n in (0..10) %}
       {% capture query %}
         query {
@@ -112,6 +59,10 @@
             }
             nodes {
               id
+              name
+              createdAt
+              acceptAutomaticDiscounts
+              allowDiscountCodesInCheckout
               appliedDiscount {
                 amountSet {
                   shopMoney {
@@ -143,6 +94,7 @@
                 key
                 value
               }
+              discountCodes
               email
               lineItems(first: 150) {
                 nodes {
@@ -211,17 +163,74 @@
 
       {% assign result = query | shopify %}
 
+      {% if event.preview %}
+        {% capture result_json %}
+          {
+            "data": {
+              "draftOrders": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/DraftOrder/1234567890",
+                    "billingAddress": {
+                      "address1": "123 Main Street",
+                      "address2": "",
+                      "city": "Springfield",
+                      "company": "Widgets Inc",
+                      "countryCodeV2": "US",
+                      "firstName": "Marge",
+                      "lastName": "Simpson",
+                      "phone": null,
+                      "provinceCode": "IL",
+                      "zip": "62701"
+                    },
+                    "customer": {
+                      "id": "gid://shopify/Customer/1234567890"
+                    },
+                    "email": "customer@example.com",
+                    "lineItems": {
+                      "nodes": [
+                        {
+                          "originalUnitPriceWithCurrency": {
+                            "amount": "5.0",
+                            "currencyCode": "USD"
+                          },
+                          "quantity": 2,
+                          "requiresShipping": false,
+                          "sku": "WIDGET-BEST",
+                          "taxable": true,
+                          "title": "Widget, Our Best",
+                          "weight": {
+                            "unit": "Grams",
+                            "value": 5
+                          }
+                        }
+                      ]
+                    },
+                    "tags": {{ array | push: draft_order_tag, "preview-tag" | json }}
+                  }
+                ]
+              }
+            }
+          }
+        {% endcapture %}
+
+        {% assign result = result_json | parse_json %}
+      {% endif %}
+
       {% for draft_order in result.data.draftOrders.nodes %}
+        {% log
+          message: "Draft order qualifies to be duplicated",
+          original_draft_order_data: draft_order
+        %}
+
         {% action "shopify" %}
           mutation {
             draftOrderCreate(
               input: {
+                acceptAutomaticDiscounts: {{ draft_order.acceptAutomaticDiscounts | json }}
+                allowDiscountCodesInCheckout: {{ draft_order.allowDiscountCodesInCheckout | json }}
                 {% if draft_order.appliedDiscount %}
                   appliedDiscount: {
-                    amountWithCurrency: {
-                      amount: {{ draft_order.appliedDiscount.amountSet.shopMoney.amount | json }}
-                      currencyCode: {{ draft_order.appliedDiscount.amountSet.shopMoney.currencyCode }}
-                    }
                     description: {{ draft_order.appliedDiscount.description | json }}
                     title: {{ draft_order.appliedDiscount.title | json }}
                     value: {{ draft_order.appliedDiscount.value }}
@@ -257,6 +266,9 @@
                     {% endfor %}
                   ]
                 {% endif %}
+                {% if draft_order.discountCodes != blank %}
+                  discountCodes: {{ draft_order.discountCodes | json }}
+                {% endif %}
                 {% if draft_order.email %}
                   email: {{ draft_order.email | json }}
                 {% endif %}
@@ -265,10 +277,6 @@
                     {
                       {% if line_item.appliedDiscount %}
                         appliedDiscount: {
-                          amountWithCurrency: {
-                            amount: {{ line_item.appliedDiscount.amountSet.shopMoney.amount | json }}
-                            currencyCode: {{ line_item.appliedDiscount.amountSet.shopMoney.currencyCode }}
-                          }
                           description: {{ line_item.appliedDiscount.description | json }}
                           title: {{ line_item.appliedDiscount.title | json }}
                           value: {{ line_item.appliedDiscount.value | json }}
@@ -392,27 +400,32 @@
 
   {% assign result = query | shopify %}
 
-  {% if event.preview or result.data.draftOrder.metafield %}
-    {% action "shopify" %}
-      mutation {
-        draftOrderInvoiceSend(
-          id: {{ draft_order.admin_graphql_api_id | json }}
-          email: {
-            {% if email_invoice_subject != blank %}
-              subject: {{ email_invoice_subject | json }}
-            {% endif %}
-            bcc: {{ email_invoice_bcc | json }}
-            customMessage: {{ email_invoice_custom_message | json }}
-          }
-        ) {
-          userErrors {
-            field
-            message
-          }
+  {% if draft_order.email == blank or result.data.draftOrder.metafield == blank %}
+    {% unless event.preview %}
+      {% log "Draft order does not contain the Mechanic autoinvoice metafield or the draft order does not have an email; no invoice will be sent." %}
+      {% break %}
+    {% endunless %}
+  {% endif %}
+
+  {% action "shopify" %}
+    mutation {
+      draftOrderInvoiceSend(
+        id: {{ draft_order.admin_graphql_api_id | json }}
+        email: {
+          {% if email_invoice_subject != blank %}
+            subject: {{ email_invoice_subject | json }}
+          {% endif %}
+          bcc: {{ email_invoice_bcc | json }}
+          customMessage: {{ email_invoice_custom_message | json }}
+        }
+      ) {
+        userErrors {
+          field
+          message
         }
       }
-    {% endaction %}
-  {% endif %}
+    }
+  {% endaction %}
 
 {% elsif event.topic == "shopify/draft_orders/create" and autocomplete %}
   {% capture query %}
