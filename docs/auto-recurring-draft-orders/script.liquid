@@ -1,8 +1,7 @@
 {% assign draft_order_tag = options.draft_order_tag__required %}
-{% assign cycle_start_date = options.cycle_start_date__required %}
+{% assign cycle_start_date = options.cycle_start_date__date_required %}
 {% assign number_of_days_in_cycle = options.number_of_days_in_cycle__number_required %}
 {% assign complete_the_order_after_creating = options.complete_the_order_after_creating__boolean %}
-{% assign complete_the_order_and_mark_as_paid_after_creating = options.complete_the_order_and_mark_as_paid_after_creating__boolean %}
 {% assign send_email_invoice_after_creating = options.send_email_invoice_after_creating__boolean %}
 {% assign email_invoice_subject = options.email_invoice_subject %}
 {% assign email_invoice_bcc = options.email_invoice_bcc__email_array %}
@@ -10,23 +9,13 @@
 
 {% if send_email_invoice_after_creating and complete_the_order_after_creating %}
   {% error "Choose either an email invoice or completing the order - not both. :)" %}
-{% elsif send_email_invoice_after_creating and complete_the_order_and_mark_as_paid_after_creating %}
-  {% error "Choose either an email invoice or completing the order - not both. :)" %}
-{% endif %}
-
-{% if complete_the_order_after_creating or complete_the_order_and_mark_as_paid_after_creating %}
-  {% assign autocomplete = true %}
-{% endif %}
-
-{% assign cycle_start = cycle_start_date | date: "%s" %}
-
-{% if cycle_start == blank or cycle_start == cycle_start_date %}
-  {% error %}
-    {{ cycle_start_date | json | prepend: "Mechanic wasn't able to parse " | append: " - try another value." | json }}
-  {% enderror %}
 {% endif %}
 
 {% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% comment %}
+    -- see if today is valid run day based on the task cycle configuration
+  {% endcomment %}
+
   {% assign run_qualifies = false %}
   {% assign cycle_start_date = cycle_start_date %}
   {% assign cycle_start_d    = cycle_start_date | date: "%s" | times: 1 | divided_by: 60 | divided_by: 60 | divided_by: 24 %}
@@ -42,6 +31,50 @@
   {% endif %}
 
   {% if run_qualifies %}
+    {% comment %}
+      -- get all payment terms templates available in shop, to support duplicating draft orders with payment terms
+    {% endcomment %}
+
+    {% capture query %}
+      query {
+        paymentTermsTemplates {
+          id
+          name
+          description
+          paymentTermsType
+          dueInDays
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "paymentTermsTemplates": [
+              {
+                "id": "gid://shopify/PaymentTermsTemplate/4",
+                "name": "Net 30",
+                "description": "Within 30 days",
+                "paymentTermsType": "NET",
+                "dueInDays": 30
+              }
+            ]
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign payment_terms_templates = result.data.paymentTermsTemplates %}
+
+    {% comment %}
+      -- get all draft orders with the configured tag
+    {% endcomment %}
+
     {% assign cursor = nil %}
 
     {% for n in (0..10) %}
@@ -132,6 +165,16 @@
                 }
               }
               note2
+              paymentTerms {
+                id
+                paymentTermsName
+                paymentTermsType
+                paymentSchedules(first: 1) {
+                  nodes {
+                    id
+                  }
+                }
+              }
               shippingAddress {
                 address1
                 address2
@@ -206,6 +249,10 @@
                         }
                       ]
                     },
+                    "paymentTerms": {
+                      "paymentTermsName": "Net 30",
+                      "paymentTermsType": "NET"
+                    },
                     "tags": {{ array | push: draft_order_tag, "preview-tag" | json }}
                   }
                 ]
@@ -220,8 +267,53 @@
       {% for draft_order in result.data.draftOrders.nodes %}
         {% log
           message: "Draft order qualifies to be duplicated",
-          original_draft_order_data: draft_order
+          original_draft_order: draft_order
         %}
+
+        {% comment %}
+          -- marking draft orders as pending upon completion has been deprecated; added support for NET and EVENT payment terms
+        {% endcomment %}
+
+        {% assign payment_terms_input = nil %}
+
+        {% if draft_order.paymentTerms != blank %}
+          {% assign payment_terms_template_id
+            = payment_terms_templates
+            | where: "name", draft_order.paymentTerms.paymentTermsName
+            | map: "id"
+            | first
+          %}
+
+          {% if draft_order.paymentTerms.paymentTermsType == "FIXED" %}
+            {% log
+              message: "FIXED payment terms are not supported by this task because arbitrary due dates cannot be calculated. The new draft order will not be created with any payment terms.",
+              original_draft_order_name: draft_order.name
+            %}
+
+          {% elsif payment_terms_template_id == blank %}
+            {% log
+              message: "Payment terms on original draft order could not be matched to available payment terms in shop.",
+              payment_terms_templates: payment_terms_templates,
+              original_draft_order: draft_order
+            %}
+
+          {% else %}
+            {% capture payment_terms_input %}
+              paymentTerms: {
+                paymentTermsTemplateId: {{ payment_terms_template_id | json }}
+                {% if draft_order.paymentTerms.paymentTermsType == "NET" %}
+                  paymentSchedules: {
+                    issuedAt: {{ "now" | date: "%Y-%m-%dT%H:%M:%SZ", tz: "UTC" | json }}
+                  }
+                {% endif %}
+              }
+            {% endcapture %}
+          {% endif %}
+        {% endif %}
+
+        {% comment %}
+          -- create new recurring draft order with as much of the original draft order parameters as possible
+        {% endcomment %}
 
         {% action "shopify" %}
           mutation {
@@ -320,7 +412,7 @@
                     }
                   {% endfor %}
                 ]
-                {% if send_email_invoice_after_creating or autocomplete %}
+                {% if send_email_invoice_after_creating or complete_the_order_after_creating %}
                   metafields: [
                     {
                       namespace: "mechanic"
@@ -329,6 +421,9 @@
                       type: "boolean"
                     }
                   ]
+                {% endif %}
+                {% if payment_terms_input != blank %}
+                  {{ payment_terms_input }}
                 {% endif %}
                 {% if draft_order.note2 != blank %}
                   note: {{ draft_order.note2 | json }}
@@ -364,6 +459,7 @@
             ) {
               draftOrder {
                 id
+                name
               }
               userErrors {
                 field
@@ -383,6 +479,10 @@
   {% endif %}
 
 {% elsif event.topic == "shopify/draft_orders/create" and send_email_invoice_after_creating %}
+  {% comment %}
+    -- check to see if this newly created draft order has the Mechanic autoinvoice metafield
+  {% endcomment %}
+
   {% capture query %}
     query {
       draftOrder(
@@ -427,7 +527,11 @@
     }
   {% endaction %}
 
-{% elsif event.topic == "shopify/draft_orders/create" and autocomplete %}
+{% elsif event.topic == "shopify/draft_orders/create" and complete_the_order_after_creating %}
+  {% comment %}
+    -- check to see if this newly created draft order has the Mechanic autocomplete metafield
+  {% endcomment %}
+
   {% capture query %}
     query {
       draftOrder(
@@ -445,24 +549,28 @@
 
   {% assign result = query | shopify %}
 
-  {% if event.preview or result.data.draftOrder.metafield %}
-    {% action "shopify" %}
-      mutation {
-        draftOrderComplete(
-          id: {{ draft_order.admin_graphql_api_id | json }}
-          paymentPending: {% if complete_the_order_and_mark_as_paid_after_creating %}false{% else %}true{% endif %}
-        ) {
-          draftOrder {
-            order {
-              id
-            }
-          }
-          userErrors {
-            field
-            message
+  {% if result.data.draftOrder.metafield == blank %}
+    {% unless event.preview %}
+      {% log "Draft order does not contain the Mechanic autocomplete metafield." %}
+      {% break %}
+    {% endunless %}
+  {% endif %}
+
+  {% action "shopify" %}
+    mutation {
+      draftOrderComplete(
+        id: {{ draft_order.admin_graphql_api_id | json }}
+      ) {
+        draftOrder {
+          order {
+            id
           }
         }
+        userErrors {
+          field
+          message
+        }
       }
-    {% endaction %}
-  {% endif %}
+    }
+  {% endaction %}
 {% endif %}
