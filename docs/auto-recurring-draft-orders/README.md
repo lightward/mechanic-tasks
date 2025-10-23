@@ -2,7 +2,7 @@
 
 Tags: Draft Orders, Recurring
 
-This task searches for draft orders having the configured tag, and duplicates each one (minus the tag used for searching). Optionally, this task can automatically send an invoice to the customer on file, after the new draft order is created. Or, this task can auto-complete the order, marking the order as paid if you so chose. (Auto-completed orders will result in an email receipt being sent to the customer on file for the original draft order.)
+This task searches for draft orders having the configured tag, and duplicates each one (minus the tag used for searching). Optionally, this task can automatically send an invoice to the customer on file, after the new draft order is created. Or, this task can auto-complete the order, marking the order as paid if you so chose. (Auto-completed orders will result in a email receipt being sent to the customer on file for the original draft order.)
 
 * View in the task library: [tasks.mechanic.dev/auto-recurring-draft-orders](https://tasks.mechanic.dev/auto-recurring-draft-orders)
 * Task JSON, for direct import: [task.json](../../tasks/auto-recurring-draft-orders.json)
@@ -31,16 +31,20 @@ This task searches for draft orders having the configured tag, and duplicates ea
 ```liquid
 mechanic/user/trigger
 mechanic/scheduler/daily
-{% if options.send_email_invoice_after_creating__boolean or options.complete_the_order_after_creating__boolean or options.complete_the_order_and_mark_as_paid_after_creating__boolean %}shopify/draft_orders/create{% endif %}
+{% if options.send_email_invoice_after_creating__boolean or options.complete_the_order_after_creating__boolean or options.complete_the_order_and_mark_as_paid_after_creating__boolean %}
+  shopify/draft_orders/create
+{% endif %}
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
-This task searches for draft orders having the configured tag, and duplicates each one (minus the tag used for searching). Optionally, this task can automatically send an invoice to the customer on file, after the new draft order is created. Or, this task can auto-complete the order, marking the order as paid if you so chose. (Auto-completed orders will result in an email receipt being sent to the customer on file for the original draft order.)
+This task searches for draft orders having the configured tag, and duplicates each one (minus the tag used for searching). Optionally, this task can automatically send an invoice to the customer on file, after the new draft order is created. Or, this task can auto-complete the order, marking the order as paid if you so chose. (Auto-completed orders will result in a email receipt being sent to the customer on file for the original draft order.)
 
-Run this task manually to scan and duplicate matching draft orders. Use the "run" task options to control automatic running of this task.
+Use the "Cycle start date" and "Number of days in cycle" options to control the frequency of the recurring invoices. The task may also be run manually, but the cycle will still be checked to make sure the current day is valid for the cycle.
+
+**Note**: When duplicating invoices, this task will include most discount applications from the original draft order, including custom order and line item discounts, discount codes, and whether or not automatic discounts can be applied.
 
 ## Installing this task
 
