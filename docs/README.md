@@ -189,12 +189,15 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Demonstration, Tutorial: Fetch data from a shared Google sheet](./demonstration-fetch-data-from-a-shared-google-sheet)
 * [Demonstration: Add new orders to a Google Sheet](./demonstration-add-new-orders-to-google-sheet)
 * [Demonstration: Auto-tag new orders, with scheduled reconciliation](./demonstration-auto-tag-new-orders-with-reconciliation)
+* [Demonstration: Create and update a table in Airtable](./demonstration-create-and-update-a-table-in-airtable)
+* [Demonstration: Create sheets and list and create files in Google Drive](./demonstration-create-sheets-and-list-and-create-files-in-google-drive)
 * [Demonstration: Fetch an external configuration file](./demonstration-fetch-an-external-configuration-file)
 * [Demonstration: Fulfillment order move](./demonstration-fulfillment-order-move)
 * [Demonstration: Generate product sales report PDF with pie chart](./demonstration-generate-product-sales-report-pdf-with-pie-chart)
 * [Demonstration: Generating a file and uploading it to Shopify](./demonstration-generate-a-file-and-upload-to-shopify)
 * [Demonstration: Order editing](./demonstration-order-editing)
 * [Demonstration: Performing action runs in sequence](./demonstration-performing-action-runs-in-sequence)
+* [Demonstration: Post to a Slack channel](./demonstration-post-to-a-slack-channel)
 * [Demonstration: Query external paginated API](./demonstration-query-external-paginated-api)
 * [Demonstration: Shopify Flow integration](./demonstration-shopify-flow-integration)
 * [Demonstration: Trigger a custom event for specific product or variant changes](./demonstration-trigger-a-custom-event-for-specific-product-or-variant-changes)
@@ -393,6 +396,10 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Age
 
 * [Auto-tag products by age](./auto-tag-new-products-by-age)
+
+### Airtable
+
+* [Demonstration: Create and update a table in Airtable](./demonstration-create-and-update-a-table-in-airtable)
 
 ### Alert
 
@@ -765,12 +772,15 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Demonstration, Tutorial: Fetch data from a shared Google sheet](./demonstration-fetch-data-from-a-shared-google-sheet)
 * [Demonstration: Add new orders to a Google Sheet](./demonstration-add-new-orders-to-google-sheet)
 * [Demonstration: Auto-tag new orders, with scheduled reconciliation](./demonstration-auto-tag-new-orders-with-reconciliation)
+* [Demonstration: Create and update a table in Airtable](./demonstration-create-and-update-a-table-in-airtable)
+* [Demonstration: Create sheets and list and create files in Google Drive](./demonstration-create-sheets-and-list-and-create-files-in-google-drive)
 * [Demonstration: Fetch an external configuration file](./demonstration-fetch-an-external-configuration-file)
 * [Demonstration: Fulfillment order move](./demonstration-fulfillment-order-move)
 * [Demonstration: Generate product sales report PDF with pie chart](./demonstration-generate-product-sales-report-pdf-with-pie-chart)
 * [Demonstration: Generating a file and uploading it to Shopify](./demonstration-generate-a-file-and-upload-to-shopify)
 * [Demonstration: Order editing](./demonstration-order-editing)
 * [Demonstration: Performing action runs in sequence](./demonstration-performing-action-runs-in-sequence)
+* [Demonstration: Post to a Slack channel](./demonstration-post-to-a-slack-channel)
 * [Demonstration: Query external paginated API](./demonstration-query-external-paginated-api)
 * [Demonstration: Shopify Flow integration](./demonstration-shopify-flow-integration)
 * [Demonstration: Trigger a custom event for specific product or variant changes](./demonstration-trigger-a-custom-event-for-specific-product-or-variant-changes)
@@ -950,12 +960,14 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Google Drive
 
+* [Demonstration: Create sheets and list and create files in Google Drive](./demonstration-create-sheets-and-list-and-create-files-in-google-drive)
 * [Demonstration: Upload files to Google Drive](./demonstration-upload-files-to-google-drive)
 
 ### Google Sheets
 
 * [Add new Shopify Forms submissions to a Google Sheet](./add-new-shopify-forms-submissions-to-a-google-sheet)
 * [Demonstration: Add new orders to a Google Sheet](./demonstration-add-new-orders-to-google-sheet)
+* [Demonstration: Create sheets and list and create files in Google Drive](./demonstration-create-sheets-and-list-and-create-files-in-google-drive)
 
 ### HTTP
 
@@ -981,6 +993,9 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Integration
 
 * [Bulk trigger Shopify Flow with historical data](./bulk-trigger-shopify-flow-with-historical-data)
+* [Demonstration: Create and update a table in Airtable](./demonstration-create-and-update-a-table-in-airtable)
+* [Demonstration: Create sheets and list and create files in Google Drive](./demonstration-create-sheets-and-list-and-create-files-in-google-drive)
+* [Demonstration: Post to a Slack channel](./demonstration-post-to-a-slack-channel)
 * [Demonstration: Shopify Flow integration](./demonstration-shopify-flow-integration)
 * [Report Toaster: Pirate Ship Integration](./report-toaster-pirateship-integration)
 * [Report Toaster: ShipStation Integration](./report-toaster-shipstation-integration)
@@ -1623,6 +1638,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Slack
 
+* [Demonstration: Post to a Slack channel](./demonstration-post-to-a-slack-channel)
 * [Report Toaster: Deliver report PDF via email or Slack](./report-toaster-deliver-report-pdf-via-email-or-slack)
 * [Send a message to Slack](./send-a-message-to-slack)
 

@@ -1,0 +1,62 @@
+{
+  "docs": "# Demonstration: Create and update a table in Airtable\n\nThis task creates a new table in the Airtable base of your choice, and then populates it with demo data. Try it out to learn how the Airtable action works!\n\n## Quick Start\n\n1. Connect your Airtable account (Settings → Authentication → Airtable)\n    - For this demonstration you will need to grant the \"Write Records\" and \"Write Base Schema\n\" scopes. Don't forget to adjust these scopes as you progress beyond this demo task.\n2. Set two task options:\n    - Your Airtable account email\n    - The Airtable base ID you wish to use\n3. Run the task\n\nLook in your Airtable base for the generated table and data.\n\n## Want to Learn More?\n\nThis task demonstrates how to:\n- Create a new table in an Airtable base, with 3 common field types: string, datetime, and checkbox\n- Handle API responses in Mechanic\n- Add data to a table\n\nTake a look at the task code to see exactly how it works, then use these examples in your own tasks.\n\nReview the [Airtable API reference](https://airtable.com/developers/web/api) for information on the many ways their API can be used. Airtable also auto-generates API docs for your base and each table in it, which can be found at `https://airtable.com/{{ airtable_base_id}}/api/docs`. The specific field parameters for each table will be documented there, which is very helpful when developing code for adding/updating records.",
+  "halt_action_run_sequence_on_error": false,
+  "name": "Demonstration: Create and update a table in Airtable",
+  "online_store_javascript": null,
+  "options": {
+    "airtable_account__required": null,
+    "airtable_base_id__required": null
+  },
+  "perform_action_runs_in_sequence": false,
+  "preview_event_definitions": [
+    {
+      "description": "Table created",
+      "event_attributes": {
+        "data": {
+          "options": {
+            "method": "POST",
+            "url_path": "/v0/meta/bases/app1234567AbcdEfg/tables"
+          },
+          "run": {
+            "ok": true,
+            "result": {
+              "body": {
+                "description": "Created by Mechanic demo task",
+                "fields": [
+                  {
+                    "name": "Order Name",
+                    "type": "singleLineText"
+                  },
+                  {
+                    "name": "Order Date",
+                    "type": "dateTime"
+                  },
+                  {
+                    "name": "Shipped",
+                    "type": "checkbox"
+                  }
+                ],
+                "id": "tblAbcdEfg1234567",
+                "name": "Demo Orders 2025-10-24 12:00:00"
+              },
+              "status": 200
+            }
+          },
+          "type": "airtable"
+        },
+        "topic": "mechanic/actions/perform"
+      }
+    }
+  ],
+  "script": "{% assign airtable_account = options.airtable_account__required %}\n{% assign airtable_base_id = options.airtable_base_id__required %}\n\n{% comment %}\n  -- API REFERENCE: https://airtable.com/developers/web/api\n{% endcomment %}\n\n{% if event.topic == \"mechanic/user/trigger\" %}\n  {% comment %}\n    ** Airtable API - Create a new table **\n    -- This action will create a new table in base of the connected Airtable account\n  {% endcomment %}\n\n  {% action \"airtable\" %}\n    {\n      \"account\": {{ airtable_account | json }},\n      \"method\": \"POST\",\n      \"url_path\": \"/v0/meta/bases/{{ airtable_base_id }}/tables\",\n      \"headers\": {\n        \"Content-Type\": \"application/json\"\n      },\n      \"body\": {\n        \"name\": \"Demo Orders {{ \"now\" | date: \"%Y-%m-%d %H:%M:%S\" }}\",\n        \"description\": \"Created by Mechanic demo task\",\n        \"fields\": [\n          {\n            \"name\": \"Order Name\",\n            \"type\": \"singleLineText\"\n          },\n          {\n            \"name\": \"Order Date\",\n            \"type\": \"dateTime\",\n            \"options\": {\n              \"dateFormat\": {\n                \"name\": \"local\"\n              },\n              \"timeFormat\": {\n                \"name\": \"24hour\"\n              },\n              \"timeZone\": {{ shop.iana_timezone | json }}\n            }\n          },\n          {\n            \"name\": \"Shipped\",\n            \"type\": \"checkbox\",\n            \"options\": {\n              \"color\": \"greenBright\",\n              \"icon\": \"check\"\n            }\n          }\n        ]\n      }\n    }\n  {% endaction %}\n\n{% elsif event.topic == \"mechanic/actions/perform\" %}\n  {% comment %}\n    -- NOTE: check the \"Preview events\" tab in the task to see the preview data for each action result\n  {% endcomment %}\n\n  {% unless action.run.ok and action.type == \"airtable\" %}\n    {% break %}\n  {% endunless %}\n\n  {% if action.run.result.status != 200 %}\n    {% unless event.preview %}\n      {%- capture error_message -%}\n        Airtable API call returned an error.\n\n        Error type: {{ action.run.result.body.error.type }}\n        Error message: {{ action.run.result.body.error.message }}\n      {%- endcapture -%}\n\n      {% error error_message %}\n    {% endunless %}\n  {% endif %}\n\n  {% comment %}\n    -- NOTE: Typically if a task performs multiple actions that need further processing, then the actions would pass along \"meta\" information to more easily distinguish between them. This was not done for this demo task to keep the action tags in the more common usage format.\n  {% endcomment %}\n\n  {% if action.options.method == \"POST\" and action.options.url_path contains \"/v0/meta/bases\" %}\n    {% assign airtable_table_id = action.run.result.body.id %}\n\n    {% if airtable_base_id == blank %}\n      {% error \"Airtable API did not return a table ID.\" %}\n    {% endif %}\n\n    {% unless event.preview %}\n      {%- capture log_message -%}\n        Airtable generates an API doc specifically for your base, which can be viewed at this link: https://airtable.com/{{ airtable_base_id }}/api/docs\n      {%- endcapture -%}\n\n      {% log log_message %}\n    {% endunless %}\n\n    {% comment %}\n      ** Airtable API - Add data to newly created table **\n      -- This action will add 2 rows to the newly created table in base of the connected Airtable account\n    {% endcomment %}\n\n    {% action \"airtable\" %}\n      {\n        \"account\": {{ airtable_account | json }},\n        \"method\": \"POST\",\n        \"url_path\": \"/v0/{{ airtable_base_id }}/{{ airtable_table_id }}\",\n        \"headers\": {\n          \"Content-Type\": \"application/json\"\n        },\n        \"body\": {\n          \"records\": [\n            {\n              \"fields\": {\n                \"Order Name\": \"#1234\",\n                \"Order Date\": \"2025-10-01T12:00:00Z\",\n                \"Shipped\": true\n              }\n            },\n            {\n              \"fields\": {\n                \"Order Name\": \"#1357\",\n                \"Order Date\": \"2025-10-05T12:00:00Z\",\n                \"Shipped\": false\n              }\n            }\n          ]\n        }\n      }\n    {% endaction %}\n\n  {% elsif action.options.method == \"POST\" %}\n    {% log records_added_to_table: action.run.result.body.records %}\n  {% endif %}\n{% endif %}\n",
+  "subscriptions": [
+    "mechanic/user/trigger",
+    "mechanic/actions/perform"
+  ],
+  "subscriptions_template": "mechanic/user/trigger\nmechanic/actions/perform",
+  "tags": [
+    "Airtable",
+    "Demonstration",
+    "Integration"
+  ]
+}

@@ -1,0 +1,243 @@
+{% assign google_account = options.google_account__required %}
+{% assign create_google_sheet_demo = options.create_google_sheet_demo__boolean %}
+{% assign list_google_drive_files_demo = options.list_google_drive_files_demo__boolean %}
+{% assign create_google_drive_file_demo = options.create_google_drive_file_demo__boolean %}
+
+{% unless create_google_sheet_demo or list_google_drive_files_demo or create_google_drive_file_demo %}
+  {% error "Choose at least one demo type before running this task" %}
+{% endunless %}
+
+{% if event.topic == "mechanic/user/trigger" %}
+  {% if create_google_sheet_demo %}
+    {% comment %}
+      ** Google Sheets API - Create spreadsheet **
+      -- This action will create a new spreadsheet in the root Drive folder of the connected Google account, with 3 rows of data
+
+      NOTES:
+      -- The data added at sheet creation is fairly basic, see the Google Sheets API reference linked below for more complex data composition
+
+      API REFERENCE: https://developers.google.com/workspace/sheets/api/reference/rest/v4/spreadsheets
+    {% endcomment %}
+
+    {% log message: "Calling Google Sheets API to create a spreadsheet with 3 rows." %}
+
+    {% action "google" %}
+      {
+        "account": {{ google_account | json }},
+        "method": "POST",
+        "url_path": "/sheets/v4/spreadsheets",
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "properties": {
+            "title": "Mechanic Demo Sheet {{ "now" | date: "%Y-%m-%d %H:%M:%S" }}"
+          },
+          "sheets": [
+            {
+              "properties": {
+                "title": "Demo orders"
+              },
+              "data": [
+                {
+                  "rowData": [
+                    {
+                      "values": [
+                        {
+                          "userEnteredValue": {
+                            "stringValue": "Order name"
+                          }
+                        },
+                        {
+                          "userEnteredValue": {
+                            "stringValue": "Date"
+                          }
+                        },
+                        {
+                          "userEnteredValue": {
+                            "stringValue": "Shipped"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "values": [
+                        {
+                          "userEnteredValue": {
+                            "stringValue": "#1234"
+                          }
+                        },
+                        {
+                          "userEnteredValue": {
+                            "stringValue": "2025-10-01T12:00:00Z"
+                          }
+                        },
+                        {
+                          "userEnteredValue": {
+                            "boolValue": true
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "values": [
+                        {
+                          "userEnteredValue": {
+                            "stringValue": "#1357"
+                          }
+                        },
+                        {
+                          "userEnteredValue": {
+                            "stringValue": "2025-10-05T12:00:00Z"
+                          }
+                        },
+                        {
+                          "userEnteredValue": {
+                            "boolValue": false
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    {% endaction %}
+  {% endif %}
+
+  {% if list_google_drive_files_demo %}
+    {% comment %}
+      ** Google Drive API - List files **
+      -- This action will list the first 10 files from the Drive of the connected Google account
+
+      NOTES:
+      -- The listed files must have been created previously by this Mechanic integration
+      -- This action uses a GET request with a body object to pass querystring parameters, which is a different behavior than using a GET in an "http" action
+      -- The "fields" parameter limits the amount of data return to the listed fields
+
+      API REFERENCE: https://developers.google.com/workspace/drive/api/reference/rest/v3
+    {% endcomment %}
+
+    {% log message: "Calling Google Drive API to get a list of files." %}
+
+    {% action "google" %}
+      {
+        "account": {{ google_account | json }},
+        "method": "GET",
+        "url_path": "/drive/v3/files",
+        "headers": {
+          "Accept": "application/json"
+        },
+        "body": {
+          "pageSize": 10,
+          "fields": "files(id,name,mimeType,createdTime)",
+          "trashed": false
+        }
+      }
+    {% endaction %}
+
+    {% comment %}
+      ** Google Drive API - List files with 'Mechanic' in the name **
+      -- This action will list the first 10 files from the Drive of the connected Google account where the name contains 'Mechanic'
+
+      NOTES:
+      -- The listed files must have been created previously by this Mechanic integration
+      -- This action uses a GET request with a body object to pass querystring parameters, which is a different behavior than using a GET in an "http" action
+      -- The "q" parameter is a Google Drive API specific feature for filtering (https://developers.google.com/workspace/drive/api/guides/search-files#examples)
+      -- The "fields" parameter limits the amount of data return to the listed fields
+      -- This action likely will not return any files until one of the create demo actions has been separately run
+
+      API REFERENCE: https://developers.google.com/workspace/drive/api/reference/rest/v3
+    {% endcomment %}
+
+    {% log message: "Calling Google Drive API to get a list of files where the name contains 'Mechanic'." %}
+
+    {% action "google" %}
+      {
+        "account": {{ google_account | json }},
+        "method": "GET",
+        "url_path": "/drive/v3/files",
+        "headers": {
+          "Accept": "application/json"
+        },
+        "body": {
+          "q": "name contains 'Mechanic'",
+          "pageSize": 10,
+          "fields": "files(id,name,mimeType,createdTime)",
+          "trashed": false
+        }
+      }
+    {% endaction %}
+  {% endif %}
+
+  {% if create_google_drive_file_demo %}
+    {% comment %}
+      ** Google Drive API - Create file **
+      -- This action will create a new text file in the root Drive folder of the connected Google account
+
+      NOTES:
+      -- To handle more complex file types, see the Google Files API reference linked below
+
+      API REFERENCE: https://developers.google.com/workspace/drive/api/reference/rest/v3/files
+    {% endcomment %}
+
+    {% log message: "Calling Google Drive API to create a new text file." %}
+
+    {% action "google" %}
+      {
+        "account": {{ google_account | json }},
+        "method": "POST",
+        "url_path": "/upload/drive/v3/files?uploadType=media",
+        "headers": {
+          "Content-Type": "text/plain"
+        },
+        "body": "This is a test file created by Mechanic at {{ "now" | date: "%Y-%m-%d %H:%M:%S" }}"
+      }
+    {% endaction %}
+  {% endif %}
+
+{% elsif event.topic == "mechanic/actions/perform" %}
+  {% if event.preview %}
+    {% capture action_json %}
+      {
+        "type": "google",
+        "run": {
+          "ok": true,
+          "result": {
+            "status": 200
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign action = action_json | parse_json %}
+  {% endif %}
+
+  {% unless action.run.ok and action.type == "google" %}
+    {% break %}
+  {% endunless %}
+
+  {% if action.run.result.status != 200 %}
+    {% unless event.preview %}
+      {% error "Google API call returned a non-200 response. Review the event log to see what information the API response provided." %}
+    {% endunless %}
+  {% endif %}
+
+  {% comment %}
+    -- NOTE: Typically if a task might perform multiple actions that need further processing, then the actions would pass along "meta" information to more easily distinguish between them. This was not done for this demo task to keep the action tags in the more common usage format.
+  {% endcomment %}
+
+  {% if action.options.method == "GET" and action.options.url_path == "/drive/v3/files" %}
+    {% log files_list: action.run.result.body.files %}
+
+  {% elsif action.options.method == "POST" and action.options.url_path == "/upload/drive/v3/files?uploadType=media" %}
+    {% log file_data: action.run.result.body %}
+
+  {% elsif action.options.method == "POST" and action.options.url_path == "/sheets/v4/spreadsheets" %}
+    {% log sheet_data: action.run.result.body %}
+  {% endif %}
+{% endif %}
