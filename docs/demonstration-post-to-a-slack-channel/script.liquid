@@ -1,0 +1,93 @@
+{% assign slack_account = options.slack_account__required %}
+{% assign slack_channel_id = options.slack_channel_id__required %}
+
+{% comment %}
+  IMPORTANT:
+  -- This task requires the Mechanic app for Slack be installed in your Slack instance
+  -- It will create a bot user - Mechanic - which the API actions will be made on behalf of
+  -- This bot can automatically post to any public channels, but it must be added to any private channels you wish to post to
+  -- Most Slack API errors will be surfaced by the integration, since the Slack convention is to return a 200 status even when there are errors
+
+  API REFERENCEs:
+  -- https://docs.slack.dev/reference/methods/chat.postmessage
+  -- https://docs.slack.dev/messaging/
+  -- https://docs.slack.dev/block-kit/
+{% endcomment %}
+
+{% if event.topic == "mechanic/user/trigger" %}
+  {% comment %}
+    ** Slack API - Post a new message **
+    -- This action will create a new message in the configured channel of the connected Slack account
+  {% endcomment %}
+
+  {% action "slack" %}
+    {
+      "account": {{ slack_account | json }},
+      "method": "POST",
+      "url_path": "/chat.postMessage",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "channel": {{ slack_channel_id | json }},
+        "text": "Slack Integration Test",
+        "blocks": [
+          {
+            "type": "header",
+            "text": {
+              "type": "plain_text",
+              "text": "🎉 Your Slack Integration is Working!"
+            }
+          },
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "Great job setting up the Slack integration! Here's what I can do:"
+            }
+          },
+          {
+            "type": "section",
+            "fields": [
+              {
+                "type": "mrkdwn",
+                "text": "*✅ Send Messages*\nSend messages as @mechanic"
+              },
+              {
+                "type": "mrkdwn",
+                "text": "*#️⃣ Post to Public Channels*\nSend messages to public channels the app isn’t a member of"
+              },
+              {
+                "type": "mrkdwn",
+                "text": "*📑 Upload Files*\nUpload, edit, and delete files as @mechanic"
+              },
+              {
+                "type": "mrkdwn",
+                "text": "*👨🏽‍🔧 Customize Messages*\nSend messages with a customized username and avatar"
+              }
+            ]
+          },
+          {
+            "type": "divider"
+          },
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*Shop Details:*\n• Name: {{ shop.name }}\n• Domain: {{ shop.domain }}\n• Email: {{ shop.email }}"
+            },
+            "accessory": {
+              "type": "button",
+              "text": {
+                "type": "plain_text",
+                "text": "Visit Shop"
+              },
+              "url": "https://{{ shop.domain }}",
+              "action_id": "button-action"
+            }
+          }
+        ]
+      }
+    }
+  {% endaction %}
+{% endif %}

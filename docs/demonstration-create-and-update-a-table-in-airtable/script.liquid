@@ -1,0 +1,134 @@
+{% assign airtable_account = options.airtable_account__required %}
+{% assign airtable_base_id = options.airtable_base_id__required %}
+
+{% comment %}
+  -- API REFERENCE: https://airtable.com/developers/web/api
+{% endcomment %}
+
+{% if event.topic == "mechanic/user/trigger" %}
+  {% comment %}
+    ** Airtable API - Create a new table **
+    -- This action will create a new table in base of the connected Airtable account
+  {% endcomment %}
+
+  {% action "airtable" %}
+    {
+      "account": {{ airtable_account | json }},
+      "method": "POST",
+      "url_path": "/v0/meta/bases/{{ airtable_base_id }}/tables",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "name": "Demo Orders {{ "now" | date: "%Y-%m-%d %H:%M:%S" }}",
+        "description": "Created by Mechanic demo task",
+        "fields": [
+          {
+            "name": "Order Name",
+            "type": "singleLineText"
+          },
+          {
+            "name": "Order Date",
+            "type": "dateTime",
+            "options": {
+              "dateFormat": {
+                "name": "local"
+              },
+              "timeFormat": {
+                "name": "24hour"
+              },
+              "timeZone": {{ shop.iana_timezone | json }}
+            }
+          },
+          {
+            "name": "Shipped",
+            "type": "checkbox",
+            "options": {
+              "color": "greenBright",
+              "icon": "check"
+            }
+          }
+        ]
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic == "mechanic/actions/perform" %}
+  {% comment %}
+    -- NOTE: check the "Preview events" tab in the task to see the preview data for each action result
+  {% endcomment %}
+
+  {% unless action.run.ok and action.type == "airtable" %}
+    {% break %}
+  {% endunless %}
+
+  {% if action.run.result.status != 200 %}
+    {% unless event.preview %}
+      {%- capture error_message -%}
+        Airtable API call returned an error.
+
+        Error type: {{ action.run.result.body.error.type }}
+        Error message: {{ action.run.result.body.error.message }}
+      {%- endcapture -%}
+
+      {% error error_message %}
+    {% endunless %}
+  {% endif %}
+
+  {% comment %}
+    -- NOTE: Typically if a task performs multiple actions that need further processing, then the actions would pass along "meta" information to more easily distinguish between them. This was not done for this demo task to keep the action tags in the more common usage format.
+  {% endcomment %}
+
+  {% if action.options.method == "POST" and action.options.url_path contains "/v0/meta/bases" %}
+    {% assign airtable_table_id = action.run.result.body.id %}
+
+    {% if airtable_base_id == blank %}
+      {% error "Airtable API did not return a table ID." %}
+    {% endif %}
+
+    {% unless event.preview %}
+      {%- capture log_message -%}
+        Airtable generates an API doc specifically for your base, which can be viewed at this link: https://airtable.com/{{ airtable_base_id }}/api/docs
+      {%- endcapture -%}
+
+      {% log log_message %}
+    {% endunless %}
+
+    {% comment %}
+      ** Airtable API - Add data to newly created table **
+      -- This action will add 2 rows to the newly created table in base of the connected Airtable account
+    {% endcomment %}
+
+    {% action "airtable" %}
+      {
+        "account": {{ airtable_account | json }},
+        "method": "POST",
+        "url_path": "/v0/{{ airtable_base_id }}/{{ airtable_table_id }}",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "records": [
+            {
+              "fields": {
+                "Order Name": "#1234",
+                "Order Date": "2025-10-01T12:00:00Z",
+                "Shipped": true
+              }
+            },
+            {
+              "fields": {
+                "Order Name": "#1357",
+                "Order Date": "2025-10-05T12:00:00Z",
+                "Shipped": false
+              }
+            }
+          ]
+        }
+      }
+    {% endaction %}
+
+  {% elsif action.options.method == "POST" %}
+    {% log records_added_to_table: action.run.result.body.records %}
+  {% endif %}
+{% endif %}
