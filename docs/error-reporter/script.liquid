@@ -1,5 +1,18 @@
+{% assign notification_methods = options.notification_methods__multiselect_o1_email_o2_slack_required %}
+{% assign email_recipients = options.email_recipients__array %}
+{% assign slack_account = options.slack_account %}
+{% assign slack_channel_id = options.slack_channel_id_ %}
+
+{% if notification_methods contains "email" and email_recipients == blank %}
+  {% error "Configure one or more email recipients when choosing the email notification method" %}
+{% endif %}
+
+{% if notification_methods contains "slack" and slack_account == blank or slack_channel_id == blank %}
+  {% error "Configure a slack account and channel ID when choosing the slack notification method" %}
+{% endif %}
+
 {% comment %}
-  Only send error emails for the same errors at these thresholds.
+  -- define thresholds for repeat error sending
 {% endcomment %}
 
 {% assign error_thresholds = array %}
@@ -10,8 +23,8 @@
 {% assign error_thresholds[4] = 200 %}
 
 {% comment %}
-  Fingerprinting the error, so that we can track if this is something we have received recently.
-  See: https://learn.mechanic.dev/techniques/debouncing-events#fingerprinting
+  -- fingerprint the error, to know if it has been received recently
+  -- See: https://learn.mechanic.dev/techniques/debouncing-events#fingerprinting
 {% endcomment %}
 
 {% assign fingerprint_parts = hash %}
@@ -22,44 +35,68 @@
 {% assign fingerprint = fingerprint_parts | json | sha256 %}
 {% assign error_count_cache_key = "errors/" | append: fingerprint %}
 
-{% comment %} How many times have we seen this error recently? {% endcomment %}
-
-{% assign recent_error_count = cache[error_count_cache_key] | default: 0 %}
-
-{% assign event_url = "https://admin.shopify.com/store/" | append: shop.myshopify_domain | replace: ".myshopify.com", "/apps/mechanic/events/" | append: error.event.id %}
-
-{% capture email_subject -%}
-  {{ event.topic }} on {{ shop.name }}
-{%- endcapture %}
-
-{% capture email_body %}
-<p><b>This is an automated error notification from your Mechanic error reporting task.</b></p>
-
-{% if error_thresholds contains recent_error_count -%}
-  <p><b>Note:</b> There have been more than {{ recent_error_count }} errors of this type in the last 10 minutes.</p>
-{%- endif %}
-
-{% if event.preview %}
-  <p>View error details</p>
-{% else %}
-  <p><a href="{{ event_url }}">View error details</a></p>
-{% endif %}
-
-<p>Error topic: {{ event.topic }}</p>
-
-<p>Error message: <pre>{{ error.message }}</pre></p>
-
-<p>Thanks,<br><br>{{ shop.name }} via Mechanic</p>
-{% endcapture %}
-
 {% comment %}
-  We only send emails on the first error and again on specific thresholds
+  -- send notification if the same error message from same task has not been cached recently or if matches one of the thresholds for reoccurrence
 {% endcomment %}
 
-{% if recent_error_count == 0 or error_thresholds contains recent_error_count %}
+{% assign recent_error_count = cache[error_count_cache_key] | default: 0 | plus: 1 %}
+
+{% comment %}
+  -- increment recent error count for this error
+{% endcomment %}
+
+{% action "cache" %}
+  {
+    "incr": {
+      "key": {{ error_count_cache_key | json }},
+      "ttl": 600
+    }
+  }
+{% endaction %}
+
+{% unless recent_error_count == 1 or error_thresholds contains recent_error_count %}
+  {%- capture log_message -%}
+    There have been {{ recent_error_count }} errors of this type from this task ({{ error.task.name }}) in the last 10 minutes. Waiting until the next threshold before sending another notification.
+  {%- endcapture -%}
+
+  {% log log_message %}
+
+  {% break %}
+{% endunless %}
+
+{%- capture event_url -%}
+  {{ shop.admin_url }}apps/mechanic/events/{{ error.event.id }}
+{%- endcapture -%}
+
+{% if notification_methods contains "email" %}
+  {% capture email_subject -%}
+    Mechanic error on {{ shop.name }}
+  {%- endcapture %}
+
+  {% capture email_body %}
+    <p><small>This is an automated error notification from your Mechanic error reporting task.</small></p>
+    {% if error_thresholds contains recent_error_count %}
+      <p><em>There have been {{ recent_error_count }} errors of this type in the last 10 minutes.</em></p>
+    {% endif %}
+    <p><strong>Error topic:</strong> {{ event.topic }}</p>
+    {% if error.action -%}
+      <p><strong>Action type:</strong> {{ error.action.type }}</p>
+    {% endif %}
+    <p>
+      <strong>Error message:</strong>
+      <pre>{{ error.message }}</pre>
+    </p>
+    {% if event.preview %}
+      <p>View error details</p>
+    {% else %}
+      <p><a href="{{ event_url }}">View error details</a></p>
+    {% endif %}
+    <p>Thanks,<br><br>{{ shop.name }} via Mechanic</p>
+  {% endcapture %}
+
   {% action "email" %}
     {
-      "to": {{ options.email_recipients__email_array_required | json  }},
+      "to": {{ email_recipients | json  }},
       "subject": {{ email_subject | json }},
       "body": {{ email_body | json }},
       "reply_to": {{ shop.customer_email | json }},
@@ -68,15 +105,105 @@
   {% endaction %}
 {% endif %}
 
-{% comment %}
-  Increment recent error count for this error
-{% endcomment %}
+{% if notification_methods contains "slack" %}
+  {% if event.topic == "mechanic/errors/event" %}
+    {% assign message_header = "Error in filter" %}
+  {% else %}
+    {% assign message_header = "Error in task: " | append: error.task.name %}
+  {% endif %}
 
-{% action "cache" %}
-  {
-    "incr": {
-      "key": {{ fingerprint | json }},
-      "ttl": 600
+  {% action "slack" %}
+    {
+      "account": {{ slack_account | json }},
+      "method": "POST",
+      "url_path": "/chat.postMessage",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "channel": {{ slack_channel_id | json }},
+        "text": {{ shop.name | prepend: "Error on " | json }},
+        "blocks": [
+          {
+            "type": "header",
+            "text": {
+              "type": "plain_text",
+              "text": {{ message_header | slice: 0, 150 | json }}
+            }
+          },
+          {
+            "type": "context",
+            "elements": [
+              {
+                "type": "plain_text",
+                "text": "This is an automated error notification from your Mechanic error reporting task."
+              }
+            ]
+          },
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": {{ shop.name | prepend: "*Shop:* " | json }}
+            }
+          },
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": {{ event.topic | prepend: "*Error topic:* " | json }}
+            }
+          },
+          {% if error.action -%}
+            {
+              "type": "section",
+              "text": {
+                "type": "mrkdwn",
+                "text": {{ error.action.type | prepend: "*Action type:* " | json }}
+              }
+            },
+          {% endif %}
+          {% if error_thresholds contains recent_error_count -%}
+            {
+              "type": "context",
+              "elements": [
+                {
+                  "type": "plain_text",
+                  "text": "There have been {{ recent_error_count }} errors of this type from this task in the last 10 minutes."
+                }
+              ]
+            },
+          {%- endif %}
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*Error message:*"
+            }
+          },
+          {
+            "type": "rich_text",
+            "elements": [
+              {
+                "type": "rich_text_preformatted",
+                "elements": [
+                  {
+                    "type": "text",
+                    "text": {{ error.message | json }}
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "<{{ event_url }}|View error details in Mechanic>"
+            }
+          }
+        ]
+      }
     }
-  }
-{% endaction %}
+  {% endaction %}
+{% endif %}
