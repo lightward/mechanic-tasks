@@ -852,6 +852,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Email vendors when an order shipping address changes](./email-vendors-when-an-order-shipping-address-changes)
 * [Email vendors when their products are ordered](./email-vendors-when-their-products-are-ordered)
 * [Email your customers after a quiet period of no orders](./email-your-customers-after-a-quiet-period-of-no-orders)
+* [Error reporter](./error-reporter)
 * [Forward incoming email to another address](./forward-incoming-email-to-another-address)
 * [Get email alerts for out of stock products](./get-email-alerts-for-out-of-stock-products)
 * [Notify a team when a tagged product is ordered](./notify-a-team-when-a-tagged-product-is-ordered)
@@ -1639,6 +1640,7 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Slack
 
 * [Demonstration: Post to a Slack channel](./demonstration-post-to-a-slack-channel)
+* [Error reporter](./error-reporter)
 * [Report Toaster: Deliver report PDF via email or Slack](./report-toaster-deliver-report-pdf-via-email-or-slack)
 * [Send a message to Slack](./send-a-message-to-slack)
 

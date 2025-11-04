@@ -1,8 +1,8 @@
 # Error reporter
 
-Tags: Alert, Error
+Tags: Alert, Email, Error, Slack
 
-Use this task to get email reports when errors occur with events, tasks, and actions in Mechanic. Use this task out of the box, customize it, or borrow logic for your more advanced error reporting tasks.
+Use this task to get email or Slack notifications when errors occur with any events, tasks, and actions in Mechanic. Use this task out of the box, customize it, or borrow logic for your more advanced error reporting tasks.
 
 * View in the task library: [tasks.mechanic.dev/error-reporter](https://tasks.mechanic.dev/error-reporter)
 * Task JSON, for direct import: [task.json](../../tasks/error-reporter.json)
@@ -12,7 +12,10 @@ Use this task to get email reports when errors occur with events, tasks, and act
 
 ```json
 {
-  "email_recipients__email_array_required": null
+  "notification_methods__multiselect_o1_email_o2_slack_required": null,
+  "email_recipients__array": null,
+  "slack_account": null,
+  "slack_channel_id_": null
 }
 ```
 
@@ -30,9 +33,11 @@ mechanic/errors/action
 
 ## Documentation
 
-Use this task to get email reports when errors occur with events, tasks, and actions in Mechanic. Use this task out of the box, customize it, or borrow logic for your more advanced error reporting tasks.
+Use this task to get email or Slack notifications when errors occur with any events, tasks, and actions in Mechanic. Use this task out of the box, customize it, or borrow logic for your more advanced error reporting tasks.
 
 [Read more about error events](https://learn.mechanic.dev/platform/error-handling).
+
+**IMPORTANT**: To use Slack notifications, you must install the Mechanic Slack app in your Slack workspace (Settings → Authentication → Slack) and confiure a Slack account and Slack channel ID in this task. If the configured channel is private, then you will need to add the Mechanic bot to the channel before it can post messages (`/invite @mechanic`).
 
 ## Installing this task
 

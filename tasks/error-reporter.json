@@ -1,10 +1,13 @@
 {
-  "docs": "Use this task to get email reports when errors occur with events, tasks, and actions in Mechanic. Use this task out of the box, customize it, or borrow logic for your more advanced error reporting tasks.\n\n[Read more about error events](https://learn.mechanic.dev/platform/error-handling).",
+  "docs": "Use this task to get email or Slack notifications when errors occur with any events, tasks, and actions in Mechanic. Use this task out of the box, customize it, or borrow logic for your more advanced error reporting tasks.\n\n[Read more about error events](https://learn.mechanic.dev/platform/error-handling).\n\n**IMPORTANT**: To use Slack notifications, you must install the Mechanic Slack app in your Slack workspace (Settings → Authentication → Slack) and confiure a Slack account and Slack channel ID in this task. If the configured channel is private, then you will need to add the Mechanic bot to the channel before it can post messages (`/invite @mechanic`).",
   "halt_action_run_sequence_on_error": false,
   "name": "Error reporter",
   "online_store_javascript": null,
   "options": {
-    "email_recipients__email_array_required": null
+    "notification_methods__multiselect_o1_email_o2_slack_required": null,
+    "email_recipients__array": null,
+    "slack_account": null,
+    "slack_channel_id_": null
   },
   "order_status_javascript": null,
   "perform_action_runs_in_sequence": false,
@@ -12,41 +15,52 @@
     {
       "description": "",
       "event_attributes": {
-        "topic": "mechanic/errors/event",
         "data": {
-          "message": "Something happened!",
           "event": {
-            "id": "8c8d3633-a0fd-4aa1-b724-c7d1f4df8292"
-          }
-        }
+            "id": "ab12cd34-1234-abcd-a1b2-e5f6e7f8e9f0"
+          },
+          "message": "Something happened!"
+        },
+        "topic": "mechanic/errors/event"
       }
     },
     {
       "description": "",
       "event_attributes": {
-        "topic": "mechanic/errors/task",
         "data": {
-          "message": "Something happened!",
           "event": {
-            "id": "8c8d3633-a0fd-4aa1-b724-c7d1f4df8292"
+            "id": "ab12cd34-1234-abcd-a1b2-e5f6e7f8e9f0"
+          },
+          "message": "Something happened!",
+          "task": {
+            "id": "ab12cd34-abcd-1234-a1b2-e5f6e7f8e9f0",
+            "name": "My custom task"
           }
-        }
+        },
+        "topic": "mechanic/errors/task"
       }
     },
     {
       "description": "",
       "event_attributes": {
-        "topic": "mechanic/errors/action",
         "data": {
-          "message": "Something happened!",
+          "action": {
+            "type": "shopify"
+          },
           "event": {
-            "id": "8c8d3633-a0fd-4aa1-b724-c7d1f4df8292"
+            "id": "ab12cd34-1234-abcd-a1b2-e5f6e7f8e9f0"
+          },
+          "message": "Something happened!",
+          "task": {
+            "id": "ab12cd34-abcd-1234-a1b2-e5f6e7f8e9f0",
+            "name": "My custom task"
           }
-        }
+        },
+        "topic": "mechanic/errors/action"
       }
     }
   ],
-  "script": "{% comment %}\n  Only send error emails for the same errors at these thresholds.\n{% endcomment %}\n\n{% assign error_thresholds = array %}\n{% assign error_thresholds[0] = 10 %}\n{% assign error_thresholds[1] = 25 %}\n{% assign error_thresholds[2] = 50 %}\n{% assign error_thresholds[3] = 100 %}\n{% assign error_thresholds[4] = 200 %}\n\n{% comment %}\n  Fingerprinting the error, so that we can track if this is something we have received recently.\n  See: https://learn.mechanic.dev/techniques/debouncing-events#fingerprinting\n{% endcomment %}\n\n{% assign fingerprint_parts = hash %}\n{% assign fingerprint_parts[\"topic\"] = event.topic %}\n{% assign fingerprint_parts[\"message\"] = error.message %}\n{% assign fingerprint_parts[\"task_id\"] = error.task.id %}\n{% assign fingerprint_parts[\"action_type\"] = error.action.type %}\n{% assign fingerprint = fingerprint_parts | json | sha256 %}\n{% assign error_count_cache_key = \"errors/\" | append: fingerprint %}\n\n{% comment %} How many times have we seen this error recently? {% endcomment %}\n\n{% assign recent_error_count = cache[error_count_cache_key] | default: 0 %}\n\n{% assign event_url = \"https://admin.shopify.com/store/\" | append: shop.myshopify_domain | replace: \".myshopify.com\", \"/apps/mechanic/events/\" | append: error.event.id %}\n\n{% capture email_subject -%}\n  {{ event.topic }} on {{ shop.name }}\n{%- endcapture %}\n\n{% capture email_body %}\n<p><b>This is an automated error notification from your Mechanic error reporting task.</b></p>\n\n{% if error_thresholds contains recent_error_count -%}\n  <p><b>Note:</b> There have been more than {{ recent_error_count }} errors of this type in the last 10 minutes.</p>\n{%- endif %}\n\n{% if event.preview %}\n  <p>View error details</p>\n{% else %}\n  <p><a href=\"{{ event_url }}\">View error details</a></p>\n{% endif %}\n\n<p>Error topic: {{ event.topic }}</p>\n\n<p>Error message: <pre>{{ error.message }}</pre></p>\n\n<p>Thanks,<br><br>{{ shop.name }} via Mechanic</p>\n{% endcapture %}\n\n{% comment %}\n  We only send emails on the first error and again on specific thresholds\n{% endcomment %}\n\n{% if recent_error_count == 0 or error_thresholds contains recent_error_count %}\n  {% action \"email\" %}\n    {\n      \"to\": {{ options.email_recipients__email_array_required | json  }},\n      \"subject\": {{ email_subject | json }},\n      \"body\": {{ email_body | json }},\n      \"reply_to\": {{ shop.customer_email | json }},\n      \"from_display_name\": {{ shop.name | json }}\n    }\n  {% endaction %}\n{% endif %}\n\n{% comment %}\n  Increment recent error count for this error\n{% endcomment %}\n\n{% action \"cache\" %}\n  {\n    \"incr\": {\n      \"key\": {{ fingerprint | json }},\n      \"ttl\": 600\n    }\n  }\n{% endaction %}\n",
+  "script": "{% assign notification_methods = options.notification_methods__multiselect_o1_email_o2_slack_required %}\n{% assign email_recipients = options.email_recipients__array %}\n{% assign slack_account = options.slack_account %}\n{% assign slack_channel_id = options.slack_channel_id_ %}\n\n{% if notification_methods contains \"email\" and email_recipients == blank %}\n  {% error \"Configure one or more email recipients when choosing the email notification method\" %}\n{% endif %}\n\n{% if notification_methods contains \"slack\" and slack_account == blank or slack_channel_id == blank %}\n  {% error \"Configure a slack account and channel ID when choosing the slack notification method\" %}\n{% endif %}\n\n{% comment %}\n  -- define thresholds for repeat error sending\n{% endcomment %}\n\n{% assign error_thresholds = array %}\n{% assign error_thresholds[0] = 10 %}\n{% assign error_thresholds[1] = 25 %}\n{% assign error_thresholds[2] = 50 %}\n{% assign error_thresholds[3] = 100 %}\n{% assign error_thresholds[4] = 200 %}\n\n{% comment %}\n  -- fingerprint the error, to know if it has been received recently\n  -- See: https://learn.mechanic.dev/techniques/debouncing-events#fingerprinting\n{% endcomment %}\n\n{% assign fingerprint_parts = hash %}\n{% assign fingerprint_parts[\"topic\"] = event.topic %}\n{% assign fingerprint_parts[\"message\"] = error.message %}\n{% assign fingerprint_parts[\"task_id\"] = error.task.id %}\n{% assign fingerprint_parts[\"action_type\"] = error.action.type %}\n{% assign fingerprint = fingerprint_parts | json | sha256 %}\n{% assign error_count_cache_key = \"errors/\" | append: fingerprint %}\n\n{% comment %}\n  -- send notification if the same error message from same task has not been cached recently or if matches one of the thresholds for reoccurrence\n{% endcomment %}\n\n{% assign recent_error_count = cache[error_count_cache_key] | default: 0 | plus: 1 %}\n\n{% comment %}\n  -- increment recent error count for this error\n{% endcomment %}\n\n{% action \"cache\" %}\n  {\n    \"incr\": {\n      \"key\": {{ error_count_cache_key | json }},\n      \"ttl\": 600\n    }\n  }\n{% endaction %}\n\n{% unless recent_error_count == 1 or error_thresholds contains recent_error_count %}\n  {%- capture log_message -%}\n    There have been {{ recent_error_count }} errors of this type from this task ({{ error.task.name }}) in the last 10 minutes. Waiting until the next threshold before sending another notification.\n  {%- endcapture -%}\n\n  {% log log_message %}\n\n  {% break %}\n{% endunless %}\n\n{%- capture event_url -%}\n  {{ shop.admin_url }}apps/mechanic/events/{{ error.event.id }}\n{%- endcapture -%}\n\n{% if notification_methods contains \"email\" %}\n  {% capture email_subject -%}\n    Mechanic error on {{ shop.name }}\n  {%- endcapture %}\n\n  {% capture email_body %}\n    <p><small>This is an automated error notification from your Mechanic error reporting task.</small></p>\n    {% if error_thresholds contains recent_error_count %}\n      <p><em>There have been {{ recent_error_count }} errors of this type in the last 10 minutes.</em></p>\n    {% endif %}\n    <p><strong>Error topic:</strong> {{ event.topic }}</p>\n    {% if error.action -%}\n      <p><strong>Action type:</strong> {{ error.action.type }}</p>\n    {% endif %}\n    <p>\n      <strong>Error message:</strong>\n      <pre>{{ error.message }}</pre>\n    </p>\n    {% if event.preview %}\n      <p>View error details</p>\n    {% else %}\n      <p><a href=\"{{ event_url }}\">View error details</a></p>\n    {% endif %}\n    <p>Thanks,<br><br>{{ shop.name }} via Mechanic</p>\n  {% endcapture %}\n\n  {% action \"email\" %}\n    {\n      \"to\": {{ email_recipients | json  }},\n      \"subject\": {{ email_subject | json }},\n      \"body\": {{ email_body | json }},\n      \"reply_to\": {{ shop.customer_email | json }},\n      \"from_display_name\": {{ shop.name | json }}\n    }\n  {% endaction %}\n{% endif %}\n\n{% if notification_methods contains \"slack\" %}\n  {% if event.topic == \"mechanic/errors/event\" %}\n    {% assign message_header = \"Error in filter\" %}\n  {% else %}\n    {% assign message_header = \"Error in task: \" | append: error.task.name %}\n  {% endif %}\n\n  {% action \"slack\" %}\n    {\n      \"account\": {{ slack_account | json }},\n      \"method\": \"POST\",\n      \"url_path\": \"/chat.postMessage\",\n      \"headers\": {\n        \"Content-Type\": \"application/json\"\n      },\n      \"body\": {\n        \"channel\": {{ slack_channel_id | json }},\n        \"text\": {{ shop.name | prepend: \"Error on \" | json }},\n        \"blocks\": [\n          {\n            \"type\": \"header\",\n            \"text\": {\n              \"type\": \"plain_text\",\n              \"text\": {{ message_header | slice: 0, 150 | json }}\n            }\n          },\n          {\n            \"type\": \"context\",\n            \"elements\": [\n              {\n                \"type\": \"plain_text\",\n                \"text\": \"This is an automated error notification from your Mechanic error reporting task.\"\n              }\n            ]\n          },\n          {\n            \"type\": \"section\",\n            \"text\": {\n              \"type\": \"mrkdwn\",\n              \"text\": {{ shop.name | prepend: \"*Shop:* \" | json }}\n            }\n          },\n          {\n            \"type\": \"section\",\n            \"text\": {\n              \"type\": \"mrkdwn\",\n              \"text\": {{ event.topic | prepend: \"*Error topic:* \" | json }}\n            }\n          },\n          {% if error.action -%}\n            {\n              \"type\": \"section\",\n              \"text\": {\n                \"type\": \"mrkdwn\",\n                \"text\": {{ error.action.type | prepend: \"*Action type:* \" | json }}\n              }\n            },\n          {% endif %}\n          {% if error_thresholds contains recent_error_count -%}\n            {\n              \"type\": \"context\",\n              \"elements\": [\n                {\n                  \"type\": \"plain_text\",\n                  \"text\": \"There have been {{ recent_error_count }} errors of this type from this task in the last 10 minutes.\"\n                }\n              ]\n            },\n          {%- endif %}\n          {\n            \"type\": \"section\",\n            \"text\": {\n              \"type\": \"mrkdwn\",\n              \"text\": \"*Error message:*\"\n            }\n          },\n          {\n            \"type\": \"rich_text\",\n            \"elements\": [\n              {\n                \"type\": \"rich_text_preformatted\",\n                \"elements\": [\n                  {\n                    \"type\": \"text\",\n                    \"text\": {{ error.message | json }}\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"type\": \"section\",\n            \"text\": {\n              \"type\": \"mrkdwn\",\n              \"text\": \"<{{ event_url }}|View error details in Mechanic>\"\n            }\n          }\n        ]\n      }\n    }\n  {% endaction %}\n{% endif %}\n",
   "subscriptions": [
     "mechanic/errors/event",
     "mechanic/errors/task",
@@ -55,6 +69,8 @@
   "subscriptions_template": "mechanic/errors/event\nmechanic/errors/task\nmechanic/errors/action",
   "tags": [
     "Alert",
-    "Error"
+    "Email",
+    "Error",
+    "Slack"
   ]
 }
