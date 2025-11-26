@@ -155,7 +155,9 @@
               node {
                 ... on Customer {
                   id
-                  email
+                  defaultEmailAddress {
+                    emailAddress
+                  }
                   tags
                   lastOrder {
                     name
@@ -183,7 +185,9 @@
               node {
                 ... on Customer {
                   id
-                  email
+                  defaultEmailAddress {
+                    emailAddress
+                  }
                   tags
                   lastOrder {
                     name
