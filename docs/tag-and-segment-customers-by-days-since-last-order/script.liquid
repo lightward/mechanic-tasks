@@ -151,7 +151,9 @@
             node {
               ... on Customer {
                 id
-                email
+                defaultEmailAddress {
+                  emailAddress
+                }
                 lastOrder {
                   name
                   processedAt
@@ -191,7 +193,9 @@
             node {
               ... on Customer {
                 id
-                email
+                defaultEmailAddress {
+                  emailAddress
+                }
                 lastOrder {
                   name
                   processedAt
