@@ -51,14 +51,27 @@
   {% endaction %}
 
   {% if send_email_notification %}
-    {% if email_recipient == blank %}
-      {% error "Email Notifications are enabled, please add a valid email." %}
-    {% endif %}
-    {% if email_subject == blank %}
-      {% error "Email Notifications are enabled, please add an email subject." %}
-    {% endif %}
-    {% if email_body == blank %}
-      {% error "Email Notifications are enabled, please add an email body." %}
+
+    {% comment %}
+      Show error if emails are enabled and any of the fields are missing
+    {% endcomment %}
+    {% if email_recipient == blank or email_subject == blank or email_body == blank %}
+      {% assign error_message = "Email Notifications are enabled, please add:" %}
+      {% assign error_topics = array %}
+      {% if email_recipient == blank %}
+        {% assign error_topics = error_topics | push: "- a valid email recipient" %}
+      {% endif %}
+      {% if email_subject == blank %}
+        {% assign error_topics = error_topics | push: "- an email subject" %}
+      {% endif %}
+      {% if email_body == blank %}
+        {% assign error_topics = error_topics | push:  "- an email body" %}
+      {% endif %}
+      {% capture error_message %}
+        {{- error_message }}{{ newline }}
+        {{- error_topics | join: newline }}
+      {%- endcapture %}
+      {% error error_message %}
     {% endif %}
 
     {% action "email" %}

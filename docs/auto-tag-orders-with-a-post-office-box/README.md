@@ -13,8 +13,8 @@ This task monitors for newly-created orders, and auto-tags any that have a detec
 ```json
 {
   "tag_to_add__required": "PO-Box",
-  "send_email_notification__boolean": true,
-  "email_recipient__email": "timd.mackey@gmail.com",
+  "send_email_notification__boolean": false,
+  "email_recipient__email": "",
   "email_subject": "P.O. Box Detected - Order {{ order.name }}",
   "email_body__multiline": "Order {{ order.name }} was flagged as having a P.O. Box in the shipping address:\n\nName: {{ order.shipping_address.first_name }} {{ order.shipping_address.last_name }}\nCompany: {{ order.shipping_address.company }}\nPhone: {{ order.shipping_address.phone }}\n\nShipping Address:\n{{ order.shipping_address.address1 }}\n{{ order.shipping_address.address2 }}\n{{ order.shipping_address.city }}, {{ order.shipping_address.province_code }} {{ order.shipping_address.zip }}\n{{ order.shipping_address.country }}\n\n\nThanks,\n{{ shop.name }}"
 }
