@@ -1,0 +1,127 @@
+{% assign order_tag_to_add = options.order_tag_to_add__required %}
+
+{% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {%- capture search_query -%}
+    subject_type:ORDER action:shipping_label_adjustment_charge_created
+  {%- endcapture -%}
+
+  {% if event.topic contains "mechanic/scheduler/" %}
+    {%- capture search_query -%}
+      {{ search_query }} created_at:past_week
+    {%- endcapture -%}
+  {% endif %}
+
+  {% comment %}
+    -- get order timeline events related to shipping
+    -- limit daily runs to a lookback of the past week; manual runs are only restricted by the number of events (25K max for this paginated query)
+  {% endcomment %}
+
+  {% assign cursor = nil %}
+  {% assign events = array %}
+
+  {% for n in (1..100) %}
+    {% capture query %}
+      query {
+        events(
+          first: 250
+          reverse: true
+          sortKey: CREATED_AT
+          after: {{ cursor | json }}
+          query: {{ search_query | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            ... on BasicEvent {
+              id
+              action
+              createdAt
+              message
+              subject {
+                ... on Order {
+                  id
+                  name
+                  createdAt
+                  tags
+                }
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "events": {
+              "nodes": [
+                {
+                  "id": "gid://shopify/BasicEvent/1234567890",
+                  "action": "shipping_label_adjustment_charge_created",
+                  "message": "You were charged $1.50 for a shipping label price adjustment.",
+                  "subject": {
+                    "id": "gid://shopify/Order/1234567890",
+                    "name": "#PREVIEW"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign events = events | concat: result.data.events.nodes %}
+
+    {% if result.data.events.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.events.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% comment %}
+    -- tag all orders associated with shipping label price adjustment events, unless they are already tagged
+  {% endcomment %}
+
+  {% for event in events %}
+    {% assign order = event.subject %}
+
+    {% if order == blank %}
+      {% log
+        message: "No order object was returned with this event. Check to make sure that Mechanic has access to order older than 60 days.",
+        event: event
+      %}
+      {% continue %}
+    {% endif %}
+
+    {% unless order.tags contains order_tag_to_add %}
+      {% log
+        message: "Order qualified to be tagged",
+        event: event
+      %}
+
+      {% action "shopify" %}
+        mutation {
+          tagsAdd(
+            id: {{ order.id | json }}
+            tags: {{ order_tag_to_add | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endunless %}
+  {% endfor %}
+{% endif %}
