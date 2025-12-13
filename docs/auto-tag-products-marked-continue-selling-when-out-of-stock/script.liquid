@@ -1,0 +1,192 @@
+{% assign tag_for_continue_selling_products = options.tag_for_continue_selling_products__required %}
+
+{% comment %}
+  -- for product create/update, filter the products query with the product ID that caused the event
+{% endcomment %}
+
+{% if event.topic contains "shopify/products/" %}
+  {% assign search_query = product.id | prepend: "id:" %}
+{% endif %}
+
+{% comment %}
+  -- query product(s) in the shop; variants will be queried separately as needed to support up to 2K variants
+{% endcomment %}
+
+{% assign cursor = nil %}
+{% assign products = array %}
+
+{% for n in (1..100) %}
+  {% capture query %}
+    query {
+      products(
+        first: 250
+        after: {{ cursor | json }}
+        query: {{ search_query | json }}
+      ) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          id
+          tags
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "products": {
+            "nodes": [
+              {
+                "id": "gid://shopify/Product/1234567890"
+              }
+            ]
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign products = products | concat: result.data.products.nodes %}
+
+  {% if result.data.products.pageInfo.hasNextPage %}
+    {% assign cursor = result.data.products.pageInfo.endCursor %}
+  {% else %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% comment %}
+  -- process each product by querying as many variants as needed to determine whether the product should be tagged
+{% endcomment %}
+
+{% for product in products %}
+  {% assign product_set_to_continue_selling = nil %}
+  {% assign cursor = nil %}
+
+  {% for n in (1..8) %}
+    {% capture query %}
+      query {
+        product(id: {{ product.id | json }}) {
+          variants(
+            first: 250
+            after: {{ cursor | json }}
+          ) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              inventoryPolicy
+            }
+          }
+        }
+      }
+    {% endcapture %}
+  {% action "echo" query %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "product": {
+              "variants": {
+                "nodes": [
+                  {
+                    "inventoryPolicy": "CONTINUE"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign variants = result.data.product.variants.nodes %}
+
+    {% comment %}
+      -- check batch of variants to see if any is marked "continue selling"
+    {% endcomment %}
+
+    {% for variant in variants %}
+      {% if variant.inventoryPolicy == "CONTINUE" %}
+        {% assign product_set_to_continue_selling = true %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+
+    {% comment %}
+      -- only query for more variants if the product has not yet qualified as "continue selling" AND if there are more variants
+    {% endcomment %}
+
+    {% if product_set_to_continue_selling %}
+      {% break %}
+    {% elsif result.data.product.variants.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.product.variants.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% comment %}
+    -- adjust tags on product as needed
+  {% endcomment %}
+
+  {% assign tag_to_add = nil %}
+  {% assign tag_to_remove = nil %}
+
+  {% if product_set_to_continue_selling %}
+    {% unless product.tags contains tag_for_continue_selling_products %}
+      {% assign tag_to_add = tag_for_continue_selling_products %}
+    {% endunless %}
+
+  {% else %}
+    {% if product.tags contains tag_for_continue_selling_products %}
+      {% assign tag_to_remove = tag_for_continue_selling_products %}
+    {% endif %}
+
+  {% endif %}
+
+  {% if tag_to_add or tag_to_remove %}
+    {% action "shopify" %}
+      mutation {
+        {% if tag_to_add %}
+          tagsAdd(
+            id: {{ product.id | json }}
+            tags: {{ tag_to_add | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        {% endif %}
+
+        {% if tag_to_remove %}
+          tagsRemove(
+            id: {{ product.id | json }}
+            tags: {{ tag_to_remove | json }}
+          ) {
+            userErrors {
+              field
+              message
+            }
+          }
+        {% endif %}
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}
