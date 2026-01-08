@@ -1,0 +1,114 @@
+{% assign shopifyql_query = options.shopifyql_query__multiline_required %}
+
+{% capture query %}
+  {
+    shopifyqlQuery(query: {{ shopifyql_query | json }}) {
+      tableData {
+        columns {
+          displayName
+          name
+          dataType
+          subType
+        }
+        rows
+      }
+      parseErrors
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "shopifyqlQuery": {
+          "tableData": {
+            "columns": [
+              {
+                "displayName": "Product vendor",
+                "name": "product_vendor",
+                "dataType": "STRING",
+                "subType": null
+              },
+              {
+                "displayName": "Net items sold",
+                "name": "net_items_sold",
+                "dataType": "INTEGER",
+                "subType": null
+              },
+              {
+                "displayName": "Gross sales",
+                "name": "gross_sales",
+                "dataType": "MONEY",
+                "subType": null
+              },
+              {
+                "displayName": "Discounts",
+                "name": "discounts",
+                "dataType": "MONEY",
+                "subType": null
+              },
+              {
+                "displayName": "Returns",
+                "name": "returns",
+                "dataType": "MONEY",
+                "subType": null
+              },
+              {
+                "displayName": "Net sales",
+                "name": "net_sales",
+                "dataType": "MONEY",
+                "subType": null
+              },
+              {
+                "displayName": "Taxes",
+                "name": "taxes",
+                "dataType": "MONEY",
+                "subType": null
+              },
+              {
+                "displayName": "Total sales",
+                "name": "total_sales",
+                "dataType": "MONEY",
+                "subType": null
+              }
+            ],
+            "rows": [
+              {
+                "product_vendor": "ACME",
+                "net_items_sold": "20",
+                "gross_sales": "800.0",
+                "discounts": "0",
+                "returns": "-24.0",
+                "net_sales": "776.00",
+                "taxes": "7.76",
+                "total_sales": "783.76"
+              },
+              {
+                "product_vendor": "Company 123",
+                "net_items_sold": "2",
+                "gross_sales": "86.55",
+                "discounts": "-30.25",
+                "returns": "0",
+                "net_sales": "56.3",
+                "taxes": "5.63",
+                "total_sales": "61.93"
+              }
+            ]
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% assign columns = result.data.shopifyqlQuery.tableData.columns %}
+{% assign rows = result.data.shopifyqlQuery.tableData.rows %}
+
+{% log rows_count: rows.size %}
+{% log rows: rows %}
+{% log columns: columns %}

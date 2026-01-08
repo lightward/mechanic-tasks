@@ -188,6 +188,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Delete the oldest x products from a specific collection](./delete-the-oldest-x-products-from-a-specific-collection)
 * [Delete variants having a metafield date that has passed](./delete-variants-having-a-metafield-date-that-has-passed)
 * [Demonstration, Tutorial: Fetch data from a shared Google sheet](./demonstration-fetch-data-from-a-shared-google-sheet)
+* [Demonstration, Tutorial: Query analytics data with ShopifyQL](./demonstration-query-analytics-data-with-shopifyql)
 * [Demonstration: Add new orders to a Google Sheet](./demonstration-add-new-orders-to-google-sheet)
 * [Demonstration: Auto-tag new orders, with scheduled reconciliation](./demonstration-auto-tag-new-orders-with-reconciliation)
 * [Demonstration: Create and update a table in Airtable](./demonstration-create-and-update-a-table-in-airtable)
@@ -421,6 +422,10 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Send an email alert when an incoming Canadian order has an unsupported FSA](./send-an-email-alert-when-an-incoming-canadian-order-has-an-unsupported-fsa)
 * [Send email notification when items are returned](./send-email-notification-when-items-are-returned)
 * [Send email when an order comes in](./send-email-when-an-order-comes-in)
+
+### Analytics
+
+* [Demonstration, Tutorial: Query analytics data with ShopifyQL](./demonstration-query-analytics-data-with-shopifyql)
 
 ### Archive
 
@@ -772,6 +777,7 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Demonstration
 
 * [Demonstration, Tutorial: Fetch data from a shared Google sheet](./demonstration-fetch-data-from-a-shared-google-sheet)
+* [Demonstration, Tutorial: Query analytics data with ShopifyQL](./demonstration-query-analytics-data-with-shopifyql)
 * [Demonstration: Add new orders to a Google Sheet](./demonstration-add-new-orders-to-google-sheet)
 * [Demonstration: Auto-tag new orders, with scheduled reconciliation](./demonstration-auto-tag-new-orders-with-reconciliation)
 * [Demonstration: Create and update a table in Airtable](./demonstration-create-and-update-a-table-in-airtable)
@@ -1637,6 +1643,10 @@ This directory is built automatically. Each task's documentation is generated fr
 
 * [Add new Shopify Forms submissions to a Google Sheet](./add-new-shopify-forms-submissions-to-a-google-sheet)
 
+### ShopifyQL
+
+* [Demonstration, Tutorial: Query analytics data with ShopifyQL](./demonstration-query-analytics-data-with-shopifyql)
+
 ### Signup
 
 * [Send a customer signup email](./customer-signup-email)
@@ -1765,6 +1775,7 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Tutorial
 
 * [Demonstration, Tutorial: Fetch data from a shared Google sheet](./demonstration-fetch-data-from-a-shared-google-sheet)
+* [Demonstration, Tutorial: Query analytics data with ShopifyQL](./demonstration-query-analytics-data-with-shopifyql)
 * [Tutorial: Trigger a task from a contact form, using webhooks](./tutorial-trigger-a-task-from-a-contact-form-using-webhooks)
 
 ### UK
