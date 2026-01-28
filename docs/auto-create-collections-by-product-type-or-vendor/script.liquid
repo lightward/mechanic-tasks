@@ -9,8 +9,8 @@
 {% assign product_types = array %}
 {% assign vendors = array %}
 
-{% if event.topic == "mechanic/user/trigger" or event.topic == "shopify/products/update" %}
-  {% if event.topic == "mechanic/user/trigger" %}
+{% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" or event.topic == "shopify/products/create" %}
+  {% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
     {% comment %}
       -- get all product types and vendors in the shop
     {% endcomment %}
@@ -105,7 +105,7 @@
       {% endif %}
     {% endfor %}
 
-  {% elsif event.topic == "shopify/products/update" %}
+  {% elsif event.topic == "shopify/products/create" %}
     {% unless product.product_type == blank %}
       {% assign product_types[0] = product.product_type %}
     {% endunless %}
@@ -213,144 +213,160 @@
     {% endunless %}
   {% endif %}
 
-  {% if create_collections_by_product_type %}
-    {% for product_type in product_types %}
-      {% capture query %}
-        query {
-          collections(
-            first: 1
-            query: {{ product_type | json | prepend: "title:" | json }}
-          ) {
-            nodes {
-              id
-              title
-              handle
+  {% comment %}
+    -- get all collection titles in the shop
+  {% endcomment %}
+
+  {% assign cursor = nil %}
+  {% assign collection_titles = array %}
+
+  {% for n in (1..100) %}
+    {% capture query %}
+      query {
+        collections(
+          first: 250
+          after: {{ cursor | json }}
+          query: {{ search_query | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            title
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "collections": {
+              "nodes": [
+                {
+                  "title": "Gizmo"
+                }
+              ]
             }
           }
         }
       {% endcapture %}
 
-      {% assign result = query | shopify %}
+      {% assign result = result_json | parse_json %}
+    {% endif %}
 
-      {% if result.data.collections.nodes != blank %}
-        {% log
-          message: "A collection title matching this product type already exists; skipping.",
-          product_type: product_type,
-          collection: result.data.collections.nodes.first
-        %}
+    {% assign collection_titles = collection_titles | concat: result.data.collections.nodes | map: "title" | uniq %}
 
-      {% else %}
-        {% capture mutation %}
-          mutation {
-            collectionCreate(
-              input: {
-                title: {{ product_type | json }}
-                ruleSet: {
-                  appliedDisjunctively: false
-                  rules: [
-                    {
-                      column: TYPE
-                      relation: EQUALS
-                      condition: {{ product_type | json }}
-                    }
-                  ]
-                }
-              }
-            ) {
-              collection {
-                id
-                title
-                handle
-              }
-              userErrors {
-                field
-                message
-              }
-            }
-          }
-        {% endcapture %}
+    {% if result.data.collections.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.collections.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
 
-        {% action %}
-          {
-            "type": "shopify",
-            "options": {{ mutation | json }},
-            "meta": {
-              "publication_ids": {{ publication_ids | json }}
-            }
-          }
-        {% endaction %}
+  {% assign existing_collections = array %}
+
+  {% if create_collections_by_product_type %}
+    {% unless event.topic == "shopify/products/create" %}
+      {% log product_types_in_shop: product_types %}
+    {% endunless %}
+
+    {% for product_type in product_types %}
+      {% if collection_titles contains product_type %}
+        {% assign existing_collections = existing_collections | push: product_type %}
+        {% continue %}
       {% endif %}
+
+      {% assign meta = hash %}
+      {% assign meta["publication_ids"] = publication_ids %}
+
+      {% action "shopify", __meta: meta %}
+        mutation {
+          collectionCreate(
+            input: {
+              title: {{ product_type | json }}
+              ruleSet: {
+                appliedDisjunctively: false
+                rules: [
+                  {
+                    column: TYPE
+                    relation: EQUALS
+                    condition: {{ product_type | json }}
+                  }
+                ]
+              }
+            }
+          ) {
+            collection {
+              id
+              title
+              handle
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
     {% endfor %}
   {% endif %}
 
   {% if create_collections_by_vendor %}
+    {% unless event.topic == "shopify/products/create" %}
+      {% log vendors_in_shop: vendors %}
+    {% endunless %}
+
     {% for vendor in vendors %}
-      {% capture query %}
-        query {
-          collections(
-            first: 1
-            query: {{ vendor | json | prepend: "title:" | json }}
+      {% if collection_titles contains vendor %}
+        {% assign existing_collections = existing_collections | push: vendor %}
+        {% continue %}
+      {% endif %}
+
+      {% assign meta = hash %}
+      {% assign meta["publication_ids"] = publication_ids %}
+
+      {% action "shopify", __meta: meta %}
+        mutation {
+          collectionCreate(
+            input: {
+              title: {{ vendor | json }}
+              ruleSet: {
+                appliedDisjunctively: false
+                rules: [
+                  {
+                    column: VENDOR
+                    relation: EQUALS
+                    condition: {{ vendor | json }}
+                  }
+                ]
+              }
+            }
           ) {
-            nodes {
+            collection {
               id
               title
               handle
             }
+            userErrors {
+              field
+              message
+            }
           }
         }
-      {% endcapture %}
-
-      {% assign result = query | shopify %}
-
-      {% if result.data.collections.nodes != blank %}
-        {% log
-          message: "A collection title matching this vendor already exists; skipping.",
-          vendor: vendor,
-          collection: result.data.collections.nodes.first
-        %}
-
-      {% else %}
-        {% capture mutation %}
-          mutation {
-            collectionCreate(
-              input: {
-                title: {{ vendor | json }}
-                ruleSet: {
-                  appliedDisjunctively: false
-                  rules: [
-                    {
-                      column: VENDOR
-                      relation: EQUALS
-                      condition: {{ vendor | json }}
-                    }
-                  ]
-                }
-              }
-            ) {
-              collection {
-                id
-                title
-                handle
-              }
-              userErrors {
-                field
-                message
-              }
-            }
-          }
-        {% endcapture %}
-
-        {% action %}
-          {
-            "type": "shopify",
-            "options": {{ mutation | json }},
-            "meta": {
-              "publication_ids": {{ publication_ids | json }}
-            }
-          }
-        {% endaction %}
-      {% endif %}
+      {% endaction %}
     {% endfor %}
+  {% endif %}
+
+  {% if existing_collections != blank %}
+    {% log
+      message: "These collections with title matching product types and/or vendors already existed as of this task run, and will not be recreated or modified",
+      existing_collections: existing_collections
+    %}
   {% endif %}
 
 {% elsif event.topic == "mechanic/actions/perform" %}
@@ -397,7 +413,7 @@
   {% endfor %}
 
   {% if mutations != blank %}
-    {% action "shopify" %}
+    {% action "shopify", __perform_event: false %}
       mutation {
         {{ mutations | join: newline }}
       }
