@@ -1,5 +1,5 @@
-{% assign required_product_id = options.required_product_id__number_required %}
-{% assign discount_collection_id = options.discount_collection_id__number %}
+{% assign required_product_id = options.required_product__picker_product_required %}
+{% assign discount_collection_id = options.discount_collection__picker_collection %}
 {% assign discount_code_prefix = options.discount_code_prefix %}
 {% assign discount_fixed_amount = options.discount_fixed_amount__number %}
 {% assign discount_percentage = options.discount_percentage__number %}
@@ -16,30 +16,67 @@
   {% error "Please choose between the discount percentage and discount fixed amount - only one is permitted." %}
 {% endif %}
 
-{% if discount_collection_id != blank %}
-  {% assign discount_collection_id = discount_collection_id | prepend: "gid://shopify/Collection/" %}
-{% endif %}
-
 {% if event.topic == "shopify/orders/paid" %}
-  {% if event.preview %}
-    {% capture order_json %}
-      {
-        "email": "customer@example.com",
-        "customer": {
-          "id": 1234567890
-        },
-        "line_items": [
-          {
-            "id": 1234567890,
-            "product_id": {{ required_product_id }},
-            "quantity": 1
+  {% comment %}
+    -- get order data
+  {% endcomment %}
+
+  {% capture query %}
+    query {
+      order(id: {{ order.admin_graphql_api_id | json }}) {
+        id
+        name
+        email
+        customer {
+          id
+        }
+        lineItems(first: 250) {
+          nodes {
+            id
+            currentQuantity
+            product {
+              id
+            }
           }
-        ]
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "order": {
+            "id": "gid://shopify/Order/1234567890",
+            "name": "#PREVIEW",
+            "email": "sample@example.com",
+            "customer": {
+              "id": "gid://shopify/Customer/1234567890",
+              "displayName": "Test Customer04"
+            },
+            "lineItems": {
+              "nodes": [
+                {
+                  "id": "gid://shopify/LineItem/1234567890",
+                  "currentQuantity": 1,
+                  "product": {
+                    "id": {{ required_product_id | json }}
+                  }
+                }
+              ]
+            }
+          }
+        }
       }
     {% endcapture %}
 
-    {% assign order = order_json | parse_json %}
+    {% assign result = result_json | parse_json %}
   {% endif %}
+
+  {% assign order = result.data.order %}
 
   {% if order.customer == blank %}
     {% log "This order has no related customer. Skipping" %}
@@ -51,19 +88,29 @@
     {% break %}
   {% endif %}
 
-  {% assign customer_id = order.customer.id | prepend: "gid://shopify/Customer/" %}
-
   {% comment %}
     -- create a discount code for each quantity of matching line items
   {% endcomment %}
 
-  {% for line_item in order.line_items %}
-    {% if line_item.product_id != required_product_id %}
+  {% for line_item in order.lineItems.nodes %}
+    {% if line_item.product.id != required_product_id %}
       {% continue %}
     {% endif %}
 
-    {% for n in (1..line_item.quantity) %}
-      {% assign discount_code = line_item.id | append: n | split: "" | reverse | join: "" | slice: 0, 4 | append: order.order_number | base64 | replace: "=", "" | upcase | prepend: discount_code_prefix %}
+    {% for n in (1..line_item.currentQuantity) %}
+      {% assign discount_code
+        = line_item.id
+        | append: n
+        | split: ""
+        | reverse
+        | join: ""
+        | slice: 0, 4
+        | append: order.name
+        | base64
+        | replace: "=", ""
+        | upcase
+        | prepend: discount_code_prefix
+      %}
 
       {% action "shopify" %}
         mutation {
@@ -75,7 +122,7 @@
                   all: true
                 {% else %}
                   customers: {
-                    add: {{ array | push: customer_id | json }}
+                    add: {{ array | push: order.customer.id | json }}
                   }
                 {% endif %}
               }
@@ -157,7 +204,7 @@
   {% assign email_subject = email_subject | replace: 'DISCOUNT_CODE', discount_code %}
   {% assign email_body = email_body | replace: 'DISCOUNT_CODE', discount_code %}
 
-  {% action "email" %}
+  {% action "email", __perform_event: false %}
     {
       "to": {{ event.parent.data.email | json }},
       "subject": {{ email_subject | strip | json }},

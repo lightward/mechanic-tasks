@@ -232,7 +232,7 @@
     - Mechanic, for {{ shop.name }}
   {%- endcapture -%}
 
-  {% action "email" %}
+  {% action "email", __perform_event: false %}
     {
       "to": {{ notification_email_recipients | json }},
       "subject": {{ email_subject | json }},

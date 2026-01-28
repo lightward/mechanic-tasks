@@ -14,7 +14,8 @@ When products are created, this task will auto-create smart collections by produ
 {
   "create_collections_by_product_type__boolean": null,
   "create_collections_by_vendor__boolean": null,
-  "names_of_sales_channels_to_publish_collections_to__array": []
+  "names_of_sales_channels_to_publish_collections_to__array": [],
+  "run_daily__boolean": false
 }
 ```
 
@@ -23,10 +24,13 @@ When products are created, this task will auto-create smart collections by produ
 ## Subscriptions
 
 ```liquid
-shopify/products/update
+shopify/products/create
 mechanic/user/trigger
 {% if options.names_of_sales_channels_to_publish_collections_to__array != blank %}
   mechanic/actions/perform
+{% endif %}
+{% if options.run_daily__boolean %}
+  mechanic/scheduler/daily
 {% endif %}
 ```
 
@@ -39,7 +43,7 @@ When products are created, this task will auto-create smart collections by produ
 _For example:_  
 A new product is added with a vendor of "ACME". If a collection with that exact title does not already exist, then the task will create it with a title of "ACME" and add a rule of "vendor = ACME", which will allow Shopify to auto-populate the collection.
 
-The task may also be run manually to gather _all_ of the product types and vendors in your shop, and then making the same decisions on whether to create new collections and publish them.
+Optionally, choose to run the task daily, and it will query for _all_ of the product types and/or vendors in your shop, and make the same decisions on whether to create new collections and publish them. Running the task manually has the same effect as a daily run.
 
 ## Installing this task
 

@@ -12,8 +12,8 @@ This task watches for newly-paid orders, and if the configured product is purcha
 
 ```json
 {
-  "required_product_id__number_required": null,
-  "discount_collection_id__number": null,
+  "required_product__picker_product_required": null,
+  "discount_collection__picker_collection": null,
   "discount_code_prefix": null,
   "discount_fixed_amount__number": null,
   "discount_percentage__number": "50",
@@ -44,8 +44,8 @@ If a customer purchases more than one qualified product, they will receive more 
 
 ### Options
 
-- **Required product ID:** The ID of the product that the customer must purchase, in order to qualify for the discount. ([Learn how to find the product ID.](https://learn.mechanic.dev/techniques/finding-a-resource-id))
-- **Discount collection ID (optional):** The ID of a specific collection of products that the discount code should be good for. ([Learn how to find the collection ID.](https://learn.mechanic.dev/techniques/finding-a-resource-id))
+- **Required product:** The product that the customer must purchase, in order to qualify for the discount.
+- **Discount collection (optional):** The specific collection of products that the discount code should be good for.
 - **Discount code prefix (optional):** A small piece of text to add to the beginning of the generated discount code.
 - **Discount fixed amount:** The money value to be subtracted. If you choose this option, you cannot choose a discount percentage.
 - **Discount percentage:** The percentage to be subtracted (e.g. 15). If you choose this option, you cannot choose a fixed discount amount.

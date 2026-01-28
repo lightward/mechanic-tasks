@@ -17,7 +17,6 @@
 
   {% comment %}
     -- make the first http get call to the external api
-    -- note: on this first call we can use the standard http action format since we don't yet need to pass meta values (e.g. products)
   {% endcomment %}
 
   {% action "http" %}
@@ -104,7 +103,7 @@
   {% if count_products_retrieved < result_total %}
     {% comment %}
       -- we do not yet have the full set of products; log out how many have been retrieved and make the next api call
-      -- note: when accessing an api with low rate limiting, then you may want to use a delay strategy [see tutorial for this demo task for more detail]
+      -- note: when accessing an api with low rate limiting, then you may want to use a delay strategy
     {% endcomment %}
 
     {% log
@@ -117,21 +116,18 @@
     {%- endcapture -%}
 
     {% comment %}
-      -- in order to pass the array of products retrieved so far, we need to use the http action format that supports passing meta values
+      -- create a meta object to pass the array of products retrieved so far to the http action event
     {% endcomment %}
 
-    {% action %}
+    {% assign meta = hash %}
+    {% assign meta["fetched_products"] = fetched_products %}
+
+    {% action "http", __meta: meta %}
       {
-        "type": "http",
-        "options": {
-          "method": "get",
-          "url": {{ api_endpoint_with_parameters | json }},
-          "verify": "true",
-          "error_on_5xx": "true"
-        },
-        "meta": {
-          "fetched_products": {{ fetched_products | json }}
-        }
+        "method": "get",
+        "url": {{ api_endpoint_with_parameters | json }},
+        "verify": "true",
+        "error_on_5xx": "true"
       }
     {% endaction %}
 
@@ -143,7 +139,7 @@
     -- note: the products could be processed here, but using a custom event is a useful indicator in the event logs that the task has finished fetching products
   {% endcomment %}
 
-  {% action "event" %}
+  {% action "event", __perform_event: false %}
     {
       "topic": "user/demo_paginated_api/fetched_products",
       "task_id": {{ task.id | json }},
