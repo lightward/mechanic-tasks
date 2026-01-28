@@ -14,7 +14,7 @@
     "glob": "13.0.0",
     "husky": "^9.0.7",
     "lint-staged": "16.2.7",
-    "prettier": "3.7.4",
+    "prettier": "3.8.1",
     "sort-json": "2.0.1"
   },
   "scripts": {
