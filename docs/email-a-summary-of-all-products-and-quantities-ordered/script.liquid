@@ -134,7 +134,7 @@
 
 {% for order in orders %}
   {% for line_item in order.lineItems.nodes %}
-    {% if line_item.product != blank %}
+    {% if line_item.product != blank and line_item.variant != blank %}
       {% if count_quantities_by_variant %}
         {% assign line_item_key = line_item.variant.legacyResourceId %}
         {% assign line_item_title = line_item.name %}
