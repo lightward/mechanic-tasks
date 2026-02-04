@@ -1,20 +1,33 @@
+{% assign payment_gateway_names_and_tags = options.payment_gateway_names_and_tags__keyval_required %}
+
 {% if event.preview %}
   {% capture order_json %}
     {
       "admin_graphql_api_id": "gid://shopify/Order/12345",
-      "payment_gateway_names": {{ options.payment_gateway_name__required | json }}
+      "payment_gateway_names": {{ payment_gateway_names_and_tags.first.first | json }}
     }
   {% endcapture %}
 
   {% assign order = order_json | parse_json %}
 {% endif %}
 
-{% if order.payment_gateway_names contains options.payment_gateway_name__required %}
+{% assign tags_to_add = array %}
+
+{% for keyval in payment_gateway_names_and_tags %}
+  {% assign payment_gateway_name = keyval[0] %}
+  {% assign tag = keyval[1] %}
+
+  {% if order.payment_gateway_names contains payment_gateway_name %}
+    {% assign tags_to_add = tags_to_add | push: tag %}
+  {% endif %}
+{% endfor %}
+
+{% if tags_to_add != blank %}
   {% action "shopify" %}
     mutation {
       tagsAdd(
         id: {{ order.admin_graphql_api_id | json }}
-        tags: {{ options.order_tag_to_add__required | json }}
+        tags: {{ tags_to_add | json }}
       ) {
         userErrors {
           field
@@ -23,6 +36,4 @@
       }
     }
   {% endaction %}
-{% else %}
-  {% log order_payment_gateway_names: order.payment_gateway_names %}
 {% endif %}
