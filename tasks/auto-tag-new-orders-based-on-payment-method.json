@@ -1,19 +1,19 @@
 {
-  "docs": "This task checks the payment method for new orders immediately upon order creation, and tags the order accordingly.\r\n\r\nTip: to tag orders paid with a gift card, fill in \"Payment gateway name\" with \"gift_card\".",
+  "docs": "This task checks the payment gateways for new orders immediately upon order creation, and tags the order accordingly.\n\nConfigure the \"Payment gateway names and tags\" fields with the payment gateway name on the left, and the associated tag on the right.\n\nTip: to tag orders paid with a gift card, fill in \"Payment gateway name\" with \"gift_card\".",
   "halt_action_run_sequence_on_error": false,
   "name": "Auto-tag new orders based on payment method",
   "online_store_javascript": null,
   "options": {
-    "payment_gateway_name__required": null,
-    "order_tag_to_add__required": null
+    "payment_gateway_names_and_tags__keyval_required": null,
+    "run_when_orders_are_paid_instead_of_created__boolean": null
   },
   "order_status_javascript": null,
   "perform_action_runs_in_sequence": false,
-  "script": "{% if event.preview %}\n  {% capture order_json %}\n    {\n      \"admin_graphql_api_id\": \"gid://shopify/Order/12345\",\n      \"payment_gateway_names\": {{ options.payment_gateway_name__required | json }}\n    }\n  {% endcapture %}\n\n  {% assign order = order_json | parse_json %}\n{% endif %}\n\n{% if order.payment_gateway_names contains options.payment_gateway_name__required %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ order.admin_graphql_api_id | json }}\n        tags: {{ options.order_tag_to_add__required | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% else %}\n  {% log order_payment_gateway_names: order.payment_gateway_names %}\n{% endif %}",
+  "script": "{% assign payment_gateway_names_and_tags = options.payment_gateway_names_and_tags__keyval_required %}\n\n{% if event.preview %}\n  {% capture order_json %}\n    {\n      \"admin_graphql_api_id\": \"gid://shopify/Order/12345\",\n      \"payment_gateway_names\": {{ payment_gateway_names_and_tags.first.first | json }}\n    }\n  {% endcapture %}\n\n  {% assign order = order_json | parse_json %}\n{% endif %}\n\n{% assign tags_to_add = array %}\n\n{% for keyval in payment_gateway_names_and_tags %}\n  {% assign payment_gateway_name = keyval[0] %}\n  {% assign tag = keyval[1] %}\n\n  {% if order.payment_gateway_names contains payment_gateway_name %}\n    {% assign tags_to_add = tags_to_add | push: tag %}\n  {% endif %}\n{% endfor %}\n\n{% if tags_to_add != blank %}\n  {% action \"shopify\" %}\n    mutation {\n      tagsAdd(\n        id: {{ order.admin_graphql_api_id | json }}\n        tags: {{ tags_to_add | json }}\n      ) {\n        userErrors {\n          field\n          message\n        }\n      }\n    }\n  {% endaction %}\n{% endif %}\n",
   "subscriptions": [
     "shopify/orders/create"
   ],
-  "subscriptions_template": "shopify/orders/create",
+  "subscriptions_template": "{% if options.run_when_orders_are_paid_instead_of_created__boolean %}\n  shopify/orders/paid\n{% else %}\n  shopify/orders/create\n{% endif %}",
   "tags": [
     "Auto-Tag",
     "Orders",
