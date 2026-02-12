@@ -1,7 +1,20 @@
+{% assign sales_calculation_to_use = options.sales_calculation_to_use__choice_o1_total_sales_o2_net_sales_required %}
 {% assign minimum_total_spent = options.minimum_total_spent__number_required %}
 {% assign customer_tag_to_apply = options.customer_tag_to_apply__required %}
 {% assign days_of_order_history = options.days_of_order_history_to_consider__number_required %}
 {% assign monitor_customer_tag = options.only_monitor_customers_having_this_tag %}
+{% comment %}{{ options.run_hourly_instead_of_daily__boolean }}{% endcomment %}
+{% assign test_mode = options.test_mode__boolean %}
+
+{% if test_mode %}
+  {% comment %}
+    -- keep the write customers scope active in test mode, to avoid app updates
+  {% endcomment %}
+
+  {% permissions %}
+    write_customers
+  {% endpermissions %}
+{% endif %}
 
 {% if monitor_customer_tag == customer_tag_to_apply %}
   {% error "The two customer tag values must be different. Please change either 'Customer tag to apply' or 'Only monitor customers having this tag'." %}
@@ -9,44 +22,217 @@
 
 {% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
   {% comment %}
-    -- get IDs of all customers who meet the minimum spend criteria and have not yet been tagged
+    -- get count of customers in the shop to use as upper limit in queries
+    -- support optional monitor tag
   {% endcomment %}
 
-  {%- capture qualifying_search_query -%}
-    orders_placed(since: -{{ days_of_order_history }}d, sum_amount_at_least: {{ minimum_total_spent }}) = true AND customer_tags NOT CONTAINS '{{ customer_tag_to_apply }}'
-  {%- endcapture -%}
-
-  {% comment %}
-    -- if monitor tag configured, then also filter by that tag
-  {% endcomment %}
+  {% assign monitor_tag_query = nil %}
 
   {% if monitor_customer_tag != blank %}
-    {% capture qualifying_search_query -%}
-      customer_tags CONTAINS '{{ monitor_customer_tag }}' AND {{ qualifying_search_query }}
-    {%- endcapture %}
+    {% assign monitor_tag_query = monitor_customer_tag | json | prepend: "tag:" %}
   {% endif %}
 
-  {% log qualifying_search_query: qualifying_search_query %}
+  {% capture query %}
+    query {
+      customersCount(
+        query: {{ monitor_tag_query | json }}
+        limit: null
+      ) {
+        count
+        precision
+      }
+    }
+  {% endcapture %}
 
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "customersCount": {
+            "count": 20000,
+            "precision": "EXACT"
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign customers_count = result.data.customersCount %}
+
+  {% log customers_count: customers_count %}
+
+  {% comment %}
+    -- use shopifyql query to get IDs of all customers who meet the minimum spend criteria and have not yet been tagged
+    -- support optional monitor tag
+  {% endcomment %}
+
+  {%- capture qualify_to_tag_shopifyql_query -%}
+    FROM sales
+    SHOW {{ sales_calculation_to_use }}, orders
+    WHERE customer_tags NOT CONTAINS '{{ customer_tag_to_apply }}'
+    {%- if monitor_customer_tag != blank %}
+    AND customer_tags CONTAINS '{{ monitor_customer_tag }}'
+    {%- endif %}
+    GROUP BY customer_email, customer_id
+    HAVING {{ sales_calculation_to_use }} >= {{ minimum_total_spent }}
+    SINCE -{{ days_of_order_history }}d UNTIL today
+    ORDER BY customer_id ASC
+    LIMIT {{ customers_count.count }}
+  {%- endcapture -%}
+
+  {% log qualify_to_tag_shopifyql_query %}
+
+  {% capture query %}
+    {
+      shopifyqlQuery(query: {{ qualify_to_tag_shopifyql_query | json }}) {
+        tableData {
+          rows
+        }
+        parseErrors
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "shopifyqlQuery": {
+            "tableData": {
+              "rows": [
+                {
+                  "customer_id": "1234567890",
+                  "customer_email": "sample@example.com",
+                  "total_sales": {{ minimum_total_spent | json }}
+                }
+              ]
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% comment %}
+    -- shopify returns 0 for customer ID when the account is deleted, so exclude it
+  {% endcomment %}
+
+  {% assign customers_to_tag = array %}
+
+  {% for row in result.data.shopifyqlQuery.tableData.rows %}
+    {% unless row.customer_id == "0" %}
+      {% assign customers_to_tag = customers_to_tag | push: row %}
+    {% endunless %}
+  {% endfor %}
+
+  {% unless event.preview %}
+    {% log count_customers_to_tag: customers_to_tag.size %}
+    {% log customers_to_tag: customers_to_tag %}
+  {% endunless %}
+
+  {% comment %}
+    -- use shopifyql query to get IDs of all customers who meet the minimum spend criteria regardless of the tag to apply
+    -- support optional monitor tag
+  {% endcomment %}
+
+  {%- capture qualifying_shopifyql_query -%}
+    FROM sales
+    SHOW total_sales, orders
+    {%- if monitor_customer_tag != blank %}
+    WHERE customer_tags CONTAINS '{{ monitor_customer_tag }}'
+    {%- endif %}
+    GROUP BY customer_email, customer_id
+    HAVING total_sales >= {{ minimum_total_spent }}
+    SINCE -{{ days_of_order_history }}d UNTIL today
+    ORDER BY customer_id ASC
+    LIMIT {{ customers_count.count }}
+  {%- endcapture -%}
+
+  {% capture query %}
+    {
+      shopifyqlQuery(query: {{ qualifying_shopifyql_query | json }}) {
+        tableData {
+          rows
+        }
+        parseErrors
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "shopifyqlQuery": {
+            "tableData": {
+              "rows": [
+                {
+                  "customer_id": "1234567890",
+                  "customer_email": "sample@example.com",
+                  "total_sales": {{ minimum_total_spent | json }}
+                }
+              ]
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign qualifying_customer_ids = result.data.shopifyqlQuery.tableData.rows | map: "customer_id" | except: "0" %}
+
+  {% unless event.preview %}
+    {% log count_qualifying_customers: qualifying_customer_ids.size %}
+    {% log qualifying_customer_ids: qualifying_customer_ids %}
+  {% endunless %}
+
+  {% comment %}
+    -- get IDs of all customers in the shop with the tag to apply
+    -- support optional monitor tag
+    -- analytics does not have data for customers with no orders in the rolling period, so we need to query the customers node
+  {% endcomment %}
+
+  {% if monitor_customer_tag == blank %}
+    {%- capture all_tagged_search_query -%}
+      tag:{{ customer_tag_to_apply | json }}
+    {%- endcapture -%}
+
+  {% else %}
+    {%- capture all_tagged_search_query -%}
+      tag:{{ customer_tag_to_apply | json }} AND tag:{{ monitor_customer_tag | json }}
+    {%- endcapture -%}
+  {% endif %}
+
+  {% assign loop_limit = customers_count.count | divided_by: 250.0 | ceil %}
   {% assign cursor = nil %}
-  {% assign customer_segment_member_ids = array %}
+  {% assign all_tagged_customer_ids = array %}
 
-  {% for n in (1..100) %}
+  {% for n in (1..loop_limit) %}
     {% capture query %}
       query {
-        customerSegmentMembers(
-          first: 1000
+        customers(
+          first: 250
           after: {{ cursor | json }}
-          query: {{ qualifying_search_query | json }}
+          query: {{ all_tagged_search_query | json }}
         ) {
           pageInfo {
             hasNextPage
             endCursor
           }
-          edges {
-            node {
-              id
-            }
+          nodes {
+            legacyResourceId
           }
         }
       }
@@ -58,12 +244,10 @@
       {% capture result_json %}
         {
           "data": {
-            "customerSegmentMembers": {
-              "edges": [
+            "customers": {
+              "nodes": [
                 {
-                  "node": {
-                    "id": "gid://shopify/CustomerSegmentMember/1234567890"
-                  }
+                  "legacyResourceId": "3456789012"
                 }
               ]
             }
@@ -74,29 +258,47 @@
       {% assign result = result_json | parse_json %}
     {% endif %}
 
-    {% assign customer_segment_member_ids
-      = result.data.customerSegmentMembers.edges
-      | map: "node"
-      | map: "id"
-      | concat: customer_segment_member_ids
-    %}
+    {% assign tagged_customer_ids = result.data.customers.nodes | map: "legacyResourceId" %}
+    {% assign all_tagged_customer_ids = all_tagged_customer_ids | concat: tagged_customer_ids %}
 
-    {% if result.data.customerSegmentMembers.pageInfo.hasNextPage %}
-      {% assign cursor = result.data.customerSegmentMembers.pageInfo.endCursor %}
+    {% if result.data.customers.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.customers.pageInfo.endCursor %}
     {% else %}
       {% break %}
     {% endif %}
   {% endfor %}
 
+  {% comment %}
+    -- identify customers to untag by confirming their ID is not in the qualifying customer IDs list
+  {% endcomment %}
+
+  {% assign customer_ids_to_untag = array %}
+
+  {% for customer_id in all_tagged_customer_ids %}
+    {% unless qualifying_customer_ids contains customer_id %}
+      {% assign customer_ids_to_untag = customer_ids_to_untag | push: customer_id %}
+    {% endunless %}
+  {% endfor %}
+
   {% unless event.preview %}
-    {% log count_of_customers_needing_tag_added: customer_segment_member_ids.size %}
+    {% log
+      all_tagged_search_query: all_tagged_search_query,
+      count_all_tagged_customers: all_tagged_customer_ids.size,
+      count_customers_to_untag: customer_ids_to_untag.size
+    %}
+    {% log customer_ids_to_untag: customer_ids_to_untag %}
   {% endunless %}
 
-  {% for customer_segment_member_id in customer_segment_member_ids %}
+  {% if test_mode %}
+    {% log "Test mode was enabled for this task run; no customer tag changes will be made." %}
+    {% break %}
+  {% endif %}
+
+  {% for customer in customers_to_tag %}
     {% action "shopify" %}
       mutation {
         tagsAdd(
-          id: {{ customer_segment_member_id | remove: "SegmentMember" | json }}
+          id: {{ customer.customer_id | prepend: "gid://shopify/Customer/" | json }}
           tags: {{ customer_tag_to_apply | json }}
         ) {
           userErrors {
@@ -108,95 +310,11 @@
     {% endaction %}
   {% endfor %}
 
-  {% comment %}
-    -- get IDs of all customers with tag who no longer meet the minimum spend criteria
-  {% endcomment %}
-
-  {%- capture disqualifying_search_query -%}
-    customer_tags CONTAINS '{{ customer_tag_to_apply }}' AND orders_placed(since: -{{ days_of_order_history }}d, sum_amount_at_least: {{ minimum_total_spent }}) = false
-  {%- endcapture -%}
-
-  {% comment %}
-    -- if monitor tag configured, then also find customers without the monitor tag who have the minimum spend qualifying tag
-  {% endcomment %}
-
-  {% if monitor_customer_tag != blank %}
-    {% capture disqualifying_search_query -%}
-      customer_tags CONTAINS '{{ customer_tag_to_apply }}' AND (customer_tags NOT CONTAINS '{{ monitor_customer_tag }}' OR orders_placed(since: -{{ days_of_order_history }}d, sum_amount_at_least: {{ minimum_total_spent }}) = false)
-    {%- endcapture %}
-  {% endif %}
-
-  {% log disqualifying_search_query: disqualifying_search_query %}
-
-  {% assign cursor = nil %}
-  {% assign customer_segment_member_ids = array %}
-
-  {% for n in (1..100) %}
-    {% capture query %}
-      query {
-        customerSegmentMembers(
-          first: 1000
-          after: {{ cursor | json }}
-          query: {{ disqualifying_search_query | json }}
-        ) {
-          pageInfo {
-            hasNextPage
-            endCursor
-          }
-          edges {
-            node {
-              id
-            }
-          }
-        }
-      }
-    {% endcapture %}
-
-    {% assign result = query | shopify %}
-
-    {% if event.preview %}
-      {% capture result_json %}
-        {
-          "data": {
-            "customerSegmentMembers": {
-              "edges": [
-                {
-                  "node": {
-                    "id": "gid://shopify/CustomerSegmentMember/2345678901"
-                  }
-                }
-              ]
-            }
-          }
-        }
-      {% endcapture %}
-
-      {% assign result = result_json | parse_json %}
-    {% endif %}
-
-    {% assign customer_segment_member_ids
-      = result.data.customerSegmentMembers.edges
-      | map: "node"
-      | map: "id"
-      | concat: customer_segment_member_ids
-    %}
-
-    {% if result.data.customerSegmentMembers.pageInfo.hasNextPage %}
-      {% assign cursor = result.data.customerSegmentMembers.pageInfo.endCursor %}
-    {% else %}
-      {% break %}
-    {% endif %}
-  {% endfor %}
-
-  {% unless event.preview %}
-    {% log count_of_customers_needing_tag_removal: customer_segment_member_ids.size %}
-  {% endunless %}
-
-  {% for customer_segment_member_id in customer_segment_member_ids %}
+  {% for customer_id in customer_ids_to_untag %}
     {% action "shopify" %}
       mutation {
         tagsRemove(
-          id: {{ customer_segment_member_id | remove: "SegmentMember" | json }}
+          id: {{ customer_id | prepend: "gid://shopify/Customer/" | json }}
           tags: {{ customer_tag_to_apply | json }}
         ) {
           userErrors {
