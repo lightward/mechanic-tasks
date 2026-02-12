@@ -131,6 +131,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag orders when paid](./auto-tag-orders-when-paid)
 * [Auto-tag orders with UTM parameters](./auto-tag-orders-with-utm-parameters)
 * [Auto-tag orders with a cart attribute](./auto-tag-orders-with-a-cart-attribute)
+* [Auto-tag orders with a post office box](./auto-tag-orders-with-a-post-office-box)
 * [Auto-tag orders with chargeback or inquiry activity](./auto-tag-orders-with-chargeback-or-inquiry-activity)
 * [Auto-tag orders with customer tags when new customer tags are added](./tag-orders-with-customer-tags-when-customer-is-tagged)
 * [Auto-tag orders with mismatching billing and shipping addresses](./auto-tag-orders-with-mismatching-billing-and-shipping-addresses)
@@ -381,6 +382,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Address
 
+* [Auto-tag orders with a post office box](./auto-tag-orders-with-a-post-office-box)
 * [Auto-tag orders with mismatching billing and shipping addresses](./auto-tag-orders-with-mismatching-billing-and-shipping-addresses)
 * [Email vendors when an order shipping address changes](./email-vendors-when-an-order-shipping-address-changes)
 * [Update empty customer data from addresses](./update-empty-customer-data-from-addresses)
@@ -501,6 +503,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag orders when paid](./auto-tag-orders-when-paid)
 * [Auto-tag orders with UTM parameters](./auto-tag-orders-with-utm-parameters)
 * [Auto-tag orders with a cart attribute](./auto-tag-orders-with-a-cart-attribute)
+* [Auto-tag orders with a post office box](./auto-tag-orders-with-a-post-office-box)
 * [Auto-tag orders with chargeback or inquiry activity](./auto-tag-orders-with-chargeback-or-inquiry-activity)
 * [Auto-tag orders with customer tags when new customer tags are added](./tag-orders-with-customer-tags-when-customer-is-tagged)
 * [Auto-tag orders with mismatching billing and shipping addresses](./auto-tag-orders-with-mismatching-billing-and-shipping-addresses)
@@ -1252,6 +1255,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag orders when paid](./auto-tag-orders-when-paid)
 * [Auto-tag orders with UTM parameters](./auto-tag-orders-with-utm-parameters)
 * [Auto-tag orders with a cart attribute](./auto-tag-orders-with-a-cart-attribute)
+* [Auto-tag orders with a post office box](./auto-tag-orders-with-a-post-office-box)
 * [Auto-tag orders with chargeback or inquiry activity](./auto-tag-orders-with-chargeback-or-inquiry-activity)
 * [Auto-tag orders with customer tags when new customer tags are added](./tag-orders-with-customer-tags-when-customer-is-tagged)
 * [Auto-tag orders with product vendors](./auto-tag-orders-with-product-vendors)
@@ -1617,6 +1621,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag orders by shipping address city](./auto-tag-orders-by-shipping-address-city)
 * [Auto-tag orders by shipping address country](./auto-tag-orders-by-shipping-address-country)
 * [Auto-tag orders that are ready to ship](./auto-tag-orders-that-are-ready-to-ship)
+* [Auto-tag orders with a post office box](./auto-tag-orders-with-a-post-office-box)
 * [Auto-tag orders with mismatching billing and shipping addresses](./auto-tag-orders-with-mismatching-billing-and-shipping-addresses)
 * [Auto-tag orders with shipping label price adjustments](./auto-tag-orders-with-shipping-label-price-adjustments)
 * [Auto-tag orders with their tracking numbers](./auto-tag-orders-with-their-tracking-numbers)
