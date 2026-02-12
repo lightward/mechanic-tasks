@@ -358,6 +358,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Unpublish products that fall below a rolling sales threshold](./unpublish-products-that-fall-below-a-rolling-sales-threshold)
 * [Unpublish products that have been out of stock for x days](./unpublish-products-that-have-been-out-of-stock-for-x-days)
 * [Unpublish products when tagged](./unpublish-products-when-tagged)
+* [Untag orders when closed/archived](./untag-orders-when-closed-archived)
 * [Untag orders when paid](./untag-orders-when-paid)
 * [Update empty customer data from addresses](./update-empty-customer-data-from-addresses)
 * [Update product description when out of stock](./update-product-description-when-out-of-stock)
@@ -1307,6 +1308,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Tag orders in bulk by order name](./tag-orders-in-bulk-by-order-name)
 * [Tag orders that have at least x of a certain product](./tag-orders-that-have-at-least-x-of-a-certain-product)
 * [Trigger order emails with a tag](./trigger-order-emails-with-a-tag)
+* [Untag orders when closed/archived](./untag-orders-when-closed-archived)
 * [Untag orders when paid](./untag-orders-when-paid)
 
 ### Out of Stock
@@ -1816,6 +1818,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Remove a product tag when another tag is added](./remove-a-product-tag-when-another-tag-is-added)
 * [Remove an order tag when another tag is added](./remove-a-order-tag-when-another-tag-is-added)
 * [Remove matched tags from all products](./remove-specified-tags-from-all-products)
+* [Untag orders when closed/archived](./untag-orders-when-closed-archived)
 * [Untag orders when paid](./untag-orders-when-paid)
 
 ### Variants
