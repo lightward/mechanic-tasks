@@ -2,7 +2,7 @@
 
 Tags: Auto-Tag, Customers, Spend
 
-This task runs daily to maintain tags for any customers that have a certain spending threshold within a rolling period of order history. Useful for rewarding customers who keep a consistent spend total.
+This task runs daily to maintain tags for any customers that have a certain spending threshold within a rolling period of order history. Useful for rewarding customers who keep a consistent spend total. Select to have the rolling spend calculated using either "Total sales" (_net sales + additional fess + duties + shipping charges + taxes_) or only "Net sales" (_gross sales - discounts - returns_).
 
 * View in the task library: [tasks.mechanic.dev/auto-tag-customers-having-a-rolling-minimum-total-spend](https://tasks.mechanic.dev/auto-tag-customers-having-a-rolling-minimum-total-spend)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-customers-having-a-rolling-minimum-total-spend.json)
@@ -12,11 +12,13 @@ This task runs daily to maintain tags for any customers that have a certain spen
 
 ```json
 {
+  "sales_calculation_to_use__choice_o1_total_sales_o2_net_sales_required": "total_sales",
   "minimum_total_spent__number_required": null,
   "customer_tag_to_apply__required": null,
   "days_of_order_history_to_consider__number_required": 30,
   "only_monitor_customers_having_this_tag": null,
-  "run_hourly_instead_of_daily__boolean": null
+  "run_hourly_instead_of_daily__boolean": null,
+  "test_mode__boolean": false
 }
 ```
 
@@ -37,9 +39,11 @@ mechanic/user/trigger
 
 ## Documentation
 
-This task runs daily to maintain tags for any customers that have a certain spending threshold within a rolling period of order history. Useful for rewarding customers who keep a consistent spend total.
+This task runs daily to maintain tags for any customers that have a certain spending threshold within a rolling period of order history. Useful for rewarding customers who keep a consistent spend total. Select to have the rolling spend calculated using either "Total sales" (_net sales + additional fess + duties + shipping charges + taxes_) or only "Net sales" (_gross sales - discounts - returns_).
 
-Optionally, choose to filter by customers who have a specific tag, or to run hourly instead of daily for increased tagging frequency.
+Optionally, choose to filter by customers who have a specific tag, or to run hourly instead of daily for increased tagging frequency, or to run the task in "Test mode".
+
+The "Test mode" option is highly recommended if you expect the task to make a lot of tagging changes (e.g. during initial set up), and you'd like to review the task run log of what it would do without making the actual tag updates. Just remember to turn off the test mode when you are ready for the daily (or hourly) scheduled task runs to make updates.
 
 ## Installing this task
 
