@@ -1,6 +1,6 @@
 # Auto-tag a customer's first order
 
-Tags: Auto-Tag, Customers, Orders, Tag
+Tags: Auto-Tag, Customers, Orders
 
 Watches for incoming orders that are the very first order on file for the related customer, and adds the tag of your choice.
 

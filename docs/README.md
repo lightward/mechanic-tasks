@@ -1713,7 +1713,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-pay orders from customers with a certain tag](./auto-pay-orders-from-customers-with-a-certain-tag)
 * [Auto-pay orders having a certain tag](./auto-pay-orders-having-a-certain-tag)
 * [Auto-publish products tagged with the current day](./auto-publish-products-tagged-with-the-current-day)
-* [Auto-tag a customer's first order](./auto-tag-a-customers-first-order)
 * [Auto-tag customers when another tag is added](./auto-tag-customers-when-another-tag-is-added)
 * [Auto-tag customers when their order is tagged](./auto-tag-customers-when-their-order-is-tagged)
 * [Auto-tag orders that do not have a certain tag](./auto-tag-orders-that-do-not-have-a-certain-tag)
