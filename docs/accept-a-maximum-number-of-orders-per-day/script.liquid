@@ -265,7 +265,7 @@
     {% action "cache", "set", cache_key, cache_value %}
   {% endfor %}
 
-{% elsif event.topic == "mechanic/scheduler/hourly" or event.topic == "mechanic/user/trigger" %}
+{% elsif event.topic == "mechanic/scheduler/daily" or event.topic == "mechanic/user/trigger" %}
   {% comment %}
     -- reset inventory levels if they are cached
   {% endcomment %}
