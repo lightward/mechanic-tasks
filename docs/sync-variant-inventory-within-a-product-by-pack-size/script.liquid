@@ -280,8 +280,24 @@
     {% assign inventory_adjustment["inventoryItemId"] = variant.inventoryItem.id %}
     {% assign inventory_adjustment["locationId"] = primary_location.admin_graphql_api_id %}
     {% assign inventory_adjustment["delta"] = new_inventory_level | minus: variant.inventoryItem.inventoryLevel.quantities.first.quantity %}
+    {% assign inventory_adjustment["changeFromQuantity"] = variant.inventoryItem.inventoryLevel.quantities.first.quantity %}
     {% assign inventory_adjustments = inventory_adjustments | push: inventory_adjustment %}
   {% endfor %}
+
+  {% comment %}
+    -- changeFromQuantity field is required as of 2026-04
+    https://shopify.dev/changelog/making-changefromquantity-field-required
+    -- Shopify will enforce idempotency for several mutations as of 2026-04
+    https://shopify.dev/changelog/making-idempotency-mandatory-for-inventory-adjustments-and-refund-mutations
+  {% endcomment %}
+
+  {% capture idempotent_key %}
+    {
+      "task_id": {{ task.id | json }},
+      "event_id": {{ event.id | json }},
+      "data": {{ inventory_adjustments | json }}
+    }
+  {% endcapture %}
 
   {% capture mutations %}
     {% if product_inventory_old != product_inventory_new %}
@@ -313,7 +329,7 @@
           name: "available"
           changes: {{ inventory_adjustments | graphql_arguments }}
         }
-      ) {
+      ) @idempotent(key: {{ idempotent_key | json | md5 | json }}) {
         inventoryAdjustmentGroup {
           reason
           changes(quantityNames: "available") {

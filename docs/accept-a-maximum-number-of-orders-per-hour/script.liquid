@@ -1,14 +1,8 @@
-{% comment %}
-  Options order:
+{% assign maximum_hourly_orders = options.maximum_hourly_orders__number_required %}
+{% assign only_count_orders_matching_this_query = options.only_count_orders_matching_this_query %}
+{% assign only_clear_inventory_for_products_with_this_tag = options.only_clear_inventory_for_products_with_this_tag %}
 
-  {{ options.maximum_hourly_orders__number_required }}
-  {{ options.only_count_orders_matching_this_query }}
-  {{ options.only_clear_inventory_for_products_with_this_tag }}
-  {{ options.restore_inventory_levels_the_next_hour__boolean }}
-  {{ options.restore_inventory_levels_on_demand__boolean }}
-{% endcomment %}
-
-{% if options.maximum_hourly_orders__number_required <= 0 %}
+{% if maximum_hourly_orders <= 0 %}
   {% error "'Maximum hourly orders' must be at least 1. :)" %}
 {% endif %}
 
@@ -16,25 +10,71 @@
 {% assign inventory_is_zeroed = cache[inventory_is_zeroed_cache_key] | default: false %}
 
 {% if event.topic contains "shopify/orders" %}
-  {% assign cursor = nil %}
-  {% assign orders_this_hour = 0 %}
   {% assign previous_hour = "now" | date: "%Y-%m-%dT%H:00:00%z" %}
   {% assign previous_hour_s = previous_hour | date: "%s" %}
   {% assign base_cache_key = "inventory_to_restore:" | append: previous_hour_s %}
 
-  {% capture orders_query %}
-    created_at:>={{ previous_hour | json }} {{ options.only_count_orders_matching_this_query }}
+  {%- capture orders_query -%}
+    created_at:>={{ previous_hour | json }} {{ only_count_orders_matching_this_query }}
+  {%- endcapture -%}
+
+  {% comment %}
+    -- get count of orders created this hour
+  {% endcomment %}
+
+  {% capture query %}
+    query {
+      ordersCount(
+        query: {{ orders_query | json }}
+        limit: null
+      ) {
+        count
+        precision
+      }
+    }
   {% endcapture %}
 
-  {% assign orders_query = orders_query | strip %}
+  {% assign result = query | shopify %}
 
-  {% for n in (0..100) %}
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "ordersCount": {
+            "count": {{ maximum_hourly_orders }}
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign orders_this_hour = result.data.ordersCount.count %}
+
+  {% log
+    orders_this_hour_thus_far: orders_this_hour,
+    orders_query: orders_query,
+    inventory_is_already_zeroed: inventory_is_zeroed
+  %}
+
+  {% if orders_this_hour < maximum_hourly_orders or inventory_is_zeroed %}
+    {% log "This hour's order count has not yet reached the maximum, or the inventory has already been zeroed." %}
+    {% break %}
+  {% endif %}
+
+  {% action "cache", "set", inventory_is_zeroed_cache_key, true %}
+
+  {% assign cursor = nil %}
+  {% assign inventory_adjustments = array %}
+  {% assign reverse_inventory_adjustments = array %}
+
+  {% for n in (1..100) %}
     {% capture query %}
       query {
-        orders(
+        inventoryItems(
           first: 250
           after: {{ cursor | json }}
-          query: {{ orders_query | json }}
         ) {
           pageInfo {
             hasNextPage
@@ -42,6 +82,24 @@
           }
           nodes {
             id
+            variants(first: 1) {
+              nodes {
+                product {
+                  tags
+                }
+              }
+            }
+            inventoryLevels(first: 100) {
+              nodes {
+                id
+                quantities(names: "available") {
+                  quantity
+                }
+                location {
+                  id
+                }
+              }
+            }
           }
         }
       }
@@ -50,18 +108,42 @@
     {% assign result = query | shopify %}
 
     {% if event.preview %}
-      {% assign inventory_is_zeroed = false %}
-
       {% capture result_json %}
         {
           "data": {
-            "orders": {
+            "inventoryItems": {
               "nodes": [
-                {% for n in (1..options.maximum_hourly_orders__number_required) %}
-                  {
-                    "id": "gid://shopify/Order/1234567890"
-                  }{% unless forloop.last %},{% endunless %}
-                {% endfor %}
+                {
+                  "id": "gid://shopify/InventoryItem/1234567890",
+                  "variants": {
+                    "nodes": [
+                      {
+                        "product": {
+                          "tags": [
+                            {% if only_clear_inventory_for_products_with_this_tag != blank %}
+                              {{ only_clear_inventory_for_products_with_this_tag | json }}
+                            {% endif %}
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  "inventoryLevels": {
+                    "nodes": [
+                      {
+                        "id": "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890",
+                        "quantities": [
+                          {
+                            "quantity": 20
+                          }
+                        ],
+                        "location": {
+                          "id": "gid://shopify/Location/1234567890"
+                        }
+                      }
+                    ]
+                  }
+                }
               ]
             }
           }
@@ -71,207 +153,130 @@
       {% assign result = result_json | parse_json %}
     {% endif %}
 
-    {% assign orders_this_hour = orders_this_hour | plus: result.data.orders.nodes.size %}
+    {% for inventory_item in result.data.inventoryItems.nodes %}
+      {% if only_clear_inventory_for_products_with_this_tag != blank %}
+        {% unless inventory_item.variants.nodes.first.product.tags contains only_clear_inventory_for_products_with_this_tag %}
+          {% continue %}
+        {% endunless %}
+      {% endif %}
 
-    {% if result.data.orders.pageInfo.hasNextPage %}
-      {% assign cursor = result.data.orders.pageInfo.endCursor %}
+      {% for inventory_level in inventory_item.inventoryLevels.nodes %}
+        {% if inventory_level.quantities.first.quantity > 0 %}
+          {% assign inventory_adjustment = hash %}
+          {% assign inventory_adjustment["inventoryItemId"] = inventory_item.id %}
+          {% assign inventory_adjustment["locationId"] = inventory_level.location.id %}
+          {% assign inventory_adjustment["delta"] = inventory_level.quantities.first.quantity | times: -1 %}
+          {% assign inventory_adjustment["changeFromQuantity"] = inventory_level.quantities.first.quantity %}
+          {% assign inventory_adjustments = inventory_adjustments | push: inventory_adjustment %}
+
+          {% comment %}
+            -- create reverse inventory adjustment to store in cache
+            -- IMPORTANT: using a fixed value of 0 for the changeFromQuantity assumes that "zeroed" inventory is not adjusted in any way prior to being restored by this task. If the possibility of adjustment exists, then the changeFromQuantity value should be set to null
+          {% endcomment %}
+
+          {% assign reverse_inventory_adjustment = hash %}
+          {% assign reverse_inventory_adjustment["inventoryItemId"] = inventory_item.id %}
+          {% assign reverse_inventory_adjustment["locationId"] = inventory_level.location.id %}
+          {% assign reverse_inventory_adjustment["delta"] = inventory_level.quantities.first.quantity %}
+          {% assign reverse_inventory_adjustment["changeFromQuantity"] = 0 %}
+          {% assign reverse_inventory_adjustments = reverse_inventory_adjustments | push: reverse_inventory_adjustment %}
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+
+    {% if result.data.inventoryItems.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.inventoryItems.pageInfo.endCursor %}
     {% else %}
       {% break %}
     {% endif %}
   {% endfor %}
 
-  {% log orders_this_hour_thus_far: orders_this_hour, orders_query: orders_query, inventory_is_already_zeroed: inventory_is_zeroed %}
-
-  {% if orders_this_hour >= options.maximum_hourly_orders__number_required and inventory_is_zeroed == false %}
-    {% action "cache", "set", inventory_is_zeroed_cache_key, true %}
-
-    {% assign cursor = nil %}
-    {% assign inventory_adjustments = array %}
-
-    {% for n in (0..2000) %}
-      {% capture query %}
-        query {
-          inventoryItems(
-            first: 3
-            after: {{ cursor | json }}
-          ) {
-            pageInfo {
-              hasNextPage
-              endCursor
-            }
-            nodes {
-              id
-                variant {
-                  product {
-                    tags
-                  }
-                }
-              inventoryLevels(first: 100) {
-                nodes {
-                  id
-                  quantities(names: "available") {
-                    name
-                    quantity
-                  }
-                  location {
-                    id
-                  }
-                }
-              }
-            }
-          }
-        }
-      {% endcapture %}
-
-      {% assign result = query | shopify %}
-
-      {% if event.preview %}
-        {% capture result_json %}
-          {
-            "data": {
-              "inventoryItems": {
-                "nodes": [
-                  {
-                    "id": "gid://shopify/InventoryItem/1234567890",
-                    "variant": {
-                      "product": {
-                        "tags": [
-                          {% if options.only_clear_inventory_for_products_with_this_tag != blank %}
-                            {{ options.only_clear_inventory_for_products_with_this_tag | json }}
-                          {% endif %}
-                        ]
-                      }
-                    },
-                    "inventoryLevels": {
-                      "nodes": [
-                        {
-                          "id": "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890",
-                          "quantities": [
-                            {
-                              "name": "available",
-                              "quantity": 20
-                            }
-                          ],
-                          "location": {
-                            "id": "gid://shopify/Location/1234567890"
-                          }
-                        }
-                      ]
-                    }
-                  }
-                ]
-              }
-            }
-          }
-        {% endcapture %}
-
-        {% assign result = result_json | parse_json %}
-      {% endif %}
-
-      {% for inventory_item in result.data.inventoryItems.nodes %}
-        {% if options.only_clear_inventory_for_products_with_this_tag != blank %}
-          {% unless inventory_item.variant.product.tags contains options.only_clear_inventory_for_products_with_this_tag %}
-            {% continue %}
-          {% endunless %}
-        {% endif %}
-
-        {% for inventory_level in inventory_item.inventoryLevels.nodes %}
-          {% if inventory_level.quantities.first.quantity > 0 %}
-            {% comment %}
-              NOTE: use availble quantity in the hash to be stored in cache... however, a negative delta will be made in the mutation to zero out the inventory
-            {% endcomment %}
-
-            {% assign inventory_adjustment = hash %}
-            {% assign inventory_adjustment["inventoryItemId"] = inventory_item.id %}
-            {% assign inventory_adjustment["locationId"] = inventory_level.location.id %}
-            {% assign inventory_adjustment["delta"] = inventory_level.quantities.first.quantity %}
-            {% assign inventory_adjustments = inventory_adjustments | push: inventory_adjustment %}
-          {% endif %}
-        {% endfor %}
-      {% endfor %}
-
-      {% if result.data.inventoryItems.pageInfo.hasNextPage %}
-        {% assign cursor = result.data.inventoryItems.pageInfo.endCursor %}
-      {% else %}
-        {% break %}
-      {% endif %}
-    {% endfor %}
-
-    {% if inventory_adjustments == blank %}
-      {% break %}
-    {% endif %}
-
-    {% assign groups_of_inventory_adjustments = inventory_adjustments | in_groups_of: 250, fill_with: false %}
-
-    {% for group_of_inventory_adjustments in groups_of_inventory_adjustments %}
-      {% action "shopify" %}
-        mutation {
-          inventoryAdjustQuantities(
-            input: {
-              reason: "correction"
-              name: "available"
-              changes: [
-                {% for inventory_adjustment in group_of_inventory_adjustments -%}
-                  {
-                    inventoryItemId: {{ inventory_adjustment.inventoryItemId | json }}
-                    locationId: {{ inventory_adjustment.locationId | json }}
-                    delta: {{ inventory_adjustment.delta | times: -1 }}
-                  }
-                {%- endfor %}
-              ]
-            }
-          ) {
-            inventoryAdjustmentGroup {
-              reason
-              changes {
-                name
-                delta
-                quantityAfterChange
-                item {
-                  id
-                  sku
-                }
-                location {
-                  name
-                }
-              }
-            }
-            userErrors {
-              code
-              field
-              message
-            }
-          }
-        }
-      {% endaction %}
-
-      {% comment %}
-        -- store the inventory to restore in cache even if neither restore option is selected... just in case :)
-      {% endcomment %}
-
-      {% assign cache_key = base_cache_key | append: "_group" | append: forloop.index0 %}
-      {% assign cache_value = hash %}
-      {% assign cache_value["value"] = group_of_inventory_adjustments %}
-
-      {% unless forloop.last %}
-        {% assign next_cache_key = base_cache_key | append: "_group" | append: forloop.index %}
-        {% assign cache_value["next_key"] = next_cache_key %}
-      {% endunless %}
-
-      {% action "cache", "set", cache_key, cache_value %}
-    {% endfor %}
+  {% if inventory_adjustments == blank %}
+    {% break %}
   {% endif %}
 
+  {% comment %}
+    -- changeFromQuantity field is required as of 2026-04
+    https://shopify.dev/changelog/making-changefromquantity-field-required
+    -- Shopify will enforce idempotency for several mutations as of 2026-04
+    https://shopify.dev/changelog/making-idempotency-mandatory-for-inventory-adjustments-and-refund-mutations
+  {% endcomment %}
+
+  {% assign groups_of_inventory_adjustments = inventory_adjustments | in_groups_of: 250, fill_with: false %}
+
+  {% for group_of_inventory_adjustments in groups_of_inventory_adjustments %}
+    {% capture idempotent_key %}
+      {
+        "task_id": {{ task.id | json }},
+        "event_id": {{ event.id | json }},
+        "data": {{ group_of_inventory_adjustments | json }}
+      }
+    {% endcapture %}
+
+    {% action "shopify" %}
+      mutation {
+        inventoryAdjustQuantities(
+          input: {
+            reason: "correction"
+            name: "available"
+            changes: {{ group_of_inventory_adjustments | graphql_arguments }}
+          }
+        ) @idempotent(key: {{ idempotent_key | json | md5 | json }}) {
+          inventoryAdjustmentGroup {
+            reason
+            changes(quantityNames: "available") {
+              name
+              delta
+              item {
+                id
+                sku
+              }
+              location {
+                name
+              }
+            }
+          }
+          userErrors {
+            code
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endfor %}
+
+  {% assign groups_of_reverse_inventory_adjustments = reverse_inventory_adjustments | in_groups_of: 250, fill_with: false %}
+
+  {% comment %}
+    -- cache the reverse inventory adjustments even if neither restore option is selected... just in case :)
+  {% endcomment %}
+
+  {% for group_of_reverse_inventory_adjustments in groups_of_reverse_inventory_adjustments %}
+    {% assign cache_key = base_cache_key | append: "_group" | append: forloop.index0 %}
+    {% assign cache_value = hash %}
+    {% assign cache_value["value"] = group_of_reverse_inventory_adjustments %}
+
+    {% unless forloop.last %}
+      {% assign next_cache_key = base_cache_key | append: "_group" | append: forloop.index %}
+      {% assign cache_value["next_key"] = next_cache_key %}
+    {% endunless %}
+
+    {% action "cache", "set", cache_key, cache_value %}
+  {% endfor %}
+
 {% elsif event.topic == "mechanic/scheduler/hourly" or event.topic == "mechanic/user/trigger" %}
+  {% comment %}
+    -- reset inventory levels if they are cached
+  {% endcomment %}
+
   {% action "cache", "del", inventory_is_zeroed_cache_key %}
   {% assign cache_keys = array %}
 
   {% assign hour_in_s = 60 | times: 60 %}
   {% assign previous_hour = "now" | date: "%s" | minus: hour_in_s | date: "%Y-%m-%dT%H:00:00%z" %}
   {% assign previous_hour_s = previous_hour | date: "%s" %}
-
   {% assign cache_key = "inventory_to_restore:" | append: previous_hour_s | append: "_group0" %}
-
   {% assign inventory_adjustments_cache_group = cache[cache_key] | default: hash %}
 
   {% if inventory_adjustments_cache_group == blank %}
@@ -286,8 +291,16 @@
     {% assign inventory_adjustment["inventoryItemId"] = "gid://shopify/InventoryItem/1234567890" %}
     {% assign inventory_adjustment["locationId"] = "gid://shopify/Location/1234567890" %}
     {% assign inventory_adjustment["delta"] = 20 %}
+    {% assign inventory_adjustment["changeFromQuantity"] = 0 %}
     {% assign inventory_adjustments_cache_group["value"] = array | push: inventory_adjustment %}
   {% endif %}
+
+  {% comment %}
+    -- changeFromQuantity field is required as of 2026-04
+    https://shopify.dev/changelog/making-changefromquantity-field-required
+    -- Shopify will enforce idempotency for several mutations as of 2026-04
+    https://shopify.dev/changelog/making-idempotency-mandatory-for-inventory-adjustments-and-refund-mutations
+  {% endcomment %}
 
   {% if inventory_adjustments_cache_group == blank %}
     {% error
@@ -295,54 +308,60 @@
       cache_key: cache_key
     %}
     {% break %}
+  {% endif %}
 
-  {% else %}
-    {% for n in (0..1000) %}
-      {% action "shopify" %}
-        mutation {
-          inventoryAdjustQuantities(
-            input: {
-              reason: "correction"
-              name: "available"
-              changes: {{ inventory_adjustments_cache_group.value | graphql_arguments }}
-            }
-          ) {
-            inventoryAdjustmentGroup {
-              reason
-              changes {
+  {% for n in (1..1000) %}
+    {% capture idempotent_key %}
+      {
+        "task_id": {{ task.id | json }},
+        "event_id": {{ event.id | json }},
+        "data": {{ inventory_adjustments_cache_group.value | json }}
+      }
+    {% endcapture %}
+
+    {% action "shopify" %}
+      mutation {
+        inventoryAdjustQuantities(
+          input: {
+            reason: "correction"
+            name: "available"
+            changes: {{ inventory_adjustments_cache_group.value | graphql_arguments }}
+          }
+        ) @idempotent(key: {{ idempotent_key | json | md5 | json }}) {
+          inventoryAdjustmentGroup {
+            reason
+            changes(quantityNames: "available") {
+              name
+              delta
+              item {
+                id
+                sku
+              }
+              location {
                 name
-                delta
-                quantityAfterChange
-                item {
-                  id
-                  sku
-                }
-                location {
-                  name
-                }
               }
             }
-            userErrors {
-              code
-              field
-              message
-            }
+          }
+          userErrors {
+            code
+            field
+            message
           }
         }
-      {% endaction %}
+      }
+    {% endaction %}
 
-      {% assign cache_keys = cache_keys | push: cache_key %}
+    {% assign cache_keys = cache_keys | push: cache_key %}
 
-      {% if inventory_adjustments_cache_group.next_key %}
-        {% assign cache_key = inventory_adjustments_cache_group.next_key %}
-        {% assign inventory_adjustments_cache_group = cache[cache_key] %}
-      {% else %}
-        {% break %}
-      {% endif %}
-    {% endfor %}
+    {% if inventory_adjustments_cache_group.next_key %}
+      {% assign cache_key = inventory_adjustments_cache_group.next_key %}
+      {% assign inventory_adjustments_cache_group = cache[cache_key] %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
 
-    {% for cache_key in cache_keys %}
-      {% action "cache", "del", cache_key %}
-    {% endfor %}
-  {% endif %}
+  {% for cache_key in cache_keys %}
+    {% action "cache", "del", cache_key %}
+  {% endfor %}
 {% endif %}

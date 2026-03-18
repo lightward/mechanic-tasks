@@ -1,8 +1,10 @@
-{% assign variant_id = options.variant_id__number_required %}
+{% assign variant_id = options.variant__picker_variant_required %}
 {% assign inventory_quantity_to_set = options.inventory_quantity_to_set__number_required %}
 {% assign location_name = options.location_name__required %}
 {% assign hours_offset = options.hours_offset_from_midnight__number__required %}
 {% assign minutes_offset = options.minutes_offset_from_the_hour__number_required %}
+{% assign run_daily = options.run_daily__boolean %}
+{% assign run_days = options.days_to_run__multiselect__o1_monday_o2_tuesday_o3_wednesday_o4_thursday_o5_friday_o6_saturday_o7_sunday %}
 
 {% if inventory_quantity_to_set < 0 %}
   {% error "Choose an inventory quantity to set greater than zero." %}
@@ -34,33 +36,10 @@
   {%- endcapture -%}
 {% endif %}
 
-{% if options.run_daily__boolean %}
+{% if run_daily %}
   {% assign run_days = "daily" %}
+
 {% else %}
-  {% assign run_days = array %}
-
-  {% if options.run_on_mondays__boolean %}
-    {% assign run_days = run_days | push: "Monday" %}
-  {% endif %}
-  {% if options.run_on_tuesdays__boolean %}
-    {% assign run_days = run_days | push: "Tuesday" %}
-  {% endif %}
-  {% if options.run_on_wednesdays__boolean %}
-    {% assign run_days = run_days | push: "Wednesday" %}
-  {% endif %}
-  {% if options.run_on_thursdays__boolean %}
-    {% assign run_days = run_days | push: "Thursday" %}
-  {% endif %}
-  {% if options.run_on_fridays__boolean %}
-    {% assign run_days = run_days | push: "Friday" %}
-  {% endif %}
-  {% if options.run_on_saturdays__boolean %}
-    {% assign run_days = run_days | push: "Saturday" %}
-  {% endif %}
-  {% if options.run_on_sundays__boolean %}
-    {% assign run_days = run_days | push: "Sunday" %}
-  {% endif %}
-
   {% if run_days.size == 1 %}
     {% capture run_days -%}
       every {{ run_days.first }}
@@ -79,7 +58,7 @@
 {% endif %}
 
 {% if run_days == blank %}
-  {% error "Choose at least one run day option." %}
+  {% error "Choose either 'Run daily' or at least one 'Days to run' option." %}
 {% endif %}
 
 {% comment %}
@@ -129,12 +108,12 @@
 {% endif %}
 
 {% comment %}
-  -- check to see if variant exists and get its inventory item ID and available quantitiy at the configured location
+  -- check to see if variant exists and get its inventory item ID and available quantity at the configured location
 {% endcomment %}
 
 {% capture query %}
   query {
-    productVariant(id: {{ variant_id | json | prepend: "gid://shopify/ProductVariant/" | json }}) {
+    productVariant(id: {{ variant_id | json }}) {
       id
       displayName
       inventoryItem {
@@ -198,7 +177,7 @@
   {% capture output %}
     This task is configured to run {{ run_days }} at {{ run_time }} local shop time.
 
-    It will set the available inventory for the {{ variant.displayName }} to {{ inventory_quantity_to_set }} at {{ location_name }}.
+    It will set the available inventory for the {{ variant.displayName | remove: " - Default Title" }} to {{ inventory_quantity_to_set }} at {{ location_name }}.
   {% endcapture %}
 
   {% log output %}
@@ -213,6 +192,21 @@
     {% break %}
   {% endif %}
 
+  {% comment %}
+    -- changeFromQuantity field is required as of 2026-04
+    https://shopify.dev/changelog/making-changefromquantity-field-required
+    -- Shopify will enforce idempotency for several mutations as of 2026-04
+    https://shopify.dev/changelog/making-idempotency-mandatory-for-inventory-adjustments-and-refund-mutations
+  {% endcomment %}
+
+  {% capture idempotent_key %}
+    {
+      "task_id": {{ task.id | json }},
+      "event_id": {{ event.id | json }},
+      "data": {{ inventory_quantity_to_set | json }}
+    }
+  {% endcapture %}
+
   {% action "shopify" %}
     mutation {
       inventoryAdjustQuantities(
@@ -224,13 +218,14 @@
               inventoryItemId: {{ variant.inventoryItem.id | json }}
               locationId: {{ location.id | json }}
               delta: {{ inventory_quantity_to_set | minus: available }}
+              changeFromQuantity: {{ available }}
             }
           ]
         }
-      ) {
+      ) @idempotent(key: {{ idempotent_key | json | md5 | json }}) {
         inventoryAdjustmentGroup {
           reason
-          changes {
+          changes(quantityNames: "available") {
             name
             delta
             item {

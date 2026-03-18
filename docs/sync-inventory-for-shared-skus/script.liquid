@@ -230,6 +230,7 @@
         {% assign inventory_adjustment["inventoryItemId"] = variant.inventoryItem.id %}
         {% assign inventory_adjustment["locationId"] = primary_location.admin_graphql_api_id %}
         {% assign inventory_adjustment["delta"] = delta_for_sync %}
+        {% assign inventory_adjustment["changeFromQuantity"] = variant.inventoryItem.inventoryLevel.quantities.first.quantity %}
         {% assign inventory_adjustments = inventory_adjustments | push: inventory_adjustment %}
       {% endif %}
     {% endfor %}
@@ -240,10 +241,25 @@
     {% endif %}
   {% endfor %}
 
+  {% comment %}
+    -- changeFromQuantity field is required as of 2026-04
+    https://shopify.dev/changelog/making-changefromquantity-field-required
+    -- Shopify will enforce idempotency for several mutations as of 2026-04
+    https://shopify.dev/changelog/making-idempotency-mandatory-for-inventory-adjustments-and-refund-mutations
+  {% endcomment %}
+
   {% if inventory_adjustments != blank %}
     {% assign groups_of_inventory_adjustments = inventory_adjustments | in_groups_of: 250, fill_with: false %}
 
     {% for group_of_inventory_adjustments in groups_of_inventory_adjustments %}
+      {% capture idempotent_key %}
+        {
+          "task_id": {{ task.id | json }},
+          "event_id": {{ event.id | json }},
+          "data": {{ group_of_inventory_adjustments | json }}
+        }
+      {% endcapture %}
+
       {% action "shopify" %}
         mutation {
           inventoryAdjustQuantities(
@@ -252,13 +268,12 @@
               name: "available"
               changes: {{ group_of_inventory_adjustments | graphql_arguments }}
             }
-          ) {
+          ) @idempotent(key: {{ idempotent_key | json | md5 | json }}) {
             inventoryAdjustmentGroup {
               reason
-              changes {
+              changes(quantityNames: "available") {
                 name
                 delta
-                quantityAfterChange
                 item {
                   id
                   sku
