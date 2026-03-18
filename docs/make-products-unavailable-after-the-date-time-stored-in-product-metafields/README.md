@@ -39,7 +39,7 @@ mechanic/shopify/bulk_operation
 
 Use this task to automatically set product inventory to 0, and the product's inventory policy to deny out-of-stock purchases, after a date/time that you specify in a product metafield.
 
-Configure the "Datetime product metafield namespace dot key" field with the namespace and key (e.g. "custom.unpublish_after") for the product metafield that holds a Shopify [date or date_time](https://shopify.dev/docs/apps/custom-data/metafields/types) value. More information on setting up new Shopify metafields can be found [here](https://help.shopify.com/en/manual/metafields).
+Configure the "Product metafield" field with the namespace and key (e.g. "custom.unpublish_after") for the product metafield that holds a Shopify [date or date_time](https://shopify.dev/docs/apps/custom-data/metafields/types) value. More information on setting up Shopify metafields can be found [here](https://help.shopify.com/en/manual/metafields).
 
 When you run this task (or as it runs hourly/daily, per your configuration), the task will look for products who have a metafield date/time value that's in the past. For qualifying products, all inventory items with a level greater than 0 will have their levels set to exactly 0, and all variants will have their inventory policies set to "deny" (preventing sales, once the variants are all out of stock).
 

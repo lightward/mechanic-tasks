@@ -1,54 +1,133 @@
-{% comment %}
-  An opinion on option order:
+{% assign minimum_inventory_level = options.minimum_inventory_level__number_required %}
+{% assign location_id = options.location_id__number %}
+{% assign whitelist_filter_mode = options.whitelist_filter_mode__boolean %}
+{% assign blacklist_filter_mode = options.blacklist_filter_mode__boolean %}
+{% assign filter_for_these_variant_ids = options.filter_for_these_variant_ids__array_number %}
+{% assign filter_for_these_variant_options = options.filter_for_these_variant_options__keyval %}
+{% assign filter_for_these_product_types = options.filter_for_these_product_types__array %}
+{% assign filter_for_these_product_ids = options.filter_for_these_product_ids__array_number %}
 
-  {{ options.minimum_inventory_level__number_required }}
-  {{ options.location_id__number }}
-  {{ options.whitelist_filter_mode__boolean }}
-  {{ options.blacklist_filter_mode__boolean }}
-  {{ options.filter_for_these_variant_ids__array_number }}
-  {{ options.filter_for_these_variant_options__keyval }}
-  {{ options.filter_for_these_product_types__array }}
-  {{ options.filter_for_these_product_ids__array_number }}
+{% if location_id != blank %}
+  {% assign location_id = location_id | append: "" %}
+{% endif %}
+
+{% comment %}
+  -- validate mode and filter combinations
 {% endcomment %}
 
-{% if event.preview %}
-  {% assign inventory_level = hash %}
-  {% assign inventory_level["inventory_item_id"] = 1234567890 %}
-  {% assign inventory_level["location_id"] = options.location_id__number | default: 1234567890 %}
-  {% assign inventory_level["available"] = options.minimum_inventory_level__number_required | minus: 1 %}
-  {% assign inventory_level["admin_graphql_api_id"] = "gid://shopify/InventoryLevel/1234567890?inventory_item_id=1234567890" %}
-  {% assign inventory_level["inventory_item"] = hash %}
-  {% assign inventory_level["inventory_item"]["admin_graphql_api_id"] = "gid://shopify/InventoryItem/1234567890" %}
-  {% assign inventory_level["location"] = hash %}
-  {% assign inventory_level["location"]["admin_graphql_api_id"] = "gid://shopify/Location/1234567890" %}
+{% if whitelist_filter_mode and blacklist_filter_mode %}
+  {% error "Choose only one of 'Whitelist filter mode' or 'Blacklist filter mode'" %}
+
+{% elsif whitelist_filter_mode or blacklist_filter_mode %}
+  {% if filter_for_these_variant_ids == blank
+    and filter_for_these_variant_options == blank
+    and filter_for_these_product_types == blank
+    and filter_for_these_product_ids == blank
+  %}
+    {% error "When using a filter mode, at least one filter must be configured." %}
+  {% endif %}
+
+{% elsif filter_for_these_variant_ids != blank
+  or filter_for_these_variant_options != blank
+  or filter_for_these_product_types != blank
+  or filter_for_these_product_ids != blank
+%}
+  {% error "When using filters, a filter mode must be selected." %}
 {% endif %}
 
-{% assign minimum_inventory_level = options.minimum_inventory_level__number_required %}
+{% comment %}
+  -- get extended inventory level data, including item, variant, and product
+  -- as of 2026-01, the item variant should be queried using variants connection
+{% endcomment %}
 
-{% assign location_id_qualifies = false %}
-{% if options.location_id__number == blank or inventory_level.location_id == options.location_id__number %}
-  {% assign location_id_qualifies = true %}
-{% endif %}
-
-{% assign inventory_level_requires_reset = false %}
-{% if location_id_qualifies and inventory_level.available < minimum_inventory_level %}
-  {% assign inventory_level_requires_reset = true %}
-{% endif %}
-
-{% if inventory_level_requires_reset %}
-  {% capture query %}
-    query {
-      inventoryLevel(id: {{ inventory_level.admin_graphql_api_id | json }}) {
-        item {
-          variant {
+{% capture query %}
+  query {
+    inventoryLevel(id: {{ inventory_level.admin_graphql_api_id | json }}) {
+      location {
+        id
+        legacyResourceId
+      }
+      quantities(names: "available") {
+        quantity
+      }
+      item {
+        id
+        legacyResourceId
+        variants(first: 1) {
+          nodes {
             legacyResourceId
             selectedOptions {
               name
               value
             }
             product {
-              productType
               legacyResourceId
+              productType
+            }
+          }
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "inventoryLevel": {
+          "location": {
+            "id": {{ location_id | default: "1234567890" | prepend: "gid://shopify/Location/" | json }},
+            "legacyResourceId": {{ location_id | default: "1234567890" | json }}
+          },
+          "quantities": [
+            {
+              "quantity": {{ minimum_inventory_level | minus: 1 }}
+            }
+          ],
+          "item": {
+            "variants": {
+              "nodes": [
+                {
+                  "legacyResourceId":
+                    {% if whitelist_filter_mode %}
+                      {{ filter_for_these_variant_ids.first | append: "" | json }}
+                    {% else %}
+                      {{ "now" | date: "%s" | json }}
+                    {% endif %}
+                    ,
+                  "selectedOptions": [
+                    {% if whitelist_filter_mode %}
+                      {
+                        "name": {{ filter_for_these_variant_options | first | first  | json }},
+                        "value": {{ filter_for_these_variant_options | first | last | json }}
+                      }
+                    {% else %}
+                      {
+                        "name": {{ "now" | date: "%s" | sha256 | json }},
+                        "value": {{ "now" | date: "%s" | sha256 | json }}
+                      }
+                    {% endif %}
+                  ],
+                  "product": {
+                    "productType":
+                      {% if whitelist_filter_mode %}
+                        {{ filter_for_these_product_types.first | json }}
+                      {% else %}
+                        {{ "now" | date: "%s" | sha256 | json }}
+                      {% endif %}
+                      ,
+                    "legacyResourceId":
+                      {% if whitelist_filter_mode %}
+                        {{ filter_for_these_product_ids.first | append: "" | json }}
+                      {% else %}
+                        {{ "now" | date: "%s" | json }}
+                      {% endif %}
+                  }
+                }
+              ]
             }
           }
         }
@@ -56,156 +135,143 @@
     }
   {% endcapture %}
 
-  {% assign result = query | shopify %}
+  {% assign result = result_json | parse_json %}
+{% endif %}
 
-  {% if event.preview %}
-    {% capture result_json %}
-      {
-        "data": {
-          "inventoryLevel": {
-            "item": {
-              "variant": {
-                "legacyResourceId":
-                  {% if options.whitelist_filter_mode__boolean %}
-                    {{ options.filter_for_these_variant_ids__array_number.first | append: "" | json }}
-                  {% else %}
-                    {{ "now" | date: "%s" | json }}
-                  {% endif %}
-                  ,
-                "selectedOptions": [
-                  {% if options.whitelist_filter_mode__boolean %}
-                    {
-                      "name": {{ options.filter_for_these_variant_options__keyval.first[0] | json }},
-                      "value": {{ options.filter_for_these_variant_options__keyval.first[1] | json }}
-                    }
-                  {% else %}
-                    {
-                      "name": {{ "now" | date: "%s" | sha256 | json }},
-                      "value": {{ "now" | date: "%s" | sha256 | json }}
-                    }
-                  {% endif %}
-                ],
-                "product": {
-                  "productType":
-                    {% if options.whitelist_filter_mode__boolean %}
-                      {{ options.filter_for_these_product_types__array.first | json }}
-                    {% else %}
-                      {{ "now" | date: "%s" | sha256 | json }}
-                    {% endif %}
-                    ,
-                  "legacyResourceId":
-                    {% if options.whitelist_filter_mode__boolean %}
-                      {{ options.filter_for_these_product_ids__array_number.first | append: "" | json }}
-                    {% else %}
-                      {{ "now" | date: "%s" | json }}
-                    {% endif %}
-                }
-              }
-            }
-          }
-        }
-      }
-    {% endcapture %}
+{% assign inventory_level = result.data.inventoryLevel %}
+{% assign available = inventory_level.quantities.first.quantity %}
+{% assign variant = inventory_level.item.variants.nodes.first %}
+{% assign variant_id = variant.legacyResourceId | times: 1 %}
+{% assign product_id = variant.product.legacyResourceId | times: 1 %}
+{% assign product_type = variant.product.productType %}
 
-    {% assign result = result_json | parse_json %}
+{% unless event.preview %}
+  {% log inventory_level: inventory_level %}
+{% endunless %}
+
+{% comment %}
+  -- only process inventory levels below the minimum, and at a specific location if configured
+{% endcomment %}
+
+{% if location_id != blank and inventory_level.location.legacyResourceId != location_id %}
+  {% log %}
+    "This inventory level change was not from the configured location ({{ location_id }}); skipping."
+  {% endlog %}
+
+  {% break %}
+
+{% elsif available >= minimum_inventory_level %}
+  {% log %}
+    "Available inventory level at this location meets or exceeds the minimum of {{ minimum_inventory_level }}; skipping."
+  {% endlog %}
+
+  {% break %}
+{% endif %}
+
+{% comment %}
+  -- check filter conditions if any are configured
+{% endcomment %}
+
+{% assign inventory_level_filtered = nil %}
+
+{% if filter_for_these_variant_ids contains variant_id %}
+  {% assign inventory_level_filtered = "variant_id:" | append: variant_id %}
+{% endif %}
+
+{% for filter_option_keyval in filter_for_these_variant_options %}
+  {% assign filter_option_name = filter_option_keyval[0] %}
+  {% assign filter_option_value = filter_option_keyval[1] %}
+  {% assign matching_filter_option = variant.selectedOptions | where: "name", filter_option_name | first %}
+
+  {% if matching_filter_option and matching_filter_option.value == filter_option_value %}
+    {% assign inventory_level_filtered = "variant_option:" | append: filter_option_name | append: "=" | append: filter_option_value %}
+    {% break %}
   {% endif %}
+{% endfor %}
 
-  {% assign inventory_level_filtered = nil %}
+{% if filter_for_these_product_ids contains product_id %}
+  {% assign inventory_level_filtered = "product_id:" | append: product_id %}
+{% endif %}
 
-  {% assign variant_id = result.data.inventoryLevel.item.variant.legacyResourceId | times: 1 %}
-  {% if options.filter_for_these_variant_ids__array_number contains variant_id %}
-    {% assign inventory_level_filtered = "variant_id:" | append: variant_id %}
-  {% endif %}
+{% if filter_for_these_product_types contains product_type %}
+  {% assign inventory_level_filtered = "product_type:" | append: product_type %}
+{% endif %}
 
-  {% for filter_option_keyval in options.filter_for_these_variant_options__keyval %}
-    {% assign filter_option_name = filter_option_keyval[0] %}
-    {% assign filter_option_value = filter_option_keyval[1] %}
-    {% assign matching_filter_option = result.data.inventoryLevel.item.variant.selectedOptions | where: "name", filter_option_name | first %}
+{% assign adjust_quantity = false %}
 
-    {% if matching_filter_option and matching_filter_option.value == filter_option_value %}
-      {% assign inventory_level_filtered = "variant_option:" | append: filter_option_name | append: "=" | append: filter_option_value %}
-      {% break %}
-    {% endif %}
-  {% endfor %}
+{% if whitelist_filter_mode == false and blacklist_filter_mode == false %}
+  {% log filter_mode: nil %}
+  {% assign adjust_quantity = true %}
 
-  {% assign product_id = result.data.inventoryLevel.item.variant.product.legacyResourceId | times: 1 %}
-  {% if options.filter_for_these_product_ids__array_number contains product_id %}
-    {% assign inventory_level_filtered = "product_id:" | append: product_id %}
-  {% endif %}
+{% elsif whitelist_filter_mode %}
+  {% log filter_mode: "whitelist", filter_value: inventory_level_filtered %}
 
-  {% assign product_type = result.data.inventoryLevel.item.variant.product.productType %}
-  {% if options.filter_for_these_product_types__array contains product_type %}
-    {% assign inventory_level_filtered = "product_type:" | append: product_type %}
-  {% endif %}
-
-  {% if options.whitelist_filter_mode__boolean and options.blacklist_filter_mode__boolean %}
-    {% error "Choose only one of 'Whitelist filter mode' or 'Blacklist filter mode'" %}
-  {% elsif options.whitelist_filter_mode__boolean %}
-    {% if options.filter_for_these_variant_ids__array_number == blank and options.filter_for_these_variant_options__keyval == blank and options.filter_for_these_product_types__array == blank and options.filter_for_these_product_ids__array_number == blank %}
-      {% error "When using the whitelist filter mode, at least one filter must be configured." %}
-    {% endif %}
-  {% elsif options.whitelist_filter_mode__boolean == false and options.blacklist_filter_mode__boolean == false %}
-    {% if options.filter_for_these_variant_ids__array_number != blank or options.filter_for_these_variant_options__keyval != blank or options.filter_for_these_product_types__array != blank or options.filter_for_these_product_ids__array_number != blank %}
-      {% error "When using filters, a filter mode must be selected." %}
-    {% endif %}
-  {% endif }
-
-  {% assign adjust_quantity = false %}
-  {% if options.whitelist_filter_mode__boolean == false and options.blacklist_filter_mode__boolean == false %}
-    {% log filter_mode: nil %}
+  {% if inventory_level_filtered != blank %}
     {% assign adjust_quantity = true %}
-  {% elsif options.whitelist_filter_mode__boolean %}
-    {% log filter_mode: "whitelist", filter_value: inventory_level_filtered %}
-
-    {% if inventory_level_filtered != blank %}
-      {% assign adjust_quantity = true %}
-    {% endif %}
-  {% elsif options.blacklist_filter_mode__boolean %}
-    {% log filter_mode: "blacklist", filter_value: inventory_level_filtered %}
-
-    {% if inventory_level_filtered == blank %}
-      {% assign adjust_quantity = true %}
-    {% endif %}
   {% endif %}
 
-  {% if adjust_quantity %}
-    {% action "shopify" %}
-      mutation {
-        inventoryAdjustQuantities(
-          input: {
-            reason: "correction"
-            name: "available"
-            changes: [
-              {
-                inventoryItemId: {{ inventory_level.inventory_item.admin_graphql_api_id | json }}
-                locationId: {{ inventory_level.location.admin_graphql_api_id | json }}
-                delta: {{ minimum_inventory_level | minus: inventory_level.available }}
-              }
-            ]
-          }
-        ) {
-          inventoryAdjustmentGroup {
-            reason
-            changes {
-              name
-              delta
-              quantityAfterChange
-              item {
-                id
-                sku
-              }
-              location {
-                name
-              }
-            }
-          }
-          userErrors {
-            code
-            field
-            message
-          }
-        }
-      }
-    {% endaction %}
+{% elsif blacklist_filter_mode %}
+  {% log filter_mode: "blacklist", filter_value: inventory_level_filtered %}
+
+  {% if inventory_level_filtered == blank %}
+    {% assign adjust_quantity = true %}
   {% endif %}
 {% endif %}
+
+{% unless adjust_quantity %}
+  {% break %}
+{% endunless %}
+
+{% comment %}
+  -- inventory level qualified to be adjusted
+  -- changeFromQuantity field is required as of 2026-04
+  https://shopify.dev/changelog/making-changefromquantity-field-required
+  -- Shopify will enforce idempotency for several mutations as of 2026-04
+  https://shopify.dev/changelog/making-idempotency-mandatory-for-inventory-adjustments-and-refund-mutations
+{% endcomment %}
+
+{% assign inventory_adjustment = hash %}
+{% assign inventory_adjustment["inventoryItemId"] = inventory_level.item.id %}
+{% assign inventory_adjustment["locationId"] = inventory_level.location.id %}
+{% assign inventory_adjustment["delta"] = minimum_inventory_level | minus: available %}
+{% assign inventory_adjustment["changeFromQuantity"] = available %}
+
+{% capture idempotent_key %}
+  {
+    "task_id": {{ task.id | json }},
+    "event_id": {{ event.id | json }},
+    "data": {{ inventory_adjustment | json }}
+  }
+{% endcapture %}
+
+{% action "shopify" %}
+  mutation {
+    inventoryAdjustQuantities(
+      input: {
+        reason: "correction"
+        name: "available"
+        changes: {{ array | push: inventory_adjustment | graphql_arguments }}
+      }
+    ) @idempotent(key: {{ idempotent_key | json | md5 | json }}) {
+      inventoryAdjustmentGroup {
+        reason
+        changes(quantityNames: "available") {
+          name
+          delta
+          item {
+            id
+            sku
+          }
+          location {
+            name
+          }
+        }
+      }
+      userErrors {
+        code
+        field
+        message
+      }
+    }
+  }
+{% endaction %}

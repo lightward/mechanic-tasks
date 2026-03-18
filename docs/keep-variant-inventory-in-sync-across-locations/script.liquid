@@ -1,7 +1,7 @@
 {% assign filter_by_these_product_types = options.filter_by_these_product_types__array %}
 
 {% comment %}
-  -- query for "available" quantites at all locations where this inventory item / variant is stocked
+  -- query for "available" quantities at all locations where this inventory item / variant is stocked
 {% endcomment %}
 
 {% capture query %}
@@ -9,10 +9,12 @@
     inventoryLevel(id: {{ inventory_level.admin_graphql_api_id | json }}) {
       item {
         id
-        variant {
-          legacyResourceId
-          product {
-            productType
+        variants(first: 1) {
+          nodes {
+            legacyResourceId
+            product {
+              productType
+            }
           }
         }
         inventoryLevels(first: 100) {
@@ -40,11 +42,15 @@
         "inventoryLevel": {
           "item": {
             "id": "gid://shopify/InventoryItem/1234567890",
-            "variant": {
-              "legacyResourceId": "1234567890",
-              "product": {
-                "productType": {{ filter_by_these_product_types.first | json }}
-              }
+            "variants": {
+              "nodes": [
+                {
+                  "legacyResourceId": "1234567890",
+                  "product": {
+                    "productType": {{ filter_by_these_product_types.first | json }}
+                  }
+                }
+              ]
             },
             "inventoryLevels": {
               "nodes": [
@@ -82,8 +88,8 @@
 {% endif %}
 
 {% assign inventory_item = result.data.inventoryLevel.item %}
-{% assign variant = inventory_item.variant %}
-{% assign product = inventory_item.variant.product %}
+{% assign variant = inventory_item.variants.nodes.first %}
+{% assign product = variant.product %}
 {% assign inventory_levels = inventory_item.inventoryLevels.nodes %}
 
 {% comment %}
@@ -124,7 +130,7 @@
   -- since this task updates ALL inventory levels of a variant in bulk, then a source quantity that doesn't equal the cached value for this variant indicates the change was likely not made via a prior run of this task
 {% endcomment %}
 
-{% assign cache_key = "variant-inventory-level-" | append: inventory_item.variant.legacyResourceId %}
+{% assign cache_key = "variant-inventory-level-" | append: variant.legacyResourceId %}
 {% assign cached_value = cache[cache_key] %}
 
 {% if cached_value != blank %}
@@ -160,11 +166,27 @@
     {% assign adjustment["inventoryItemId"] = inventory_item.id %}
     {% assign adjustment["locationId"] = inventory_level.location.id %}
     {% assign adjustment["delta"] = delta %}
+    {% assign adjustment["changeFromQuantity"] = inventory_level.quantities.first.quantity %}
     {% assign adjustments = adjustments | push: adjustment %}
   {% endif %}
 {% endfor %}
 
+{% comment %}
+  -- changeFromQuantity field is required as of 2026-04
+  https://shopify.dev/changelog/making-changefromquantity-field-required
+  -- Shopify will enforce idempotency for several mutations as of 2026-04
+  https://shopify.dev/changelog/making-idempotency-mandatory-for-inventory-adjustments-and-refund-mutations
+{% endcomment %}
+
 {% if adjustments != blank %}
+  {% capture idempotent_key %}
+    {
+      "task_id": {{ task.id | json }},
+      "event_id": {{ event.id | json }},
+      "data": {{ adjustments | json }}
+    }
+  {% endcapture %}
+
   {% action "shopify" %}
     mutation {
       inventoryAdjustQuantities(
@@ -173,7 +195,21 @@
           reason: "correction"
           changes: {{ adjustments | graphql_arguments }}
         }
-      ) {
+      ) @idempotent(key: {{ idempotent_key | json | md5 | json }}) {
+        inventoryAdjustmentGroup {
+          reason
+          changes(quantityNames: "available") {
+            name
+            delta
+            item {
+              id
+              sku
+            }
+            location {
+              name
+            }
+          }
+        }
         userErrors {
           code
           field

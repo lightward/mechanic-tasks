@@ -12,19 +12,13 @@ Use this task to set the available inventory of a single product variant at a si
 
 ```json
 {
-  "variant_id__number_required": null,
+  "variant__picker_variant_required": null,
   "inventory_quantity_to_set__number_required": null,
   "location_name__required": null,
   "hours_offset_from_midnight__number__required": "0",
   "minutes_offset_from_the_hour__number_required": "0",
   "run_daily__boolean": false,
-  "run_on_mondays__boolean": false,
-  "run_on_tuesdays__boolean": false,
-  "run_on_wednesdays__boolean": false,
-  "run_on_thursdays__boolean": false,
-  "run_on_fridays__boolean": false,
-  "run_on_saturdays__boolean": false,
-  "run_on_sundays__boolean": false
+  "days_to_run__multiselect__o1_monday_o2_tuesday_o3_wednesday_o4_thursday_o5_friday_o6_saturday_o7_sunday": []
 }
 ```
 
@@ -42,27 +36,9 @@ mechanic/user/trigger
 {% if options.run_daily__boolean %}
   mechanic/scheduler/daily+{{ total_minutes_offset }}.minutes
 {% else %}
-  {% if options.run_on_mondays__boolean %}
-    mechanic/scheduler/monday+{{ total_minutes_offset }}.minutes
-  {% endif %}
-  {% if options.run_on_tuesdays__boolean %}
-    mechanic/scheduler/tuesday+{{ total_minutes_offset }}.minutes
-  {% endif %}
-  {% if options.run_on_wednesdays__boolean %}
-    mechanic/scheduler/wednesday+{{ total_minutes_offset }}.minutes
-  {% endif %}
-  {% if options.run_on_thursdays__boolean %}
-    mechanic/scheduler/thursday+{{ total_minutes_offset }}.minutes
-  {% endif %}
-  {% if options.run_on_fridays__boolean %}
-    mechanic/scheduler/friday+{{ total_minutes_offset }}.minutes
-  {% endif %}
-  {% if options.run_on_saturdays__boolean %}
-    mechanic/scheduler/saturday+{{ total_minutes_offset }}.minutes
-  {% endif %}
-  {% if options.run_on_sundays__boolean %}
-    mechanic/scheduler/sunday+{{ total_minutes_offset }}.minutes
-  {% endif %}
+  {% for selection in options.days_to_run__multiselect__o1_monday_o2_tuesday_o3_wednesday_o4_thursday_o5_friday_o6_saturday_o7_sunday %}
+      mechanic/scheduler/{{ selection }}+{{ total_minutes_offset }}.minutes
+  {% endfor %}
 {% endif %}
 ```
 

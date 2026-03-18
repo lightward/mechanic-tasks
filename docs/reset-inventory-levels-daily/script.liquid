@@ -1,5 +1,5 @@
 {% assign inventory_level_to_apply = options.inventory_level_to_apply__number_required %}
-{% assign collection_id = options.collection_id__number_required %}
+{% assign collection_id = options.collection__picker_collection_required %}
 
 {% assign location_id = shop.primary_location_id | prepend: "gid://shopify/Location/" %}
 
@@ -13,7 +13,7 @@
 {% for n in (1..100) %}
   {% capture query %}
     query {
-      collection(id: {{ collection_id | prepend: "gid://shopify/Collection/" | json }}) {
+      collection(id: {{ collection_id | json }}) {
         products(
           first: 250
           after: {{ cursor | json }}
@@ -83,112 +83,127 @@
   -- determine which inventory levels need to be set on this task run
 {% endcomment %}
 
-{% assign inventory_inputs = array %}
+{% assign inventory_adjustments = array %}
 
 {% for product_id in product_ids %}
   {% comment %}
-    -- get all variants for this product (up to 2K), and their inventory items and inventory levels at the default location
+    -- get all variants for this product, and their inventory items and inventory levels at the default location
   {% endcomment %}
 
-  {% assign cursor = nil %}
-  {% assign variants = array %}
-
-  {% for n in (1..8) %}
-    {% capture query %}
-      query {
-        product(id: {{ product_id | json }}) {
-          id
-          handle
-          variants(
-            first: 250
-            after: {{ cursor | json }}
-          ) {
-            pageInfo {
-              hasNextPage
-              endCursor
-            }
-            nodes {
-              inventoryItem {
-                id
-                tracked
-                inventoryLevel(locationId: {{ location_id | json }}) {
-                  quantities(names: "available") {
-                    quantity
-                  }
+  {% capture query %}
+    query {
+      product(id: {{ product_id | json }}) {
+        id
+        handle
+        variants(first: 2048) {
+          nodes {
+            inventoryItem {
+              id
+              tracked
+              inventoryLevel(locationId: {{ location_id | json }}) {
+                quantities(names: "available") {
+                  quantity
                 }
               }
             }
           }
         }
       }
-    {% endcapture %}
+    }
+  {% endcapture %}
 
-    {% assign result = query | shopify %}
+  {% assign result = query | shopify %}
 
-    {% if event.preview %}
-      {% capture result_json %}
-        {
-          "data": {
-            "product": {
-              "variants": {
-                "nodes": [
-                  {
-                    "inventoryItem": {
-                      "id": "gid://shopify/InventoryItem/1234567890",
-                      "tracked": "true",
-                      "inventoryLevel": {
-                        "quantities": {
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "product": {
+            "variants": {
+              "nodes": [
+                {
+                  "inventoryItem": {
+                    "id": "gid://shopify/InventoryItem/1234567890",
+                    "tracked": "true",
+                    "inventoryLevel": {
+                      "quantities": [
+                        {
                           "quantity": {{ inventory_level_to_apply | minus: 1 }}
                         }
-                      }
+                      ]
                     }
                   }
-                ]
-              }
+                }
+              ]
             }
           }
         }
-      {% endcapture %}
+      }
+    {% endcapture %}
 
-      {% assign result = result_json | parse_json %}
-    {% endif %}
+    {% assign result = result_json | parse_json %}
+  {% endif %}
 
-    {% comment %}
-      -- if a variant's inventory is tracked (i.e. managed by Shopify) and the available quantity at the default location differs from the configured level, then add it to input array
-    {% endcomment %}
+  {% comment %}
+    -- if a variant's inventory is tracked (i.e. managed by Shopify) and the available quantity at the default location differs from the configured level, then add it to adjustments array
+  {% endcomment %}
 
-    {% for variant in result.data.product.variants.nodes %}
-      {% if variant.inventoryItem.tracked and variant.inventoryItem.inventoryLevel.quantities.first.quantity != inventory_level_to_apply %}
-        {% assign inventory_input = hash %}
-        {% assign inventory_input["inventoryItemId"] = variant.inventoryItem.id %}
-        {% assign inventory_input["locationId"] = location_id %}
-        {% assign inventory_input["quantity"] = inventory_level_to_apply %}
-        {% assign inventory_inputs = inventory_inputs | push: inventory_input %}
-      {% endif %}
-    {% endfor %}
+  {% for variant in result.data.product.variants.nodes %}
+    {% if variant.inventoryItem.tracked and variant.inventoryItem.inventoryLevel.quantities.first.quantity != inventory_level_to_apply %}
+      {% assign delta = inventory_level_to_apply | minus: variant.inventoryItem.inventoryLevel.quantities.first.quantity %}
 
-    {% if result.data.product.variants.pageInfo.hasNextPage %}
-      {% assign cursor = result.data.product.variants.pageInfo.endCursor %}
-    {% else %}
-      {% break %}
+      {% assign inventory_adjustment = hash %}
+      {% assign inventory_adjustment["inventoryItemId"] = variant.inventoryItem.id %}
+      {% assign inventory_adjustment["locationId"] = location_id %}
+      {% assign inventory_adjustment["delta"] = delta %}
+      {% assign inventory_adjustment["changeFromQuantity"] = variant.inventoryItem.inventoryLevel.quantities.first.quantity %}
+      {% assign inventory_adjustments = inventory_adjustments | push: inventory_adjustment %}
     {% endif %}
   {% endfor %}
 {% endfor %}
 
-{% if inventory_inputs != blank %}
-  {% assign groups_of_inventory_inputs = inventory_inputs | in_groups_of: 250, fill_with: false %}
+{% comment %}
+  -- changeFromQuantity field is required as of 2026-04
+  https://shopify.dev/changelog/making-changefromquantity-field-required
+  -- Shopify will enforce idempotency for several mutations as of 2026-04
+  https://shopify.dev/changelog/making-idempotency-mandatory-for-inventory-adjustments-and-refund-mutations
+{% endcomment %}
 
-  {% for group_of_inventory_inputs in groups_of_inventory_inputs %}
+{% if inventory_adjustments != blank %}
+  {% assign groups_of_inventory_adjustments = inventory_adjustments | in_groups_of: 250, fill_with: false %}
+
+  {% for group_of_inventory_adjustments in groups_of_inventory_adjustments %}
+    {% capture idempotent_key %}
+      {
+        "task_id": {{ task.id | json }},
+        "event_id": {{ event.id | json }},
+        "data": {{ group_of_inventory_adjustments | json }}
+      }
+    {% endcapture %}
+
     {% action "shopify" %}
       mutation {
-        inventorySetQuantities(
+        inventoryAdjustQuantities(
           input: {
-            name: "available"
             reason: "correction"
-            ignoreCompareQuantity: true
-            quantities: {{ group_of_inventory_inputs | graphql_arguments }}
+            name: "available"
+            changes: {{ group_of_inventory_adjustments | graphql_arguments }}
           }
-        ) {
+        ) @idempotent(key: {{ idempotent_key | json | md5 | json }}) {
+          inventoryAdjustmentGroup {
+            reason
+            changes(quantityNames: "available") {
+              name
+              delta
+              item {
+                id
+                sku
+              }
+              location {
+                name
+              }
+            }
+          }
           userErrors {
             code
             field
