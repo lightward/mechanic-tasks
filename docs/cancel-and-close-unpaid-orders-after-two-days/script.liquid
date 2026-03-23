@@ -88,7 +88,7 @@
   -- reverse the creation order to get the most recent first (in case this instance is not configured to read all orders)
 {% endcomment %}
 
-{% for n in (0..100) %}
+{% for n in (1..100) %}
   {% capture query %}
     query {
       orders(
@@ -200,7 +200,6 @@
       {% comment %}
         -- cancel the order with configured options; this will also automatically close the order
         -- if possible, the order will be voided; this is not configurable in this mutation
-        -- refunds are set to false and not configurable in the task because these are unpaid orders
       {% endcomment %}
 
       {% action "shopify" %}
@@ -209,7 +208,6 @@
             orderId: {{ order.id | json }}
             notifyCustomer: {{ send_cancellation_email_to_customer | json }}
             reason: {{ cancellation_reason_to_set | upcase }}
-            refund: false
             restock: {{ restock_line_items | json }}
           ) {
             job {
@@ -224,7 +222,6 @@
         }
       {% endaction %}
     {% endif %}
-
 
     {% if summary.qualifies_for_closing and summary.qualifies_for_cancellation == false %}
       {% comment %}

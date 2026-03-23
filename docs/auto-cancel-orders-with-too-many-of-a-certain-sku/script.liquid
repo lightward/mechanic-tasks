@@ -134,7 +134,9 @@
       orderId: {{ order.id | json }}
       notifyCustomer: {{ notify_customer | json }}
       reason: {{ cancellation_reason | upcase }}
-      refund: {{ refund_payment | json }}
+      refundMethod: {
+        originalPaymentMethodsRefund: {{ refund_payment | json }}
+      }
       restock: {{ restock_inventory | json }}
       staffNote: {{ staff_note | json }}
     ) {
