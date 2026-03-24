@@ -319,6 +319,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Set product or variant metafields values in bulk](./set-product-or-variant-metafields-in-bulk)
 * [Set product templates based on product tags](./set-product-templates-based-on-product-tags)
 * [Set product types by title keywords](./set-product-types-by-title-keywords)
+* [Sort collections by recent sales performance](./sort-collections-by-recent-sales-performance)
 * [Standardize UK postcodes](./standardize-uk-shipping-postcodes)
 * [Sync a Product List Metafield Of Products That Share Another Common Metafield Value](./sync-a-product-list-metafield-of-products-that-share-another-common-metafield-value)
 * [Sync an inverse customer tag](./sync-an-inverse-customer-tag)
@@ -1784,6 +1785,7 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Uncategorized
 
 * [Mechanic tour task](./mechanic-tour-task)
+* [Sort collections by recent sales performance](./sort-collections-by-recent-sales-performance)
 * [Sync in stock locations to a variant metafield](./sync-in-stock-locations-to-a-variant-metafield)
 
 ### Unpaid

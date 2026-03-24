@@ -1,0 +1,260 @@
+{% assign collections_to_sort = options.collections_to_sort__picker_collection_array_required %}
+{% assign lookback_period_in_days = options.lookback_period_in_days__range_min7_max90_required %}
+{% assign sort_metric = options.sort_metric__choice_o1_net_items_sold_o2_net_sales_o3_total_sales_required %}
+
+{% if event.preview %}
+  {% comment %}
+    -- only use a single collection for preview
+  {% endcomment %}
+
+  {% assign collections_to_sort = array | push: "gid://shopify/Collection/1234567890" %}
+{% endif %}
+
+{% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% comment %}
+    -- process each configured collection that is sorted manually
+  {% endcomment %}
+
+  {% assign skipped_collections = array %}
+
+  {% for collection_id in collections_to_sort %}
+    {% comment %}
+      -- get the product IDs by the current sort
+    {% endcomment %}
+
+    {% assign cursor = nil %}
+    {% assign collection = nil %}
+    {% assign products_current_sort = array %}
+
+    {% for n in (1..100) %}
+      {% capture query %}
+        query {
+          collection(id: {{ collection_id | json }}) {
+            id
+            title
+            sortOrder
+            products(
+              first: 250
+              after: {{ cursor | json }}
+              sortKey: COLLECTION_DEFAULT
+            ) {
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+              nodes {
+                legacyResourceId
+                title
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = query | shopify %}
+
+      {% if event.preview %}
+        {% capture result_json %}
+          {
+            "data": {
+              "collection": {
+                "id": "gid://shopify/Collection/1234567890",
+                "title": "Everyday Essentials",
+                "sortOrder": "MANUAL",
+                "products": {
+                  "nodes": [
+                    {
+                      "legacyResourceId": "1234567890",
+                      "title": "Sprocket"
+                    },
+                    {
+                      "legacyResourceId": "2345678901",
+                      "title": "Widget"
+                    },
+                    {
+                      "legacyResourceId": "3456789012",
+                      "title": "Gadget"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        {% endcapture %}
+
+        {% assign result = result_json | parse_json %}
+      {% endif %}
+
+      {% assign collection = result.data.collection | except: "products" %}
+      {% assign products_current_sort = products_current_sort | concat: result.data.collection.products.nodes %}
+
+      {% if result.data.collection.products.pageInfo.hasNextPage and collection.sortOrder == "MANUAL" %}
+        {% assign cursor = result.data.collection.products.pageInfo.endCursor %}
+      {% else %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+
+    {% if collection == blank %}
+      {% log
+        message: "Configured collection not found. As it was likely deleted, it should be removed from the task configuration.",
+        collection_id: collection_id
+      %}
+      {% continue %}
+
+    {% elsif collection.sortOrder != "MANUAL" %}
+      {% assign skipped_collections = skipped_collections | push: collection %}
+      {% continue %}
+    {% endif %}
+
+    {% comment %}
+      -- get first 1000 products in collection that had sales in the lookback period
+    {% endcomment %}
+
+    {%- capture shopifyql_query -%}
+      FROM sales
+      SHOW {{ sort_metric }}
+      WHERE product_collections CONTAINS '{{ collection.title }}'
+      GROUP BY product_id, product_title
+      SINCE -{{ lookback_period_in_days }}d UNTIL today
+      ORDER BY {{ sort_metric }} DESC
+      LIMIT 1000
+    {%- endcapture -%}
+
+    {% unless event.preview %}
+      {% log shopifyql_query %}
+    {% endunless %}
+
+    {% capture query %}
+      {
+        shopifyqlQuery(query: {{ shopifyql_query | json }}) {
+          tableData {
+            rows
+          }
+          parseErrors
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "shopifyqlQuery": {
+              "tableData": {
+                "rows": [
+                  {
+                    "product_id": "2345678901",
+                    "product_title": "Widget",
+                    "net_items_sold": "20",
+                    "net_sales": "2000.00",
+                    "total_sales": "2200.00"
+                  },
+                  {
+                    "product_id": "3456789012",
+                    "product_title": "Gadget",
+                    "net_items_sold": "10",
+                    "net_sales": "1000.00",
+                    "total_sales": "1100.00"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign products_with_sales = result.data.shopifyqlQuery.tableData.rows %}
+
+    {% comment %}
+      -- add products with sales to new sorted array if they still exist in collection
+    {% endcomment %}
+
+    {% assign product_ids_current_sort = products_current_sort | map: "legacyResourceId" %}
+    {% assign products_new_sort = array %}
+
+    {% for product in products_with_sales %}
+      {% if product_ids_current_sort contains product.product_id %}
+        {% assign products_new_sort = products_new_sort | push: product %}
+      {% endif %}
+    {% endfor %}
+
+    {% comment %}
+      -- append collection products that did not have sales in the lookback period
+    {% endcomment %}
+
+    {% assign product_ids_new_sort = products_new_sort | map: "product_id" %}
+
+    {% for product in products_current_sort %}
+      {% unless product_ids_new_sort contains product.legacyResourceId %}
+        {% assign product_data = hash %}
+        {% assign product_data["product_id"] = product.legacyResourceId %}
+        {% assign product_data["product_title"] = product.title %}
+        {% assign products_new_sort = products_new_sort | push: product_data %}
+      {% endunless %}
+    {% endfor %}
+
+    {% unless event.preview %}
+      {% log
+        collection: collection,
+        products_new_sort: products_new_sort
+      %}
+    {% endunless %}
+
+    {% comment %}
+      -- determine if any moves are necessary by comparing new and current sort
+    {% endcomment %}
+
+    {% assign moves = array %}
+
+    {% for product in products_new_sort %}
+      {% if product_ids_current_sort[forloop.index0] != product.product_id %}
+        {% assign move = hash %}
+        {% assign move["id"] = product.product_id | prepend: "gid://shopify/Product/" %}
+        {% assign move["newPosition"] = "" | append: forloop.index0 %}
+        {% assign moves[moves.size] = move %}
+      {% endif %}
+    {% endfor %}
+
+    {% comment %}
+      -- NOTE: using reverse filter here to circumvent Shopify bug on collection reordering
+      -- Each move contains the new position, so using reverse will NOT change the sort order determined in above logic
+    {% endcomment %}
+
+    {% assign move_groups = moves | reverse | in_groups_of: 250, fill_with: false %}
+
+    {% for move_group in move_groups %}
+      {% action "shopify" %}
+        mutation {
+          collectionReorderProducts(
+            id: {{ collection.id | json }}
+            moves: {{ move_group | graphql_arguments }}
+          ) {
+            job {
+              id
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+
+    {% else %}
+      {% log
+        message: "No position moves necessary for this collection, everything is already in its appropriate sort order.",
+        collection: collection
+      %}
+    {% endfor %}
+  {% endfor %}
+
+  {% if skipped_collections != blank %}
+    {% log skipped_collections_which_did_not_have_manual_sort: skipped_collections %}
+  {% endif %}
+{% endif %}
