@@ -35,9 +35,8 @@ This task will run daily to sort the selected collections, moving products with 
 
 **Notes:**
 - This task will skip any collections that are not configured for manual sorting.
-- The sales lookback period is capped at 90 days to avoid potential Shopify Analytics query limits.
-- The metrics offered for configuration directly match the ones available in Shopify Analytics.
-
+- The sales lookback period is capped at 90 days to avoid potential Shopify Analytics query limits. Similarly, the sales data for each collection is limited to the top 1000 products by metric.
+- The metrics offered for configuration directly match sales metrics available in Shopify Analytics.
 
 ## Installing this task
 
