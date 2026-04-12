@@ -2,7 +2,7 @@
 
 Tags: Auto-Tag, Orders, Payment
 
-This task checks the payment gateways for new orders immediately upon order creation, and tags the order accordingly.
+This task checks the payment gateways and payment methods on order creation and updates, and tags the order accordingly if any of the gateways or methods match a configured value.
 
 * View in the task library: [tasks.mechanic.dev/auto-tag-new-orders-based-on-payment-method](https://tasks.mechanic.dev/auto-tag-new-orders-based-on-payment-method)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-new-orders-based-on-payment-method.json)
@@ -12,8 +12,7 @@ This task checks the payment gateways for new orders immediately upon order crea
 
 ```json
 {
-  "payment_gateway_names_and_tags__keyval_required": null,
-  "run_when_orders_are_paid_instead_of_created__boolean": null
+  "payment_gateway_names_and_tags__keyval_required": null
 }
 ```
 
@@ -22,22 +21,19 @@ This task checks the payment gateways for new orders immediately upon order crea
 ## Subscriptions
 
 ```liquid
-{% if options.run_when_orders_are_paid_instead_of_created__boolean %}
-  shopify/orders/paid
-{% else %}
-  shopify/orders/create
-{% endif %}
+shopify/orders/create
+shopify/orders/updated+15.seconds
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
-This task checks the payment gateways for new orders immediately upon order creation, and tags the order accordingly.
+This task checks the payment gateways and payment methods on order creation and updates, and tags the order accordingly if any of the gateways or methods match a configured value.
 
-Configure the "Payment gateway names and tags" fields with the payment gateway name on the left, and the associated tag on the right.
+Configure the "Payment gateway names and tags" fields with each payment gateway name you wish to monitor on the left, and the associated tag on the right.
 
-Tip: to tag orders paid with a gift card, fill in "Payment gateway name" with "gift_card".
+Tip: this task will log out the payment gateways and methods from success transactions on each run, so review the log to verify any configuration values you wish to use (e.g. "gift_card", "paypal"). Case-sensitivity is important!
 
 ## Installing this task
 

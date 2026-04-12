@@ -1,39 +1,98 @@
 {% assign payment_gateway_names_and_tags = options.payment_gateway_names_and_tags__keyval_required %}
 
-{% if event.preview %}
-  {% capture order_json %}
-    {
-      "admin_graphql_api_id": "gid://shopify/Order/12345",
-      "payment_gateway_names": {{ payment_gateway_names_and_tags.first.first | json }}
-    }
-  {% endcapture %}
+{% if event.topic == "shopify/orders/create" or event.topic == "shopify/orders/updated" %}
+  {% comment %}
+    -- get order and transactions data
+  {% endcomment %}
 
-  {% assign order = order_json | parse_json %}
-{% endif %}
-
-{% assign tags_to_add = array %}
-
-{% for keyval in payment_gateway_names_and_tags %}
-  {% assign payment_gateway_name = keyval[0] %}
-  {% assign tag = keyval[1] %}
-
-  {% if order.payment_gateway_names contains payment_gateway_name %}
-    {% assign tags_to_add = tags_to_add | push: tag %}
-  {% endif %}
-{% endfor %}
-
-{% if tags_to_add != blank %}
-  {% action "shopify" %}
-    mutation {
-      tagsAdd(
+  {% capture query %}
+    query {
+      order(
         id: {{ order.admin_graphql_api_id | json }}
-        tags: {{ tags_to_add | json }}
       ) {
-        userErrors {
-          field
-          message
+        id
+        name
+        displayFinancialStatus
+        paymentGatewayNames
+        tags
+        transactions(first: 10) {
+          id
+          status
+          kind
+          formattedGateway
+          gateway
+          paymentDetails {
+            __typename
+            ... on BasePaymentDetails {
+              paymentMethodName
+            }
+          }
         }
       }
     }
-  {% endaction %}
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "order": {
+            "id": "gid://shopify/Order/1234567890",
+            "paymentGatewayNames": {{ array | push: payment_gateway_names_and_tags.first.first | json }}
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign order = result.data.order %}
+
+  {% log order_data: order %}
+
+  {% comment %}
+    -- get all payment gateways and payment methods (from success transactions)
+  {% endcomment %}
+
+  {% assign payment_gateways_and_methods
+    = order.transactions
+    | where: "status", "SUCCESS"
+    | default: array
+    | map: "paymentDetails"
+    | map: "paymentMethodName"
+    | concat: order.paymentGatewayNames
+    | uniq
+  %}
+
+  {% assign tags_to_add = array %}
+
+  {% for keyval in payment_gateway_names_and_tags %}
+    {% assign payment_gateway_name = keyval[0] %}
+    {% assign tag = keyval[1] %}
+
+    {% if payment_gateways_and_methods contains payment_gateway_name %}
+      {% unless order.tags contains tag %}
+        {% assign tags_to_add = tags_to_add | push: tag %}
+      {% endunless %}
+    {% endif %}
+  {% endfor %}
+
+  {% if tags_to_add != blank %}
+    {% action "shopify" %}
+      mutation {
+        tagsAdd(
+          id: {{ order.id | json }}
+          tags: {{ tags_to_add | json }}
+        ) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
 {% endif %}
