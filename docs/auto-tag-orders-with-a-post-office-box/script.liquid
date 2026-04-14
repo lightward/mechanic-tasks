@@ -1,0 +1,89 @@
+{% assign tag_to_add = options.tag_to_add__required %}
+{% assign send_email_notification = options.send_email_notification__boolean %}
+{% assign email_recipient = options.email_recipient__email %}
+{% assign email_subject = options.email_subject %}
+{% assign email_body = options.email_body__multiline %}
+
+{% comment %} 
+  Check address lines 1 and 2 for a post office box
+  The matching logic strips out all spaces and special characters,
+  then matches against one of several strings followed by a digit
+{% endcomment %}
+
+{% assign order_has_po_box = false %}
+{% assign po_box_regex = "(POB|POBOX|POSTBOX|POSTALBOX|POSTOFFICEBOX|BOXNUMBER|BOXNO|^BOX)\d+" %}
+
+{% assign po_box_match1
+  = order.shipping_address.address1
+  | scan: "[A-Za-z0-9]+"
+  | join: ""
+  | upcase
+  | match: po_box_regex
+%}
+{% assign po_box_match2
+  = order.shipping_address.address2
+  | scan: "[A-Za-z0-9]+"
+  | join: ""
+  | upcase
+  | match: po_box_regex
+%}
+
+{% if po_box_match1 or po_box_match2 %}
+  {% assign order_has_po_box = true %}
+{% endif %}
+
+{% comment %}
+  IF PO Box is detected, add tag to order
+{% endcomment %}
+{% if order_has_po_box %}
+  {% action "shopify" %}
+    mutation {
+      tagsAdd(
+        id: {{ order.admin_graphql_api_id | json }}
+        tags: {{ tag_to_add | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+  {% if send_email_notification %}
+
+    {% comment %}
+      Show error if emails are enabled and any of the fields are missing
+    {% endcomment %}
+    {% if email_recipient == blank or email_subject == blank or email_body == blank %}
+      {% assign error_message = "Email Notifications are enabled, please add:" %}
+      {% assign error_topics = array %}
+      {% if email_recipient == blank %}
+        {% assign error_topics = error_topics | push: "- a valid email recipient" %}
+      {% endif %}
+      {% if email_subject == blank %}
+        {% assign error_topics = error_topics | push: "- an email subject" %}
+      {% endif %}
+      {% if email_body == blank %}
+        {% assign error_topics = error_topics | push:  "- an email body" %}
+      {% endif %}
+      {% capture error_message %}
+        {{- error_message }}{{ newline }}
+        {{- error_topics | join: newline }}
+      {%- endcapture %}
+      {% error error_message %}
+    {% endif %}
+
+    {% action "email" %}
+      {
+        "to": {{ email_recipient | json }},
+        "subject": {{ email_subject | json }},
+        "body": {{ email_body | newline_to_br | json }},
+        "reply_to": {{ shop.customer_email | json }},
+        "from_display_name": {{ shop.name | json }}
+      }
+    {% endaction %}
+  {% endif %}
+{% else %}
+  {% log "No PO Box detected" %}
+{% endif %}
