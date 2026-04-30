@@ -1,46 +1,94 @@
-{% assign customers = array %}
+{% assign tag_to_watch_for = options.tag_to_watch_for__required | downcase %}
+{% assign invitation_email_subject = options.invitation_email_subject__required %}
+{% assign invitation_email_body = options.invitation_email_body__multiline_required %}
 
-{% if event.preview %}
-  {% assign customers[0] = hash %}
-  {% assign customers[0]["id"] = 1234567890 %}
-{% elsif event.topic contains "shopify/customers/" %}
-  {% assign customer_qualifies = true %}
+{% if event.topic == "shopify/customer/tags_added" %}
+  {% comment %}
+    -- check tags before querying the customer with GraphQL, so we know if the monitored tag was just added
+    -- note: this webhook uses a tags array, unlike most other webhooks with tags
+  {% endcomment %}
 
-  {% assign customer_tags = customer.tags | split: ", " %}
-  {% assign tag = options.tag_to_watch_for__required %}
-
-  {% if options.ignore_tag_case__boolean %}
-    {% assign customer_tags = customer.tags | downcase | split: ", " %}
-    {% assign tag = tag | downcase %}
-    {% unless customer_tags contains tag %}
-      {% assign customer_qualifies = false %}
-    {% endunless %}
-  {% else %}
-    {% unless customer_tags contains tag %}
-      {% assign customer_qualifies = false %}
-    {% endunless %}
-  {% endif %}
-
-  {% if customer.state != "disabled" %}
-    {% assign customer_qualifies = false %}
-  {% endif %}
-
-  {% if customer_qualifies %}
-    {% assign customers[customers.size] = customer %}
-  {% endif %}
-{% endif %}
-
-{% for customer in customers %}
-  {% action "shopify" %}
-    [
-      "post",
-      "/admin/customers/{{ customer.id | json }}/send_invite.json",
+  {% if event.preview %}
+    {% capture customer_json %}
       {
-        "customer_invite": {
-          "subject": {{ options.invitation_email_subject__required | json }},
-          "custom_message": {{ options.invitation_email_body__multiline_required | json }}
+        "customerId": "gid://shopify/Customer/1234567890",
+        "tags": {{ array | push: tag_to_watch_for | json }}
+      }
+    {% endcapture %}
+
+    {% assign customer = customer_json | parse_json %}
+  {% endif %}
+
+  {% assign added_tags = customer.tags | json | downcase | parse_json %}
+
+  {% unless added_tags contains tag_to_watch_for %}
+    {% break %}
+  {% endunless %}
+
+  {% comment %}
+    -- get customer data
+  {% endcomment %}
+
+  {% capture query %}
+    query {
+      customer(id: {{ customer.customerId | json }}) {
+        id
+        displayName
+        defaultEmailAddress {
+          emailAddress
+        }
+        state
+        tags
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "customer": {
+            "id": "gid://shopify/Customer/1234567890",
+            "state": "DISABLED"
+          }
         }
       }
-    ]
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign customer = result.data.customer %}
+
+  {% unless event.preview %}
+    {% log customer: customer %}
+  {% endunless %}
+
+  {% unless customer.state == "DISABLED" %}
+    {% log "Customer state is not 'DISABLED', so an account invite will not be sent." %}
+    {% break %}
+  {% endunless %}
+
+  {% action "shopify" %}
+    mutation {
+      customerSendAccountInviteEmail(
+        customerId: {{ customer.id | json }}
+        email: {
+          subject: {{ invitation_email_subject | json }}
+          customMessage: {{ invitation_email_body | json }}
+        }
+      ) {
+        customer {
+          id
+          displayName
+          defaultEmailAddress {
+            emailAddress
+          }
+          state
+        }
+      }
+    }
   {% endaction %}
-{% endfor %}
+{% endif %}

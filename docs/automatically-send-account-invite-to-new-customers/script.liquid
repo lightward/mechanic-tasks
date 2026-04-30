@@ -1,24 +1,71 @@
-{% assign customer = customer.reload %}
+{% assign invitation_email_subject = options.invitation_email_subject__required %}
+{% assign invitation_email_body = options.invitation_email_body__multiline_required %}
 
-{% assign customer_qualifies = false %}
-{% if customer.state == "disabled" and customer.email != blank %}
-  {% assign customer_qualifies = true %}
-{% endif %}
+{% if event.topic == "shopify/customers/create" %}
+  {% comment %}
+    -- get customer data
+  {% endcomment %}
 
-{% if event.preview or customer_qualifies %}
-  {
-    "action": {
-      "type": "shopify",
-      "options": [
-        "post",
-        "/admin/customers/{{ customer.id }}/send_invite.json",
-        {
-          "customer_invite": {
-            "subject": {{ options.invitation_email_subject__required | json }},
-            "custom_message": {{ options.invitation_email_body__multiline_required | json }}
+  {% capture query %}
+    query {
+      customer(id: {{ customer.admin_graphql_api_id | json }}) {
+        id
+        displayName
+        defaultEmailAddress {
+          emailAddress
+        }
+        state
+        tags
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "customer": {
+            "id": "gid://shopify/Customer/1234567890",
+            "state": "DISABLED"
           }
         }
-      ]
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign customer = result.data.customer %}
+
+  {% unless event.preview %}
+    {% log customer: customer %}
+  {% endunless %}
+
+  {% unless customer.state == "DISABLED" %}
+    {% log "Customer state is not 'DISABLED', so an account invite will not be sent." %}
+    {% break %}
+  {% endunless %}
+
+  {% action "shopify" %}
+    mutation {
+      customerSendAccountInviteEmail(
+        customerId: {{ customer.id | json }}
+        email: {
+          subject: {{ invitation_email_subject | json }}
+          customMessage: {{ invitation_email_body | json }}
+        }
+      ) {
+        customer {
+          id
+          displayName
+          defaultEmailAddress {
+            emailAddress
+          }
+          state
+        }
+      }
     }
-  }
+  {% endaction %}
 {% endif %}
