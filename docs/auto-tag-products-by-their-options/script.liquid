@@ -41,10 +41,12 @@
       query {
         inventoryLevel(id: {{ inventory_level.admin_graphql_api_id | json }}) {
           item {
-            variant {
-              product {
-                id
-                tags
+            variants(first: 1) {
+              nodes {
+                product {
+                  id
+                  tags
+                }
               }
             }
           }
@@ -54,7 +56,7 @@
 
     {% assign result = query | shopify %}
 
-    {% assign product = result.data.inventoryLevel.item.variant.product %}
+    {% assign product = result.data.inventoryLevel.item.variants.nodes.first.product %}
   {% endif %}
 
   {% assign jobs[0] = hash %}
@@ -67,52 +69,38 @@
     -- paginate to support up to 2K variants
   {% endcomment %}
 
-  {% assign cursor = nil %}
   {% assign selected_options_found = array %}
 
-  {% for n in (1..8) %}
-    {% capture query %}
-      query {
-        product(id: {{ product.id | json }}) {
-          variants(
-            first: 250
-            after: {{ cursor | json }}
-          ) {
-            pageInfo {
-              hasNextPage
-              endCursor
-            }
-            nodes {
-              inventoryQuantity
-              selectedOptions {
-                name
-                value
-              }
+  {% capture query %}
+    query {
+      product(id: {{ product.id | json }}) {
+        variants(
+          first: 2048
+        ) {
+          nodes {
+            inventoryQuantity
+            selectedOptions {
+              name
+              value
             }
           }
         }
       }
-    {% endcapture %}
+    }
+  {% endcapture %}
 
-    {% assign result = query | shopify %}
+  {% assign result = query | shopify %}
 
-    {% for variant in result.data.product.variants.nodes %}
-      {% if ignore_variants_that_are_out_of_stock and variant.inventoryQuantity <= 0 %}
-        {% continue %}
-      {% endif %}
-
-      {% assign selected_options_found
-        = variant.selectedOptions
-        | default: array
-        | concat: selected_options_found
-      %}
-    {% endfor %}
-
-    {% if result.data.product.variants.pageInfo.hasNextPage %}
-      {% assign cursor = result.data.product.variants.pageInfo.endCursor %}
-    {% else %}
-      {% break %}
+  {% for variant in result.data.product.variants.nodes %}
+    {% if ignore_variants_that_are_out_of_stock and variant.inventoryQuantity <= 0 %}
+      {% continue %}
     {% endif %}
+
+    {% assign selected_options_found
+      = variant.selectedOptions
+      | default: array
+      | concat: selected_options_found
+    %}
   {% endfor %}
 
   {% assign jobs[0]["selected_options_found"] = selected_options_found | uniq %}

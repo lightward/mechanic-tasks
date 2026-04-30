@@ -1,6 +1,6 @@
 # Update product description when out of stock
 
-Tags: (not tagged!)
+Tags: Auto-Update, Inventory, Products
 
 This task prepends an HTML message to the beginning of the product description, for each product that goes out of stock, and then restores the original product description when the product is back in stock. Optionally, you may choose to append the HTML message to the end of the product description, instead of prepending it to the beginning.
 

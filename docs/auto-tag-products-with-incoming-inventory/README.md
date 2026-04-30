@@ -2,7 +2,7 @@
 
 Tags: Auto-Tag, Bulk, Inventory, Products, Transfer
 
-Keep track of which products in your shop have incoming inventory with this task! Running when inventory levels are updated, this task will tag the product with the tag of your choice if _any_ of that product's variants at _any_ of your locations has an incoming transfer. Conversely, the tag will be removed when there are no pending transfers.
+Keep track of which products in your shop have incoming inventory with this task! Running when inventory levels are updated, this task will tag the product with the tag of your choice if _any_ of that product's variants at _any_ of your locations has an incoming transfer or purchase order. Conversely, the tag will be removed when there are no in transit transfers or ordered purchase orders.
 
 * View in the task library: [tasks.mechanic.dev/auto-tag-products-with-incoming-inventory](https://tasks.mechanic.dev/auto-tag-products-with-incoming-inventory)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-products-with-incoming-inventory.json)
@@ -34,13 +34,12 @@ mechanic/shopify/bulk_operation
 
 ## Documentation
 
-Keep track of which products in your shop have incoming inventory with this task! Running when inventory levels are updated, this task will tag the product with the tag of your choice if _any_ of that product's variants at _any_ of your locations has an incoming transfer. Conversely, the tag will be removed when there are no pending transfers.
+Keep track of which products in your shop have incoming inventory with this task! Running when inventory levels are updated, this task will tag the product with the tag of your choice if _any_ of that product's variants at _any_ of your locations has an incoming transfer or purchase order. Conversely, the tag will be removed when there are no in transit transfers or ordered purchase orders.
 
-The task may also be run manually, and optionally on a schedule, in which case it will scan your _entire_ product catalog for incoming transfers, and tag products accordingly.
+The task may also be run manually, and optionally on a schedule, in which case it will scan your _entire_ product catalog for incoming inventory, and tag products accordingly.
 
 Notes:
-- Transfers initiated from suppliers (i.e external locations) do __not__ trigger inventory level updates _until_ they are received. Use the "Run on a schedule" option to have the task identify and tag these incoming transfers.
-- Because the scheduled run option uses a [bulk operation query](https://learn.mechanic.dev/core/shopify/read/bulk-operations), by default it has been scheduled to run at 2 AM local shop time to avoid potential conflicts with other scheduled bulk operations. Adjust this [time](https://learn.mechanic.dev/core/tasks/subscriptions#offsets) and [frequency](https://learn.mechanic.dev/platform/events/topics#scheduler) as needed in the task subscriptions.
+- Transfers initiated without an origin, and all purchase orders, do __not__ trigger inventory level updates _until_ they are received. Use the "Run on a schedule" option to have the task run daily to also identify these incoming inventory while they are in transit.
 
 ## Installing this task
 

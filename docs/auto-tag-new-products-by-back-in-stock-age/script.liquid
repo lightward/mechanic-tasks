@@ -23,16 +23,10 @@
             title
             tags
             totalInventory
-            back_in_stock_metafield: metafield(
-              namespace: "mechanic"
-              key: "back_in_stock_s"
-            ) {
+            back_in_stock_metafield: metafield(key: "mechanic.back_in_stock_s") {
               value
             }
-            back_in_stock_first_seen_metafield: metafield(
-              namespace: "mechanic"
-              key: "back_in_stock_first_seen_s"
-            ) {
+            back_in_stock_first_seen_metafield: metafield(key: "mechanic.back_in_stock_first_seen_s") {
               value
             }
           }
@@ -240,32 +234,40 @@
 
 {% elsif event.topic contains "shopify/inventory_levels/" %}
   {% comment %}
-    -- on inventory level changes, check the total inventory and set metafields as needed; no tagging decisions occur here
+    -- on inventory level changes, tally the inventory across all variants and set metafields as needed; no tagging decisions occur here
   {% endcomment %}
 
   {% capture query %}
     query {
       inventoryLevel(id: {{ inventory_level.admin_graphql_api_id | json }}) {
         item {
-          variant {
-            product {
-              id
-              totalInventory
-              back_in_stock_metafield: metafield(
-                namespace: "mechanic"
-                key: "back_in_stock_s"
-              ) {
+          variants(first: 1) {
+            nodes {
+              product {
                 id
-                value
-              }
-              back_in_stock_first_seen_metafield: metafield(
-                namespace: "mechanic"
-                key: "back_in_stock_first_seen_s"
-              ) {
-                id
-                value
               }
             }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% capture query %}
+    query {
+      product(id: {{ result.data.inventoryLevel.item.variants.nodes.first.product.id | json }}) {
+        id
+        back_in_stock_metafield: metafield(key: "mechanic.back_in_stock_s") {
+          value
+        }
+        back_in_stock_first_seen_metafield: metafield(key: "mechanic.back_in_stock_first_seen_s") {
+          value
+        }
+        variants(first: 2048) {
+          nodes {
+            inventoryQuantity
           }
         }
       }
@@ -278,14 +280,14 @@
     {% capture result_json %}
       {
         "data": {
-          "inventoryLevel": {
-            "item": {
-              "variant": {
-                "product": {
-                  "id": "gid://shopify/Product/1234567890",
-                  "totalInventory": {{ back_in_stock_inventory_level }}
+          "product": {
+            "id": "gid://shopify/Product/1234567890",
+            "variants": {
+              "nodes": [
+                {
+                  "inventoryQuantity": {{ back_in_stock_inventory_level }}
                 }
-              }
+              ]
             }
           }
         }
@@ -295,9 +297,14 @@
     {% assign result = result_json | parse_json %}
   {% endif %}
 
-  {% assign product = result.data.inventoryLevel.item.variant.product %}
+  {% assign product = result.data.product %}
+  {% assign available_inventory = product.variants.nodes | map: "inventoryQuantity" | sum %}
 
-  {% log product: product, back_in_stock_inventory_level: back_in_stock_inventory_level %}
+  {% log
+    available_inventory: available_inventory,
+    back_in_stock_inventory_level: back_in_stock_inventory_level,
+    product: product
+  %}
 
   {% assign metafields_to_set = array %}
 
@@ -315,7 +322,7 @@
     {% assign metafields_to_set = metafields_to_set | push: metafield_to_set %}
   {% endif %}
 
-  {% if product.totalInventory >= back_in_stock_inventory_level %}
+  {% if available_inventory >= back_in_stock_inventory_level %}
     {% comment %}
       -- product inventory meets the back in stock threshold; save the time in the metafield IF a value does not already exist
     {% endcomment %}

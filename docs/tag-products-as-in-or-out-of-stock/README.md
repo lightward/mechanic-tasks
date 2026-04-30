@@ -2,7 +2,7 @@
 
 Tags: Auto-Tag, In stock, Inventory, Out of Stock, Products
 
-This task scans your active products, in bulk, and tags them according to whether or not they're in stock. Optionally, configure this task to monitor products for live auto-tagging.
+This task scans your active products, in bulk, and tags them according to whether or not they're in stock. Optionally, configure this task to monitor inventory changes for live auto-tagging.
 
 * View in the task library: [tasks.mechanic.dev/tag-products-as-in-or-out-of-stock](https://tasks.mechanic.dev/tag-products-as-in-or-out-of-stock)
 * Task JSON, for direct import: [task.json](../../tasks/tag-products-as-in-or-out-of-stock.json)
@@ -25,10 +25,8 @@ This task scans your active products, in bulk, and tags them according to whethe
 ```liquid
 mechanic/user/trigger
 mechanic/shopify/bulk_operation
-
 {% if options.monitor_products_for_inventory_updates__boolean %}
-  shopify/products/create
-  shopify/products/update
+  shopify/inventory_levels/update
 {% endif %}
 ```
 
@@ -36,9 +34,9 @@ mechanic/shopify/bulk_operation
 
 ## Documentation
 
-This task scans your active products, in bulk, and tags them according to whether or not they're in stock. Optionally, configure this task to monitor products for live auto-tagging.
+This task scans your active products, in bulk, and tags them according to whether or not they're in stock. Optionally, configure this task to monitor inventory changes for live auto-tagging.
 
-For the purposes of this task, "in stock" means "having a total inventory of greater than zero, when added up for all variants across all locations".
+For the purposes of this task, "in stock" means having a total inventory of greater than zero, when added up for all variants across all locations.
 
 ## Installing this task
 

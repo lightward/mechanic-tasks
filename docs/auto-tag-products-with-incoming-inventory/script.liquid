@@ -2,7 +2,7 @@
 
 {% if event.topic == "shopify/inventory_levels/update" %}
   {% comment %}
-    -- get product ID and tags using the inventory_item_id in the inventory_level webhook
+    -- get product ID and tags
   {% endcomment %}
 
   {% capture query %}
@@ -10,10 +10,12 @@
       inventoryItem(
         id: {{ inventory_level.inventory_item_id | prepend: "gid://shopify/InventoryItem/" | json }}
       ) {
-        variant {
-          product {
-            id
-            tags
+        variants(first: 1) {
+          nodes {
+            product {
+              id
+              tags
+            }
           }
         }
       }
@@ -40,35 +42,31 @@
     {% assign result = result_json | parse_json %}
   {% endif %}
 
-  {% assign product = result.data.inventoryItem.variant.product %}
+  {% assign product = result.data.inventoryItem.variants.nodes.first.product %}
 
   {% comment %}
-    -- get all variants (up to 2K) for this product and their "incoming" inventory levels (up to 200 locations)
+    -- get all variants for this product and their "incoming" inventory levels (up to 200 locations)
   {% endcomment %}
 
   {% assign qualifies_to_be_tagged = nil %}
-  {% assign cursor = nil %}
 
-  {% for n in (1..8) %}
-    {% capture query %}
-      query {
-        product(id: {{ product.id | json }}) {
-          variants(
-            first: 250
-            after: {{ cursor | json }}
-          ) {
-            pageInfo {
-              hasNextPage
-              endCursor
-            }
-            nodes {
-              inventoryItem {
-                inventoryLevels(first: 200) {
-                  nodes {
-                    quantities(names: "incoming") {
-                      name
-                      quantity
-                    }
+  {% capture query %}
+    query {
+      product(id: {{ product.id | json }}) {
+        variants(
+          first: 2048
+          after: {{ cursor | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            inventoryItem {
+              inventoryLevels(first: 200) {
+                nodes {
+                  quantities(names: "incoming") {
+                    quantity
                   }
                 }
               }
@@ -76,65 +74,57 @@
           }
         }
       }
-    {% endcapture %}
+    }
+  {% endcapture %}
 
-    {% assign result = query | shopify %}
+  {% assign result = query | shopify %}
 
-    {% if event.preview %}
-      {% capture result_json %}
-        {
-          "data": {
-            "product": {
-              "id": "gid://shopify/Product/1234567890",
-              "variants": {
-                "nodes": [
-                  {
-                    "inventoryItem": {
-                      "inventoryLevels": {
-                        "nodes": [
-                          {
-                            "quantities": [
-                              {
-                                "name": "incoming",
-                                "quantity": 1
-                              }
-                            ]
-                          }
-                        ]
-                      }
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "product": {
+            "variants": {
+              "nodes": [
+                {
+                  "inventoryItem": {
+                    "inventoryLevels": {
+                      "nodes": [
+                        {
+                          "quantities": [
+                            {
+                              "quantity": 1
+                            }
+                          ]
+                        }
+                      ]
                     }
                   }
-                ]
-              }
+                }
+              ]
             }
           }
         }
-      {% endcapture %}
+      }
+    {% endcapture %}
 
-      {% assign result = result_json | parse_json %}
-    {% endif %}
+    {% assign result = result_json | parse_json %}
+  {% endif %}
 
-    {% comment %}
-      -- the product qualifies if any of the variants' inventory levels have incoming inventory
-    {% endcomment %}
+  {% comment %}
+    -- the product qualifies if any of the variants' inventory levels have incoming inventory
+  {% endcomment %}
 
-    {% for variant in result.data.product.variants.nodes %}
-      {% for inventory_level in variant.inventoryItem.inventoryLevels.nodes %}
-        {% if inventory_level.quantities.first.quantity > 0 %}
-          {% assign qualifies_to_be_tagged = true %}
-          {% break %}
-        {% endif %}
-      {% endfor %}
-
-      {% if qualifies_to_be_tagged %}
+  {% for variant in result.data.product.variants.nodes %}
+    {% for inventory_level in variant.inventoryItem.inventoryLevels.nodes %}
+      {% if inventory_level.quantities.first.quantity > 0 %}
+        {% assign qualifies_to_be_tagged = true %}
         {% break %}
       {% endif %}
     {% endfor %}
 
-    {% if qualifies_to_be_tagged or result.data.product.variants.pageInfo.hasNextPage == false %}
+    {% if qualifies_to_be_tagged %}
       {% break %}
-    {% else %}
-      {% assign cursor = result.data.product.variants.pageInfo.endCursor %}
     {% endif %}
   {% endfor %}
 
@@ -200,7 +190,6 @@
                           __typename
                           id
                           quantities(names: "incoming") {
-                            name
                             quantity
                           }
                         }
@@ -238,10 +227,10 @@
     {% capture jsonl_string %}
       {"__typename":"Product","id":"gid:\/\/shopify\/Product\/1234567890","tags":["testing"]}
       {"__typename":"ProductVariant","id":"gid:\/\/shopify\/ProductVariant\/1234567890","inventoryItem":{},"__parentId":"gid:\/\/shopify\/Product\/1234567890"}
-      {"__typename":"InventoryLevel","quantities":[{"name":"incoming","quantity":1}],"__parentId":"gid:\/\/shopify\/ProductVariant\/1234567890"}
+      {"__typename":"InventoryLevel","quantities":[{"quantity":1}],"__parentId":"gid:\/\/shopify\/ProductVariant\/1234567890"}
       {"__typename":"Product","id":"gid:\/\/shopify\/Product\/2345678901","tags":[{{ product_tag_to_apply | json }}]}
       {"__typename":"ProductVariant","id":"gid:\/\/shopify\/ProductVariant\/2345678901","inventoryItem":{},"__parentId":"gid:\/\/shopify\/Product\/2345678901"}
-      {"__typename":"InventoryLevel","quantities":[{"name":"incoming","quantity":1}],"__parentId":"gid:\/\/shopify\/ProductVariant\/2345678901"}
+      {"__typename":"InventoryLevel","quantities":[{"quantity":1}],"__parentId":"gid:\/\/shopify\/ProductVariant\/2345678901"}
     {% endcapture %}
 
     {% assign bulkOperation = hash %}

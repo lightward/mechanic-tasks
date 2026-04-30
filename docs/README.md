@@ -544,6 +544,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 * [Auto-associate variants with a delivery profile, by metafield value](./auto-associate-variants-with-a-delivery-profile-by-metafield-value)
 * [Auto-update inventory policy based on a "preorder" tag](./auto-update-inventory-policy-based-on-a-preorder-tag)
+* [Update product description when out of stock](./update-product-description-when-out-of-stock)
 
 ### Backups
 
@@ -1041,6 +1042,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Sync variant inventory within a product by pack size](./sync-variant-inventory-within-a-product-by-pack-size)
 * [Tag products as in- or out-of-stock](./tag-products-as-in-or-out-of-stock)
 * [Unpublish products that have been out of stock for x days](./unpublish-products-that-have-been-out-of-stock-for-x-days)
+* [Update product description when out of stock](./update-product-description-when-out-of-stock)
 
 ### Invite
 
@@ -1461,6 +1463,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Unpublish products that fall below a rolling sales threshold](./unpublish-products-that-fall-below-a-rolling-sales-threshold)
 * [Unpublish products that have been out of stock for x days](./unpublish-products-that-have-been-out-of-stock-for-x-days)
 * [Unpublish products when tagged](./unpublish-products-when-tagged)
+* [Update product description when out of stock](./update-product-description-when-out-of-stock)
 
 ### Publish
 

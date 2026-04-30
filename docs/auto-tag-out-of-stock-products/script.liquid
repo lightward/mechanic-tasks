@@ -13,14 +13,16 @@
     query {
       inventoryLevel(id: {{ inventory_level.admin_graphql_api_id | json }}) {
         item {
-          variant {
-            product {
-              id
-              legacyResourceId
-              status
-              title
-              totalInventory
-              tags
+          variants(first: 1) {
+            nodes {
+              product {
+                id
+                legacyResourceId
+                status
+                title
+                totalInventory
+                tags
+              }
             }
           }
         }
@@ -30,15 +32,64 @@
 
   {% assign result = query | shopify %}
 
-  {% assign product = result.data.inventoryLevel.item.variant.product %}
+  {% assign product = result.data.inventoryLevel.item.variants.nodes.first.product %}
 
   {% comment %}
     -- only process active products
   {% endcomment %}
 
-  {% if product.status == "ACTIVE" or event.preview %}
-    {% assign products[0] = product %}
+  {% unless product.status == "ACTIVE" or event.preview %}
+    {% break %}
+  {% endunless %}
+
+  {% comment %}
+    -- sum inventoryQuantity from all variants instead of using product.totalInventory due to calculated field lag
+  {% endcomment %}
+
+  {% capture query %}
+    query {
+      product(id: {{ product.id | json }}) {
+        variants(first: 2048) {
+          nodes {
+            inventoryQuantity
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "product": {
+            "variants": {
+              "nodes": [
+                {
+                  "inventoryQuantity": {{ out_of_stock_inventory_level }}
+                }
+              ]
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
   {% endif %}
+
+  {% assign available_inventory = result.data.product.variants.nodes | map: "inventoryQuantity" | sum %}
+
+  {% unless event.preview %}
+    {% log
+      available_inventory_summed_from_variants: available_inventory,
+      product_total_inventory_laggy_calc: product.totalInventory
+    %}
+  {% endunless %}
+
+  {% assign products[0] = product %}
 
 {% elsif event.topic == "mechanic/user/trigger" %}
   {% comment %}
@@ -113,7 +164,11 @@
 {% endcomment %}
 
 {% for product in products %}
-  {% if product.totalInventory > out_of_stock_inventory_level %}
+  {% if event.topic == "mechanic/shopify/bulk_operation" %}
+    {% assign available_inventory = product.totalInventory %}
+  {% endif %}
+
+  {% if available_inventory > out_of_stock_inventory_level %}
     {% if product.tags contains product_tag %}
       {% comment %}
         -- product is above the configured out of stock level and has the out of stock tag; remove it
@@ -169,7 +224,7 @@
       {% capture email_body %}
         Hello,
 
-        {{ product.title }} is now out of stock, with a total stock level of {{ product.totalInventory }} (across all variants and locations).
+        {{ product.title }} is now out of stock, with a total stock level of {{ available_inventory }} (across all variants and locations).
 
         <a href="{{ shop.admin_url }}/products/{{ product.legacyResourceId }}">Manage this product</a>
 
@@ -180,7 +235,7 @@
       {% action "email" %}
         {
           "to": {{ email_alert_recipient | json }},
-          "subject": {{ product.title | append: " is now out of stock (" | append: product.totalInventory | append: ")" | json }},
+          "subject": {{ product.title | append: " is now out of stock (" | append: available_inventory | append: ")" | json }},
           "body": {{ email_body | unindent | strip | newline_to_br | json }},
           "reply_to": {{ shop.customer_email | json }},
           "from_display_name": {{ shop.name | json }}

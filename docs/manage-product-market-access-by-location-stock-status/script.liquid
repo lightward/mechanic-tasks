@@ -184,8 +184,6 @@
     {% assign result = result_json | parse_json %}
   {% endif %}
 
-  {% assign markets = markets | concat: result.data.markets.nodes %}
-
   {% for market in result.data.markets.nodes %}
     {% assign publication_ids = market.catalogs.nodes | map: "publication" | map: "id" %}
     {% assign market_names_and_publication_ids[market.name] = publication_ids %}
@@ -233,7 +231,6 @@
 {% if event.topic == "shopify/inventory_levels/update" %}
   {% comment %}
     -- use the inventory level to query available inventory for ALL of the product's variants at each configured location
-    -- Shopify supports 100 variants per product (as of June 2023)
   {% endcomment %}
 
   {% capture query %}
@@ -243,21 +240,11 @@
           name
         }
         item {
-          variant {
-            product {
-              id
-              title
-              status
-              tags
-              {{ published_inputs | join: newline }}
-              variants(first: 100) {
-                nodes {
-                  inventoryPolicy
-                  inventoryItem {
-                    tracked
-                    {{ inventory_level_inputs | join: newline }}
-                  }
-                }
+          variants(first: 1) {
+            nodes {
+              product {
+                id
+                status
               }
             }
           }
@@ -277,33 +264,15 @@
               "name": "Warehouse"
             },
             "item": {
-              "variant": {
-                "product": {
-                  "id": "gid://shopify/Product/1234567890",
-                  "title": "Widget",
-                  "status": "ACTIVE",
-                  "published_1234567890": true,
-                  "variants": {
-                    "nodes": [
-                      {
-                        "inventoryPolicy": "DENY",
-                        "inventoryItem": {
-                          "tracked": true,
-                          "location_1234567890": {
-                            "location": {
-                              "name": "International"
-                            },
-                            "quantities": [
-                              {
-                                "quantity":0
-                              }
-                            ]
-                          }
-                        }
-                      }
-                    ]
+              "variants": {
+                "nodes": [
+                  {
+                    "product": {
+                      "id": "gid://shopify/Product/1234567890",
+                      "status": "ACTIVE"
+                    }
                   }
-                }
+                ]
               }
             }
           }
@@ -315,7 +284,75 @@
   {% endif %}
 
   {% assign location_name = result.data.inventoryLevel.location.name %}
-  {% assign product = result.data.inventoryLevel.item.variant.product %}
+  {% assign product = result.data.inventoryLevel.item.variants.nodes.first.product %}
+
+  {% comment %}
+    -- stop processing if this location isn't configured in the task or if the product is not active
+  {% endcomment %}
+
+  {% unless location_names contains location_name and product.status == "ACTIVE" %}
+    {% break %}
+  {% endunless %}
+
+  {% capture query %}
+    query {
+      product(id: {{ product.id | json }}) {
+        id
+        title
+        tags
+        {{ published_inputs | join: newline }}
+        variants(first: 2048) {
+          nodes {
+            inventoryPolicy
+            inventoryItem {
+              tracked
+              {{ inventory_level_inputs | join: newline }}
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "product": {
+            "id": "gid://shopify/Product/1234567890",
+            "title": "Widget",
+            "published_1234567890": true,
+            "variants": {
+              "nodes": [
+                {
+                  "inventoryPolicy": "DENY",
+                  "inventoryItem": {
+                    "tracked": true,
+                    "location_1234567890": {
+                      "location": {
+                        "name": "International"
+                      },
+                      "quantities": [
+                        {
+                          "quantity":0
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign product = result.data.product %}
 
   {% comment %}
     -- stop processing if this product has any of the configured ignore tags
@@ -337,14 +374,6 @@
     %}
     {% break %}
   {% endif %}
-
-  {% comment %}
-    -- stop processing if this location isn't configured in the task or if the product is not active
-  {% endcomment %}
-
-  {% unless location_names contains location_name and product.status == "ACTIVE" %}
-    {% break %}
-  {% endunless %}
 
   {% comment %}
     -- make sure the products processing loop only checks this specific product and location

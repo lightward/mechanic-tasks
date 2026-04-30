@@ -48,11 +48,13 @@
       item {
         inventoryHistoryUrl
         sku
-        variant {
-          legacyResourceId
-          displayName
-          product {
+        variants(first: 1) {
+          nodes {
             legacyResourceId
+            displayName
+            product {
+              legacyResourceId
+            }
           }
         }
       }
@@ -73,12 +75,16 @@
           "item": {
             "inventoryHistoryUrl": "https://preview-sample.myshopify.com/admin/products/inventory/1234567890/inventory_history",
             "sku": "WDGT123",
-            "variant": {
-              "legacyResourceId": "1234567890",
-              "displayName": "Widget - Default Title",
-              "product": {
-                "legacyResourceId": "987654321"
-              }
+            "variants": {
+              "nodes": [
+                {
+                  "legacyResourceId": "1234567890",
+                  "displayName": "Widget - Default Title",
+                  "product": {
+                    "legacyResourceId": "987654321"
+                  }
+                }
+              ]
             }
           }
         }
@@ -91,9 +97,10 @@
 
 {% assign location_name = result.data.inventoryLevel.location.name %}
 {% assign sku = result.data.inventoryLevel.item.sku %}
-{% assign title = result.data.inventoryLevel.item.variant.displayName | remove: " - Default Title" %}
-{% assign variant_id = result.data.inventoryLevel.item.variant.legacyResourceId %}
-{% assign product_id = result.data.inventoryLevel.item.variant.product.legacyResourceId %}
+{% assign variant = result.data.inventoryLevel.item.variants.nodes.first %}
+{% assign title = variant.displayName | remove: " - Default Title" %}
+{% assign variant_id = variant.legacyResourceId %}
+{% assign product_id = variant.product.legacyResourceId %}
 
 {%- capture inventory_history_link -%}
   <a href="{{ result.data.inventoryLevel.item.inventoryHistoryUrl }}?location_id={{ inventory_level.location_id }}">View inventory history</a>
