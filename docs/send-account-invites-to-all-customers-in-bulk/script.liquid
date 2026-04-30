@@ -1,89 +1,80 @@
-{% if event.topic == "mechanic/user/trigger" %}
-  {% assign search_query = "customer_account_status = 'DISABLED'" %}
+{% assign only_invite_customers_with_this_tag = options.only_invite_customers_with_this_tag %}
+{% assign invitation_email_subject = options.invitation_email_subject %}
+{% assign invitation_email_body = options.invitation_email_body__multiline %}
 
-  {% if options.only_invite_customers_with_this_tag %}
+{% if event.topic == "mechanic/user/trigger" %}
+  {% assign search_query = "state:disabled" %}
+
+  {% if only_invite_customers_with_this_tag != blank %}
     {%- capture search_query -%}
-      {{ search_query }} AND customer_tags CONTAINS '{{ options.only_invite_customers_with_this_tag }}'
+      {{ search_query }} AND tag:{{ only_invite_customers_with_this_tag | json }}
     {%- endcapture -%}
   {% endif %}
 
-  {% assign cursor = nil %}
-  {% assign customer_ids = array %}
-
-  {% comment %}
-    -- can query 1000 segment members at a time
-  {% endcomment %}
-
-  {% for n in (1..100) %}
-    {% capture query %}
-      query {
-        customerSegmentMembers(
-          first: 1000
-          after: {{ cursor | json }}
-          query: {{ search_query | json }}
-        ) {
-          pageInfo {
-            hasNextPage
-            endCursor
-          }
-          edges {
-            node {
-              id
-            }
+  {% capture bulk_operation_query %}
+    query {
+      customers(
+        query: {{ search_query | json }}
+      ) {
+        edges {
+          node {
+            __typename
+            id
           }
         }
       }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture jsonl_string %}
+      {"__typename":"Customer","id":"gid://shopify/Customer/1234567890"}
     {% endcapture %}
 
-    {% assign result = query | shopify %}
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = jsonl_string | parse_jsonl %}
+  {% endif %}
 
-    {% if event.preview %}
-      {% capture result_json %}
-        {
-          "data": {
-            "customerSegmentMembers": {
-              "edges": [
-                {
-                  "node": {
-                    "id": "gid://shopify/CustomerSegmentMember/1234567890"
-                  }
-                }
-              ]
-            }
-          }
-        }
-      {% endcapture %}
+  {% assign customers = bulkOperation.objects | where: "__typename", "Customer" %}
 
-      {% assign result = result_json | parse_json %}
-    {% endif %}
-
-    {% for edge in result.data.customerSegmentMembers.edges %}
-      {% assign customer_ids[customer_ids.size] = edge.node.id | remove: "gid://shopify/CustomerSegmentMember/" %}
-    {% endfor %}
-
-    {% if result.data.customerSegmentMembers.pageInfo.hasNextPage %}
-      {% assign cursor = result.data.customerSegmentMembers.pageInfo.endCursor %}
-    {% else %}
-      {% break %}
-    {% endif %}
-  {% endfor %}
-
-  {% comment %}
-    -- send invite to all customers with disabled accounts using REST (there is no equivalent GraphQL mutation)
-  {% endcomment %}
-
-  {% for customer_id in customer_ids %}
+  {% for customer in customers %}
     {% action "shopify" %}
-      [
-        "post",
-        "/admin/customers/{{ customer_id }}/send_invite.json",
-        {
-          "customer_invite": {
-            "subject": {{ options.custom_subject | json }},
-            "custom_message": {{ options.custom_message__multiline | json }}
+      mutation {
+        customerSendAccountInviteEmail(
+          customerId: {{ customer.id | json }}
+          email: {
+            subject: {{ invitation_email_subject | json }}
+            customMessage: {{ invitation_email_body | json }}
+          }
+        ) {
+          customer {
+            id
+            displayName
+            defaultEmailAddress {
+              emailAddress
+            }
+            state
           }
         }
-      ]
+      }
     {% endaction %}
   {% endfor %}
 {% endif %}

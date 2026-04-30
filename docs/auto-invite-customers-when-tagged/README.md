@@ -2,7 +2,7 @@
 
 Tags: Email, Invite, Tag, Watch
 
-This task watches for updates to customers, and sends invites for any customer who has the tag you choose, who hasn't previously been invited. If you'd like to run this task in bulk, you can find that version of the task [here](https://tasks.mechanic.dev/send-account-invites-to-all-customers-in-bulk).
+This task watches for tags being added to customers, and sends invites for any customer who gets the tag you choose, who hasn't previously been invited. If you'd like to run this task in bulk, you can find that version of the task [here](https://tasks.mechanic.dev/send-account-invites-to-all-customers-in-bulk).
 
 * View in the task library: [tasks.mechanic.dev/auto-invite-customers-when-tagged](https://tasks.mechanic.dev/auto-invite-customers-when-tagged)
 * Task JSON, for direct import: [task.json](../../tasks/auto-invite-customers-when-tagged.json)
@@ -13,7 +13,6 @@ This task watches for updates to customers, and sends invites for any customer w
 ```json
 {
   "tag_to_watch_for__required": "invite",
-  "ignore_tag_case__boolean": true,
   "invitation_email_subject__required": "Your account is ready!",
   "invitation_email_body__multiline_required": "Your account for {{ shop.name }} has been pre-approved! Use the button below to get started."
 }
@@ -24,17 +23,14 @@ This task watches for updates to customers, and sends invites for any customer w
 ## Subscriptions
 
 ```liquid
-shopify/customers/create
-shopify/customers/update
+shopify/customer/tags_added
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
-This task watches for updates to customers, and sends invites for any customer who has the tag you choose, who hasn't previously been invited. If you'd like to run this task in bulk, you can find that version of the task [here](https://tasks.mechanic.dev/send-account-invites-to-all-customers-in-bulk).
-
-This task watches for updates to customers, and sends invites for any customer who has the tag you choose, who hasn't previously been invited.
+This task watches for tags being added to customers, and sends invites for any customer who gets the tag you choose, who hasn't previously been invited. If you'd like to run this task in bulk, you can find that version of the task [here](https://tasks.mechanic.dev/send-account-invites-to-all-customers-in-bulk).
 
 Invitation emails are sent using your store's account invite notification email template. [Learn how to update this template.](https://help.shopify.com/en/manual/sell-online/notifications/edit-template)
 
