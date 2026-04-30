@@ -3,21 +3,28 @@
 
 {% if event.topic contains "shopify/inventory_levels/" %}
   {% comment %}
-    -- get this product's total inventory, and up to 250 collections
+    -- get this product, variant, and collection data
+    -- sum inventoryQuantity from all variants instead of using product.totalInventory due to calculated field lag
   {% endcomment %}
 
   {% capture query %}
     query {
       inventoryItem(id: {{ inventory_level.inventory_item_id | prepend: "gid://shopify/InventoryItem/" | json }}) {
-        variant {
-          product {
-            id
-            totalInventory
-            tracksInventory
-            collections(first: 250) {
-              nodes {
-                id
-                templateSuffix
+        variants(first: 1) {
+          nodes {
+            product {
+              id
+              tracksInventory
+              variants(first: 250) {
+                nodes {
+                  inventoryQuantity
+                }
+              }
+              collections(first: 250) {
+                nodes {
+                  id
+                  templateSuffix
+                }
               }
             }
           }
@@ -33,20 +40,30 @@
       {
         "data": {
           "inventoryItem": {
-            "variant": {
-              "product": {
-                "id": "gid://shopify/Product/1234567890",
-                "totalInventory": 0,
-                "tracksInventory": true,
-                "collections": {
-                  "nodes": [
-                    {
-                      "id": "gid://shopify/Collection/1234567890",
-                      "templateSuffix": {{ default_collection_template_suffix | json }}
+            "variants": {
+              "nodes": [
+                {
+                  "product": {
+                    "id": "gid://shopify/Product/1234567890",
+                    "tracksInventory": true,
+                    "variants": {
+                      "nodes": [
+                        {
+                          "inventoryQuantity": 0
+                        }
+                      ]
+                    },
+                    "collections": {
+                      "nodes": [
+                        {
+                          "id": "gid://shopify/Collection/1234567890",
+                          "templateSuffix": {{ default_collection_template_suffix | json }}
+                        }
+                      ]
                     }
-                  ]
+                  }
                 }
-              }
+              ]
             }
           }
         }
@@ -56,7 +73,8 @@
     {% assign result = result_json | parse_json %}
   {% endif %}
 
-  {% assign product = result.data.inventoryItem.variant.product %}
+  {% assign product = result.data.inventoryItem.variants.nodes.first.product %}
+  {% assign available_inventory = product.variants.nodes | map: "inventoryQuantity" | sum %}
   {% assign collections = product.collections.nodes %}
 
   {% for collection in collections %}
@@ -86,7 +104,7 @@
       -- NOTE: another product might cause the collection to change templates, but that should  be handled in an inventory level event for that product
     {% endcomment %}
 
-    {% if product.totalInventory <= 0 and product.tracksInventory %}
+    {% if available_inventory <= 0 and product.tracksInventory %}
       {% if has_out_of_stock_template %}
         {% continue %}
       {% endif %}
@@ -97,6 +115,7 @@
 
     {% comment %}
       -- query collection for up to 25K products, getting inventory of each
+      -- note: ok to use product.totalInventory here since the calculated field lag would be negligible
       -- break the query loop early when at least one product is in stock and the collection has the out of stock template
     {% endcomment %}
 
@@ -299,6 +318,7 @@
 
     {% comment %}
       -- break the products loop early when at least one product is in stock
+      -- note: ok to use product.totalInventory here since the calculated field lag would be negligible
     {% endcomment %}
 
     {% for product in collection_products %}

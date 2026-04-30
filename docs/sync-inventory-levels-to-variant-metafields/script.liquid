@@ -16,84 +16,108 @@
   {% assign inventory_level_string = inventory_level.location_id | append: "" %}
   {% assign metafield_key = location_ids_and_metafield_keys[inventory_level_string] %}
 
-  {% if metafield_key != blank %}
-    {% capture query %}
-      query {
-        inventoryLevel(id: {{ inventory_level.admin_graphql_api_id | json }}) {
-          id
-          quantities(names: "available") {
-            name
-            quantity
-          }
-          item {
-            variant {
+  {% if metafield_key == blank %}
+    {% log "Inventory level change did not occur at a location configured in this task." %}
+    {% break %}
+  {% endif %}
+
+  {% capture query %}
+    query {
+      inventoryLevel(id: {{ inventory_level.admin_graphql_api_id | json }}) {
+        id
+        quantities(names: "available") {
+          name
+          quantity
+        }
+        item {
+          variants(first: 1) {
+            nodes {
               id
+              metafield(
+                namespace: {{ metafield_namespace | json }}
+                key: {{ metafield_key | json }}
+              ) {
+                value
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "inventoryLevel": {
+            "quantities": [
+              {
+                "name": "available",
+                "quantity": 20
+              }
+            ],
+            "item": {
+              "variants": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/ProductVariant/1234567890"
+                  }
+                ]
+              }
             }
           }
         }
       }
     {% endcapture %}
 
-    {% assign result = query | shopify %}
+    {% assign result = result_json | parse_json %}
+  {% endif %}
 
-    {% if event.preview %}
-      {% capture result_json %}
-        {
-          "data": {
-            "inventoryLevel": {
-              "quantities": [
-                {
-                  "name": "available",
-                  "quantity": 20
-                }
-              ],
-              "item": {
-                "variant": {
-                  "id": "gid://shopify/ProductVariant/1234567890"
-                }
-              }
+  {% assign available_inventory = result.data.inventoryLevel.quantities.first.quantity | append: "" %}
+  {% assign variant = result.data.inventoryLevel.item.variants.nodes.first %}
+  {% assign metafield_value = variant.metafield.value %}
+
+  {% if available_inventory == metafield_value %}
+    {% log "Metafield value already matches the available inventory level." %}
+    {% break %}
+  {% endif %}
+
+  {% action "shopify" %}
+    mutation {
+      metafieldsSet(
+        metafields: [
+          {
+            ownerId: {{ variant.id | json }}
+            namespace: {{ metafield_namespace | json }}
+            key: {{ metafield_key | json }}
+            type: "number_integer"
+            value: {{ available_inventory | json }}
+          }
+        ]
+      ) {
+        metafields {
+          id
+          namespace
+          key
+          type
+          value
+          owner {
+            ... on ProductVariant {
+              id
             }
           }
         }
-      {% endcapture %}
-
-      {% assign result = result_json | parse_json %}
-    {% endif %}
-
-    {% action "shopify" %}
-      mutation {
-        metafieldsSet(
-          metafields: [
-            {
-              ownerId: {{ result.data.inventoryLevel.item.variant.id | json }}
-              namespace: {{ metafield_namespace | json }}
-              key: {{ metafield_key | json }}
-              type: "number_integer"
-              value: {{ result.data.inventoryLevel.quantities.first.quantity | append: "" | json }}
-            }
-          ]
-        ) {
-          metafields {
-            id
-            namespace
-            key
-            type
-            value
-            owner {
-              ... on ProductVariant {
-                id
-              }
-            }
-          }
-          userErrors {
-            code
-            field
-            message
-          }
+        userErrors {
+          code
+          field
+          message
         }
       }
-    {% endaction %}
-  {% endif %}
+    }
+  {% endaction %}
 
 {% elsif event.topic == "mechanic/user/trigger" %}
   {% capture bulk_operation_query %}
@@ -146,8 +170,7 @@
 {% elsif event.topic == "mechanic/shopify/bulk_operation" %}
   {% if event.preview %}
     {% capture jsonl_string %}
-      {"id":"gid:\/\/shopify\/ProductVariant\/1234567890"}
-      {"__typename":"InventoryLevel","quantities":[{"name":"available","quantity":20}],"location":{"legacyResourceId":{{ location_ids_and_metafield_keys.first.first | json }}},"__parentId":"gid:\/\/shopify\/ProductVariant\/1234567890"}
+      {"__typename":"InventoryLevel","quantities":[{"name":"available","quantity":20}],"location":{"legacyResourceId":{{ location_ids_and_metafield_keys.first.first | json }}},"__parentId":"gid://shopify/ProductVariant/1234567890"}
     {% endcapture %}
 
     {% assign bulkOperation = hash %}
@@ -156,55 +179,51 @@
 
   {% assign inventory_levels = bulkOperation.objects | where: "__typename", "InventoryLevel" %}
 
-  {% assign metafields = array %}
+  {% assign metafield_set_inputs = array %}
 
   {% for inventory_level in inventory_levels %}
     {% assign metafield_key = location_ids_and_metafield_keys[inventory_level.location.legacyResourceId] %}
 
     {% if metafield_key != blank and inventory_level.quantities.first.quantity != blank %}
-      {% capture metafield %}
-        {
-          ownerId: {{ inventory_level.__parentId | json }}
-          namespace: {{ metafield_namespace | json }}
-          key: {{ metafield_key | json }}
-          type: "number_integer"
-          value: {{ inventory_level.quantities.first.quantity | append: "" | json }}
-        }
-      {% endcapture %}
-
-      {% assign metafields = metafields | push: metafield %}
+      {% assign metafield_set_input = hash %}
+      {% assign metafield_set_input["ownerId"] = inventory_level.__parentId %}
+      {% assign metafield_set_input["namespace"] = metafield_namespace %}
+      {% assign metafield_set_input["key"] = metafield_key %}
+      {% assign metafield_set_input["type"] = "number_integer" %}
+      {% assign metafield_set_input["value"] = inventory_level.quantities.first.quantity | append: "" %}
+      {% assign metafield_set_inputs = metafield_set_inputs | push: metafield_set_input %}
     {% endif %}
   {% endfor %}
 
-  {% assign groups_of_metafields = metafields | in_groups_of: 25, fill_with: false %}
+  {% if metafield_set_inputs != blank %}
+    {% assign groups_of_metafield_set_inputs = metafield_set_inputs | in_groups_of: 25, fill_with: false %}
 
-  {% for group_of_metafields in groups_of_metafields %}
-    {% action "shopify" %}
-      mutation {
-        metafieldsSet(
-          metafields: [
-            {{ group_of_metafields | join: newline }}
-          ]
-        ) {
-          metafields {
-            id
-            namespace
-            key
-            type
-            value
-            owner {
-              ... on ProductVariant {
-                id
+    {% for group_of_metafield_set_inputs in groups_of_metafield_set_inputs %}
+      {% action "shopify" %}
+        mutation {
+          metafieldsSet(
+            metafields: {{ group_of_metafield_set_inputs | graphql_arguments }}
+          ) {
+            metafields {
+              id
+              namespace
+              key
+              type
+              value
+              owner {
+                ... on ProductVariant {
+                  id
+                }
               }
             }
-          }
-          userErrors {
-            code
-            field
-            message
+            userErrors {
+              code
+              field
+              message
+            }
           }
         }
-      }
-    {% endaction %}
-  {% endfor %}
+      {% endaction %}
+    {% endfor %}
+  {% endif %}
 {% endif %}

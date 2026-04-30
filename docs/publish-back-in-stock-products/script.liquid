@@ -184,9 +184,124 @@
   {% endunless %}
 {% endif %}
 
-{% if event.topic == "mechanic/user/trigger" %}
+{% if event.topic contains "shopify/inventory_levels/" %}
+  {% comment %}
+    -- query the inventory level to get the product data needed for this task
+  {% endcomment %}
+
+  {% capture query %}
+    query {
+      inventoryLevel(
+        id: {{ inventory_level.admin_graphql_api_id | json }}
+      ) {
+        item {
+          variants(first: 1) {
+            nodes {
+              product {
+                id
+                legacyResourceId
+                title
+                totalInventory
+                tags
+                {% for publication_id in publication_ids %}
+                  published{{ forloop.index }}: publishedOnPublication(publicationId: {{ publication_id | json }})
+                {% endfor %}
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "inventoryLevel": {
+            "item": {
+              "variants": {
+                "nodes": [
+                  {
+                    "product": {
+                      "id": "gid://shopify/Product/1234567890",
+                      "legacyResourceId": "1234567890",
+                      "title": "Widget",
+                      "tags": {{ inclusion_tags.first | json }},
+                      "published1": false
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign product = result.data.inventoryLevel.item.variants.nodes.first.product %}
+
+  {% comment %}
+    -- check to see if product is included or excluded (i.e. whether to process) by any configured tags
+  {% endcomment %}
+
+  {% assign product_included_by_tag = nil %}
+  {% assign product_excluded_by_tag = nil %}
+
+  {% if inclusion_tags != blank %}
+    {% for inclusion_tag in inclusion_tags %}
+      {% if product.tags contains inclusion_tag %}
+        {% assign product_included_by_tag = true %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
+  {% if exclusion_tags != blank %}
+    {% for exclusion_tag in exclusion_tags %}
+      {% if product.tags contains exclusion_tag %}
+        {% assign product_excluded_by_tag = true %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
+  {% comment %}
+    -- check if a product has been excluded first, then only if there are inclusion tags configured check if it has been included
+  {% endcomment %}
+
+  {% if product_excluded_by_tag %}
+    {% log
+      message: "Product was excluded by a configured tag and will not be processed by this task.",
+      exclusion_tags: exclusion_tags,
+      product: product
+    %}
+    {% break %}
+
+  {% elsif inclusion_tags != blank %}
+    {% unless product_included_by_tag %}
+      {% log
+        message: "Product was not included by any configured tag and will not be processed by this task.",
+        inclusion_tags: inclusion_tags,
+        product: product
+      %}
+      {% break %}
+    {% endunless %}
+  {% endif %}
+
+  {% comment %}
+    -- product qualifies to be processed in main product loop
+  {% endcomment %}
+
+  {% assign products = array | push: product %}
+
+{% elsif event.topic == "mechanic/user/trigger" %}
   {% comment %}
     -- use an inventory filter in the products search query only if no location names have been configured in the task
+    -- note: ok to use inventory_total filter on scheduled/manual runs since the calculated field lag would be negligible
   {% endcomment %}
 
   {% if location_names == blank %}
@@ -249,13 +364,13 @@
   {% log products_search_query: search_query %}
 
   {% comment %}
-    -- use paginated query to get all products in the shop that match the optional search filters
+    -- use paginated query to get all active products in the shop that match the search filters
   {% endcomment %}
 
   {% assign products = array %}
   {% assign cursor = nil %}
 
-  {% for n in (0..100) %}
+  {% for n in (1..100) %}
     {% capture query %}
       query {
         products(
@@ -313,115 +428,6 @@
       {% break %}
     {% endif %}
   {% endfor %}
-
-{% elsif event.topic contains "shopify/inventory_levels/" %}
-  {% comment %}
-    -- query the inventory level to get the product data needed for this task
-  {% endcomment %}
-
-  {% capture query %}
-    query {
-      inventoryLevel(
-        id: {{ inventory_level.admin_graphql_api_id | json }}
-      ) {
-        item {
-          variant {
-            product {
-              id
-              legacyResourceId
-              title
-              totalInventory
-              tags
-              {% for publication_id in publication_ids %}
-                published{{ forloop.index }}: publishedOnPublication(publicationId: {{ publication_id | json }})
-              {% endfor %}
-            }
-          }
-        }
-      }
-    }
-  {% endcapture %}
-
-  {% assign result = query | shopify %}
-
-  {% if event.preview %}
-    {% capture result_json %}
-      {
-        "data": {
-          "inventoryLevel": {
-            "item": {
-              "variant": {
-                "product": {
-                  "id": "gid://shopify/Product/1234567890",
-                  "legacyResourceId": "1234567890",
-                  "title": "Widget",
-                  "totalInventory": {{ back_in_stock_inventory_quantity }},
-                  "tags": {{ inclusion_tags.first | json }},
-                  "published1": false
-                }
-              }
-            }
-          }
-        }
-      }
-    {% endcapture %}
-
-    {% assign result = result_json | parse_json %}
-  {% endif %}
-
-  {% assign product = result.data.inventoryLevel.item.variant.product %}
-
-  {% comment %}
-    -- check to see if product is included or excluded (i.e. whether to process) by any configured tags
-  {% endcomment %}
-
-  {% assign product_included_by_tag = nil %}
-  {% assign product_excluded_by_tag = nil %}
-
-  {% if inclusion_tags != blank %}
-    {% for inclusion_tag in inclusion_tags %}
-      {% if product.tags contains inclusion_tag %}
-        {% assign product_included_by_tag = true %}
-      {% endif %}
-    {% endfor %}
-  {% endif %}
-
-  {% if exclusion_tags != blank %}
-    {% for exclusion_tag in exclusion_tags %}
-      {% if product.tags contains exclusion_tag %}
-        {% assign product_excluded_by_tag = true %}
-      {% endif %}
-    {% endfor %}
-  {% endif %}
-
-  {% comment %}
-    -- check if a product has been excluded first, then only if there are inclusion tags configured check if it has been included
-  {% endcomment %}
-
-  {% if product_excluded_by_tag %}
-    {% log
-      message: "Product was excluded by a configured tag and will not be processed by this task.",
-      exclusion_tags: exclusion_tags,
-      product: product
-    %}
-    {% break %}
-
-  {% elsif inclusion_tags != blank %}
-    {% unless product_included_by_tag %}
-      {% log
-        message: "Product was not included by any configured tag and will not be processed by this task.",
-        inclusion_tags: inclusion_tags,
-        product: product
-      %}
-      {% break %}
-    {% endunless %}
-  {% endif %}
-
-  {% comment %}
-    -- product qualifies to be processed in main product loop
-  {% endcomment %}
-
-  {% assign products = array | push: product %}
 {% endif %}
 
 {% comment %}
@@ -436,24 +442,74 @@
 
   {% if location_names == blank %}
     {% comment %}
-      -- any products returned in the query will have met the back in stock quantity threshold due to the search filter, so can just output the total inventory
+      -- any products returned in the query will have met the back in stock quantity threshold due to the search filter, so can just output the total inventory (unless this is an inventory level event)
     {% endcomment %}
 
-    {% assign summed_inventory = product.totalInventory %}
+    {% assign available_inventory = product.totalInventory %}
+
+    {% if event.topic contains "shopify/inventory_levels/" %}
+      {% comment %}
+        -- sum inventoryQuantity from all variants instead of using product.totalInventory due to calculated field lag
+      {% endcomment %}
+
+      {% capture query %}
+        query {
+          product(id: {{ product.id | json }}) {
+            id
+            totalInventory
+            variants(first: 2048) {
+              nodes {
+                inventoryQuantity
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = query | shopify %}
+
+      {% if event.preview %}
+        {% capture result_json %}
+          {
+            "data": {
+              "product": {
+                "id": "gid://shopify/Product/1234567890",
+                "variants": {
+                  "nodes": [
+                    {
+                      "inventoryQuantity": {{ back_in_stock_inventory_quantity }}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        {% endcapture %}
+
+        {% assign result = result_json | parse_json %}
+      {% endif %}
+
+      {% assign available_inventory = result.data.product.variants.nodes | map: "inventoryQuantity" | sum %}
+
+      {% unless event.preview %}
+        {% log
+          available_inventory_summed_from_variants: available_inventory,
+          product_total_inventory_laggy_calc: product.totalInventory
+        %}
+      {% endunless %}
+    {% endif %}
 
   {% else %}
-    {% assign summed_inventory = 0 %}
+    {% assign available_inventory = 0 %}
 
     {% comment %}
       -- query and sum available inventory across the configured locations to determine stock status
-      -- to avoid exceeding api query cost, first get the inventory item IDs
     {% endcomment %}
 
     {% capture query %}
       query {
         product(id: {{ product.id | json }}) {
-          id
-          variants(first: 2000) {
+          variants(first: 2048) {
             nodes {
               inventoryItem {
                 {% for location_id in location_ids %}
@@ -477,7 +533,6 @@
         {
           "data": {
             "product": {
-              "id": "gid://shopify/Product/1234567890",
               "variants": {
                 "nodes": [
                   {
@@ -485,7 +540,7 @@
                       "inventory_level_1": {
                         "quantities": [
                           {
-                            "quantity": 0
+                            "quantity": {{ back_in_stock_inventory_quantity }}
                           }
                         ]
                       }
@@ -503,16 +558,12 @@
 
     {% for variant in result.data.product.variants.nodes %}
       {% for item in variant.inventoryItem %}
-        {% assign summed_inventory = summed_inventory | plus: item[1].quantities.first.quantity %}
+        {% assign available_inventory = available_inventory | plus: item[1].quantities.first.quantity %}
       {% endfor %}
     {% endfor %}
   {% endif %}
 
-  {% if summed_inventory < back_in_stock_inventory_quantity %}
-    {% comment %}
-      -- the summed inventory across the configured locations is less than the back in stock threshold; skip this product
-    {% endcomment %}
-
+  {% if available_inventory < back_in_stock_inventory_quantity %}
     {% continue %}
   {% endif %}
 
@@ -572,7 +623,7 @@
 
           Your product is back in stock{% if location_names != blank %} at the configured locations{% else %} across all locations{% endif %}! This product has been published to: {{ publication_names | join: ", " }}.
 
-          <a href="https://{{ shop.domain }}/admin/products/{{ product.legacyResourceId }}">Manage this product</a>
+          <a href="{{ shop.admin_url }}products/{{ product.legacyResourceId }}">Manage this product</a>
 
           Thanks,
           - Mechanic, for {{ shop.name }}
@@ -589,7 +640,7 @@
 
     {% else %}
       {% capture link -%}
-        <li><a href="https://{{ shop.domain }}/admin/products/{{ product.legacyResourceId }}">{{ product.title }}</a> ({{ summed_inventory }} - published to {{ publication_names | join: ", " }})</li>
+        <li><a href="{{ shop.admin_url }}products/{{ product.legacyResourceId }}">{{ product.title }}</a> ({{ available_inventory }} - published to {{ publication_names | join: ", " }})</li>
       {%- endcapture %}
 
       {% assign published_product_links[published_product_links.size] = link %}

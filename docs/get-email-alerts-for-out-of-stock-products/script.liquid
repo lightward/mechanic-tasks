@@ -11,15 +11,21 @@
 %}
 
 {% if event.topic contains "shopify/inventory_levels/" %}
+  {% comment %}
+    -- note: 15 second delay added to this event subscription in task configuration, to overcome the laggy update of product.totalInventory
+  {% endcomment %}
+
   {% capture query %}
     query {
       inventoryLevel(
         id: {{ inventory_level.admin_graphql_api_id | json }}
       ) {
         item {
-          variant {
-            product {
-              legacyResourceId
+          variants(first: 1) {
+            nodes {
+              product {
+                legacyResourceId
+              }
             }
           }
         }
@@ -34,7 +40,7 @@
   {% endcomment %}
 
   {%- capture search_query -%}
-    {{ search_query }} id:{{ result.data.inventoryLevel.item.variant.product.legacyResourceId }}
+    {{ search_query }} id:{{ result.data.inventoryLevel.item.variants.nodes.first.product.legacyResourceId }}
   {%- endcapture -%}
 {% endif %}
 
@@ -47,7 +53,7 @@
 
 {% assign cursor = nil %}
 
-{% for n in (0..100) %}
+{% for n in (1..100) %}
   {% capture query %}
     query {
       products(

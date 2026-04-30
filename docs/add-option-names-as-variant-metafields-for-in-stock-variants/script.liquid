@@ -21,17 +21,19 @@
     query {
       inventoryLevel(id: {{ inventory_level.admin_graphql_api_id | json }}) {
         item {
-          variant {
-            id
-            displayName
-            inventoryPolicy
-            availableForSale
-            sellableOnlineQuantity
-            selectedOptions {
-              name
-              value
+          variants(first: 1) {
+            nodes {
+              id
+              displayName
+              inventoryPolicy
+              availableForSale
+              sellableOnlineQuantity
+              selectedOptions {
+                name
+                value
+              }
+              {{ metafields_query }}
             }
-            {{ metafields_query }}
           }
         }
       }
@@ -40,7 +42,7 @@
 
   {% assign result = query | shopify %}
 
-  {% assign variants[0] = result.data.inventoryLevel.item.variant %}
+  {% assign variants[0] = result.data.inventoryLevel.item.variants.nodes.first %}
 
 {% elsif event.topic == "mechanic/user/trigger" %}
   {% capture bulk_operation_query %}

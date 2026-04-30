@@ -25,7 +25,7 @@ Use this task to keep you and your team updated when products go out of stock - 
 ## Subscriptions
 
 ```liquid
-shopify/inventory_levels/update
+shopify/inventory_levels/update+15.seconds
 mechanic/user/trigger
 ```
 

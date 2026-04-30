@@ -1,4 +1,4 @@
-{% assign must_belong_to_collection_id = options.must_belong_to_collection_id %}
+{% assign must_belong_to_collection_id = options.must_belong_to_collection__picker_collection %}
 {% assign must_be_published_to_publication_id = options.must_be_published_to_publication_id %}
 {% assign email_subject = options.email_subject__required %}
 {% assign email_body = options.email_body__multiline_required %}
@@ -78,17 +78,19 @@
     query {
       inventoryLevel(id: {{ inventory_level.admin_graphql_api_id | json }}) {
         item {
-          variant {
-            displayName
-            inventoryQuantity
-            legacyResourceId
-            product {
+          variants(first: 1) {
+            nodes {
+              displayName
+              inventoryQuantity
               legacyResourceId
-              {% if must_belong_to_collection_id -%}
-                inCollection(id: "gid://shopify/Collection/{{must_belong_to_collection_id}}")
-              {%- elsif must_be_published_to_publication_id -%}
-                publishedOnPublication(publicationId: "gid://shopify/Publication/{{must_be_published_to_publication_id}}")
-              {%- endif %}
+              product {
+                legacyResourceId
+                {% if must_belong_to_collection_id -%}
+                  inCollection(id: {{ must_belong_to_collection_id | json }})
+                {%- elsif must_be_published_to_publication_id -%}
+                  publishedOnPublication(publicationId: "gid://shopify/Publication/{{must_be_published_to_publication_id}}")
+                {%- endif %}
+              }
             }
           }
         }
@@ -104,18 +106,22 @@
         "data": {
           "inventoryLevel": {
             "item": {
-              "variant": {
-                "displayName": "Short sleeve t-shirt - L / Red",
-                "inventoryQuantity": 0,
-                "legacyResourceId": "1234567890",
-                "product": {
-                  "legacyResourceId": "1234567890"
-                  {% if must_belong_to_collection_id -%}
-                    , "inCollection" : "true"
-                  {%- elsif options.must_be_published_to_publication_id -%}
-                    , "publishedOnPublication": "true"
-                  {%- endif %}
-                }
+              "variants": {
+                "nodes": [
+                  {
+                  "displayName": "Short sleeve t-shirt - L / Red",
+                  "inventoryQuantity": 0,
+                  "legacyResourceId": "1234567890",
+                  "product": {
+                    "legacyResourceId": "1234567890"
+                    {% if must_belong_to_collection_id -%}
+                      , "inCollection" : "true"
+                    {%- elsif options.must_be_published_to_publication_id -%}
+                      , "publishedOnPublication": "true"
+                    {%- endif %}
+                    }
+                  }
+                ]
               }
             }
           }
@@ -126,7 +132,8 @@
     {% assign result = result_json | parse_json %}
   {% endif %}
 
-  {% assign variant = result.data.inventoryLevel.item.variant %}
+  {% assign variant = result.data.inventoryLevel.item.variants.nodes.first %}
+  {% assign variant_title = variant.displayName | remove: " - Default Title" %}
 
   {% assign product_qualifies = false %}
 
@@ -141,10 +148,20 @@
   {% endif %}
 
   {% if variant.inventoryQuantity == 0 and product_qualifies %}
-    {% assign variant_admin_url = "https://" | append: shop.domain | append: "/admin/products/" | append: variant.product.legacyResourceId | append: "/variants/" | append: variant.legacyResourceId %}
+    {%- capture variant_admin_url -%}
+      {{ shop.admin_url }}products/{{ variant.product.legacyResourceId }}/variants/{{ variant.legacyResourceId }}
+    {%- endcapture -%}
 
-    {% assign email_subject = email_subject | replace: "VARIANT_TITLE", variant.displayName | replace: "VARIANT_ADMIN_URL", variant_admin_url %}
-    {% assign email_body = email_body | replace: "VARIANT_TITLE", variant.displayName | replace: "VARIANT_ADMIN_URL", variant_admin_url %}
+    {% assign email_subject
+      = email_subject
+      | replace: "VARIANT_TITLE", variant_title
+      | replace: "VARIANT_ADMIN_URL", variant_admin_url
+    %}
+    {% assign email_body
+      = email_body
+      | replace: "VARIANT_TITLE", variant_title
+      | replace: "VARIANT_ADMIN_URL", variant_admin_url
+    %}
 
     {% action "email" %}
       {

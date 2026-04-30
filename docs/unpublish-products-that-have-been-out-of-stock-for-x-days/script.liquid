@@ -1,8 +1,7 @@
 {% comment %}
   1. Watch for updates to inventory levels.
   2. Look up the associated product, when an update comes in.
-  3. If the product's total inventory is <=0, record the current time in a metafield. If the
-     total inventory is not 0, delete that metafield, if it exists.
+  3. If the product's summed variant inventory is <=0, record the current time in a metafield. If not, delete that metafield, if it exists.
   4. Scan all products, on a schedule, retrieving each product's out-of-stock time metafield.
      For products found with a total inventory of <=0, with a recorded time that's at least a
      configurable distance in days from the current time, unpublish the product.
@@ -16,22 +15,33 @@
 {% assign time_format = "%FT%T%z" %}
 
 {% if event.topic == "shopify/inventory_levels/update" %}
+  {% comment %}
+    -- sum inventoryQuantity from all variants instead of using product.totalInventory due to calculated field lag
+  {% endcomment %}
+
   {% capture query %}
     query {
       inventoryLevel(
         id: {{ inventory_level.admin_graphql_api_id | json }}
       ) {
         item {
-          variant {
-            product {
-              id
-              title
-              totalInventory
-              metafield(
-                namespace: "mechanic"
-                key: "out_of_stock_at"
-              ) {
-                value
+          variants(first: 1) {
+            nodes {
+              product {
+                id
+                title
+                totalInventory
+                metafield(
+                  namespace: "mechanic"
+                  key: "out_of_stock_at"
+                ) {
+                  value
+                }
+                variants(first: 250) {
+                  nodes {
+                    inventoryQuantity
+                  }
+                }
               }
             }
           }
@@ -48,12 +58,22 @@
         "data": {
           "inventoryLevel": {
             "item": {
-              "variant": {
-                "product": {
-                  "id": "gid://shopify/Product/1234567890",
-                  "title": "Short sleeve t-shirt",
-                  "totalInventory": 0
-                }
+              "variants": {
+                "nodes": [
+                  {
+                    "product": {
+                      "id": "gid://shopify/Product/1234567890",
+                      "title": "Short sleeve t-shirt",
+                      "variants": {
+                        "nodes": [
+                          {
+                            "inventoryQuantity": 0
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
               }
             }
           }
@@ -64,16 +84,23 @@
     {% assign result = result_json | parse_json %}
   {% endif %}
 
-  {% assign product = result.data.inventoryLevel.item.variant.product %}
+  {% assign product = result.data.inventoryLevel.item.variants.nodes.first.product %}
+  {% assign available_inventory = product.variants.nodes | map: "inventoryQuantity" | sum %}
 
-  {% if product.totalInventory <= 0 and product.metafield == blank %}
+  {% unless event.preview %}
+    {% log
+      available_inventory_summed_from_variants: available_inventory,
+      product_total_inventory_laggy_calc: product.totalInventory
+    %}
+  {% endunless %}
+
+  {% if available_inventory <= 0 and product.metafield == blank %}
     {% if test_mode %}
-      {% log %}
-        {%- capture message -%}
-          Product {{ product.title | json }} ({{ product.id }}) is out of stock. Its out-of-stock time should be recorded.
-        {%- endcapture -%}
-        {{ message | json }}
-      {% endlog %}
+      {%- capture message -%}
+        Product {{ product.title | json }} ({{ product.id }}) is out of stock. Its out-of-stock time should be recorded.
+      {%- endcapture -%}
+
+      {% log message %}
 
     {% else %}
       {% action "shopify" %}
@@ -112,14 +139,13 @@
       {% endaction %}
     {% endif %}
 
-  {% elsif product.totalInventory > 0 and product.metafield != blank %}
+  {% elsif available_inventory > 0 and product.metafield != blank %}
     {% if test_mode %}
-      {% log %}
-        {%- capture message -%}
-          Product {{ product.title | json }} ({{ product.id }}) is back in stock. Its out-of-stock time should be cleared.
-        {%- endcapture -%}
-        {{ message | json }}
-      {% endlog %}
+      {%- capture message -%}
+        Product {{ product.title | json }} ({{ product.id }}) is back in stock. Its out-of-stock time should be cleared.
+      {%- endcapture -%}
+
+      {% log message %}
 
     {% else %}
       {% action "shopify" %}
@@ -150,7 +176,7 @@
 
 {% elsif event.topic contains "mechanic/scheduler/" or event.topic == "mechanic/user/trigger" %}
   {% assign now_s = "now" | date: "%s" | times: 1 %}
-  {% assign minimum_out_of_stock_at_distance_s = number_of_days_to_wait_before_unpublishing | times: 24 | times: 60 | times: 60 %}
+  {% assign minimum_out_of_stock_at_distance_s = number_of_days_to_wait_before_unpublishing | times: 86400 %}
 
   {% comment %}
     -- get all of the sales channel names (i.e. publications aka app catalogs) in the shop
@@ -249,6 +275,7 @@
 
   {% comment %}
     -- query for all active, out of stock products (up to 25K); optionally filter the products with configured query
+    -- note: ok to use inventory_total filter on scheduled/manual runs since the calculated field lag would be negligible
   {% endcomment %}
 
   {% assign search_query = "status:active AND inventory_total:<=0" %}
@@ -288,7 +315,6 @@
               namespace: "mechanic"
               key: "out_of_stock_at"
             ) {
-              id
               value
             }
           }
@@ -333,9 +359,11 @@
 
   {% for product in products %}
     {% if product.metafield == blank %}
-      {% log %}
-        "Product {{ product.id }} is out of stock, but its out-of-stock time was not recorded. This product will not be unpublished now, but its out-of-stock time will be set to the current time."
-      {% endlog %}
+      {%- capture message -%}
+        Product {{ product.id }} is out of stock, but its out-of-stock time was not recorded. This product will not be unpublished now, but its out-of-stock time will be set to the current time.
+      {%- endcapture -%}
+
+      {% log message  %}
 
       {% assign metafield_to_set = hash %}
       {% assign metafield_to_set["ownerId"] = product.id %}
@@ -362,32 +390,31 @@
     {% endfor %}
 
     {% if unpublishings == blank %}
-      {% log %}
-        {%- capture message -%}
-          Product {{ product.title | json }} ({{ product.id }}) has been out of stock for {{ out_of_stock_at_distance_s | divided_by: 86400 | round: 2 }} day(s), but is not published - nothing to do.
-        {%- endcapture -%}
-        {{ message | json }}
-      {% endlog %}
+      {%- capture message -%}
+        Product {{ product.title | json }} ({{ product.id }}) has been out of stock for {{ out_of_stock_at_distance_s | divided_by: 86400 | round: 2 }} day(s), but is not published - nothing to do.
+      {%- endcapture -%}
+
+      {% log message %}
+
       {% continue %}
     {% endif %}
 
     {% if out_of_stock_at_distance_s < minimum_out_of_stock_at_distance_s %}
-      {% log %}
-        {%- capture message -%}
-          Product {{ product.title | json }} ({{ product.id }}) is out of stock, and is published, but has only been out of stock for {{ out_of_stock_at_distance_s | divided_by: 86400 | round: 2 }} day(s).
-        {%- endcapture -%}
-        {{ message | json }}
-      {% endlog %}
+      {%- capture message -%}
+        Product {{ product.title | json }} ({{ product.id }}) is out of stock, and is published, but has only been out of stock for {{ out_of_stock_at_distance_s | divided_by: 86400 | round: 2 }} day(s).
+      {%- endcapture -%}
+
+      {% log message %}
+
       {% continue %}
     {% endif %}
 
     {% if test_mode %}
-      {% log %}
-        {%- capture message -%}
-          Product {{ product.title | json }} ({{ product.id }}) is out of stock, and has been out of stock for {{ out_of_stock_at_distance_s | divided_by: 86400 | round: 2 }} day(s). It should be unpublished.
-        {%- endcapture -%}
-        {{ message | json }}
-      {% endlog %}
+      {%- capture message -%}
+        Product {{ product.title | json }} ({{ product.id }}) is out of stock, and has been out of stock for {{ out_of_stock_at_distance_s | divided_by: 86400 | round: 2 }} day(s). It should be unpublished.
+      {%- endcapture -%}
+
+      {% log message  %}
 
     {% else %}
       {% action "shopify" %}
@@ -412,9 +439,11 @@
 
   {% if metafields_to_set != blank %}
     {% if test_mode %}
-      {% log %}
-        "Found {{ metafields_to_set.size }} out of stock products which do not yet have their out of stock time recorded. This task has test mode enabled, so these metafields will not be set on this task run."
-      {% endlog %}
+      {%- capture message -%}
+        Found {{ metafields_to_set.size }} out of stock products which do not yet have their out of stock time recorded. This task has test mode enabled, so these metafields will not be set on this task run.
+      {%- endcapture -%}
+
+      {% log message  %}
 
       {% break %}
     {% endif %}

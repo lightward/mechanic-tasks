@@ -6,12 +6,12 @@
       product(id: {{ product.admin_graphql_api_id | json }}) {
         legacyResourceId
         title
-        variants(first: 100) {
+        variants(first: 2048) {
           nodes {
             id
             legacyResourceId
             sku
-            title
+            displayName
             price
             inventoryItem {
               unitCost {
@@ -46,7 +46,7 @@
                   "id": "gid://shopify/ProductVariant/1234567890",
                   "legacyResourceId": "1234567890",
                   "sku": "ABC123",
-                  "title": "Default Title",
+                  "displayName": "ACME Widget - Red",
                   "price": "5.00",
                   "inventoryItem": {
                     "unitCost": {
@@ -65,202 +65,129 @@
   {% endif %}
 
   {% assign product = result.data.product %}
-  {% assign variants = product.variants.nodes %}
 
-{% elsif event.topic == "shopify/inventory_items/update" %}
-  {% comment %}
-    -- product update webhooks will not fire when costs are updated, so listen for inventory items updates as well
-  {% endcomment %}
+  {% assign metafields_to_set = array %}
+  {% assign metafields_to_delete = array %}
 
-  {% capture query %}
-    query {
-      inventoryItem(id: {{ inventory_item.admin_graphql_api_id | json }}) {
-        variant {
-          id
-          legacyResourceId
-          sku
-          title
-          price
-          inventoryItem {
-            unitCost {
-              amount
-            }
-          }
-          known_cost_and_price: metafield(
-            namespace: "mechanic"
-            key: "known_cost_and_price"
-          ) {
-            id
-            value
-          }
-          product {
-            legacyResourceId
-            title
-          }
-        }
-      }
-    }
-  {% endcapture %}
+  {% for variant in product.variants.nodes %}
+    {% assign unit_cost = variant.inventoryItem.unitCost.amount | times: 1 %}
+    {% assign price = variant.price | times: 1 %}
+    {% assign known_cost_and_price = variant.known_cost_and_price.value | default: "{}" | parse_json %}
 
-  {% assign result = query | shopify %}
+    {% assign current_cost_and_price = hash %}
+    {% assign current_cost_and_price["cost"] = unit_cost %}
+    {% assign current_cost_and_price["price"] = price %}
 
-  {% if event.preview %}
-    {% capture result_json %}
-      {
-        "data": {
-          "inventoryItem": {
-            "variant": {
-              "id": "gid://shopify/ProductVariant/1234567890",
-              "legacyResourceId": "1234567890",
-              "title": "Red",
-              "price": "5.00",
-              "inventoryItem": {
-                "unitCost": {
-                  "amount": "10.0"
-                }
-              },
-              "known_cost_and_price": null,
-              "product": {
-                "legacyResourceId": "1234567890",
-                "title": "ACME Widget"
-              }
-            }
-          }
-        }
-      }
-    {% endcapture %}
-
-    {% assign result = result_json | parse_json %}
-  {% endif %}
-
-  {% comment %}
-    -- assign the variant paired to the updated inventory item to a variants array for shared processing with product updates
-  {% endcomment %}
-
-  {% assign product = result.data.inventoryItem.variant.product %}
-  {% assign variants = array | push: result.data.inventoryItem.variant %}
-{% endif %}
-
-{% assign metafields_to_set = array %}
-{% assign metafields_to_delete = array %}
-
-{% for variant in variants %}
-  {% assign unit_cost = variant.inventoryItem.unitCost.amount | times: 1 %}
-  {% assign price = variant.price | times: 1 %}
-  {% assign known_cost_and_price = variant.known_cost_and_price.value | default: "{}" | parse_json %}
-
-  {% assign current_cost_and_price = hash %}
-  {% assign current_cost_and_price["cost"] = unit_cost %}
-  {% assign current_cost_and_price["price"] = price %}
-
-  {% log
-    variant_id: variant.id,
-    known_cost_and_price: known_cost_and_price,
-    current_cost_and_price: current_cost_and_price
-  %}
-
-  {% if price >= unit_cost and variant.known_cost_and_price != blank %}
-    {% assign metafield_to_delete = hash %}
-    {% assign metafield_to_delete["ownerId"] = variant.id %}
-    {% assign metafield_to_delete["namespace"] = "mechanic" %}
-    {% assign metafield_to_delete["key"] = "known_cost_and_price" %}
-    {% assign metafields_to_delete = metafields_to_delete | push: metafield_to_delete %}
-
-  {% elsif price < unit_cost and known_cost_and_price != current_cost_and_price %}
-    {% assign variant_name
-      = variant.sku
-      | default: variant.title
-      | remove: " - Default Title"
+    {% log
+      variant_id: variant.id,
+      known_cost_and_price: known_cost_and_price,
+      current_cost_and_price: current_cost_and_price
     %}
 
-    {% capture email_subject %}
-      {{ variant_name }} was priced lower than its cost
-    {% endcapture %}
+    {% if price >= unit_cost and variant.known_cost_and_price != blank %}
+      {% assign metafield_to_delete = hash %}
+      {% assign metafield_to_delete["ownerId"] = variant.id %}
+      {% assign metafield_to_delete["namespace"] = "mechanic" %}
+      {% assign metafield_to_delete["key"] = "known_cost_and_price" %}
+      {% assign metafields_to_delete = metafields_to_delete | push: metafield_to_delete %}
 
-    {% capture email_body %}
-      Hello,
+    {% elsif price < unit_cost and known_cost_and_price != current_cost_and_price %}
+      {% assign variant_name
+        = variant.sku
+        | default: variant.displayName
+        | remove: " - Default Title"
+      %}
 
-      {{ variant_name }} was found to have a unit cost of {{ unit_cost | currency }}, while its price is set to {{ price | currency }}.
+      {% capture email_subject %}
+        {{ variant_name }} was priced lower than its cost
+      {% endcapture %}
 
-      <a href="{{ shop.admin_url }}products/{{ product.legacyResourceId }}/variants/{{ variant.legacyResourceId }}">Manage this in Shopify</a>
+      {% capture email_body %}
+        Hello,
 
-      Thanks,
-      Mechanic, for {{ shop.name }}
-    {% endcapture %}
+        {{ variant_name }} was found to have a unit cost of {{ unit_cost | currency }}, while its price is set to {{ price | currency }}.
 
-    {% action "email" %}
-      {
-        "to": {{ recipient_emails | json }},
-        "subject": {{ email_subject | strip | json }},
-        "body": {{ email_body | unindent | strip | newline_to_br | json }},
-        "reply_to": {{ shop.customer_email | json }},
-        "from_display_name": {{ shop.name | json }}
-      }
-    {% endaction %}
+        <a href="{{ shop.admin_url }}products/{{ product.legacyResourceId }}/variants/{{ variant.legacyResourceId }}">Manage this in Shopify</a>
 
-    {% assign metafield_to_set = hash %}
-    {% assign metafield_to_set["ownerId"] = variant.id %}
-    {% assign metafield_to_set["namespace"] = "mechanic" %}
-    {% assign metafield_to_set["key"] = "known_cost_and_price" %}
-    {% assign metafield_to_set["type"] = "json" %}
-    {% assign metafield_to_set["value"] = current_cost_and_price | json %}
-    {% assign metafields_to_set = metafields_to_set | push: metafield_to_set %}
-  {% endif %}
-{% endfor %}
+        Thanks,
+        Mechanic, for {{ shop.name }}
+      {% endcapture %}
 
-{% if metafields_to_set != blank %}
-  {% assign groups_of_metafields_to_set = metafields_to_set | in_groups_of: 25, fill_with: false %}
+      {% action "email" %}
+        {
+          "to": {{ recipient_emails | json }},
+          "subject": {{ email_subject | strip | json }},
+          "body": {{ email_body | unindent | strip | newline_to_br | json }},
+          "reply_to": {{ shop.customer_email | json }},
+          "from_display_name": {{ shop.name | json }}
+        }
+      {% endaction %}
 
-  {% for group_of_metafields_to_set in groups_of_metafields_to_set %}
-    {% action "shopify" %}
-      mutation {
-        metafieldsSet(
-          metafields: {{ group_of_metafields_to_set | graphql_arguments }}
-        ) {
-          metafields {
-            id
-            namespace
-            key
-            type
-            value
-            owner {
-              ... on ProductVariant {
-                id
-                displayName
+      {% assign metafield_to_set = hash %}
+      {% assign metafield_to_set["ownerId"] = variant.id %}
+      {% assign metafield_to_set["namespace"] = "mechanic" %}
+      {% assign metafield_to_set["key"] = "known_cost_and_price" %}
+      {% assign metafield_to_set["type"] = "json" %}
+      {% assign metafield_to_set["value"] = current_cost_and_price | json %}
+      {% assign metafields_to_set = metafields_to_set | push: metafield_to_set %}
+    {% endif %}
+  {% endfor %}
+
+  {% if metafields_to_set != blank %}
+    {% assign groups_of_metafields_to_set = metafields_to_set | in_groups_of: 25, fill_with: false %}
+
+    {% for group_of_metafields_to_set in groups_of_metafields_to_set %}
+      {% action "shopify" %}
+        mutation {
+          metafieldsSet(
+            metafields: {{ group_of_metafields_to_set | graphql_arguments }}
+          ) {
+            metafields {
+              id
+              namespace
+              key
+              type
+              value
+              owner {
+                ... on ProductVariant {
+                  id
+                  sku
+                  displayName
+                }
               }
             }
-          }
-          userErrors {
-            code
-            field
-            message
-          }
-        }
-      }
-    {% endaction %}
-  {% endfor %}
-{% endif %}
-
-{% if metafields_to_delete != blank %}
-  {% assign groups_of_metafields_to_delete = metafields_to_delete | in_groups_of: 250, fill_with: false %}
-
-  {% for group_of_metafields_to_delete in groups_of_metafields_to_delete %}
-    {% action "shopify" %}
-      mutation {
-        metafieldsDelete(
-          metafields: {{ group_of_metafields_to_delete | graphql_arguments }}
-        ) {
-          deletedMetafields {
-            ownerId
-            namespace
-            key
-          }
-          userErrors {
-            field
-            message
+            userErrors {
+              code
+              field
+              message
+            }
           }
         }
-      }
-    {% endaction %}
-  {% endfor %}
+      {% endaction %}
+    {% endfor %}
+  {% endif %}
+
+  {% if metafields_to_delete != blank %}
+    {% assign groups_of_metafields_to_delete = metafields_to_delete | in_groups_of: 250, fill_with: false %}
+
+    {% for group_of_metafields_to_delete in groups_of_metafields_to_delete %}
+      {% action "shopify" %}
+        mutation {
+          metafieldsDelete(
+            metafields: {{ group_of_metafields_to_delete | graphql_arguments }}
+          ) {
+            deletedMetafields {
+              ownerId
+              namespace
+              key
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endfor %}
+  {% endif %}
 {% endif %}

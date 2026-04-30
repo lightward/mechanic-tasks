@@ -1,87 +1,91 @@
 {% assign in_stock_tag = options.in_stock_tag__required %}
 {% assign out_of_stock_tag = options.out_of_stock_tag__required %}
 
-{% assign products = array %}
+{% if event.topic == "shopify/inventory_levels/update" %}
+  {% comment %}
+    -- get product and variant data
+    -- sum inventoryQuantity from all variants instead of using product.totalInventory due to calculated field lag
+  {% endcomment %}
 
-{% if event.topic contains "shopify/products/" %}
   {% capture query %}
     query {
-      product(id: {{ product.admin_graphql_api_id | json }}) {
-        id
-        status
-        totalInventory
-        tags
-      }
-    }
-  {% endcapture %}
-
-  {% assign result = query | shopify %}
-
-  {% if result.data.product.status == "ACTIVE" or event.preview %}
-    {% assign products[0] = result.data.product %}
-  {% endif %}
-
-{% elsif event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
-  {% capture bulk_operation_query %}
-    query {
-      products(
-        query: "status:active"
-      ) {
-        edges {
-          node {
-            __typename
-            id
-            totalInventory
-            tags
+      inventoryLevel(id: {{ inventory_level.admin_graphql_api_id | json }}) {
+        item {
+          variants(first: 1) {
+            nodes {
+              product {
+                id
+                status
+                totalInventory
+                tags
+              }
+            }
           }
         }
       }
     }
   {% endcapture %}
 
-  {% action "shopify" %}
-    mutation {
-      bulkOperationRunQuery(
-        query: {{ bulk_operation_query | json }}
-      ) {
-        bulkOperation {
-          id
-          status
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "inventoryLevel": {
+            "item": {
+              "variants": {
+                "nodes": [
+                  {
+                    "product": {
+                      "id": "gid://shopify/Product/1234567890",
+                      "status": "ACTIVE"
+                    }
+                  }
+                ]
+              }
+            }
+          }
         }
-        userErrors {
-          field
-          message
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign product = result.data.inventoryLevel.item.variants.nodes.first.product %}
+
+  {% unless product.status == "ACTIVE" %}
+    {% break %}
+  {% endunless %}
+
+  {% capture query %}
+    query {
+      product(id: {{ product.id | json }}) {
+        variants(first: 2048) {
+          nodes {
+            inventoryQuantity
+          }
         }
       }
     }
-  {% endaction %}
-
-{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
-  {% assign products = bulkOperation.objects | where: "__typename", "Product" %}
-{% endif %}
-
-{% if event.preview %}
-  {% capture products_json %}
-    [
-      {
-        "id": "gid://shopify/Product/1234567890",
-        "totalInventory": 1
-      },
-      {
-        "id": "gid://shopify/Product/2345678901",
-        "totalInventory": 0
-      }
-    ]
   {% endcapture %}
 
-  {% assign products = products_json | parse_json %}
-{% endif %}
+  {% assign result = query | shopify %}
 
-{% for product in products %}
+  {% assign available_inventory = result.data.product.variants.nodes | map: "inventoryQuantity" | sum %}
+
+  {% unless event.preview %}
+    {% log
+      available_inventory_summed_from_variants: available_inventory,
+      product_total_inventory_laggy_calc: product.totalInventory
+    %}
+  {% endunless %}
+
   {% assign tag_to_add = nil %}
   {% assign tag_to_remove = nil %}
 
-  {% if product.totalInventory > 0 %}
+  {% if available_inventory > 0 %}
     {% unless product.tags contains in_stock_tag %}
       {% assign tag_to_add = in_stock_tag %}
     {% endunless %}
@@ -128,4 +132,105 @@
       }
     {% endaction %}
   {% endif %}
-{% endfor %}
+
+{% elsif event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
+  {% capture bulk_operation_query %}
+    query {
+      products(
+        query: "status:active"
+      ) {
+        edges {
+          node {
+            __typename
+            id
+            totalInventory
+            tags
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if event.preview %}
+    {% capture jsonl_string %}
+      {"__typename":"Product","id":"gid://shopify/Product/1234567890","totalInventory":1}
+      {"__typename":"Product","id":"gid://shopify/Product/2345678901","totalInventory":0}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = jsonl_string | parse_jsonl %}
+  {% endif %}
+
+  {% assign products = bulkOperation.objects | where: "__typename", "Product" %}
+
+  {% for product in products %}
+    {% assign tag_to_add = nil %}
+    {% assign tag_to_remove = nil %}
+
+    {% if product.totalInventory > 0 %}
+      {% unless product.tags contains in_stock_tag %}
+        {% assign tag_to_add = in_stock_tag %}
+      {% endunless %}
+
+      {% if product.tags contains out_of_stock_tag %}
+        {% assign tag_to_remove = out_of_stock_tag %}
+      {% endif %}
+
+    {% else %}
+      {% unless product.tags contains out_of_stock_tag %}
+        {% assign tag_to_add = out_of_stock_tag %}
+      {% endunless %}
+
+      {% if product.tags contains in_stock_tag %}
+        {% assign tag_to_remove = in_stock_tag %}
+      {% endif %}
+    {% endif %}
+
+    {% if tag_to_add != blank or tag_to_remove != blank %}
+      {% action "shopify" %}
+        mutation {
+          {% if tag_to_add != blank %}
+            tagsAdd(
+              id: {{ product.id | json }}
+              tags: {{ tag_to_add | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          {% endif %}
+          {% if tag_to_remove != blank %}
+            tagsRemove(
+              id: {{ product.id | json }}
+              tags: {{ tag_to_remove | json }}
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          {% endif %}
+        }
+      {% endaction %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
