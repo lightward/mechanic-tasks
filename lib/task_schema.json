@@ -218,6 +218,57 @@
         ],
         "additionalProperties": false
       }
+    },
+    "custom_shopify_webhook_subscriptions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "shopify_topic": {
+            "type": "string",
+            "pattern": "^shopify/[a-z0-9_]+/[a-z0-9_]+$"
+          },
+          "event_topic": {
+            "type": "string",
+            "pattern": "^user/[a-z0-9_]+/[a-z0-9_]+$"
+          },
+          "filter": {
+            "type": "string"
+          },
+          "include_fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "metafield_namespaces": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "metafields": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[^.]+\\.[^.]+$"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "shopify_topic",
+          "event_topic",
+          "filter",
+          "include_fields",
+          "metafield_namespaces",
+          "metafields"
+        ],
+        "additionalProperties": false
+      }
     }
   },
   "required": [
