@@ -229,7 +229,179 @@
           },
           "shopify_topic": {
             "type": "string",
-            "pattern": "^shopify/[a-z0-9_]+/[a-z0-9_]+$"
+            "enum": [
+              "shopify/carts/create",
+              "shopify/carts/update",
+              "shopify/channels/delete",
+              "shopify/checkout_and_accounts_configurations/update",
+              "shopify/checkouts/create",
+              "shopify/checkouts/delete",
+              "shopify/checkouts/update",
+              "shopify/collections/create",
+              "shopify/collections/delete",
+              "shopify/collections/update",
+              "shopify/companies/create",
+              "shopify/companies/delete",
+              "shopify/companies/update",
+              "shopify/company_contact_roles/assign",
+              "shopify/company_contact_roles/revoke",
+              "shopify/company_contacts/create",
+              "shopify/company_contacts/delete",
+              "shopify/company_contacts/update",
+              "shopify/company_locations/create",
+              "shopify/company_locations/delete",
+              "shopify/company_locations/update",
+              "shopify/customer/joined_segment",
+              "shopify/customer/left_segment",
+              "shopify/customer/tags_added",
+              "shopify/customer/tags_removed",
+              "shopify/customer_account_settings/update",
+              "shopify/customer_groups/create",
+              "shopify/customer_groups/delete",
+              "shopify/customer_groups/update",
+              "shopify/customers/create",
+              "shopify/customers/delete",
+              "shopify/customers/disable",
+              "shopify/customers/enable",
+              "shopify/customers/merge",
+              "shopify/customers/purchasing_summary",
+              "shopify/customers/update",
+              "shopify/customers_email_marketing_consent/update",
+              "shopify/customers_marketing_consent/update",
+              "shopify/delivery_promise_settings/update",
+              "shopify/discounts/create",
+              "shopify/discounts/delete",
+              "shopify/discounts/redeemcode_added",
+              "shopify/discounts/redeemcode_removed",
+              "shopify/discounts/update",
+              "shopify/disputes/create",
+              "shopify/disputes/update",
+              "shopify/domains/create",
+              "shopify/domains/destroy",
+              "shopify/domains/update",
+              "shopify/draft_orders/create",
+              "shopify/draft_orders/delete",
+              "shopify/draft_orders/update",
+              "shopify/finance_app_staff_member/delete",
+              "shopify/finance_app_staff_member/grant",
+              "shopify/finance_app_staff_member/revoke",
+              "shopify/finance_app_staff_member/update",
+              "shopify/finance_kyc_information/update",
+              "shopify/fulfillment_events/create",
+              "shopify/fulfillment_events/delete",
+              "shopify/fulfillment_holds/added",
+              "shopify/fulfillment_holds/released",
+              "shopify/fulfillment_orders/cancellation_request_accepted",
+              "shopify/fulfillment_orders/cancellation_request_rejected",
+              "shopify/fulfillment_orders/cancellation_request_submitted",
+              "shopify/fulfillment_orders/cancelled",
+              "shopify/fulfillment_orders/fulfillment_request_accepted",
+              "shopify/fulfillment_orders/fulfillment_request_rejected",
+              "shopify/fulfillment_orders/fulfillment_request_submitted",
+              "shopify/fulfillment_orders/fulfillment_service_failed_to_complete",
+              "shopify/fulfillment_orders/hold_released",
+              "shopify/fulfillment_orders/line_items_prepared_for_local_delivery",
+              "shopify/fulfillment_orders/line_items_prepared_for_pickup",
+              "shopify/fulfillment_orders/merged",
+              "shopify/fulfillment_orders/moved",
+              "shopify/fulfillment_orders/order_routing_complete",
+              "shopify/fulfillment_orders/placed_on_hold",
+              "shopify/fulfillment_orders/rescheduled",
+              "shopify/fulfillment_orders/scheduled_fulfillment_order_ready",
+              "shopify/fulfillment_orders/split",
+              "shopify/fulfillments/create",
+              "shopify/fulfillments/update",
+              "shopify/inventory_items/create",
+              "shopify/inventory_items/delete",
+              "shopify/inventory_items/update",
+              "shopify/inventory_levels/connect",
+              "shopify/inventory_levels/disconnect",
+              "shopify/inventory_levels/update",
+              "shopify/inventory_shipments/add_items",
+              "shopify/inventory_shipments/create",
+              "shopify/inventory_shipments/delete",
+              "shopify/inventory_shipments/mark_in_transit",
+              "shopify/inventory_shipments/receive_items",
+              "shopify/inventory_shipments/remove_items",
+              "shopify/inventory_shipments/update_item_quantities",
+              "shopify/inventory_shipments/update_tracking",
+              "shopify/inventory_transfers/add_items",
+              "shopify/inventory_transfers/cancel",
+              "shopify/inventory_transfers/complete",
+              "shopify/inventory_transfers/ready_to_ship",
+              "shopify/inventory_transfers/remove_items",
+              "shopify/inventory_transfers/update_item_quantities",
+              "shopify/locales/create",
+              "shopify/locales/destroy",
+              "shopify/locales/update",
+              "shopify/locations/activate",
+              "shopify/locations/create",
+              "shopify/locations/deactivate",
+              "shopify/locations/delete",
+              "shopify/locations/update",
+              "shopify/markets/create",
+              "shopify/markets/delete",
+              "shopify/markets/update",
+              "shopify/markets_backup_region/update",
+              "shopify/metafield_definitions/create",
+              "shopify/metafield_definitions/delete",
+              "shopify/metafield_definitions/update",
+              "shopify/metaobjects/create",
+              "shopify/metaobjects/delete",
+              "shopify/metaobjects/update",
+              "shopify/order_transactions/create",
+              "shopify/orders/cancelled",
+              "shopify/orders/create",
+              "shopify/orders/delete",
+              "shopify/orders/edited",
+              "shopify/orders/fulfilled",
+              "shopify/orders/link_requested",
+              "shopify/orders/paid",
+              "shopify/orders/partially_fulfilled",
+              "shopify/orders/risk_assessment_changed",
+              "shopify/orders/shopify_protect_eligibility_changed",
+              "shopify/orders/updated",
+              "shopify/payment_schedules/due",
+              "shopify/payment_terms/create",
+              "shopify/payment_terms/delete",
+              "shopify/payment_terms/update",
+              "shopify/product_feeds/create",
+              "shopify/product_feeds/full_sync",
+              "shopify/product_feeds/full_sync_finish",
+              "shopify/product_feeds/incremental_sync",
+              "shopify/product_feeds/update",
+              "shopify/products/create",
+              "shopify/products/delete",
+              "shopify/products/update",
+              "shopify/profiles/create",
+              "shopify/profiles/delete",
+              "shopify/profiles/update",
+              "shopify/publications/delete",
+              "shopify/refunds/create",
+              "shopify/returns/approve",
+              "shopify/returns/cancel",
+              "shopify/returns/close",
+              "shopify/returns/decline",
+              "shopify/returns/process",
+              "shopify/returns/reopen",
+              "shopify/returns/request",
+              "shopify/returns/update",
+              "shopify/reverse_deliveries/attach_deliverable",
+              "shopify/reverse_fulfillment_orders/dispose",
+              "shopify/segments/create",
+              "shopify/segments/delete",
+              "shopify/segments/update",
+              "shopify/shop/update",
+              "shopify/tax_partners/update",
+              "shopify/tax_summaries/create",
+              "shopify/tender_transactions/create",
+              "shopify/themes/create",
+              "shopify/themes/delete",
+              "shopify/themes/publish",
+              "shopify/themes/update",
+              "shopify/variants/in_stock",
+              "shopify/variants/out_of_stock"
+            ]
           },
           "event_topic": {
             "type": "string",
@@ -241,20 +413,22 @@
           "include_fields": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\S"
             }
           },
           "metafield_namespaces": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\S"
             }
           },
           "metafields": {
             "type": "array",
             "items": {
               "type": "string",
-              "pattern": "^[^.]+\\.[^.]+$"
+              "pattern": "^[^.\\s]+\\.[^.\\s]+$"
             }
           }
         },
@@ -266,6 +440,40 @@
           "include_fields",
           "metafield_namespaces",
           "metafields"
+        ],
+        "anyOf": [
+          {
+            "properties": {
+              "filter": {
+                "type": "string",
+                "pattern": "\\S"
+              }
+            }
+          },
+          {
+            "properties": {
+              "include_fields": {
+                "type": "array",
+                "minItems": 1
+              }
+            }
+          },
+          {
+            "properties": {
+              "metafield_namespaces": {
+                "type": "array",
+                "minItems": 1
+              }
+            }
+          },
+          {
+            "properties": {
+              "metafields": {
+                "type": "array",
+                "minItems": 1
+              }
+            }
+          }
         ],
         "additionalProperties": false
       }
