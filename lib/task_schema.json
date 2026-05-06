@@ -225,7 +225,8 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "pattern": "\\S"
           },
           "shopify_topic": {
             "type": "string",
