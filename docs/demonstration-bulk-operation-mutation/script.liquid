@@ -1,0 +1,185 @@
+{% comment %}
+  -- see https://learn.mechanic.dev/resources/tutorials/bulk-operation-mutations for more details on this multi-step process
+  -- set permission explicitly because the mutations are captured and uploaded as JSONL with no preview available for inference by Mechanic
+{% endcomment %}
+
+{% permissions %}
+  write_products
+{% endpermissions %}
+
+{% if event.topic == "mechanic/user/trigger" %}
+  {% comment %}
+    -- begin the bulk mutation process by creating a staged upload file (i.e. a placeholder); the filename is arbitrary
+  {% endcomment %}
+
+  {% assign meta = hash %}
+  {% assign meta["stage"] = "create_staged_upload" %}
+
+  {% action "shopify", __meta: meta %}
+    mutation {
+      stagedUploadsCreate(
+        input: [
+          {
+            resource: BULK_MUTATION_VARIABLES
+            filename: "mechanic-bulk-mutation-demo.jsonl"
+            mimeType: "text/jsonl"
+            httpMethod: POST
+          }
+        ]
+      ) {
+        stagedTargets {
+          url
+          parameters {
+            name
+            value
+          }
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic == "mechanic/actions/perform" %}
+  {% unless action.run.ok or event.preview %}
+    {% error action.run.error %}
+  {% endunless %}
+
+  {% if action.meta.stage == "create_staged_upload" %}
+    {% assign result = action.run.result.data.stagedUploadsCreate %}
+
+    {% if result.userErrors != blank %}
+      {% error result.userErrors %}
+    {% endif %}
+
+    {% comment %}
+      -- convert staged target parameters into an object, and save the upload path
+    {% endcomment %}
+
+    {% assign staged_target = result.stagedTargets.first %}
+    {% assign upload_body = hash %}
+
+    {% for parameter in staged_target.parameters %}
+      {% assign upload_body[parameter.name] = parameter.value %}
+    {% endfor %}
+
+    {% comment %}
+      -- technically the bulk mutation is not needed until the next step in the process; it is useful here as a reference for the JSONL variables file
+    {% endcomment %}
+
+    {% capture bulk_mutation %}
+      mutation call($product: ProductCreateInput!) {
+        productCreate(product: $product) {
+          product {
+            id
+            title
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% comment %}
+      -- for demo purposes, the JSONL variables file is captured here, one line per resource
+      -- typically though, this data would be coming from an earlier process (e.g. CSV download) where it was then sanitized and composed into the proper structure needed for the relevant mutation
+      -- each top-level JSONL key must match a variable in the bulk mutation captured above (e.g. $product).
+    {% endcomment %}
+
+    {% assign timestamp = "now" | date: "%FT%TZ", tz: "UTC" %}
+
+    {% capture variables_jsonl %}
+      {"product":{"title":"Mechanic bulk mutation demo {{ timestamp }} A"}}
+      {"product":{"title":"Mechanic bulk mutation demo {{ timestamp }} B"}}
+    {% endcapture %}
+
+    {% comment %}
+      -- strip the variables capture because JSONL inputs should not have stray newlines
+    {% endcomment %}
+
+    {% assign files = hash %}
+    {% assign files["file"] = variables_jsonl | strip %}
+
+    {% assign meta = hash %}
+    {% assign meta["stage"] = "upload_staged_content" %}
+    {% assign meta["staged_upload_path"] = upload_body.key %}
+    {% assign meta["success_action_status"] = upload_body.success_action_status | times: 1 %}
+    {% assign meta["bulk_mutation"] = bulk_mutation %}
+
+    {% action "http", __meta: meta %}
+      {
+        "method": "post",
+        "url": {{ staged_target.url | json }},
+        "body": {{ upload_body | json }},
+        "files": {{ files | json }},
+        "verify": "true",
+        "error_on_5xx": "true"
+      }
+    {% endaction %}
+
+  {% elsif action.meta.stage == "upload_staged_content" %}
+    {% comment %}
+      -- verify that the staged upload service returned the expected HTTP status
+    {% endcomment %}
+
+    {% unless action.run.result.status == action.meta.success_action_status or event.preview %}
+      {% error action.run.result %}
+    {% endunless %}
+
+    {% comment %}
+      -- run the actual bulk mutation
+    {% endcomment %}
+
+    {% action "shopify", __perform_event: false %}
+      mutation {
+        bulkOperationRunMutation(
+          mutation: {{ action.meta.bulk_mutation | json }}
+          stagedUploadPath: {{ action.meta.staged_upload_path | json }}
+        ) {
+          bulkOperation {
+            id
+            status
+            type
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% if bulkOperation.status == "FAILED" %}
+    {% comment %}
+      -- an error for the bulk op as a whole will most likely be Shopify infrastructure related or 24 hour job timeouts
+    {% endcomment %}
+
+    {% error bulkOperation %}
+  {% endif %}
+
+  {% comment %}
+    -- check each mutation result for errors; log the result if none
+  {% endcomment %}
+
+  {% for object in bulkOperation.objects %}
+    {% assign result = object.data.productCreate %}
+
+    {% if object.errors != blank or result.userErrors != blank %}
+      {% comment %}
+        -- echo error for this line so the task does not halt
+      {% endcomment %}
+
+      {% action "echo" __error: object %}
+
+      {% continue %}
+    {% endif %}
+
+    {% log created_product: result.product %}
+  {% endfor %}
+{% endif %}
