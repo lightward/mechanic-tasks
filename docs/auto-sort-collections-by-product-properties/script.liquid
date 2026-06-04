@@ -1,7 +1,8 @@
 {% assign product_property = options.product_property %}
 {% assign product_metafield = options.product_metafield %}
 {% assign first_variant_property = options.first_variant_property %}
-{% assign only_sort_these_collections = options.only_sort_these_collections__array %}
+{% assign collections_to_include = options.collections_to_include__picker_collection_array %}
+{% assign collections_to_exclude = options.collections_to_exclude__picker_collection_array %}
 {% assign reverse_sort = options.reverse_sort__boolean %}
 {% assign sort_naturally = options.sort_naturally__boolean %}
 
@@ -52,13 +53,14 @@
 
 {% if event.topic == "mechanic/user/trigger" or event.topic contains "mechanic/scheduler/" %}
   {% comment %}
-    -- get IDs for all manually sorted collections, optionally restricted to specific collections by ID or title
+    -- query for all manually sorted collections; do not use a query filter for IDs since those configuration fields are optional
   {% endcomment %}
 
   {% assign collection_ids_to_sort = array %}
+  {% assign skipped_collections = array %}
   {% assign cursor = nil %}
 
-  {% for n in (1..50) %}
+  {% for n in (1..100) %}
     {% capture query %}
       query {
         collections(
@@ -71,10 +73,11 @@
           }
           nodes {
             id
-            legacyResourceId
             title
-            handle
             sortOrder
+            productsCount {
+              count
+            }
           }
         }
       }
@@ -89,9 +92,9 @@
             "collections": {
               "nodes": [
                 {
-                  "id": "gid://shopify/Collection/1234567890",
-                  "legacyResourceId": "1234567890",
-                  "sortOrder": "MANUAL"
+                  "id": {{ collections_to_include.first | default: "gid://shopify/Collection/1234567890" | json }},
+                  "sortOrder": "MANUAL",
+                  "productsCount": 10
                 }
               ]
             }
@@ -103,24 +106,29 @@
     {% endif %}
 
     {% comment %}
-      -- loop through collections and filter by ID, title, or handle as configured
+      -- loop through collections and filter by inclusion or exclusion if configured
     {% endcomment %}
 
     {% for collection in result.data.collections.nodes %}
-      {% if only_sort_these_collections != blank %}
-        {% unless only_sort_these_collections contains collection.legacyResourceId
-          or only_sort_these_collections contains collection.title
-          or only_sort_these_collections contains collection.handle
-          or event.preview
-        %}
+      {% if collections_to_include != blank %}
+        {% unless collections_to_include contains collection.id %}
           {% continue %}
         {% endunless %}
+
+      {% elsif collections_to_exclude != blank  %}
+        {% if collections_to_exclude contains collection.id %}
+          {% continue %}
+        {% endif %}
       {% endif %}
 
       {% if collection.sortOrder != "MANUAL" %}
-        {% log %}
-          {{ collection.title | json | append: " is not configured for manual sorting; skipping." | json }}
-        {% endlog %}
+        {% assign skipped_collections = skipped_collections | push: collection.title %}
+
+        {% continue %}
+      {% endif %}
+
+      {% if collection.productsCount.count < 2 %}
+        {% assign skipped_collections = skipped_collections | push: collection.title %}
         {% continue %}
       {% endif %}
 
@@ -134,8 +142,17 @@
     {% endif %}
   {% endfor %}
 
+  {% if skipped_collections != blank %}
+    {% assign skipped_collections = skipped_collections | sort_natural %}
+
+    {% log
+      count_skipped_collections: skipped_collections.size,
+      skipped_collections: skipped_collections
+    %}
+  {% endif %}
+
   {% if collection_ids_to_sort == blank %}
-    {% log "None of the configured collections were found or set for manual sorting." %}
+    {% log "No collections to sort on this task run. Each collection must have at least two products, be configured for manual sorting, and pass the inclusion or exclusion filters (if configured)." %}
     {% break %}
   {% endif %}
 
@@ -148,7 +165,7 @@
   {% action "cache", "set", cache_key, collection_ids_to_sort %}
 
   {% log
-    message: "Begin processing collections loop using sequential child events.",
+    message: "Begin collection sorting using sequential child events.",
     total_collections_to_sort: collection_ids_to_sort.size
   %}
 
@@ -237,7 +254,8 @@
     {% endif %}
   {% endfor %}
 
-  {% log collection_products: products %}
+  {% log count_collection_products: products.size %}
+  {% log collection_products_current_sort: products %}
 
   {% for product in products %}
     {% assign product_ids_and_positions[product.id] = forloop.index0 %}
