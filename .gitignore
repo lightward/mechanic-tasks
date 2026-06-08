@@ -3,3 +3,4 @@ yarn.lock
 .DS_Store
 CLAUDE.md
 /test-local/
+.vscode/mcp.json

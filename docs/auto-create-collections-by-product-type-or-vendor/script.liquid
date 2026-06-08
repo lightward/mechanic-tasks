@@ -226,7 +226,6 @@
         collections(
           first: 250
           after: {{ cursor | json }}
-          query: {{ search_query | json }}
         ) {
           pageInfo {
             hasNextPage
@@ -259,7 +258,12 @@
       {% assign result = result_json | parse_json %}
     {% endif %}
 
-    {% assign collection_titles = collection_titles | concat: result.data.collections.nodes | map: "title" | uniq %}
+    {% assign collection_titles
+      = result.data.collections.nodes
+      | map: "title"
+      | concat: collection_titles
+      | uniq
+    %}
 
     {% if result.data.collections.pageInfo.hasNextPage %}
       {% assign cursor = result.data.collections.pageInfo.endCursor %}
@@ -385,15 +389,17 @@
     -- publish the new collection to all of the valid publications configured in the task
   {% endcomment %}
 
-  {% assign mutations = array %}
-
-  {% for publication_id in publication_ids %}
-    {% capture mutation %}
+  {% action "shopify", __perform_event: false %}
+    mutation {
       publishablePublish{{ forloop.index }}: publishablePublish(
         id: {{ collection_id | json }}
-        input: {
-          publicationId: {{ publication_id | json }}
-        }
+        input: [
+          {% for publication_id in publication_ids %}
+            {
+              publicationId: {{ publication_id | json }}
+            }
+          {% endfor %}
+        ]
       ) {
         publishable {
           ... on Collection {
@@ -407,16 +413,6 @@
           message
         }
       }
-    {% endcapture %}
-
-    {% assign mutations = mutations | push: mutation %}
-  {% endfor %}
-
-  {% if mutations != blank %}
-    {% action "shopify", __perform_event: false %}
-      mutation {
-        {{ mutations | join: newline }}
-      }
-    {% endaction %}
-  {% endif %}
+    }
+  {% endaction %}
 {% endif %}
