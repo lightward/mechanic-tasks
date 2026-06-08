@@ -1,0 +1,26 @@
+{% if event.preview %}
+  {% capture order_json %}
+    {
+      "admin_graphql_api_id": "gid://shopify/Order/12345",
+      "closed_at" : "2025-01-01T00:00:00+00:00"
+    }
+  {% endcapture %}
+
+  {% assign order = order_json | parse_json %}
+{% endif %}
+
+{% if order.closed_at %}
+  {% action "shopify" %}
+    mutation {
+      tagsRemove(
+        id: {{ order.admin_graphql_api_id | json }}
+        tags: {{ options.order_tags_to_remove__array | json }}
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+{% endif %}
