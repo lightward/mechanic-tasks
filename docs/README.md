@@ -265,6 +265,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Partially auto-capture payments as orders are fulfilled](./partially-auto-capture-payments-as-orders-are-fulfilled)
 * [Publish a certain collection, daily](./publish-a-certain-collection-daily)
 * [Publish back-in-stock products](./publish-back-in-stock-products)
+* [Publish back-in-stock variants](./publish-back-in-stock-variants)
 * [Receive a nightly out-of-stock report](./receive-a-nightly-out-of-stock-report)
 * [Receive email alerts when inventory levels change](./receive-email-alerts-when-inventory-levels-change)
 * [Record Judge.me customer review counts](./record-judge-me-customer-review-counts)
@@ -358,9 +359,11 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Trigger order emails with a tag](./trigger-order-emails-with-a-tag)
 * [Tutorial: Trigger a task from a contact form, using webhooks](./tutorial-trigger-a-task-from-a-contact-form-using-webhooks)
 * [Unpublish a certain collection, daily](./unpublish-a-certain-collection-daily)
+* [Unpublish out-of-stock variants](./unpublish-out-of-stock-variants)
 * [Unpublish products that fall below a rolling sales threshold](./unpublish-products-that-fall-below-a-rolling-sales-threshold)
 * [Unpublish products that have been out of stock for x days](./unpublish-products-that-have-been-out-of-stock-for-x-days)
 * [Unpublish products when tagged](./unpublish-products-when-tagged)
+* [Unpublish variants that have been out of stock for x days](./unpublish-variants-that-have-been-out-of-stock-for-x-days)
 * [Untag orders when paid](./untag-orders-when-paid)
 * [Update empty customer data from addresses](./update-empty-customer-data-from-addresses)
 * [Update product description when out of stock](./update-product-description-when-out-of-stock)
@@ -1007,6 +1010,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag products by "back in stock" age](./auto-tag-new-products-by-back-in-stock-age)
 * [Manage product market access by location stock status](./manage-product-market-access-by-location-stock-status)
 * [Publish back-in-stock products](./publish-back-in-stock-products)
+* [Publish back-in-stock variants](./publish-back-in-stock-variants)
 * [Tag products as in- or out-of-stock, by location ID](./tag-products-as-in-or-out-of-stock-by-location-id)
 * [Tag products as in- or out-of-stock](./tag-products-as-in-or-out-of-stock)
 
@@ -1036,6 +1040,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Maintain inventory for a product bundle](./maintain-inventory-for-a-product-bundle)
 * [Manage collection templates by product inventory](./manage-collection-templates-by-product-inventory)
 * [Publish back-in-stock products](./publish-back-in-stock-products)
+* [Publish back-in-stock variants](./publish-back-in-stock-variants)
 * [Receive a nightly out-of-stock report](./receive-a-nightly-out-of-stock-report)
 * [Receive email alerts when inventory levels change](./receive-email-alerts-when-inventory-levels-change)
 * [Reset all inventory levels to a single level, in bulk](./reset-all-inventory-levels-to-a-single-level-in-bulk)
@@ -1050,7 +1055,9 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Sync inventory levels to variant metafields](./sync-inventory-levels-to-variant-metafields)
 * [Sync variant inventory within a product by pack size](./sync-variant-inventory-within-a-product-by-pack-size)
 * [Tag products as in- or out-of-stock](./tag-products-as-in-or-out-of-stock)
+* [Unpublish out-of-stock variants](./unpublish-out-of-stock-variants)
 * [Unpublish products that have been out of stock for x days](./unpublish-products-that-have-been-out-of-stock-for-x-days)
+* [Unpublish variants that have been out of stock for x days](./unpublish-variants-that-have-been-out-of-stock-for-x-days)
 * [Update product description when out of stock](./update-product-description-when-out-of-stock)
 
 ### Invite
@@ -1086,7 +1093,9 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Hide out-of-stock products](./hide-out-of-stock-products)
 * [Keep variant inventory in sync across locations](./keep-variant-inventory-in-sync-across-locations)
 * [Publish back-in-stock products](./publish-back-in-stock-products)
+* [Publish back-in-stock variants](./publish-back-in-stock-variants)
 * [Tag products as in- or out-of-stock, by location ID](./tag-products-as-in-or-out-of-stock-by-location-id)
+* [Unpublish out-of-stock variants](./unpublish-out-of-stock-variants)
 
 ### Locksmith
 
@@ -1332,6 +1341,8 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Send an email alert when a variant hits 0 total inventory](./send-an-email-alert-when-a-variant-hits-0-total-inventory)
 * [Tag products as in- or out-of-stock, by location ID](./tag-products-as-in-or-out-of-stock-by-location-id)
 * [Tag products as in- or out-of-stock](./tag-products-as-in-or-out-of-stock)
+* [Unpublish out-of-stock variants](./unpublish-out-of-stock-variants)
+* [Unpublish variants that have been out of stock for x days](./unpublish-variants-that-have-been-out-of-stock-for-x-days)
 
 ### PDF
 
@@ -1490,6 +1501,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Manage product market access by location stock status](./manage-product-market-access-by-location-stock-status)
 * [Publish a certain collection, daily](./publish-a-certain-collection-daily)
 * [Publish back-in-stock products](./publish-back-in-stock-products)
+* [Publish back-in-stock variants](./publish-back-in-stock-variants)
 * [Scheduled theme publishing](./scheduled-theme-publishing)
 
 ### Receipts
@@ -1818,9 +1830,11 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Make products unavailable, after the date/time stored in product metafields](./make-products-unavailable-after-the-date-time-stored-in-product-metafields)
 * [Manage product market access by location stock status](./manage-product-market-access-by-location-stock-status)
 * [Unpublish a certain collection, daily](./unpublish-a-certain-collection-daily)
+* [Unpublish out-of-stock variants](./unpublish-out-of-stock-variants)
 * [Unpublish products that fall below a rolling sales threshold](./unpublish-products-that-fall-below-a-rolling-sales-threshold)
 * [Unpublish products that have been out of stock for x days](./unpublish-products-that-have-been-out-of-stock-for-x-days)
 * [Unpublish products when tagged](./unpublish-products-when-tagged)
+* [Unpublish variants that have been out of stock for x days](./unpublish-variants-that-have-been-out-of-stock-for-x-days)
 
 ### Untag
 
@@ -1843,11 +1857,14 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Keep variant inventory in sync across locations](./keep-variant-inventory-in-sync-across-locations)
 * [Maintain discount percentage filters in variant metafields](./maintain-discount-percentage-filters-in-variant-metafields)
 * [Monitor for variants with zero price](./monitor-for-variants-with-zero-price)
+* [Publish back-in-stock variants](./publish-back-in-stock-variants)
 * [Scheduled inventory adjustment](./scheduled-inventory-adjustment)
 * [Send an email when a product's price goes below its cost](./send-an-email-when-a-products-price-goes-below-its-cost)
 * [Set product or variant metafields values in bulk](./set-product-or-variant-metafields-in-bulk)
 * [Sync inventory across product variants](./sync-inventory-across-product-variants)
 * [Sync inventory levels to variant metafields](./sync-inventory-levels-to-variant-metafields)
+* [Unpublish out-of-stock variants](./unpublish-out-of-stock-variants)
+* [Unpublish variants that have been out of stock for x days](./unpublish-variants-that-have-been-out-of-stock-for-x-days)
 
 ### Vendor
 

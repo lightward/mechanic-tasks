@@ -1,0 +1,687 @@
+{% assign back_in_stock_inventory_quantity = options.back_in_stock_inventory_quantity__number_required %}
+{% assign sales_channel_names = options.sales_channel_names__required_array %}
+{% assign inclusion_tags = options.only_include_products_with_any_of_these_tags__array %}
+{% assign exclusion_tags = options.always_exclude_products_with_any_of_these_tags__array %}
+{% assign location_names = options.only_include_inventory_from_these_location_names__array %}
+{% assign email_notification_recipient = options.email_notification_recipient__email %}
+
+{% comment %}
+  -- get all of the sales channel names (i.e. publications aka app catalogs) in the shop
+{% endcomment %}
+
+{% capture query %}
+  query {
+    publications(
+      first: 250
+      catalogType:APP
+    ) {
+      nodes {
+        id
+        catalog {
+          ... on AppCatalog {
+            apps(first: 1) {
+              nodes {
+                title
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "publications": {
+          "nodes": [
+            {
+              "id": "gid://shopify/Publication/1234567890",
+              "catalog": {
+                "apps": {
+                  "nodes": [
+                    {
+                      "title": {{ sales_channel_names.first | json }}
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% comment %}
+  -- add the configured publication names into a hash for use in lookups
+{% endcomment %}
+
+{% assign publication_ids = array %}
+{% assign publication_names_by_id = hash %}
+{% assign available_sales_channel_names = array %}
+
+{% for publication in result.data.publications.nodes %}
+  {% assign publication_name = publication.catalog.apps.nodes.first.title %}
+
+  {% assign available_sales_channel_names = available_sales_channel_names | push: publication_name %}
+
+  {% if sales_channel_names contains publication_name %}
+    {% assign publication_ids = publication_ids | push: publication.id %}
+    {% assign publication_names_by_id[publication.id] = publication_name %}
+  {% endif %}
+{% endfor %}
+
+{% comment %}
+  -- make sure the configured sales channel names match what is in the shop
+{% endcomment %}
+
+{% unless event.preview %}
+  {% if publication_ids.size != sales_channel_names.size %}
+    {% error
+      message: "Each sales channel configured in this task must exist in the shop. Check the list of available channels and verify each configured channel exists.",
+      configured_sales_channel_names: sales_channel_names,
+      available_sales_channel_names: available_sales_channel_names
+    %}
+
+    {% break %}
+  {% endif %}
+{% endunless %}
+
+{% if location_names != blank %}
+  {% comment %}
+    -- get all of the locations in the shop; Shopify supports 1000 as of July 2023
+  {% endcomment %}
+
+  {% assign cursor = nil %}
+  {% assign locations = array %}
+
+  {% for n in (1..10) %}
+    {% capture query %}
+      query {
+        locations(
+          first: 250
+          after: {{ cursor | json }}
+          sortKey: NAME
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            name
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "locations": {
+              "nodes": [
+                {
+                  "id": "gid://shopify/Location/1234567890",
+                  "name": {{ location_names.first | json }}
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign locations = locations | concat: result.data.locations.nodes %}
+
+    {% if result.data.locations.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.locations.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% assign location_ids = array %}
+
+  {% comment %}
+    -- save the location IDs that map to the configured location names
+  {% endcomment %}
+
+  {% for location in locations %}
+    {% if location_names contains location.name %}
+      {% assign location_ids[location_ids.size] = location.id %}
+    {% endif %}
+  {% endfor %}
+
+  {% comment %}
+    -- make sure the configured location names match what is in the shop
+  {% endcomment %}
+
+  {% unless event.preview %}
+    {% if location_ids.size != location_names.size %}
+      {% assign available_location_names = locations | map: "name" %}
+
+      {% error
+        message: "Each location name configured in this task must exactly match a location name in the shop. Check the list of available locations and verify each configured location exists.",
+        configured_location_names: location_names,
+        available_location_names: available_location_names
+      %}
+
+      {% break %}
+    {% endif %}
+  {% endunless %}
+{% endif %}
+
+{% if event.topic contains "shopify/inventory_levels/" %}
+  {% comment %}
+    -- query the inventory level to get the product data needed for this task
+  {% endcomment %}
+
+  {% capture query %}
+    query {
+      inventoryLevel(
+        id: {{ inventory_level.admin_graphql_api_id | json }}
+      ) {
+        item {
+          variants(first: 1) {
+            nodes {
+              product {
+                id
+                legacyResourceId
+                title
+                totalInventory
+                tags
+                {% for publication_id in publication_ids %}
+                  published{{ forloop.index }}: publishedOnPublication(publicationId: {{ publication_id | json }})
+                {% endfor %}
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "inventoryLevel": {
+            "item": {
+              "variants": {
+                "nodes": [
+                  {
+                    "product": {
+                      "id": "gid://shopify/Product/1234567890",
+                      "legacyResourceId": "1234567890",
+                      "title": "Widget",
+                      "tags": {{ inclusion_tags.first | json }},
+                      "published1": false
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign product = result.data.inventoryLevel.item.variants.nodes.first.product %}
+
+  {% comment %}
+    -- check to see if product is included or excluded (i.e. whether to process) by any configured tags
+  {% endcomment %}
+
+  {% assign product_included_by_tag = nil %}
+  {% assign product_excluded_by_tag = nil %}
+
+  {% if inclusion_tags != blank %}
+    {% for inclusion_tag in inclusion_tags %}
+      {% if product.tags contains inclusion_tag %}
+        {% assign product_included_by_tag = true %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
+  {% if exclusion_tags != blank %}
+    {% for exclusion_tag in exclusion_tags %}
+      {% if product.tags contains exclusion_tag %}
+        {% assign product_excluded_by_tag = true %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
+  {% comment %}
+    -- check if a product has been excluded first, then only if there are inclusion tags configured check if it has been included
+  {% endcomment %}
+
+  {% if product_excluded_by_tag %}
+    {% log
+      message: "Product was excluded by a configured tag and will not be processed by this task.",
+      exclusion_tags: exclusion_tags,
+      product: product
+    %}
+    {% break %}
+
+  {% elsif inclusion_tags != blank %}
+    {% unless product_included_by_tag %}
+      {% log
+        message: "Product was not included by any configured tag and will not be processed by this task.",
+        inclusion_tags: inclusion_tags,
+        product: product
+      %}
+      {% break %}
+    {% endunless %}
+  {% endif %}
+
+  {% comment %}
+    -- product qualifies to be processed in main product loop
+  {% endcomment %}
+
+  {% assign products = array | push: product %}
+
+{% elsif event.topic == "mechanic/user/trigger" %}
+  {% comment %}
+    -- use an inventory filter in the products search query only if no location names have been configured in the task
+    -- note: ok to use inventory_total filter on scheduled/manual runs since the calculated field lag would be negligible
+  {% endcomment %}
+
+  {% if location_names == blank %}
+    {% assign inventory_filter = back_in_stock_inventory_quantity | prepend: "inventory_total:>=" %}
+  {% endif %}
+
+  {% comment %}
+    -- if inclusion or exclusion tags are configured, use them to refine the search query in order to reduce the number of products to be processed
+  {% endcomment %}
+
+  {% if inclusion_tags != blank %}
+    {% assign inclusion_tag_filters = array %}
+
+    {% for inclusion_tag in inclusion_tags %}
+      {% assign inclusion_tag_filter
+        = inclusion_tag
+        | json
+        | prepend: "tag:"
+      %}
+      {% assign inclusion_tag_filters = inclusion_tag_filters | push: inclusion_tag_filter %}
+    {% endfor %}
+
+    {% if inclusion_tag_filters.size > 1 %}
+      {% capture inclusion_tag_filters -%}
+        ({{ inclusion_tag_filters | join: " OR " }})
+      {%- endcapture %}
+    {% endif %}
+  {% endif %}
+
+  {% if exclusion_tags != blank %}
+    {% assign exclusion_tag_filters = array %}
+
+    {% for exclusion_tag in exclusion_tags %}
+      {% assign exclusion_tag_filter
+        = exclusion_tag
+        | json
+        | prepend: "tag_not:"
+      %}
+      {% assign exclusion_tag_filters = exclusion_tag_filters | push: exclusion_tag_filter %}
+    {% endfor %}
+
+    {% if exclusion_tag_filters.size > 1 %}
+      {% capture exclusion_tag_filters -%}
+        {{ exclusion_tag_filters | join: " AND " }}
+      {%- endcapture %}
+    {% endif %}
+  {% endif %}
+
+  {% comment %}
+    -- recombine any search filters for use in the products query
+  {% endcomment %}
+
+  {% assign search_query
+    = array
+    | push: "status:active", inventory_filter, inclusion_tag_filters, exclusion_tag_filters
+    | compact
+    | join: " AND "
+  %}
+
+  {% log products_search_query: search_query %}
+
+  {% comment %}
+    -- use paginated query to get all active products in the shop that match the search filters
+  {% endcomment %}
+
+  {% assign products = array %}
+  {% assign cursor = nil %}
+
+  {% for n in (1..100) %}
+    {% capture query %}
+      query {
+        products(
+          first: 250
+          after: {{ cursor | json }}
+          query: {{ search_query | json }}
+        ) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            legacyResourceId
+            title
+            totalInventory
+            tags
+            {% for publication_id in publication_ids %}
+              published{{ forloop.index }}: publishedOnPublication(publicationId: {{ publication_id | json }})
+            {% endfor %}
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "products": {
+              "nodes": [
+                {
+                  "id": "gid://shopify/Product/1234567890",
+                  "legacyResourceId": "1234567890",
+                  "title": "Widget",
+                  "totalInventory": {{ back_in_stock_inventory_quantity }},
+                  "published1": false
+                }
+              ]
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign products = products | concat: result.data.products.nodes %}
+
+    {% if result.data.products.pageInfo.hasNextPage %}
+      {% assign cursor = result.data.products.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+{% comment %}
+  -- process products, publishing as needed and saving links for optional email output
+{% endcomment %}
+
+{% assign published_product_links = array %}
+
+{% for product in products %}
+  {% assign mutations = array %}
+  {% assign publication_names = array %}
+
+  {% if location_names == blank %}
+    {% comment %}
+      -- any products returned in the query will have met the back in stock quantity threshold due to the search filter, so can just output the total inventory (unless this is an inventory level event)
+    {% endcomment %}
+
+    {% assign available_inventory = product.totalInventory %}
+
+    {% if event.topic contains "shopify/inventory_levels/" %}
+      {% comment %}
+        -- sum inventoryQuantity from all variants instead of using product.totalInventory due to calculated field lag
+      {% endcomment %}
+
+      {% capture query %}
+        query {
+          product(id: {{ product.id | json }}) {
+            id
+            totalInventory
+            variants(first: 2048) {
+              nodes {
+                inventoryQuantity
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = query | shopify %}
+
+      {% if event.preview %}
+        {% capture result_json %}
+          {
+            "data": {
+              "product": {
+                "id": "gid://shopify/Product/1234567890",
+                "variants": {
+                  "nodes": [
+                    {
+                      "inventoryQuantity": {{ back_in_stock_inventory_quantity }}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        {% endcapture %}
+
+        {% assign result = result_json | parse_json %}
+      {% endif %}
+
+      {% assign available_inventory = result.data.product.variants.nodes | map: "inventoryQuantity" | sum %}
+
+      {% unless event.preview %}
+        {% log
+          available_inventory_summed_from_variants: available_inventory,
+          product_total_inventory_laggy_calc: product.totalInventory
+        %}
+      {% endunless %}
+    {% endif %}
+
+  {% else %}
+    {% assign available_inventory = 0 %}
+
+    {% comment %}
+      -- query and sum available inventory across the configured locations to determine stock status
+    {% endcomment %}
+
+    {% capture query %}
+      query {
+        product(id: {{ product.id | json }}) {
+          variants(first: 2048) {
+            nodes {
+              inventoryItem {
+                {% for location_id in location_ids %}
+                  inventory_level_{{ forloop.index }}: inventoryLevel(locationId: {{ location_id | json }}) {
+                    quantities(names: "available") {
+                      quantity
+                    }
+                  }
+                {% endfor %}
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% capture result_json %}
+        {
+          "data": {
+            "product": {
+              "variants": {
+                "nodes": [
+                  {
+                    "inventoryItem": {
+                      "inventory_level_1": {
+                        "quantities": [
+                          {
+                            "quantity": {{ back_in_stock_inventory_quantity }}
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% for variant in result.data.product.variants.nodes %}
+      {% for item in variant.inventoryItem %}
+        {% assign available_inventory = available_inventory | plus: item[1].quantities.first.quantity %}
+      {% endfor %}
+    {% endfor %}
+  {% endif %}
+
+  {% if available_inventory < back_in_stock_inventory_quantity %}
+    {% continue %}
+  {% endif %}
+
+  {% comment %}
+    -- capture publish mutation for each sales channel a product should be published on
+  {% endcomment %}
+
+  {% for publication_id in publication_ids %}
+    {% assign key = "published" | append: forloop.index %}
+
+    {% if product[key] == true %}
+      {% continue %}
+    {% endif %}
+
+    {% assign publication_names[publication_names.size] = publication_names_by_id[publication_id] %}
+
+    {% capture mutation %}
+      publishablePublish{{ forloop.index}}: publishablePublish(
+        id: {{ product.id | json }}
+        input: {
+          publicationId: {{ publication_id | json }}
+        }
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    {% endcapture %}
+
+    {% assign mutations[mutations.size] = mutation %}
+  {% endfor %}
+
+  {% comment %}
+    -- if there are any publishing actions to take, then do so and generate a notification email if a recipient is configured
+  {% endcomment %}
+
+  {% if mutations != empty %}
+    {% action "shopify" %}
+      mutation {
+        {{ mutations | join: newline }}
+      }
+    {% endaction %}
+
+    {% comment %}
+      -- if this task was triggered by an inventory level event, then send email right away; otherwise save admin links for each product that was published
+    {% endcomment %}
+
+    {% if event.topic contains "shopify/inventory_levels/" %}
+      {% if email_notification_recipient != blank %}
+        {% capture email_subject %}
+          Back in stock: {{ product.title }}
+        {% endcapture %}
+
+        {% capture email_body %}
+          Hi there,
+
+          Your product is back in stock{% if location_names != blank %} at the configured locations{% else %} across all locations{% endif %}! This product has been published to: {{ publication_names | join: ", " }}.
+
+          <a href="{{ shop.admin_url }}products/{{ product.legacyResourceId }}">Manage this product</a>
+
+          Thanks,
+          - Mechanic, for {{ shop.name }}
+        {% endcapture %}
+
+        {% action "email" %}
+          {
+            "to": {{ email_notification_recipient | json }},
+            "subject": {{ email_subject | unindent | strip | json }},
+            "body": {{ email_body | unindent | strip | newline_to_br | json }}
+          }
+        {% endaction %}
+      {% endif %}
+
+    {% else %}
+      {% capture link -%}
+        <li><a href="{{ shop.admin_url }}products/{{ product.legacyResourceId }}">{{ product.title }}</a> ({{ available_inventory }} - published to {{ publication_names | join: ", " }})</li>
+      {%- endcapture %}
+
+      {% assign published_product_links[published_product_links.size] = link %}
+    {% endif %}
+  {% endif %}
+{% endfor %}
+
+{% comment %}
+  -- for manually triggered task runs, send notification email if any publishing actions were taken AND if there is an email notification recipient configured
+{% endcomment %}
+
+{% if published_product_links == blank %}
+  {% unless event.topic contains "shopify/inventory_levels" %}
+    {% log "No products qualified to be published during this task run." %}
+  {% endunless %}
+
+  {% break %}
+{% endif %}
+
+{% if email_notification_recipient != blank %}
+  {% capture email_subject %}
+    Found {{ published_product_links.size }} {{ published_product_links.size | pluralize: "product", "products" }} back in stock
+  {% endcapture %}
+
+  {% capture email_body %}
+    Hi there,
+    <br><br>
+    These products were found to be at or above your back in stock minimum quantity ({{ back_in_stock_inventory_quantity }}), when adding up the inventory for each product{% if location_names != blank %} at the configured locations{% else %} across all locations{% endif %}.
+    <br>
+    <ul>{{ published_product_links | join: "" }}</ul>
+    <br>
+    Thanks,
+    <br>
+    - Mechanic, for {{ shop.name }}
+  {% endcapture %}
+
+  {% action "email" %}
+    {
+      "to": {{ email_notification_recipient | json }},
+      "subject": {{ email_subject | unindent | strip | json }},
+      "body": {{ email_body | unindent | strip | json }}
+    }
+  {% endaction %}
+{% endif %}
