@@ -25,6 +25,14 @@ Use this task to publish a banner, to be displayed across your online storefront
 
 Use this task to publish a banner, to be displayed across your online storefront. This task comes with some pre-configured HTML and CSS – customize to taste. :)
 
+### Enable Mechanic in your theme
+
+This task needs to run JavaScript in your online store. If Mechanic shows a theme setup prompt, click **Enable Mechanic in your theme**, make sure Mechanic's **Online store JavaScript** is turned on under **App embeds**, and click **Save** in Shopify. Then return to Mechanic to confirm setup.
+
+You only need to do this once for your current theme; the same setting serves all your enabled tasks that use storefront JavaScript. You can leave it enabled if you disable this task. If your store doesn't already have Mechanic loading JavaScript, this task's storefront functionality won't work until setup is complete. [Learn about theme setup and existing tasks](https://learn.mechanic.dev/core/tasks/advanced-settings/javascript#enable-mechanic-in-your-theme).
+
+### Configure the banner
+
 Configure the starting and ending times as appropriate, remembering that all times in Mechanic are local to your store's timezone.
 
 Adjust (or replace!) the banner HTML and CSS to taste. Mechanic will place your code within a plain `<div>` wrapper. To control where your banner is inserted, use the "Banner parent CSS selector" option. Mechanic will insert your banner as the first child of whatever element is matched by that CSS selector.

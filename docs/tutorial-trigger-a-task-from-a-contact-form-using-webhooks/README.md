@@ -36,6 +36,16 @@ user/webhook/form
 
 This is the companion task for the [Triggering tasks from a contact form](https://learn.mechanic.dev/resources/tutorials/triggering-tasks-from-a-contact-form) tutorial.
 
+### Enable Mechanic in your theme
+
+This task needs to run JavaScript in your online store. If Mechanic shows a theme setup prompt, click **Enable Mechanic in your theme**, make sure Mechanic's **Online store JavaScript** is turned on under **App embeds**, and click **Save** in Shopify. Then return to Mechanic to confirm setup.
+
+You only need to do this once for your current theme; the same setting serves all your enabled tasks that use storefront JavaScript. You can leave it enabled if you disable this task. If your store doesn't already have Mechanic loading JavaScript, this task's storefront functionality won't work until setup is complete. [Learn about theme setup and existing tasks](https://learn.mechanic.dev/core/tasks/advanced-settings/javascript#enable-mechanic-in-your-theme).
+
+This loads the task's JavaScript. You still need to configure the webhook and match the code to your contact form, as described in the tutorial.
+
+### Complete the tutorial
+
 This task is triggered via Mechanic webhook, and includes JavaScript that calls this webhook when a contact form is submitted on your online Shopify store. This task's included JavaScript listens for a `submit` event on that form, sends the form data to your Mechanic webhook, and then allows that form to continue submission normally. In this way, the task augments the contact form's original functionality, instead of replacing that functionality.
 
 This task requires additional setup, including configuring a Mechanic webhook for your store, and adjusting the task's JavaScript to account for your contact form HTML. To use this task, make sure to start with the tutorial itself:

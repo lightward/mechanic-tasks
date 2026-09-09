@@ -34,6 +34,14 @@ Use this task as a starting point, for allowing visitors to submit their carts t
 
 Use this task as a starting point, for allowing visitors to submit their carts to be transformed into draft orders, associated with their customer account. Installing and customizing this task requires some level of comfort with Liquid, HTML, and JavaScript.
 
+### Enable Mechanic in your theme
+
+This task needs to run JavaScript in your online store. If Mechanic shows a theme setup prompt, click **Enable Mechanic in your theme**, make sure Mechanic's **Online store JavaScript** is turned on under **App embeds**, and click **Save** in Shopify. Then return to Mechanic to confirm setup.
+
+You only need to do this once for your current theme; the same setting serves all your enabled tasks that use storefront JavaScript. You can leave it enabled if you disable this task. If your store doesn't already have Mechanic loading JavaScript, this task's storefront functionality won't work until setup is complete. [Learn about theme setup and existing tasks](https://learn.mechanic.dev/core/tasks/advanced-settings/javascript#enable-mechanic-in-your-theme).
+
+This loads the task's JavaScript. You still need to create the webhook and add the cart button described below.
+
 ### Installation
 
 1.  Create a Mechanic webhook ([learn how](https://help.usemechanic.com/en/articles/2637727-getting-started-with-webhooks)), and update this task's options to reflect the webhook's configuration. Use whatever event topic you like - "user/carts/draft_order", for example. :)
