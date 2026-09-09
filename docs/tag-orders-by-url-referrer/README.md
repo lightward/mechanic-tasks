@@ -37,7 +37,7 @@ Have your traffic sources refer customers using ?ref=referral-code-here URLs (us
 
 ### Enable Mechanic in your theme
 
-This task needs to run JavaScript in your online store. If Mechanic shows a theme setup prompt, click **Enable Mechanic in your theme**, make sure Mechanic's **Online store JavaScript** is turned on under **App embeds**, and click **Save** in Shopify. Then return to Mechanic to confirm setup.
+This task needs to run JavaScript in your online store. If Mechanic shows a theme setup prompt, click **Enable Mechanic in your theme**, make sure Mechanic's **Online store JavaScript** is turned on under **App embeds**, and click **Save** in the theme editor. Then return to Mechanic to confirm setup.
 
 You only need to do this once for your current theme; the same setting serves all your enabled tasks that use storefront JavaScript. You can leave it enabled if you disable this task. If your store doesn't already have Mechanic loading JavaScript, this task's storefront functionality won't work until setup is complete. [Learn about theme setup and existing tasks](https://learn.mechanic.dev/core/tasks/advanced-settings/javascript#enable-mechanic-in-your-theme).
 
