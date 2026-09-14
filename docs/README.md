@@ -282,6 +282,8 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Reset inventory levels daily](./reset-inventory-levels-daily)
 * [Reset inventory levels when they get too low](./reset-inventory-levels-when-they-get-too-low)
 * [Reset negative inventory levels to zero in bulk](./reset-negative-inventory-levels-to-zero-in-bulk)
+* [Save Mechanic form submissions to Shopify metaobjects](./save-mechanic-form-submissions-to-shopify-metaobjects)
+* [Save Mechanic form submissions to a Google Sheet](./save-mechanic-form-submissions-to-a-google-sheet)
 * [Schedule a storefront banner](./schedule-a-storefront-banner)
 * [Schedule product tags by date](./schedule-product-tags-by-date)
 * [Scheduled inventory adjustment](./scheduled-inventory-adjustment)
@@ -675,6 +677,8 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Custom Webhook
 
 * [Monitor for variants with zero price](./monitor-for-variants-with-zero-price)
+* [Save Mechanic form submissions to Shopify metaobjects](./save-mechanic-form-submissions-to-shopify-metaobjects)
+* [Save Mechanic form submissions to a Google Sheet](./save-mechanic-form-submissions-to-a-google-sheet)
 
 ### Customer Notes
 
@@ -988,6 +992,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Add new Shopify Forms submissions to a Google Sheet](./add-new-shopify-forms-submissions-to-a-google-sheet)
 * [Demonstration: Add new orders to a Google Sheet](./demonstration-add-new-orders-to-google-sheet)
 * [Demonstration: Create sheets and list and create files in Google Drive](./demonstration-create-sheets-and-list-and-create-files-in-google-drive)
+* [Save Mechanic form submissions to a Google Sheet](./save-mechanic-form-submissions-to-a-google-sheet)
 
 ### HTTP
 
@@ -1149,6 +1154,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Maintain collections by product metafield values](./maintain-collections-by-product-metafield-values)
 * [Maintain discount percentage filters in variant metafields](./maintain-discount-percentage-filters-in-variant-metafields)
 * [Make products unavailable, after the date/time stored in product metafields](./make-products-unavailable-after-the-date-time-stored-in-product-metafields)
+* [Save Mechanic form submissions to Shopify metaobjects](./save-mechanic-form-submissions-to-shopify-metaobjects)
 * [Send an email when a product's price goes below its cost](./send-an-email-when-a-products-price-goes-below-its-cost)
 * [Set product or variant metafields values in bulk](./set-product-or-variant-metafields-in-bulk)
 * [Sync a Product List Metafield Of Products That Share Another Common Metafield Value](./sync-a-product-list-metafield-of-products-that-share-another-common-metafield-value)
