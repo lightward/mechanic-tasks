@@ -14,7 +14,13 @@
   {% assign payload = sample | parse_json %}
 {% endif %}
 {% assign form_keys = payload.form | keys %}
-{% assign field_keys = payload.fields | keys %}
+{% assign payload_keys = payload | keys %}
+{% assign submitted_fields = payload.fields %}
+{% unless payload_keys contains "fields" %}
+  {% comment %}Empty optional uploads and checkbox groups produce no multipart field parts.{% endcomment %}
+  {% assign submitted_fields = hash %}
+{% endunless %}
+{% assign field_keys = submitted_fields | keys %}
 {% unless form_keys and field_keys %}
   {% error "This event is not a form submission. Expected form and fields objects in the webhook body." %}
   {% break %}
@@ -53,7 +59,7 @@
 {% assign attachments = hash %}
 {% assign invalid_field = false %}
 {% assign address_keys = "line1,line2,city,region,postal_code,country" | split: "," %}
-{% for field in payload.fields %}
+{% for field in submitted_fields %}
   {% assign key = field[0] %}
   {% assign value = field[1] %}
   {% assign key_valid = key | match: '\A[a-z][a-z0-9_]{0,63}\z' %}
