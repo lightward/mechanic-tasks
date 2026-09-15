@@ -1,81 +1,13 @@
 {% comment %}
   {{ options.webhook_event_topic__required }}
   {{ options.form_id }}
-  {{ options.google_account__required }}
-  {{ options.spreadsheet_title__required }}
-  {{ options.spreadsheet_id }}
-  {{ options.column_headings_and_field_keys__keyval_required }}
-  {{ options.save_uploaded_files_to_google_drive__boolean }}
+  {{ options.email_recipients__email_array_required }}
+  {{ options.email_subject__required }}
+  {{ options.include_uploaded_files__boolean }}
+  {{ options.reply_to_email_field_key }}
 {% endcomment %}
-{% assign columns = options.column_headings_and_field_keys__keyval_required %}
-{% assign column_names = columns | keys %}
-{% if column_names == nil or column_names.size == 0 or column_names.size > 50 %}
-  {% error "Configure between 1 and 50 column headings and form field keys." %}{% break %}
-{% endif %}
-{% assign headers = "Received at,Form code,Form revision,Submission ID,Mechanic event ID,File details and links" | split: "," | concat: column_names %}
-{% if event.topic == "mechanic/actions/perform" %}
-  {% if event.preview %}
-    {% capture callback_json %}
-      {"type":"google_drive","meta":{"stage":"form_submission_drive_upload_v1","account":{{ options.google_account__required | json }},"spreadsheet_id":{{ options.spreadsheet_id | default: "preview-spreadsheet-id" | json }},"row":["2026-09-14T12:00:00+00:00","11111111-1111-4111-8111-111111111111","1","22222222-2222-4222-8222-222222222222","33333333-3333-4333-8333-333333333333","{}"{% for column in columns %},""{% endfor %}],"attachments":{"receipt":{"name":"receipt.txt","mime_type":"text/plain","size":4,"contents_saved":false}},"upload_paths":{"receipt":"Mechanic form uploads/example/receipt.txt"},"file_columns":{}},"run":{"ok":true,"result":{"uploads":{"Mechanic form uploads/example/receipt.txt":{"id":"preview-file-id","web_view_link":"https://drive.google.com/file/d/preview-file-id/view"}}}}}
-    {% endcapture %}
-    {% assign action = callback_json | parse_json %}
-  {% endif %}
-  {% if action.type != "google_drive" or action.meta.stage != "form_submission_drive_upload_v1" %}{% break %}{% endif %}
-  {% unless action.run.ok %}
-    {% error "Google Drive could not save all uploaded files. No spreadsheet row was added. Inspect the failed Drive action before retrying." %}{% break %}
-  {% endunless %}
-  {% assign attachments = action.meta.attachments %}
-  {% assign missing_upload = false %}
-  {% for file_path in action.meta.upload_paths %}
-    {% assign saved = action.run.result.uploads[file_path[1]] %}
-    {% assign link_prefix = saved.web_view_link | slice: 0, 25 %}
-    {% if saved.id == blank or link_prefix != "https://drive.google.com/" %}
-      {% assign missing_upload = true %}{% break %}
-    {% endif %}
-    {% assign file = attachments[file_path[0]] %}
-    {% assign file["contents_saved"] = true %}
-    {% assign file["google_drive_id"] = saved.id %}
-    {% assign file["url"] = saved.web_view_link %}
-    {% assign key = file_path[0] %}
-    {% assign attachments[key] = file %}
-  {% endfor %}
-  {% if missing_upload %}
-    {% error "Google Drive did not return every expected file link. No spreadsheet row was added. Inspect the Drive action result before retrying." %}{% break %}
-  {% endif %}
-  {% assign file_details = attachments | json %}
-  {% if file_details.size > 40000 %}
-    {% error "The file details are too large for a spreadsheet cell. Files were saved to Drive, but no row was added." %}{% break %}
-  {% endif %}
-  {% assign row = array %}
-  {% for cell in action.meta.row %}
-    {% assign index = forloop.index0 | append: "" %}
-    {% assign file_key = action.meta.file_columns[index] %}
-    {% if forloop.index0 == 5 %}
-      {% assign row = row | push: file_details %}
-    {% elsif file_key != nil %}
-      {% assign row = row | push: attachments[file_key].url %}
-    {% else %}
-      {% assign row = row | push: cell %}
-    {% endif %}
-  {% endfor %}
-  {% action "google_sheets", __perform_event: false %}
-    {"account":{{ action.meta.account | json }},"operation":"append_rows","spreadsheet_id":{{ action.meta.spreadsheet_id | json }},"value_input_option":"raw","retry_on_transient_errors":false,"rows":[{{ row | json }}]}
-  {% endaction %}
-  {% break %}
-{% endif %}
-{% if event.topic == "mechanic/user/trigger" %}
-  {% if options.spreadsheet_id != blank %}
-    {% log "A spreadsheet is already configured. Manual runs do not add submission rows or replace its headers." %}
-    {% break %}
-  {% endif %}
-  {% action "google_sheets", __perform_event: false %}
-    {"account":{{ options.google_account__required | json }},"operation":"create_spreadsheet","title":{{ options.spreadsheet_title__required | json }},"value_input_option":"raw","rows":[{{ headers | json }}]}
-  {% endaction %}
-  {% break %}
-{% endif %}
 {% if event.topic != options.webhook_event_topic__required %}{% break %}{% endif %}
-
-{% assign forward_files = options.save_uploaded_files_to_google_drive__boolean %}
+{% assign forward_files = options.include_uploaded_files__boolean %}
 {% assign payload = event.data %}
 {% if payload.body != nil %}{% assign payload = payload.body %}{% endif %}
 {% if event.preview %}
@@ -209,59 +141,39 @@
   {% error "The answers and file details exceed this task's 100 KB storage limit. Nothing was saved." %}{% break %}
 {% endif %}
 
-{% assign spreadsheet_id = options.spreadsheet_id %}
-{% if event.preview %}{% assign spreadsheet_id = spreadsheet_id | default: "preview-spreadsheet-id" %}{% endif %}
-{% if spreadsheet_id == blank %}
-  {% error "Run this task once to create the spreadsheet, copy its spreadsheet_id into the task options, and save before collecting submissions." %}{% break %}
+{% assign reply_to = nil %}
+{% if options.reply_to_email_field_key != blank %}
+  {% assign candidate = answers[options.reply_to_email_field_key] %}
+  {% assign candidate_type = candidate | json | slice: 0, 1 %}
+  {% if candidate_type == '"' and candidate != blank %}
+    {% assign candidate = candidate | strip %}
+    {% assign valid_email = candidate | match: '\A[^\s@<>,;:]+@[^\s@<>,;:]+\.[^\s@<>,;:]+\z' %}
+    {% if valid_email and candidate.size <= 254 %}
+      {% assign reply_to = candidate %}
+    {% else %}
+      {% log "The submitted reply-to address was invalid; the notification will be sent without Reply-To." %}
+    {% endif %}
+  {% endif %}
 {% endif %}
-{% assign file_columns = hash %}
-{% assign row = array | push: received_at, payload.form.id, revision, payload.submission_id, event_id, attachments_json %}
-{% for column in columns %}
-  {% assign value = answers[column[1]] %}
-  {% if forward_files and attachments[column[1]] %}
-    {% assign index = row.size | append: "" %}
-    {% assign file_columns[index] = column[1] %}
+{% capture body %}
+  <h2>New form submission</h2>
+  <table>
+    {% for answer in answers %}
+      {% assign value_type = answer[1] | json | slice: 0, 1 %}
+      {% assign display_value = answer[1] %}
+      {% if value_type == "[" or value_type == "{" %}{% assign display_value = answer[1] | json %}{% endif %}
+      <tr><th align="left" valign="top">{{ answer[0] | escape }}</th><td>{{ display_value | escape | newline_to_br }}</td></tr>
+    {% else %}
+      <tr><td>No answers were provided.</td></tr>
+    {% endfor %}
+  </table>
+  {% if attachments.size > 0 %}
+    <h3>Uploaded files</h3>
+    {% if forward_files %}<p>The files are attached to this email.</p>{% else %}<p>File details only. Uploaded files are not attached.</p>{% endif %}
+    <ul>{% for file in attachments %}<li>{{ file[0] | escape }}: {{ file[1].name | escape }} ({{ file[1].size }} bytes)</li>{% endfor %}</ul>
   {% endif %}
-  {% assign value_type = value | json | slice: 0, 1 %}
-  {% if value_type == "[" or value_type == "{" %}
-    {% assign value = value | json %}
-  {% elsif value == nil %}
-    {% assign value = "" %}
-  {% endif %}
-  {% if value.size > 40000 %}
-    {% error "An answer is too large for a spreadsheet cell. Nothing was appended." %}{% break %}
-  {% endif %}
-  {% assign row = row | push: value %}
-{% endfor %}
-{% if row.size != headers.size %}{% break %}{% endif %}
-{% if attachments_json.size > 40000 %}
-  {% error "The file details are too large for a spreadsheet cell. Nothing was saved." %}{% break %}
-{% endif %}
-{% if forward_files and generated_files.size > 0 %}
-  {% assign uploads = hash %}
-  {% assign uploads["overwrite"] = true %}
-  {% assign upload_paths = hash %}
-  {% assign event_folder = event_id | sha256 %}
-  {% for file_name in file_names %}
-    {% assign path = "Mechanic form uploads/" | append: payload.form.id | append: "/" | append: event_folder | append: "/" | append: file_name[1] %}
-    {% assign uploads[path] = generated_files[file_name[1]] %}
-    {% assign key = file_name[0] %}
-    {% assign upload_paths[key] = path %}
-  {% endfor %}
-  {% assign meta = hash %}
-  {% assign meta["stage"] = "form_submission_drive_upload_v1" %}
-  {% assign meta["account"] = options.google_account__required %}
-  {% assign meta["spreadsheet_id"] = spreadsheet_id %}
-  {% assign meta["row"] = row %}
-  {% assign meta["attachments"] = attachments %}
-  {% assign meta["upload_paths"] = upload_paths %}
-  {% assign meta["file_columns"] = file_columns %}
-  {% action "google_drive", __meta: meta %}
-    {"account":{{ options.google_account__required | json }},"uploads":{{ uploads | json }}}
-  {% endaction %}
-{% else %}
-{% action "google_sheets", __perform_event: false %}
-  {"account":{{ options.google_account__required | json }},"operation":"append_rows","spreadsheet_id":{{ spreadsheet_id | json }},"value_input_option":"raw","retry_on_transient_errors":false,"rows":[{{ row | json }}]}
+  <p>Received: {{ received_at | escape }}<br>Form code: {{ payload.form.id | escape }}<br>Revision: {{ revision | escape }}<br>Submission ID: {{ payload.submission_id | escape }}<br>Mechanic event ID: {{ event_id | escape }}</p>
+{% endcapture %}
+{% action "email", __perform_event: false %}
+  {"to":{{ options.email_recipients__email_array_required | json }},"subject":{{ options.email_subject__required | json }},"body":{{ body | strip | json }}{% if reply_to %},"reply_to":{{ reply_to | json }}{% endif %}{% if forward_files and generated_files.size > 0 %},"attachments":{{ generated_files | json }}{% endif %}}
 {% endaction %}
-
-{% endif %}

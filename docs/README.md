@@ -208,6 +208,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Demonstration: Web fonts in PDFs](./demonstration-web-fonts-in-pdfs)
 * [Demonstration: Write to a customer metafield](./demonstration-write-to-a-customer-metafield)
 * [Download and email a file to a customer, when purchased](./download-and-email-a-file-to-a-customer-when-purchased)
+* [Email Mechanic form submissions](./email-mechanic-form-submissions)
 * [Email a CSV export of orders](./email-a-csv-export-of-orders)
 * [Email a CSV export of products](./email-a-csv-export-of-products)
 * [Email a report of customers who haven't ordered in X days](./email-a-report-of-customers-who-havent-ordered-in-x-days)
@@ -676,6 +677,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Custom Webhook
 
+* [Email Mechanic form submissions](./email-mechanic-form-submissions)
 * [Monitor for variants with zero price](./monitor-for-variants-with-zero-price)
 * [Save Mechanic form submissions to Shopify metaobjects](./save-mechanic-form-submissions-to-shopify-metaobjects)
 * [Save Mechanic form submissions to a Google Sheet](./save-mechanic-form-submissions-to-a-google-sheet)
@@ -856,6 +858,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Automatically send account invite to new customers](./automatically-send-account-invite-to-new-customers)
 * [Catalog update email](./catalog-update-email)
 * [Download and email a file to a customer, when purchased](./download-and-email-a-file-to-a-customer-when-purchased)
+* [Email Mechanic form submissions](./email-mechanic-form-submissions)
 * [Email a CSV export of orders](./email-a-csv-export-of-orders)
 * [Email a CSV export of products](./email-a-csv-export-of-products)
 * [Email a report of customers who haven't ordered in X days](./email-a-report-of-customers-who-havent-ordered-in-x-days)
@@ -986,6 +989,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 * [Demonstration: Create sheets and list and create files in Google Drive](./demonstration-create-sheets-and-list-and-create-files-in-google-drive)
 * [Demonstration: Upload files to Google Drive](./demonstration-upload-files-to-google-drive)
+* [Save Mechanic form submissions to a Google Sheet](./save-mechanic-form-submissions-to-a-google-sheet)
 
 ### Google Sheets
 
