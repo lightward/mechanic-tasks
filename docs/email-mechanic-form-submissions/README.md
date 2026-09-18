@@ -13,7 +13,7 @@ Email the answers from a Mechanic form submission to your team, optionally inclu
 ```json
 {
   "webhook_event_topic__required": "user/forms/submission",
-  "form_id": "",
+  "form__storefrontform": "",
   "email_recipients__email_array_required": null,
   "email_subject__required": "New form submission",
   "include_uploaded_files__boolean": false,
@@ -40,7 +40,7 @@ This task is for **Mechanic's form builder**. It uses the form's ordinary webhoo
 ## Setup
 
 1. In the form's **Submission settings**, choose a webhook. Copy its exact event topic into **Webhook event topic**; the example `user/forms/submission` is not automatically connected.
-2. Optionally set **Form ID** to the form's code to receive only that form. Leave it blank to handle any Mechanic form on the selected webhook.
+2. Optionally choose a published form in **Form** to receive only that form. Leave it blank to handle any Mechanic form on the selected webhook.
 3. Set **Email recipients** to the team members who should receive submissions, and choose an **Email subject**. Recipients come from task settings, never from the visitor's answers.
 4. Optionally enable **Include uploaded files**. Optionally set **Reply to email field key** to a field such as `email`, so replying to the notification addresses the submitter. An omitted, empty or invalid answer does not set Reply-To. The supplied address is not proof of identity.
 5. Save and enable the task. Your Mechanic account must be [approved to send email](https://learn.mechanic.dev/platform/email). Submit a test from the actual storefront and check the email action and recipient inbox. The preview inside Mechanic and the form inside Shopify’s theme editor do not send email. A storefront opened in a separate tab, including an unpublished theme preview, sends real submissions and can run this task. A form confirmation means the request was accepted; email delivery happens afterward and may fail independently.

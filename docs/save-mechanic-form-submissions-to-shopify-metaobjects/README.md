@@ -13,7 +13,7 @@ Save answers from Mechanic form submissions as Shopify metaobject entries, with 
 ```json
 {
   "webhook_event_topic__required": "user/forms/submission",
-  "form_id": "",
+  "form__storefrontform": "",
   "form_name": ""
 }
 ```
@@ -38,7 +38,7 @@ These tasks are for **Mechanic's form builder**, not Shopify Forms. Submissions 
 ## Connect a form
 
 1. In the form's **Submission settings**, choose a webhook. Copy its exact event topic into **Webhook event topic** in this task; the example `user/forms/submission` is not automatically connected.
-2. Optionally paste the form's code into **Form ID** to save only that form. Leave it blank to handle any Mechanic form on this webhook. Form codes and submission IDs identify visitor input, not authenticated customers.
+2. Optionally choose a published form in **Form** to save only that form. Leave it blank to handle any Mechanic form on this webhook. Form IDs and submission IDs identify visitor input, not authenticated customers.
 3. Complete the destination setup below, save and enable the task, then refresh the form's connected tasks. Disabled tasks do not save submissions.
 4. Send a test from the actual storefront, then check the resulting task action and destination. The builder and theme-editor previews do not send anything. The form's confirmation does not guarantee that a storage action succeeded.
 

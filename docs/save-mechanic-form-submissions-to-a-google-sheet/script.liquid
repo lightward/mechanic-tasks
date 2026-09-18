@@ -1,6 +1,6 @@
 {% comment %}
   {{ options.webhook_event_topic__required }}
-  {{ options.form_id }}
+  {{ options.form__storefrontform }}
   {{ options.google_account__required }}
   {{ options.spreadsheet_title__required }}
   {{ options.spreadsheet_id }}
@@ -80,7 +80,7 @@
 {% if payload.body != nil %}{% assign payload = payload.body %}{% endif %}
 {% if event.preview %}
   {% capture sample %}
-    {"form":{"id":{{ options.form_id | default: "11111111-1111-4111-8111-111111111111" | json }},"revision":"1"},"submission_id":"22222222-2222-4222-8222-222222222222","fields":{"name":"Pat Example","email":"pat@example.com","product":"Garden lamp","issue":"The switch stopped working.","agree":"false","receipt":{"name":"receipt.txt","mime_type":"text/plain","size":4,"content_base64":"dGVzdA=="}}}
+    {"form":{"id":{{ options.form__storefrontform | default: "11111111-1111-4111-8111-111111111111" | json }},"revision":"1"},"submission_id":"22222222-2222-4222-8222-222222222222","fields":{"name":"Pat Example","email":"pat@example.com","product":"Garden lamp","issue":"The switch stopped working.","agree":"false","receipt":{"name":"receipt.txt","mime_type":"text/plain","size":4,"content_base64":"dGVzdA=="}}}
   {% endcapture %}
   {% assign payload = sample | parse_json %}
 {% endif %}
@@ -106,7 +106,7 @@
 {% unless valid_form_id and valid_submission_id %}
   {% error "The form or submission ID is invalid." %}{% break %}
 {% endunless %}
-{% if options.form_id != blank and options.form_id != payload.form.id %}
+{% if options.form__storefrontform != blank and options.form__storefrontform != payload.form.id %}
   {% log "This submission belongs to another form; nothing was saved." %}{% break %}
 {% endif %}
 {% assign revision = payload.form.revision | append: "" %}
