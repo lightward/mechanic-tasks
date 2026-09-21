@@ -1,0 +1,26 @@
+{% comment %}
+Option order:
+{{ options.webhook_event_topic__required }}
+{{ options.form__orderstatusform_required }}
+{{ options.email_recipients__email_array_required }}
+{{ options.email_subject__required }}
+{% endcomment %}
+{% assign form_id = options.form__orderstatusform_required %}
+{% if event.preview and form_id == blank %}{% assign form_id = "dcdbe314-23fa-4afd-875b-9d52c6bd7110" %}{% endif %}
+{% assign valid_form = form_id | match: '\A[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\z' %}
+{% unless valid_form %}{% error "Choose an Order status form in the task's Form option." %}{% break %}{% endunless %}
+{% assign status_key = form_id | remove: "-" | prepend: "form_" %}
+{% assign request = event.order_status_request %}
+{% if event.preview %}
+  {% capture preview %}{"version":1,"request_id":"a807b3c1-bbae-423d-99f8-8e6d5f0bdaf5","issued_at":{{ "now" | date: "%s" | plus: 0 }},"form":{"id":{{ form_id | json }},"title":"Order assistance","revision":1},"customer":{"id":"gid://shopify/Customer/1234567890"},"order":{"id":"gid://shopify/Order/1234567890","name":"#1001"},"fields":{"request_type":"Service request","details":"Could you help me with my order?"}}{% endcapture %}
+  {% assign request = preview | parse_json %}
+{% endif %}
+{% unless request %}{% log "No verified Order status request was supplied. Nothing was changed or sent." %}{% break %}{% endunless %}
+{% if request.form.id != form_id %}{% break %}{% endif %}
+{% capture body %}<h2>New order request</h2>
+<p>Order {{ request.order.name | escape }} · {{ request.form.title | escape }}</p>
+<table>{% for answer in request.fields %}{% assign text = answer[1] %}{% assign kind = text | json | slice: 0, 1 %}{% if kind == "[" or kind == "{" %}{% assign text = text | json %}{% endif %}<tr><th align="left" valign="top">{{ answer[0] | escape }}</th><td>{{ text | escape | newline_to_br }}</td></tr>{% else %}<tr><td>No additional answers.</td></tr>{% endfor %}</table>
+<p><a href="https://{{ shop.myshopify_domain | escape }}/admin/orders/{{ request.order.id | split: '/' | last | escape }}">Open order in Shopify</a></p>
+<p>Request ID: {{ request.request_id | escape }}<br>Received by Mechanic: {{ event.created_at | escape }}</p>
+{% endcapture %}
+{% action "email", __perform_event: false %}{"to":{{ options.email_recipients__email_array_required | json }},"subject":{{ options.email_subject__required | append: " — " | append: request.order.name | json }},"body":{{ body | strip | json }}}{% endaction %}
