@@ -34,6 +34,9 @@
   {% assign field_keys = fields | keys %}
   {% unless field_keys %}{% assign invalid = true %}{% error "Expected form answers." %}{% break %}{% endunless %}
   {% if field_keys.size > 50 %}{% assign invalid = true %}{% error "Too many form answers." %}{% break %}{% endif %}
+  {% if customer_id == nil and options.email_field_key == blank %}
+    {% error "Set Email field key so guest quote requests include a contact email." %}{% break %}
+  {% endif %}
   {% if options.email_field_key != blank %}
     {% assign email = fields[options.email_field_key] %}
     {% assign email_type = email | json | slice: 0, 1 %}
