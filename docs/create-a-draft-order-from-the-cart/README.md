@@ -2,7 +2,7 @@
 
 Tags: Cart, Draft Orders
 
-Use this task as a starting point, for allowing visitors to submit their carts to be transformed into draft orders, associated with their customer account. Installing and customizing this task requires some level of comfort with Liquid, HTML, and JavaScript.
+Turn a storefront cart into a Shopify draft order, using a Mechanic storefront form or your existing custom cart button. Signed-in customers are linked to their verified Shopify customer account. Shopify supplies current variant prices; review the draft before sending an invoice.
 
 * View in the task library: [tasks.mechanic.dev/create-a-draft-order-from-the-cart](https://tasks.mechanic.dev/create-a-draft-order-from-the-cart)
 * Task JSON, for direct import: [task.json](../../tasks/create-a-draft-order-from-the-cart.json)
@@ -14,9 +14,11 @@ Use this task as a starting point, for allowing visitors to submit their carts t
 
 ```json
 {
-  "shared_secret__required": null,
   "mechanic_webhook_event_topic__required": null,
-  "mechanic_webhook_url__required": null
+  "form__storefrontform": "",
+  "email_field_key": "email",
+  "shared_secret": null,
+  "mechanic_webhook_url": null
 }
 ```
 
@@ -32,11 +34,30 @@ Use this task as a starting point, for allowing visitors to submit their carts t
 
 ## Documentation
 
-Use this task as a starting point, for allowing visitors to submit their carts to be transformed into draft orders, associated with their customer account. Installing and customizing this task requires some level of comfort with Liquid, HTML, and JavaScript.
+Turn a storefront cart into a Shopify draft order, using a Mechanic storefront form or your existing custom cart button. Signed-in customers are linked to their verified Shopify customer account. Shopify supplies current variant prices; review the draft before sending an invoice.
 
-### Installation
+### Set up a storefront form
 
-1.  Create a Mechanic webhook ([learn how](https://help.usemechanic.com/en/articles/2637727-getting-started-with-webhooks)), and update this task's options to reflect the webhook's configuration. Use whatever event topic you like - "user/carts/draft_order", for example. :)
+1. In **Storefront forms**, use **Request a quote from your cart**. The template includes the current cart when submitted and opens from a button. Keep the email field, or set this task’s **Email field key** to your field’s key.
+2. Create a custom webhook and select it in the form’s **Submission settings**. Enter its event topic in this task, and choose your published form in **Form**.
+3. Enable the task, publish the form, and use **Add to cart page** on the Theme tab. In the theme editor, choose the form in the Mechanic form block. The cart page must support app blocks or an Apps section; cart drawers require separate customization.
+4. Leave **Shared secret** and **Mechanic webhook URL** empty for the form setup. Mechanic verifies the signed-in customer through Shopify, while the form submission uses the ordinary webhook. Guests supply their contact email; entering an email is not verification of a customer account.
+
+The form acknowledges that the request was received. Draft order creation happens asynchronously; the task does not send an invoice or change/clear the cart. Notes include the form answers and uploaded file names, not the file contents. Use the email or Google Sheets/Drive task on the same webhook if you also want those files.
+
+Supports 1–100 ordinary variant lines, quantities, and line item properties. Subscription and bundle items are rejected for separate review. Cart discounts, shipping rates, and displayed prices are not copied. This is a request for a quote, not a promise to preserve checkout pricing. Submitted cart data is visitor input, not proof of a previous purchase. An explicit retry after an uncertain response can create another draft order.
+
+If you customized Mechanic’s app proxy URL in Shopify’s app settings, set the block’s advanced **Customer verification path** to that path. Verification failure prevents submission; it does not silently switch a signed-in customer to a guest.
+
+### Existing custom cart button
+
+Leave **Form** empty and fill in **Shared secret** and **Mechanic webhook URL**. The existing `cart`, `customerId`, and `customerIdSignature` payload remains supported. Customer IDs are linked only when the shared-secret signature matches.
+
+**When updating an older installed task:** preserve your shared secret and webhook URL, then put them into the same-named fields after updating. Those two option keys no longer have the `__required` suffix because the form setup does not need them. The webhook event topic key is unchanged. Keep your existing theme button and its matching secret.
+
+### Custom button installation
+
+1.  Create a Mechanic webhook ([learn how](https://learn.mechanic.dev/platform/webhooks)), and update this task's options to reflect the webhook's configuration. Use whatever event topic you like - "user/carts/draft_order", for example. :)
 2.  In an appropriate place in your cart template, add a button to send the cart data to Mechanic. Use the following code to get started:
 
     ```

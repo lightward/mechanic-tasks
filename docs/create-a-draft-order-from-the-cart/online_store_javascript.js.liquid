@@ -1,8 +1,8 @@
 const mechanicCartSubmit = document.querySelector('#mechanic_cart_submit');
 
-if (mechanicCartSubmit) {
+if (mechanicCartSubmit && {{ options.mechanic_webhook_url | json }}) {
   mechanicCartSubmit.addEventListener('click', (event) => {
-    fetch({{ options.mechanic_webhook_url__required | json }}, {
+    fetch({{ options.mechanic_webhook_url | json }}, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
