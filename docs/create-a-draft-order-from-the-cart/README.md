@@ -41,13 +41,13 @@ Turn a storefront cart into a Shopify draft order, using a Mechanic storefront f
 1. In **Storefront forms**, use **Request a quote from your cart**. The template includes the current cart when submitted and opens from a button. Keep the email field, or set this task’s **Email field key** to your field’s key.
 2. Create a custom webhook and select it in the form’s **Submission settings**. Enter its event topic in this task, and choose your published form in **Form**.
 3. Enable the task, publish the form, and use **Add to cart page** on the Theme tab. In the theme editor, choose the form in the Mechanic form block. The cart page must support app blocks or an Apps section; cart drawers require separate customization.
-4. Leave **Shared secret** and **Mechanic webhook URL** empty for the form setup. Mechanic verifies the signed-in customer through Shopify, while the form submission uses the ordinary webhook. Guests supply their contact email; entering an email is not verification of a customer account.
+4. Leave **Shared secret** and **Mechanic webhook URL** empty for the form setup. Shopify signs the customer context when rendering the form, and this task verifies it before linking the customer. Form submissions use the ordinary webhook. Guests supply their contact email; entering an email is not verification of a customer account.
 
 The form acknowledges that the request was received. Draft order creation happens asynchronously; the task does not send an invoice or change/clear the cart. Notes include the form answers and uploaded file names, not the file contents. Use the email or Google Sheets/Drive task on the same webhook if you also want those files.
 
 Supports 1–100 ordinary variant lines, quantities, and line item properties. Subscription and bundle items are rejected for separate review. Cart discounts, shipping rates, and displayed prices are not copied. This is a request for a quote, not a promise to preserve checkout pricing. Submitted cart data is visitor input, not proof of a previous purchase. An explicit retry after an uncertain response can create another draft order.
 
-If you customized Mechanic’s app proxy URL in Shopify’s app settings, set the block’s advanced **Customer verification path** to that path. Verification failure prevents submission; it does not silently switch a signed-in customer to a guest.
+Form signing is configured automatically when you publish. A stale page refreshes its signed customer context through Shopify. If the task cannot verify that context, it stops without creating a draft order; it does not silently switch a signed-in customer to a guest.
 
 ### Existing custom cart button
 
