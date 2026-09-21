@@ -190,7 +190,7 @@
         {% action "shopify" %}
           mutation {
             collectionUpdate(
-              input: {
+              collection: {
                 id: {{ collection.id | json }}
                 templateSuffix: {{ default_collection_template_suffix | json }}
               }
@@ -214,7 +214,7 @@
         {% action "shopify" %}
           mutation {
             collectionUpdate(
-              input: {
+              collection: {
                 id: {{ collection.id | json }}
                 templateSuffix: {{ out_of_stock_collection_template_suffix | json }}
               }
@@ -333,7 +333,7 @@
         {% action "shopify" %}
           mutation {
             collectionUpdate(
-              input: {
+              collection: {
                 id: {{ collection.id | json }}
                 templateSuffix: {{ default_collection_template_suffix | json }}
               }
@@ -357,7 +357,7 @@
         {% action "shopify" %}
           mutation {
             collectionUpdate(
-              input: {
+              collection: {
                 id: {{ collection.id | json }}
                 templateSuffix: {{ out_of_stock_collection_template_suffix | json }}
               }

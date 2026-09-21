@@ -1,36 +1,29 @@
-{% comment %}
-  This task script *also* includes a feature for ignoring
-  products based on metafield value. To reveal and use this
-  feature, swap "options_" for "options." in these variables:
-  * options_product_metafield_namespace
-  * options_product_metafield_key
-  * options_ignore_products_having_this_metafield_value
-{% endcomment %}
-
 {% assign collection_maximum_size = options.collection_maximum_size__number_required %}
-{% assign collection = shop.collections[options.collection_id__number_required] %}
+{% assign collection_id = options.collection__picker_collection_required %}
+{% assign exclude_products_that_are_sold_out = options.exclude_products_that_are_sold_out__boolean %}
+{% assign exclude_product_tags = options.exclude_products_with_any_of_these_tags__array %}
+
+{% assign exclude_product_tags_lower = exclude_product_tags | json | downcase | parse_json %}
 
 {% if collection_maximum_size < 1 %}
   {% error "The 'Collection maximum size' option must be at least 1. :)" %}
+
 {% else %}
   {% assign collection_maximum_size_rounded = collection_maximum_size | round %}
+
   {% if collection_maximum_size_rounded != collection_maximum_size %}
     {% error "The 'Collection maximum size' option must be a whole number. ;)" %}
   {% endif %}
 {% endif %}
 
-{% if event.preview %}
-  {% assign order = hash %}
-  {% assign order = "gid://shopify/Order/1234567890" %}
-
-  {% assign collection = hash %}
-  {% assign collection["admin_graphql_api_id"] = "gid://shopify/Collection/1234567890" %}
-{% endif %}
+{% comment %}
+  -- get product IDs from order line items (limit of 500 line items per order)
+{% endcomment %}
 
 {% assign product_ids_ordered = array %}
 {% assign cursor = nil %}
 
-{% for n in (0..100) %}
+{% for n in (1..2) %}
   {% capture query %}
     query {
       order(id: {{ order.admin_graphql_api_id | json }}) {
@@ -39,22 +32,15 @@
           first: 250
           after: {{ cursor | json }}
         ) {
-          edges {
-            node {
-              product {
-                id
-                {% if options.ignore_products_that_are_sold_out__boolean %}
-                  totalInventory
-                {% endif %}
-                {% if options_product_metafield_namespace != blank %}
-                  metafield(
-                    namespace: {{ options_product_metafield_namespace | json }}
-                    key: {{ options_product_metafield_key | json }}
-                  ) {
-                    value
-                  }
-                {% endif %}
-              }
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            product {
+              id
+              totalInventory
+              tags
             }
           }
         }
@@ -71,26 +57,11 @@
           "order": {
             "id": "gid://shopify/Order/1234567890",
             "lineItems": {
-              "edges": [
+              "nodes": [
                 {
-                  "node": {
-                    "product": {
-                      {% if options.ignore_products_that_are_sold_out__boolean %}
-                        "totalInventory": 1,
-                      {% endif %}
-                      {% if options_product_metafield_namespace != blank %}
-                        "metafield": null,
-                      {% endif %}
-                      "id": "gid://shopify/Product/1234567890"
-                    }
-                  }
-                },
-                {
-                  "node": {
-                    {% comment %}
-                      Prove that line items having no product are ignored
-                    {% endcomment %}
-                    "product": null
+                  "product": {
+                    "id": "gid://shopify/Product/1234567890",
+                    "totalInventory": 1
                   }
                 }
               ]
@@ -103,47 +74,73 @@
     {% assign result = result_json | parse_json %}
   {% endif %}
 
-  {% for lineItem_edge in result.data.order.lineItems.edges %}
-    {% assign product = lineItem_edge.node.product %}
-    {% if product == nil %}
+  {% comment %}
+    -- exclude line items without products, and optionally slod-out products and products with certain tags
+  {% endcomment %}
+
+  {% for line_item in result.data.order.lineItems.nodes %}
+    {% assign product = line_item.product %}
+
+    {% if product == blank %}
       {% continue %}
     {% endif %}
 
-    {% if options.ignore_products_that_are_sold_out__boolean and product.totalInventory <= 0 %}
-      {% continue %}
-    {% elsif options_product_metafield_namespace != blank and product.metafield.value == options_ignore_products_having_this_metafield_value %}
-        {% continue %}
+    {% assign skip = nil %}
+
+    {% if exclude_products_that_are_sold_out and product.totalInventory <= 0 %}
+      {% assign skip = true %}
+
+    {% elsif exclude_product_tags != blank %}
+      {% for product_tag in product.tags %}
+        {% assign product_tag_lower = product_tag | downcase %}
+
+        {% if exclude_product_tags_lower contains product_tag_lower %}
+          {% assign skip = true %}
+          {% break %}
+        {% endif %}
+      {% endfor %}
     {% endif %}
 
-    {% assign product_ids_ordered[product_ids_ordered.size] = product.id %}
+    {% if skip %}
+      {% continue %}
+    {% endif %}
+
+    {% assign product_ids_ordered = product_ids_ordered | push: product.id %}
   {% endfor %}
 
   {% if result.data.order.lineItems.pageInfo.hasNextPage %}
-    {% assign cursor = result.data.order.lineItems.edges.last.cursor %}
+    {% assign cursor = result.data.order.lineItems.pageInfo.endCursor %}
   {% else %}
     {% break %}
   {% endif %}
 {% endfor %}
 
+{% comment %}
+  -- get existing products in collection, also applying optional exclusions
+{% endcomment %}
+
 {% assign product_ids_already_collected = array %}
 {% assign cursor = nil %}
+{% assign collection_sort_order = nil %}
+{% assign product_ids_to_remove = array %}
 
-{% for n in (0..100) %}
+{% for n in (1..100) %}
   {% capture query %}
     query {
-      collection(id: {{ collection.admin_graphql_api_id | json }}) {
+      collection(id: {{ collection_id | json }}) {
+        sortOrder
         products(
           first: 250
           after: {{ cursor | json }}
         ) {
           pageInfo {
             hasNextPage
+            endCursor
           }
-          edges {
-            cursor
-            node {
-              id
-            }
+          nodes {
+            id
+            totalInventory
+            tags
           }
         }
       }
@@ -158,12 +155,12 @@
         "data": {
           "collection": {
             "id": "gid://shopify/Collection/1234567890",
+            "sortOrder": "MANUAL",
             "products": {
-              "edges": [
+              "nodes": [
                 {
-                  "node": {
-                    "id": "gid://shopify/Product/2345678901"
-                  }
+                  "id": "gid://shopify/Product/2345678901",
+                  "totalInventory": 1
                 }
               ]
             }
@@ -175,40 +172,70 @@
     {% assign result = result_json | parse_json %}
   {% endif %}
 
-  {% for product_edge in result.data.collection.products.edges %}
-    {% assign product = product_edge.node %}
-    {% assign product_ids_already_collected[product_ids_already_collected.size] = product.id %}
+  {% assign collection_sort_order = result.data.collection.sortOrder %}
+
+  {% for product in result.data.collection.products.nodes %}
+    {% assign skip = nil %}
+
+    {% if exclude_products_that_are_sold_out and product.totalInventory <= 0 %}
+      {% assign skip = true %}
+
+    {% elsif exclude_product_tags != blank %}
+      {% for product_tag in product.tags %}
+        {% assign product_tag_lower = product_tag | downcase %}
+
+        {% if exclude_product_tags_lower contains product_tag_lower %}
+          {% assign skip = true %}
+          {% break %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+
+    {% if skip %}
+      {% assign product_ids_to_remove = product_ids_to_remove | push: product.id %}
+    {% else %}
+      {% assign product_ids_already_collected = product_ids_already_collected | push: product.id %}
+    {% endif %}
   {% endfor %}
 
   {% if result.data.collection.products.pageInfo.hasNextPage %}
-    {% assign cursor = result.data.collection.products.edges.last.cursor %}
+    {% assign cursor = result.data.collection.products.pageInfo.endCursor %}
   {% else %}
     {% break %}
   {% endif %}
 {% endfor %}
 
+{% comment %}
+  -- figure out which products should be in the collection to keep it within maximum size
+{% endcomment %}
+
 {% assign product_ids_under_consideration = product_ids_ordered | concat: product_ids_already_collected | uniq %}
-{% assign product_ids_to_have_at_the_end_of_the_day = array %}
+{% assign product_ids_should_have = array %}
 {% assign product_ids_to_add = array %}
-{% assign product_ids_to_remove = array %}
 
 {% for product_id in product_ids_under_consideration %}
   {% if forloop.index <= collection_maximum_size %}
-    {% assign product_ids_to_have_at_the_end_of_the_day[product_ids_to_have_at_the_end_of_the_day.size] = product_id %}
+    {% assign product_ids_should_have = product_ids_should_have | push: product_id %}
+
     {% unless product_ids_already_collected contains product_id %}
-      {% assign product_ids_to_add[product_ids_to_add.size] = product_id %}
+      {% assign product_ids_to_add = product_ids_to_add | push: product_id %}
     {% endunless %}
+
   {% else %}
-    {% assign product_ids_to_remove[product_ids_to_remove.size] = product_id %}
+    {% assign product_ids_to_remove = product_ids_to_remove | push: product_id %}
   {% endif %}
 {% endfor %}
 
+{% comment %}
+  -- capture any necessary mutations
+{% endcomment %}
+
 {% assign mutations = array %}
 
-{% if product_ids_to_add != empty %}
+{% if product_ids_to_add != blank %}
   {% capture mutation %}
     collectionAddProducts(
-      id: {{ collection.admin_graphql_api_id | json }}
+      id: {{ collection_id | json }}
       productIds: {{ product_ids_to_add | json }}
     ) {
       userErrors {
@@ -217,13 +244,14 @@
       }
     }
   {% endcapture %}
-  {% assign mutations[mutations.size] = mutation %}
+
+  {% assign mutations = mutations | push: mutation %}
 {% endif %}
 
-{% if product_ids_to_remove != empty %}
+{% if product_ids_to_remove != blank %}
   {% capture mutation %}
     collectionRemoveProducts(
-      id: {{ collection.admin_graphql_api_id | json }}
+      id: {{ collection_id | json }}
       productIds: {{ product_ids_to_remove | json }}
     ) {
       userErrors {
@@ -232,37 +260,44 @@
       }
     }
   {% endcapture %}
-  {% assign mutations[mutations.size] = mutation %}
+
+  {% assign mutations = mutations | push: mutation %}
 {% endif %}
 
-{% assign moves = array %}
-{% for product_id in product_ids_ordered %}
-  {% if product_ids_already_collected[forloop.index0] != product_id %}
-    {% capture move %}
-      {
-        id: {{ product_id | json }}
-        newPosition: {{ forloop.index0 | append: "" | json }}
+{% comment %}
+  -- only sort the collection if it is configured for manual sorting
+{% endcomment %}
+
+{% if collection_sort_order == "MANUAL" %}
+  {% assign moves = array %}
+
+  {% for product_id in product_ids_ordered %}
+    {% if product_ids_already_collected[forloop.index0] != product_id %}
+      {% assign move = hash %}
+      {% assign move["id"] = product_id %}
+      {% assign move["newPosition"] = forloop.index0 | append: "" %}
+      {% assign moves = moves | push: move %}
+    {% endif %}
+  {% endfor %}
+
+  {% if moves != blank %}
+    {% capture mutation %}
+      collectionReorderProducts(
+        id: {{ collection_id | json }}
+        moves: {{ moves | graphql_arguments }}
+      ) {
+        userErrors {
+          field
+          message
+        }
       }
     {% endcapture %}
-    {% assign moves[moves.size] = move %}
-  {% endif %}
-{% endfor %}
 
-{% if moves != empty %}
-  {% capture mutation %}
-    collectionReorderProducts(
-      id: {{ collection.admin_graphql_api_id | json }}
-      moves: [
-        {{ moves | join: newline }}
-      ]
-    ) {
-      userErrors {
-        field
-        message
-      }
-    }
-  {% endcapture %}
-  {% assign mutations[mutations.size] = mutation %}
+    {% assign mutations = mutations | push: mutation %}
+  {% endif %}
+
+{% else %}
+  {% action "echo" __error: "This collection is not configured for manual sorting. This task will not be able to move the most recent purchases to the top of the collection." %}
 {% endif %}
 
 {% if mutations != blank %}

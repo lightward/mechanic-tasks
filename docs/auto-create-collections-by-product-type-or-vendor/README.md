@@ -2,7 +2,7 @@
 
 Tags: Collections, Products, Publish, Vendor
 
-When products are created, this task will auto-create smart collections by product type and/or vendor, if such collections don't already exist. Additionally, configuring one or more __exact__ sales channel names will enable publishing of any _newly created_ collections by this task to those sales channels.
+When products are created, this task will auto-create collections with product type and/or vendor source conditions, if such collections don't already exist (by title search). Additionally, configuring one or more __exact__ sales channel names will enable publishing of any _newly created_ collections by this task to those sales channels.
 
 * View in the task library: [tasks.mechanic.dev/auto-create-collections-by-product-type-or-vendor](https://tasks.mechanic.dev/auto-create-collections-by-product-type-or-vendor)
 * Task JSON, for direct import: [task.json](../../tasks/auto-create-collections-by-product-type-or-vendor.json)
@@ -38,12 +38,14 @@ mechanic/user/trigger
 
 ## Documentation
 
-When products are created, this task will auto-create smart collections by product type and/or vendor, if such collections don't already exist. Additionally, configuring one or more __exact__ sales channel names will enable publishing of any _newly created_ collections by this task to those sales channels.
+When products are created, this task will auto-create collections with product type and/or vendor source conditions, if such collections don't already exist (by title search). Additionally, configuring one or more __exact__ sales channel names will enable publishing of any _newly created_ collections by this task to those sales channels.
 
 _For example:_  
-A new product is added with a vendor of "ACME". If a collection with that exact title does not already exist, then the task will create it with a title of "ACME" and add a rule of "vendor = ACME", which will allow Shopify to auto-populate the collection.
+A new product is added with a vendor of "ACME". If a collection with that exact title does not already exist, then the task will create it with a title of "ACME" and add a source condition of "vendor = ACME", which will allow Shopify to auto-populate the collection.
 
 Optionally, choose to run the task daily, and it will query for _all_ of the product types and/or vendors in your shop, and make the same decisions on whether to create new collections and publish them. Running the task manually has the same effect as a daily run.
+
+**IMPORTANT**: This task must use the 2026-07 API or newer.
 
 ## Installing this task
 

@@ -61,7 +61,9 @@ You may use any of these options for the base sort order:
 * PRICE_ASC
 * PRICE_DESC
 
-__Note__: To function correctly, the "Perform action runs in sequence" option should stay enabled in the task's advanced settings.
+__Notes__:
+- To function correctly, the "Perform action runs in sequence" option should stay enabled in the task's advanced settings.
+- This task may only be used with 2026-07 API and higher
 
 ## Installing this task
 

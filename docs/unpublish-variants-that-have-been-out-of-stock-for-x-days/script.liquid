@@ -1,0 +1,450 @@
+{% comment %}
+  1. Watch for updates to inventory levels.
+  2. Look up the associated variant, when an update comes in.
+  3. If the variant's inventory quantity is <=0, record the current time in a metafield. If not, delete that metafield, if it exists.
+  4. Scan all variants, on a schedule, retrieving each variant's out-of-stock time metafield.
+     For variants found with an inventory quantity of <=0, with a recorded time that's at least a
+     configurable distance in days from the current time, unpublish the variant.
+{% endcomment %}
+
+{% assign number_of_days_to_wait_before_unpublishing = options.number_of_days_to_wait_before_unpublishing__number_required %}
+{% assign sales_channel_names = options.sales_channel_names__required_array %}
+{% assign only_include_variants_matching_this_search_query = options.only_include_variants_matching_this_search_query %}
+{% assign test_mode = options.test_mode__boolean %}
+
+{% assign time_format = "%FT%T%z" %}
+
+{% comment %}
+  -- get all of the sales channel names (i.e. publications aka app catalogs) in the shop
+{% endcomment %}
+
+{% capture query %}
+  query {
+    publications(
+      first: 250
+      catalogType:APP
+    ) {
+      nodes {
+        id
+        catalog {
+          ... on AppCatalog {
+            apps(first: 1) {
+              nodes {
+                title
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "publications": {
+          "nodes": [
+            {
+              "id": "gid://shopify/Publication/1234567890",
+              "catalog": {
+                "apps": {
+                  "nodes": [
+                    {
+                      "title": {{ sales_channel_names.first | json }}
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% comment %}
+  -- save the publication IDs for all of the configured sales channel names
+{% endcomment %}
+
+{% assign publication_ids = array %}
+{% assign available_sales_channel_names = array %}
+
+{% for publication in result.data.publications.nodes %}
+  {% assign publication_name = publication.catalog.apps.nodes.first.title %}
+
+  {% assign available_sales_channel_names = available_sales_channel_names | push: publication_name %}
+
+  {% if sales_channel_names contains publication_name %}
+    {% assign publication_ids = publication_ids | push: publication.id %}
+  {% endif %}
+{% endfor %}
+
+{% if publication_ids == blank  %}
+  {% error
+    message: "None of the sales channels configured in this task exist in the shop. Check the list of available channels and verify each configured channel exists.",
+    configured_sales_channel_names: sales_channel_names,
+    available_sales_channel_names: available_sales_channel_names
+  %}
+
+  {% break %}
+
+{% elsif publication_ids.size != sales_channel_names.size %}
+  {% unless event.preview %}
+    {% comment %}
+      -- using action error here so the task will continue with any other configured and matched sales channels
+    {% endcomment %}
+
+    {% action "echo"
+      __error: "One or more configured sales channel names do not match any of the publication names available in this shop.",
+      configured_sales_channel_names: sales_channel_names,
+      available_sales_channel_names: available_sales_channel_names
+    %}
+  {% endunless %}
+{% endif %}
+
+{% if event.topic == "shopify/inventory_levels/update" %}
+  {% capture query %}
+    query {
+      inventoryLevel(
+        id: {{ inventory_level.admin_graphql_api_id | json }}
+      ) {
+        item {
+          variants(first: 1) {
+            nodes {
+              id
+              legacyResourceId
+              displayName
+              inventoryQuantity
+              metafield(
+                namespace: "mechanic"
+                key: "out_of_stock_at"
+              ) {
+                value
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "inventoryLevel": {
+            "item": {
+              "variants": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/ProductVariant/1234567890",
+                    "displayName": "Widget - Red",
+                    "inventoryQuantity": 0
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign variant = result.data.inventoryLevel.item.variants.nodes.first %}
+
+  {% log variant: variant %}
+
+  {% if variant.inventoryQuantity <= 0 and variant.metafield == blank %}
+    {% if test_mode %}
+      {%- capture message -%}
+        Variant {{ variant.displayName | remove: " - Default Title" }} ({{ variant.legacyResourceId }}) is out of stock. Its out-of-stock time should be recorded.
+      {%- endcapture -%}
+
+      {% log message %}
+
+    {% else %}
+      {% action "shopify" %}
+        mutation {
+          metafieldsSet(
+            metafields: [
+              {
+                ownerId: {{ variant.id | json }}
+                namespace: "mechanic"
+                key: "out_of_stock_at"
+                type: "date_time"
+                value: {{ "now" | date: time_format | json }}
+              }
+            ]
+          ) {
+            metafields {
+              id
+              namespace
+              key
+              type
+              value
+              owner {
+                ... on ProductVariant {
+                  id
+                  displayName
+                }
+              }
+            }
+            userErrors {
+              code
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endif %}
+
+  {% elsif variant.inventoryQuantity > 0 and variant.metafield != blank %}
+    {% if test_mode %}
+      {%- capture message -%}
+        Variant {{ variant.displayName | remove: " - Default Title" }} ({{ variant.legacyResourceId }}) is back in stock. Its out-of-stock time should be cleared.
+      {%- endcapture -%}
+
+      {% log message %}
+
+    {% else %}
+      {% action "shopify" %}
+        mutation {
+          metafieldsDelete(
+            metafields: [
+              {
+                ownerId: {{ variant.id | json }}
+                namespace: "mechanic"
+                key: "out_of_stock_at"
+              }
+            ]
+          ) {
+            deletedMetafields {
+              ownerId
+              namespace
+              key
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endif %}
+  {% endif %}
+
+{% elsif event.topic contains "mechanic/scheduler/" or event.topic == "mechanic/user/trigger" %}
+  {% comment %}
+    -- query for all active, out of stock variants (up to 25K); optionally filter the variants with configured query
+  {% endcomment %}
+
+  {% assign search_query = "product_status:active AND gift_card:false AND inventory_quantity:<=0" %}
+
+  {% if only_include_variants_matching_this_search_query != blank %}
+    {%- capture search_query -%}
+      {{ search_query }} AND ({{ only_include_variants_matching_this_search_query }})
+    {%- endcapture -%}
+
+    {% log search_query: search_query %}
+  {% endif %}
+
+  {% comment %}
+    -- use bulk op query to get all variants in the shop that match the search filters
+  {% endcomment %}
+
+  {% capture bulk_operation_query %}
+    query {
+      productVariants(
+        query: {{ search_query | json }}
+      ) {
+        edges {
+          node {
+            __typename
+            id
+            legacyResourceId
+            displayName
+            inventoryQuantity
+            {% for publication_id in publication_ids %}
+              published{{ forloop.index }}: publishedOnPublication(publicationId: {{ publication_id | json }})
+            {% endfor %}
+            metafield(
+              namespace: "mechanic"
+              key: "out_of_stock_at"
+            ) {
+              value
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic == "mechanic/shopify/bulk_operation" %}
+  {% assign now_s = "now" | date: "%s" | times: 1 %}
+  {% assign minimum_out_of_stock_at_distance_s = number_of_days_to_wait_before_unpublishing | times: 86400 %}
+
+  {% if event.preview %}
+    {% capture jsonl_string %}
+      {"__typename":"ProductVariant","id":"gid://shopify/ProductVariant/1234567890","legacyResourceId":"1234567890","displayName":"Widget - Red","inventoryQuantity":0,"published1": true,"metafield": {"value":{{ now_s | minus: minimum_out_of_stock_at_distance_s | minus: 1 | append: "" | json }}}}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["objects"] = jsonl_string | parse_jsonl %}
+  {% endif %}
+
+  {% assign variants = bulkOperation.objects | where: "__typename", "ProductVariant" %}
+
+  {% assign metafields_to_set = array %}
+
+  {% for variant in variants %}
+    {% if variant.metafield == blank %}
+      {%- capture message -%}
+        Variant {{ variant.displayName | remove: " - Default Title" }} ({{ variant.legacyResourceId }}) is out of stock, but its out-of-stock time was not recorded. This variant will not be unpublished now, but its out-of-stock time will be set to the current time.
+      {%- endcapture -%}
+
+      {% log message  %}
+
+      {% assign metafield_to_set = hash %}
+      {% assign metafield_to_set["ownerId"] = variant.id %}
+      {% assign metafield_to_set["namespace"] = "mechanic" %}
+      {% assign metafield_to_set["key"] = "out_of_stock_at" %}
+      {% assign metafield_to_set["type"] = "date_time" %}
+      {% assign metafield_to_set["value"] = "now" | date: time_format %}
+      {% assign metafields_to_set = metafields_to_set | push: metafield_to_set %}
+
+      {% continue %}
+    {% endif %}
+
+    {% assign out_of_stock_at_s = variant.metafield.value | date: "%s" | times: 1 %}
+    {% assign out_of_stock_at_distance_s = now_s | minus: out_of_stock_at_s %}
+
+    {% assign unpublishings = array %}
+
+    {% for publication_id in publication_ids %}
+      {% assign key = "published" | append: forloop.index %}
+
+      {% if variant[key] %}
+        {% assign unpublishings[unpublishings.size] = array | push: variant.id, publication_id %}
+      {% endif %}
+    {% endfor %}
+
+    {% if unpublishings == blank %}
+      {%- capture message -%}
+        Variant {{ variant.displayName | remove: " - Default Title" }} ({{ variant.legacyResourceId }}) has been out of stock for {{ out_of_stock_at_distance_s | divided_by: 86400 | round: 2 }} day(s), but is not published - nothing to do.
+      {%- endcapture -%}
+
+      {% log message %}
+
+      {% continue %}
+    {% endif %}
+
+    {% if out_of_stock_at_distance_s < minimum_out_of_stock_at_distance_s %}
+      {%- capture message -%}
+        Variant {{ variant.displayName | remove: " - Default Title" }} ({{ variant.legacyResourceId }}) is out of stock, and is published, but has only been out of stock for {{ out_of_stock_at_distance_s | divided_by: 86400 | round: 2 }} day(s).
+      {%- endcapture -%}
+
+      {% log message %}
+
+      {% continue %}
+    {% endif %}
+
+    {% if test_mode %}
+      {%- capture message -%}
+        Variant {{ variant.displayName | remove: " - Default Title" }} ({{ variant.legacyResourceId }}) is out of stock, and has been out of stock for {{ out_of_stock_at_distance_s | divided_by: 86400 | round: 2 }} day(s). It should be unpublished.
+      {%- endcapture -%}
+
+      {% log message  %}
+
+    {% else %}
+      {% action "shopify" %}
+        mutation {
+          {% for unpublishing in unpublishings %}
+            publishableUnpublish{{ forloop.index }}: publishableUnpublish(
+              id: {{ unpublishing[0] | json }}
+              input: {
+                publicationId: {{ unpublishing[1] | json }}
+              }
+            ) {
+              userErrors {
+                field
+                message
+              }
+            }
+          {% endfor %}
+        }
+      {% endaction %}
+    {% endif %}
+  {% endfor %}
+
+  {% if metafields_to_set != blank %}
+    {% if test_mode %}
+      {%- capture message -%}
+        Found {{ metafields_to_set.size }} out of stock variants which do not yet have their out of stock time recorded. This task has test mode enabled, so these metafields will not be set on this task run.
+      {%- endcapture -%}
+
+      {% log message  %}
+
+      {% break %}
+    {% endif %}
+
+    {% assign groups_of_metafields_to_set = metafields_to_set | in_groups_of: 25, fill_with: false %}
+
+    {% for group_of_metafields_to_set in groups_of_metafields_to_set %}
+      {% action "shopify" %}
+        mutation {
+          metafieldsSet(
+            metafields: {{ group_of_metafields_to_set | graphql_arguments }}
+          ) {
+            metafields {
+              id
+              namespace
+              key
+              type
+              value
+              owner {
+                ... on ProductVariant {
+                  id
+                  displayName
+                }
+              }
+            }
+            userErrors {
+              code
+              field
+              message
+            }
+          }
+        }
+      {% endaction %}
+    {% endfor %}
+  {% endif %}
+{% endif %}

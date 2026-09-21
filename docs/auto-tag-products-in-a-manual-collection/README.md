@@ -1,8 +1,8 @@
-# Auto-tag products in a manual collection
+# Auto-tag products in collections
 
 Tags: Auto-Tag, Collections, Products
 
-If you prefer to categorize your products using manual collections, but you still need your tags to match up, use this task to monitor your manual collection and automatically tag the products it contains.
+This task will monitor the configured collections for updates, and automatically tag all products that each contains. If a configured collection has at least one condition-based source (e.g. metafield contains a specific value), then choose either an hourly or daily scheduled run to pick up the dynamic membership changes which don't trigger collection updates.
 
 * View in the task library: [tasks.mechanic.dev/auto-tag-products-in-a-manual-collection](https://tasks.mechanic.dev/auto-tag-products-in-a-manual-collection)
 * Task JSON, for direct import: [task.json](../../tasks/auto-tag-products-in-a-manual-collection.json)
@@ -12,8 +12,9 @@ If you prefer to categorize your products using manual collections, but you stil
 
 ```json
 {
-  "collection_tag__required": "sale",
-  "collection_id__number_required": null
+  "collections_and_tags__keyval_required": null,
+  "run_daily__boolean": null,
+  "run_hourly__boolean": null
 }
 ```
 
@@ -22,19 +23,24 @@ If you prefer to categorize your products using manual collections, but you stil
 ## Subscriptions
 
 ```liquid
-mechanic/user/trigger
 shopify/collections/update
+mechanic/user/trigger
+{% if options.run_hourly__boolean %}
+  mechanic/scheduler/hourly
+{% elsif options.run_daily__boolean %}
+  mechanic/scheduler/daily
+{% endif %}
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
 
 ## Documentation
 
-If you prefer to categorize your products using manual collections, but you still need your tags to match up, use this task to monitor your manual collection and automatically tag the products it contains.
+This task will monitor the configured collections for updates, and automatically tag all products that each contains. If a configured collection has at least one condition-based source (e.g. metafield contains a specific value), then choose either an hourly or daily scheduled run to pick up the dynamic membership changes which don't trigger collection updates.
 
-Run this task manually to auto-tag products in your configured collection, and to untag any products that are not in this collection. Otherwise, this task will run automatically whenever the configured collection is updated, which includes the addition or removal of products.
+The task will also remove tags from any products if they are no longer in a matching collection. This task may be run manually to process all configured collections if you choose not to use a scheduled run.
 
-This task only supports manual collections, not automated collections. ([Learn about the differences here.](https://help.shopify.com/en/manual/products/collections#collection-types)) Configure this task with your collection ID. [Learn how to find this.](https://learn.mechanic.dev/techniques/finding-a-resource-id)
+**NOTE**: As of July 2026, Shopify has [merged the manual and automated collection models](https://help.shopify.com/en/manual/products/collections#collection-types), and this task will now support any configured collection as long as the task API is set to 2026-07 or newer.
 
 ## Installing this task
 

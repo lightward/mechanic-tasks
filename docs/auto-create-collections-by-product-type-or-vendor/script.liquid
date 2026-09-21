@@ -226,7 +226,6 @@
         collections(
           first: 250
           after: {{ cursor | json }}
-          query: {{ search_query | json }}
         ) {
           pageInfo {
             hasNextPage
@@ -259,7 +258,12 @@
       {% assign result = result_json | parse_json %}
     {% endif %}
 
-    {% assign collection_titles = collection_titles | concat: result.data.collections.nodes | map: "title" | uniq %}
+    {% assign collection_titles
+      = result.data.collections.nodes
+      | map: "title"
+      | concat: collection_titles
+      | uniq
+    %}
 
     {% if result.data.collections.pageInfo.hasNextPage %}
       {% assign cursor = result.data.collections.pageInfo.endCursor %}
@@ -267,6 +271,11 @@
       {% break %}
     {% endif %}
   {% endfor %}
+
+
+  {% comment %}
+    -- create collections with a source instead of a ruleSet (as of 2026-07 API)
+  {% endcomment %}
 
   {% assign existing_collections = array %}
 
@@ -287,18 +296,28 @@
       {% action "shopify", __meta: meta %}
         mutation {
           collectionCreate(
-            input: {
-              title: {{ product_type | json }}
-              ruleSet: {
-                appliedDisjunctively: false
-                rules: [
-                  {
-                    column: TYPE
-                    relation: EQUALS
-                    condition: {{ product_type | json }}
+            collection: {
+              title: {{ product_type | json }},
+              sources: [
+                {
+                  source: {
+                    title: {{ product_type | prepend: "product type: " | json }},
+                    targetType: PRODUCTS,
+                    inclusion: {
+                      matchType: ALL,
+                      conditions: [
+                        {
+                          productType: {
+                            relation: EQUALS
+                            values: {{ product_type | json }}
+                            matchType: ANY
+                          }
+                        }
+                      ]
+                    }
                   }
-                ]
-              }
+                }
+              ]
             }
           ) {
             collection {
@@ -333,18 +352,28 @@
       {% action "shopify", __meta: meta %}
         mutation {
           collectionCreate(
-            input: {
-              title: {{ vendor | json }}
-              ruleSet: {
-                appliedDisjunctively: false
-                rules: [
-                  {
-                    column: VENDOR
-                    relation: EQUALS
-                    condition: {{ vendor | json }}
+            collection: {
+              title: {{ vendor | json }},
+              sources: [
+                {
+                  source: {
+                    title: {{ vendor | prepend: "vendor: " | json }},
+                    targetType: PRODUCTS,
+                    inclusion: {
+                      matchType: ALL,
+                      conditions: [
+                        {
+                          productVendor: {
+                            relation: EQUALS
+                            values: {{ vendor | json }}
+                            matchType: ANY
+                          }
+                        }
+                      ]
+                    }
                   }
-                ]
-              }
+                }
+              ]
             }
           ) {
             collection {
@@ -385,15 +414,17 @@
     -- publish the new collection to all of the valid publications configured in the task
   {% endcomment %}
 
-  {% assign mutations = array %}
-
-  {% for publication_id in publication_ids %}
-    {% capture mutation %}
-      publishablePublish{{ forloop.index }}: publishablePublish(
+  {% action "shopify", __perform_event: false %}
+    mutation {
+      publishablePublish(
         id: {{ collection_id | json }}
-        input: {
-          publicationId: {{ publication_id | json }}
-        }
+        input: [
+          {% for publication_id in publication_ids %}
+            {
+              publicationId: {{ publication_id | json }}
+            }
+          {% endfor %}
+        ]
       ) {
         publishable {
           ... on Collection {
@@ -407,16 +438,6 @@
           message
         }
       }
-    {% endcapture %}
-
-    {% assign mutations = mutations | push: mutation %}
-  {% endfor %}
-
-  {% if mutations != blank %}
-    {% action "shopify", __perform_event: false %}
-      mutation {
-        {{ mutations | join: newline }}
-      }
-    {% endaction %}
-  {% endif %}
+    }
+  {% endaction %}
 {% endif %}

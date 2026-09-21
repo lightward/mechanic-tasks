@@ -55,6 +55,14 @@ Leave **Form** empty and fill in **Shared secret** and **Mechanic webhook URL**.
 
 **When updating an older installed task:** preserve your shared secret and webhook URL, then put them into the same-named fields after updating. Those two option keys no longer have the `__required` suffix because the form setup does not need them. The webhook event topic key is unchanged. Keep your existing theme button and its matching secret.
 
+### Enable Mechanic in your theme for the custom button
+
+The custom cart button needs task JavaScript in your online store. The storefront form setup above uses the Mechanic form block instead. If Mechanic shows a theme setup prompt, click **Enable Mechanic in your theme**, make sure Mechanic's **Online store JavaScript** is turned on under **App embeds**, and click **Save** in the theme editor. Then return to Mechanic to confirm setup.
+
+You only need to do this once for your current theme; the same setting serves all your enabled tasks that use storefront JavaScript. You can leave it enabled if you disable this task. If your store doesn't already have Mechanic loading JavaScript, this task's storefront functionality won't work until setup is complete. [Learn about theme setup and existing tasks](https://learn.mechanic.dev/core/tasks/advanced-settings/javascript#enable-mechanic-in-your-theme).
+
+This loads the task's JavaScript. You still need to create the webhook and add the cart button described below.
+
 ### Custom button installation
 
 1.  Create a Mechanic webhook ([learn how](https://learn.mechanic.dev/platform/webhooks)), and update this task's options to reflect the webhook's configuration. Use whatever event topic you like - "user/carts/draft_order", for example. :)

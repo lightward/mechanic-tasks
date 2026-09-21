@@ -2,7 +2,7 @@
 
 Tags: Collections, Products
 
-This task watches for newly-paid orders (or newly-fulfilled orders, if you choose), and adds or moves the purchased products to the top of the collection of your choice. Optionally, ignore products that are sold out. Useful for "trending products" functionality. :)
+This task watches for newly-paid orders (or newly-fulfilled orders, if you choose), and adds or moves the purchased products to the top of the collection of your choice. Optionally, ignore products that are sold out or that have one of a list of certain tags. Useful for "trending products" functionality. :)
 
 * View in the task library: [tasks.mechanic.dev/maintain-a-collection-of-recently-purchased-products](https://tasks.mechanic.dev/maintain-a-collection-of-recently-purchased-products)
 * Task JSON, for direct import: [task.json](../../tasks/maintain-a-collection-of-recently-purchased-products.json)
@@ -13,8 +13,9 @@ This task watches for newly-paid orders (or newly-fulfilled orders, if you choos
 ```json
 {
   "collection_maximum_size__number_required": null,
-  "collection_id__number_required": null,
-  "ignore_products_that_are_sold_out__boolean": null,
+  "collection__picker_collection_required": null,
+  "exclude_products_that_are_sold_out__boolean": false,
+  "exclude_products_with_any_of_these_tags__array": null,
   "wait_until_order_is_fulfilled__boolean": null
 }
 ```
@@ -35,13 +36,14 @@ This task watches for newly-paid orders (or newly-fulfilled orders, if you choos
 
 ## Documentation
 
-This task watches for newly-paid orders (or newly-fulfilled orders, if you choose), and adds or moves the purchased products to the top of the collection of your choice. Optionally, ignore products that are sold out. Useful for "trending products" functionality. :)
+This task watches for newly-paid orders (or newly-fulfilled orders, if you choose), and adds or moves the purchased products to the top of the collection of your choice. Optionally, ignore products that are sold out or that have one of a list of certain tags. Useful for "trending products" functionality. :)
 
-This task watches for newly-paid orders (or newly-fulfilled orders, if you choose), and adds or moves the ordered products to the top of the collection of your choice. Optionally, ignore products that are sold out.
+Configure this task with a collection which either has no sources or conditions, or only has products manually added. The collection must also be configured for manual sorting or the task will not be able to add the most recent purchases to the top of the collection.
 
-Provide this task with ID of a manual collection, which you've configured to be manually sorted. ([Learn how to find the collection ID.](https://help.usemechanic.com/en/articles/2946120-how-do-i-find-an-id-for-a-product-collection-order-or-something-else))
+**IMPORTANT**:
+- This task must use the 2026-07 API or newer
+- Do not add additional sources or conditions to the configured collection as that may prevent this task from being able to maintain it
 
-[YouTube: Watch the development video!](https://youtu.be/89rxU1D5tFM)
 
 ## Installing this task
 

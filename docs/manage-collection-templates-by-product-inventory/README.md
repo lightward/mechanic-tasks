@@ -40,7 +40,11 @@ Use this task to automatically switch collections over to an appropriate theme t
 
 This task can be run manually (using the "Run task" button), or be configured to run daily/hourly. If you encounter performance issues when running every time an inventory level is updated, disable this option.
 
-Note: For this task, products which do not track inventory in Shopify will be considered as in stock.
+**IMPORTANT**:
+- This task must use the 2026-07 API or newer
+- For this task, products which do not track inventory in Shopify will be considered as in stock.
+
+
 
 ## Installing this task
 

@@ -18,7 +18,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Archive orders on delivery](./archive-orders-on-delivery)
 * [Archive orders when tagged](./archive-orders-when-tagged)
 * [Ask for reviews a week after order fulfillment](./ask-for-reviews-a-week-after-order-fulfillment)
-* [Auto create collections by metafield values](./auto-create-collections-by-metafield-values)
 * [Auto publish products by tag](./auto-publish-products-by-tag)
 * [Auto-add a note for new orders having a certain tag](./auto-add-order-note-for-new-tagged-orders)
 * [Auto-add an order note for customers having a certain tag](./auto-add-an-order-note-for-customers-having-a-certain-tag)
@@ -26,7 +25,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-add bundle components to orders, post-purchase](./auto-add-bundle-components-to-orders-post-purchase)
 * [Auto-add default custom attributes to new orders](./auto-add-default-custom-attributes-to-new-orders)
 * [Auto-add phone numbers to unfulfilled orders, when the customer is updated](./auto-add-phone-numbers-to-unfulfilled-orders-when-the-customer-is-updated)
-* [Auto-add products to a custom collection when tagged](./auto-add-products-to-a-custom-collection-when-tagged)
 * [Auto-add the draft order to a new order's attributes](./auto-add-the-draft-order-id-to-an-orders-attributes)
 * [Auto-approve return requests](./auto-approve-return-requests)
 * [Auto-archive orders after fulfillment](./auto-archive-orders-after-fulfillment)
@@ -145,7 +143,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag products by age](./auto-tag-new-products-by-age)
 * [Auto-tag products by their options](./auto-tag-products-by-their-options)
 * [Auto-tag products by their publish date](./auto-tag-products-by-their-publish-date)
-* [Auto-tag products in a manual collection](./auto-tag-products-in-a-manual-collection)
+* [Auto-tag products in collections](./auto-tag-products-in-a-manual-collection)
 * [Auto-tag products that are missing costs](./auto-tag-products-that-are-missing-costs)
 * [Auto-tag products that have a "compare at" price](./auto-tag-products-that-have-a-compare-at-price)
 * [Auto-tag products that meet a sales threshold](./auto-tag-products-that-meet-a-sales-threshold)
@@ -248,7 +246,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Maintain a collection of new products](./maintain-a-collection-of-new-products)
 * [Maintain a collection of recently purchased products](./maintain-a-collection-of-recently-purchased-products)
 * [Maintain a tag for orders processed today](./maintain-a-tag-for-orders-processed-today)
-* [Maintain collections by product metafield values](./maintain-collections-by-product-metafield-values)
 * [Maintain discount percentage filters in variant metafields](./maintain-discount-percentage-filters-in-variant-metafields)
 * [Maintain inventory for a product bundle](./maintain-inventory-for-a-product-bundle)
 * [Make products unavailable, after the date/time stored in product metafields](./make-products-unavailable-after-the-date-time-stored-in-product-metafields)
@@ -260,12 +257,12 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Mechanic tour task](./mechanic-tour-task)
 * [Monitor customer note for certain information](./monitor-customer-note-for-certain-information)
 * [Monitor for variants with zero price](./monitor-for-variants-with-zero-price)
-* [Monitor smart collections for product membership changes](./monitor-smart-collections-for-product-membership-changes)
 * [Move out-of-stock products to the end of a collection](./move-out-of-stock-products-to-the-end-of-a-collection)
 * [Notify a team when a tagged product is ordered](./notify-a-team-when-a-tagged-product-is-ordered)
 * [Partially auto-capture payments as orders are fulfilled](./partially-auto-capture-payments-as-orders-are-fulfilled)
 * [Publish a certain collection, daily](./publish-a-certain-collection-daily)
 * [Publish back-in-stock products](./publish-back-in-stock-products)
+* [Publish back-in-stock variants](./publish-back-in-stock-variants)
 * [Receive a nightly out-of-stock report](./receive-a-nightly-out-of-stock-report)
 * [Receive email alerts when inventory levels change](./receive-email-alerts-when-inventory-levels-change)
 * [Record Judge.me customer review counts](./record-judge-me-customer-review-counts)
@@ -361,9 +358,11 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Trigger order emails with a tag](./trigger-order-emails-with-a-tag)
 * [Tutorial: Trigger a task from a contact form, using webhooks](./tutorial-trigger-a-task-from-a-contact-form-using-webhooks)
 * [Unpublish a certain collection, daily](./unpublish-a-certain-collection-daily)
+* [Unpublish out-of-stock variants](./unpublish-out-of-stock-variants)
 * [Unpublish products that fall below a rolling sales threshold](./unpublish-products-that-fall-below-a-rolling-sales-threshold)
 * [Unpublish products that have been out of stock for x days](./unpublish-products-that-have-been-out-of-stock-for-x-days)
 * [Unpublish products when tagged](./unpublish-products-when-tagged)
+* [Unpublish variants that have been out of stock for x days](./unpublish-variants-that-have-been-out-of-stock-for-x-days)
 * [Untag orders when paid](./untag-orders-when-paid)
 * [Update empty customer data from addresses](./update-empty-customer-data-from-addresses)
 * [Update product description when out of stock](./update-product-description-when-out-of-stock)
@@ -522,7 +521,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag products by age](./auto-tag-new-products-by-age)
 * [Auto-tag products by their options](./auto-tag-products-by-their-options)
 * [Auto-tag products by their publish date](./auto-tag-products-by-their-publish-date)
-* [Auto-tag products in a manual collection](./auto-tag-products-in-a-manual-collection)
+* [Auto-tag products in collections](./auto-tag-products-in-a-manual-collection)
 * [Auto-tag products that are missing costs](./auto-tag-products-that-are-missing-costs)
 * [Auto-tag products that have a "compare at" price](./auto-tag-products-that-have-a-compare-at-price)
 * [Auto-tag products that meet a sales threshold](./auto-tag-products-that-meet-a-sales-threshold)
@@ -576,7 +575,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Delete product or product variant metafields in bulk](./delete-product-or-product-variant-metafields-in-bulk)
 * [Demonstration: Bulk operation mutation](./demonstration-bulk-operation-mutation)
 * [Keep SKUs up to date with barcodes](./keep-skus-up-to-date-with-barcodes)
-* [Maintain collections by product metafield values](./maintain-collections-by-product-metafield-values)
 * [Manage product market access by location stock status](./manage-product-market-access-by-location-stock-status)
 * [Reset negative inventory levels to zero in bulk](./reset-negative-inventory-levels-to-zero-in-bulk)
 * [Send account invites to all customers in bulk](./send-account-invites-to-all-customers-in-bulk)
@@ -637,23 +635,20 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Collections
 
-* [Auto create collections by metafield values](./auto-create-collections-by-metafield-values)
-* [Auto-add products to a custom collection when tagged](./auto-add-products-to-a-custom-collection-when-tagged)
 * [Auto-create collections by product type or vendor](./auto-create-collections-by-product-type-or-vendor)
 * [Auto-sort collections by a product property](./auto-sort-collections-by-product-properties)
 * [Auto-sort collections by inventory levels](./auto-sort-collections-by-inventory-levels)
 * [Auto-tag orders by product collections](./auto-tag-orders-by-product-collections)
-* [Auto-tag products in a manual collection](./auto-tag-products-in-a-manual-collection)
+* [Auto-tag products in collections](./auto-tag-products-in-a-manual-collection)
 * [Delete the oldest x products from a specific collection](./delete-the-oldest-x-products-from-a-specific-collection)
 * [Maintain a collection of new products](./maintain-a-collection-of-new-products)
 * [Maintain a collection of recently purchased products](./maintain-a-collection-of-recently-purchased-products)
-* [Maintain collections by product metafield values](./maintain-collections-by-product-metafield-values)
 * [Manage collection templates by product inventory](./manage-collection-templates-by-product-inventory)
-* [Monitor smart collections for product membership changes](./monitor-smart-collections-for-product-membership-changes)
 * [Move out-of-stock products to the end of a collection](./move-out-of-stock-products-to-the-end-of-a-collection)
 * [Publish a certain collection, daily](./publish-a-certain-collection-daily)
 * [Send an email alert if a new collection has no orders after x days](./send-an-email-alert-if-a-new-collection-has-no-orders-after-x-days)
 * [Send an email when a purchase is made from a certain collection](./send-an-email-when-a-purchase-is-made-from-a-certain-collection)
+* [Sort collections by recent sales performance](./sort-collections-by-recent-sales-performance)
 * [Unpublish a certain collection, daily](./unpublish-a-certain-collection-daily)
 
 ### Comments
@@ -1016,6 +1011,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag products by "back in stock" age](./auto-tag-new-products-by-back-in-stock-age)
 * [Manage product market access by location stock status](./manage-product-market-access-by-location-stock-status)
 * [Publish back-in-stock products](./publish-back-in-stock-products)
+* [Publish back-in-stock variants](./publish-back-in-stock-variants)
 * [Tag products as in- or out-of-stock, by location ID](./tag-products-as-in-or-out-of-stock-by-location-id)
 * [Tag products as in- or out-of-stock](./tag-products-as-in-or-out-of-stock)
 
@@ -1045,6 +1041,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Maintain inventory for a product bundle](./maintain-inventory-for-a-product-bundle)
 * [Manage collection templates by product inventory](./manage-collection-templates-by-product-inventory)
 * [Publish back-in-stock products](./publish-back-in-stock-products)
+* [Publish back-in-stock variants](./publish-back-in-stock-variants)
 * [Receive a nightly out-of-stock report](./receive-a-nightly-out-of-stock-report)
 * [Receive email alerts when inventory levels change](./receive-email-alerts-when-inventory-levels-change)
 * [Reset all inventory levels to a single level, in bulk](./reset-all-inventory-levels-to-a-single-level-in-bulk)
@@ -1059,7 +1056,9 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Sync inventory levels to variant metafields](./sync-inventory-levels-to-variant-metafields)
 * [Sync variant inventory within a product by pack size](./sync-variant-inventory-within-a-product-by-pack-size)
 * [Tag products as in- or out-of-stock](./tag-products-as-in-or-out-of-stock)
+* [Unpublish out-of-stock variants](./unpublish-out-of-stock-variants)
 * [Unpublish products that have been out of stock for x days](./unpublish-products-that-have-been-out-of-stock-for-x-days)
+* [Unpublish variants that have been out of stock for x days](./unpublish-variants-that-have-been-out-of-stock-for-x-days)
 * [Update product description when out of stock](./update-product-description-when-out-of-stock)
 
 ### Invite
@@ -1095,7 +1094,9 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Hide out-of-stock products](./hide-out-of-stock-products)
 * [Keep variant inventory in sync across locations](./keep-variant-inventory-in-sync-across-locations)
 * [Publish back-in-stock products](./publish-back-in-stock-products)
+* [Publish back-in-stock variants](./publish-back-in-stock-variants)
 * [Tag products as in- or out-of-stock, by location ID](./tag-products-as-in-or-out-of-stock-by-location-id)
+* [Unpublish out-of-stock variants](./unpublish-out-of-stock-variants)
 
 ### Locksmith
 
@@ -1141,7 +1142,6 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Metafields
 
 * [Add Option Name as a Variant Metafield for In Stock Variants](./add-option-names-as-variant-metafields-for-in-stock-variants)
-* [Auto create collections by metafield values](./auto-create-collections-by-metafield-values)
 * [Auto-associate variants with a delivery profile, by metafield value](./auto-associate-variants-with-a-delivery-profile-by-metafield-value)
 * [Auto-copy customer metafields to new orders](./auto-copy-customer-metafields-to-new-orders)
 * [Auto-delete customer metafields older than X days](./auto-delete-customer-metafields-older-than-x-days)
@@ -1155,7 +1155,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Delete product or product variant metafields in bulk](./delete-product-or-product-variant-metafields-in-bulk)
 * [Delete variants having a metafield date that has passed](./delete-variants-having-a-metafield-date-that-has-passed)
 * [Demonstration: Write to a customer metafield](./demonstration-write-to-a-customer-metafield)
-* [Maintain collections by product metafield values](./maintain-collections-by-product-metafield-values)
 * [Maintain discount percentage filters in variant metafields](./maintain-discount-percentage-filters-in-variant-metafields)
 * [Make products unavailable, after the date/time stored in product metafields](./make-products-unavailable-after-the-date-time-stored-in-product-metafields)
 * [Save Mechanic form submissions to Shopify metaobjects](./save-mechanic-form-submissions-to-shopify-metaobjects)
@@ -1342,6 +1341,8 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Send an email alert when a variant hits 0 total inventory](./send-an-email-alert-when-a-variant-hits-0-total-inventory)
 * [Tag products as in- or out-of-stock, by location ID](./tag-products-as-in-or-out-of-stock-by-location-id)
 * [Tag products as in- or out-of-stock](./tag-products-as-in-or-out-of-stock)
+* [Unpublish out-of-stock variants](./unpublish-out-of-stock-variants)
+* [Unpublish variants that have been out of stock for x days](./unpublish-variants-that-have-been-out-of-stock-for-x-days)
 
 ### PDF
 
@@ -1388,9 +1389,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 * [Add all products to a certain sales channel](./add-all-products-to-a-certain-sales-channel)
 * [Advanced: Scheduled Price Changes](./advanced-scheduled-price-changes)
-* [Auto create collections by metafield values](./auto-create-collections-by-metafield-values)
 * [Auto publish products by tag](./auto-publish-products-by-tag)
-* [Auto-add products to a custom collection when tagged](./auto-add-products-to-a-custom-collection-when-tagged)
 * [Auto-associate products with a delivery profile, by product tag](./auto-associate-products-with-a-delivery-profile-by-product-tag)
 * [Auto-connect new products to all locations](./auto-connect-new-products-to-all-locations)
 * [Auto-create collections by product type or vendor](./auto-create-collections-by-product-type-or-vendor)
@@ -1415,7 +1414,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag products by age](./auto-tag-new-products-by-age)
 * [Auto-tag products by their options](./auto-tag-products-by-their-options)
 * [Auto-tag products by their publish date](./auto-tag-products-by-their-publish-date)
-* [Auto-tag products in a manual collection](./auto-tag-products-in-a-manual-collection)
+* [Auto-tag products in collections](./auto-tag-products-in-a-manual-collection)
 * [Auto-tag products that are missing costs](./auto-tag-products-that-are-missing-costs)
 * [Auto-tag products that have a "compare at" price](./auto-tag-products-that-have-a-compare-at-price)
 * [Auto-tag products that meet a sales threshold](./auto-tag-products-that-meet-a-sales-threshold)
@@ -1451,13 +1450,11 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Keep inventory levels in sync within products](./keep-inventory-levels-in-sync-within-products)
 * [Maintain a collection of new products](./maintain-a-collection-of-new-products)
 * [Maintain a collection of recently purchased products](./maintain-a-collection-of-recently-purchased-products)
-* [Maintain collections by product metafield values](./maintain-collections-by-product-metafield-values)
 * [Maintain inventory for a product bundle](./maintain-inventory-for-a-product-bundle)
 * [Make products unavailable, after the date/time stored in product metafields](./make-products-unavailable-after-the-date-time-stored-in-product-metafields)
 * [Manage product market access by location stock status](./manage-product-market-access-by-location-stock-status)
 * [Manage tagging for a time-limited membership product](./manage-tagging-for-a-time-limited-membership-product)
 * [Monitor for variants with zero price](./monitor-for-variants-with-zero-price)
-* [Monitor smart collections for product membership changes](./monitor-smart-collections-for-product-membership-changes)
 * [Notify a team when a tagged product is ordered](./notify-a-team-when-a-tagged-product-is-ordered)
 * [Publish back-in-stock products](./publish-back-in-stock-products)
 * [Remove a product tag when another tag is added](./remove-a-product-tag-when-another-tag-is-added)
@@ -1490,7 +1487,6 @@ This directory is built automatically. Each task's documentation is generated fr
 
 * [Add all products to a certain sales channel](./add-all-products-to-a-certain-sales-channel)
 * [Advanced: Scheduled section publishing](./advanced-scheduled-section-publishing)
-* [Auto create collections by metafield values](./auto-create-collections-by-metafield-values)
 * [Auto publish products by tag](./auto-publish-products-by-tag)
 * [Auto-create collections by product type or vendor](./auto-create-collections-by-product-type-or-vendor)
 * [Auto-publish new products](./auto-publish-new-products)
@@ -1500,6 +1496,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Manage product market access by location stock status](./manage-product-market-access-by-location-stock-status)
 * [Publish a certain collection, daily](./publish-a-certain-collection-daily)
 * [Publish back-in-stock products](./publish-back-in-stock-products)
+* [Publish back-in-stock variants](./publish-back-in-stock-variants)
 * [Scheduled theme publishing](./scheduled-theme-publishing)
 
 ### Receipts
@@ -1688,6 +1685,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-sort collections by a product property](./auto-sort-collections-by-product-properties)
 * [Auto-sort collections by inventory levels](./auto-sort-collections-by-inventory-levels)
 * [Move out-of-stock products to the end of a collection](./move-out-of-stock-products-to-the-end-of-a-collection)
+* [Sort collections by recent sales performance](./sort-collections-by-recent-sales-performance)
 
 ### Spend
 
@@ -1809,7 +1807,6 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Uncategorized
 
 * [Mechanic tour task](./mechanic-tour-task)
-* [Sort collections by recent sales performance](./sort-collections-by-recent-sales-performance)
 * [Sync in stock locations to a variant metafield](./sync-in-stock-locations-to-a-variant-metafield)
 
 ### Unpaid
@@ -1828,9 +1825,11 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Make products unavailable, after the date/time stored in product metafields](./make-products-unavailable-after-the-date-time-stored-in-product-metafields)
 * [Manage product market access by location stock status](./manage-product-market-access-by-location-stock-status)
 * [Unpublish a certain collection, daily](./unpublish-a-certain-collection-daily)
+* [Unpublish out-of-stock variants](./unpublish-out-of-stock-variants)
 * [Unpublish products that fall below a rolling sales threshold](./unpublish-products-that-fall-below-a-rolling-sales-threshold)
 * [Unpublish products that have been out of stock for x days](./unpublish-products-that-have-been-out-of-stock-for-x-days)
 * [Unpublish products when tagged](./unpublish-products-when-tagged)
+* [Unpublish variants that have been out of stock for x days](./unpublish-variants-that-have-been-out-of-stock-for-x-days)
 
 ### Untag
 
@@ -1853,11 +1852,14 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Keep variant inventory in sync across locations](./keep-variant-inventory-in-sync-across-locations)
 * [Maintain discount percentage filters in variant metafields](./maintain-discount-percentage-filters-in-variant-metafields)
 * [Monitor for variants with zero price](./monitor-for-variants-with-zero-price)
+* [Publish back-in-stock variants](./publish-back-in-stock-variants)
 * [Scheduled inventory adjustment](./scheduled-inventory-adjustment)
 * [Send an email when a product's price goes below its cost](./send-an-email-when-a-products-price-goes-below-its-cost)
 * [Set product or variant metafields values in bulk](./set-product-or-variant-metafields-in-bulk)
 * [Sync inventory across product variants](./sync-inventory-across-product-variants)
 * [Sync inventory levels to variant metafields](./sync-inventory-levels-to-variant-metafields)
+* [Unpublish out-of-stock variants](./unpublish-out-of-stock-variants)
+* [Unpublish variants that have been out of stock for x days](./unpublish-variants-that-have-been-out-of-stock-for-x-days)
 
 ### Vendor
 
@@ -1874,7 +1876,6 @@ This directory is built automatically. Each task's documentation is generated fr
 
 * [Add fulfillment tracking when an order is tagged](./add-fulfillment-tracking-when-an-order-is-tagged)
 * [Add new Shopify Forms submissions to a Google Sheet](./add-new-shopify-forms-submissions-to-a-google-sheet)
-* [Auto-add products to a custom collection when tagged](./auto-add-products-to-a-custom-collection-when-tagged)
 * [Auto-cancel fulfillments when an order is tagged](./auto-cancel-fulfillments-when-an-order-is-tagged)
 * [Auto-invite customers when tagged](./auto-invite-customers-when-tagged)
 * [Auto-pay orders from customers with a certain tag](./auto-pay-orders-from-customers-with-a-certain-tag)
@@ -1894,7 +1895,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Maintain a collection of new products](./maintain-a-collection-of-new-products)
 * [Monitor customer note for certain information](./monitor-customer-note-for-certain-information)
 * [Monitor for variants with zero price](./monitor-for-variants-with-zero-price)
-* [Monitor smart collections for product membership changes](./monitor-smart-collections-for-product-membership-changes)
 * [Notify a team when a tagged product is ordered](./notify-a-team-when-a-tagged-product-is-ordered)
 * [Remove a customer tag when another tag is added](./remove-a-customer-tag-when-another-tag-is-added)
 * [Remove a product tag when another tag is added](./remove-a-product-tag-when-another-tag-is-added)

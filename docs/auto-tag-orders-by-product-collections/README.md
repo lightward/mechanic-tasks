@@ -39,6 +39,9 @@ Fill in the "Collections and tags" option with the collection on the left, and t
 
 Run this task manually to scan and tag every order in your store. (To process orders older than 60 days, [enable "read all orders"](https://learn.mechanic.dev/platform/shopify/read-all-orders).)
 
+**IMPORTANT**: This task must be used with 2026-07 API and higher if any of the configured collections are using newer features (e.g. exclusions, variants).
+
+
 ## Installing this task
 
 Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-tag-orders-by-product-collections), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-tag-orders-by-product-collections.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.

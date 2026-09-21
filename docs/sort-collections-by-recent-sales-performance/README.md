@@ -1,6 +1,6 @@
 # Sort collections by recent sales performance
 
-Tags: (not tagged!)
+Tags: Collections, Sort
 
 This task will run daily to sort the selected collections, moving products with sales in the lookback period to the top in descending order by the sort metric (e.g. "Net sales"). All other products in each collection will be left in the previously sorted order. Choose the length of the sales lookback period in days and the metric you wish to use for sorting.
 

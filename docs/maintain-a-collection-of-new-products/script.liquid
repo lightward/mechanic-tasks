@@ -1,4 +1,4 @@
-{% assign collection_id = options.collection_id__number_required | prepend: "gid://shopify/Collection/" %}
+{% assign collection_id = options.collection__picker_collection_required %}
 {% assign days_to_keep_products = options.number_of_days_to_keep_a_product_in_this_collection__number %}
 {% assign product_count = options.number_of_products_to_keep_in_this_collection__number %}
 
@@ -22,6 +22,9 @@
   {% capture query %}
     query {
       collection(id: {{ collection_id | json }}) {
+        sources {
+          id
+        }
         products(
           first: 250
           after: {{ cursor | json }}
@@ -45,6 +48,11 @@
       {
         "data": {
           "collection": {
+            "sources": [
+              {
+                "id": "gid://shopify/CollectionConditionsSource/1234567890"
+              }
+            ],
             "products": {
               "nodes": [
                 {
@@ -59,6 +67,8 @@
 
     {% assign result = result_json | parse_json %}
   {% endif %}
+
+  {% assign collection_source_id = result.data.collection.sources.first.id %}
 
   {% assign current_product_ids
     = result.data.collection.products.nodes
@@ -190,65 +200,83 @@
 
 {% for qualifying_product_id in qualifying_product_ids %}
   {% unless current_product_ids contains qualifying_product_id %}
-    {% assign product_ids_to_add = product_ids_to_add | push: qualifying_product_id %}
+    {% assign product_id_input = hash %}
+    {% assign product_id_input["productId"] = qualifying_product_id %}
+    {% assign product_ids_to_add = product_ids_to_add | push: product_id_input %}
   {% endunless %}
 {% endfor %}
 
 {% for current_product_id in current_product_ids %}
   {% unless qualifying_product_ids contains current_product_id %}
-    {% assign product_ids_to_remove = product_ids_to_remove | push: current_product_id %}
+    {% assign product_id_input = hash %}
+    {% assign product_id_input["productId"] = current_product_id %}
+    {% assign product_ids_to_remove = product_ids_to_remove | push: product_id_input %}
   {% endunless %}
 {% endfor %}
 
-{% assign mutations = array %}
+{% if product_ids_to_add == blank and product_ids_to_remove == blank %}
+  {% log "This collection already has the correct products." %}
+  {% break %}
+{% endif %}
 
 {% if product_ids_to_add != blank  %}
   {% assign groups_of_product_ids_to_add = product_ids_to_add | in_groups_of: 250, fill_with: false %}
 
   {% for group_of_product_ids_to_add in groups_of_product_ids_to_add %}
-    {% capture mutation %}
-      collectionAddProducts{{ forloop.index0 }}: collectionAddProducts(
-        id: {{ collection_id | json }}
-        productIds: {{ group_of_product_ids_to_add | json }}
-      ) {
-        userErrors {
-          field
-          message
+    {% action "shopify" %}
+      mutation {
+        collectionUpdate(
+          collection: {
+            id: {{ collection_id | json }}
+            sourcesToUpdate: [
+              {
+                condition: {
+                  id: {{ collection_source_id | json }}
+                  inclusion: {
+                    selectionsToAdd: {{ group_of_product_ids_to_add | graphql_arguments }}
+                  }
+                }
+              }
+            ]
+          }
+        ) {
+          userErrors {
+            field
+            message
+          }
         }
       }
-    {% endcapture %}
-
-    {% assign mutations = mutations | push: mutation %}
+    {% endaction %}
   {% endfor %}
 {% endif %}
 
-{% if product_ids_to_remove != blank  %}
+{% if product_ids_to_remove != blank %}
   {% assign groups_of_product_ids_to_remove = product_ids_to_remove | in_groups_of: 250, fill_with: false %}
 
   {% for group_of_product_ids_to_remove in groups_of_product_ids_to_remove %}
-    {% capture mutation %}
-      collectionRemoveProducts{{ forloop.index0 }}: collectionRemoveProducts(
-        id: {{ collection_id | json }}
-        productIds: {{ group_of_product_ids_to_remove | json }}
-      ) {
-        userErrors {
-          field
-          message
+    {% action "shopify" %}
+      mutation {
+        collectionUpdate(
+          collection: {
+            id: {{ collection_id | json }}
+            sourcesToUpdate: [
+              {
+                condition: {
+                  id: {{ collection_source_id | json }}
+                  inclusion: {
+                    selectionsToRemove: {{ group_of_product_ids_to_remove | graphql_arguments }}
+                  }
+                }
+              }
+            ]
+          }
+        ) {
+          userErrors {
+            field
+            message
+          }
         }
       }
-    {% endcapture %}
-
-    {% assign mutations = mutations | push: mutation %}
+    {% endaction %}
   {% endfor %}
-{% endif %}
-
-{% if mutations != blank %}
-  {% action "shopify" %}
-    mutation {
-      {{ mutations | join: newline }}
-    }
-  {% endaction %}
-
-{% else %}
-  {% log "This collection already has the correct products." %}
 {% endif %}

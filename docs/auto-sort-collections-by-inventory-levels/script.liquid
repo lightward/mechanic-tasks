@@ -128,7 +128,7 @@
       {% action "shopify" %}
         mutation {
           collectionUpdate(
-            input: {
+            collection: {
               id: {{ collection.id | json }}
               sortOrder: MANUAL
             }
@@ -281,67 +281,53 @@
 
       {% if use_sellable_online_quantity %}
         {% comment %}
-          -- query up to 2K variants to sum the sellableOnlineQuantity from each
+          -- query up to max of 2048 variants to sum the sellableOnlineQuantity from each
         {% endcomment %}
 
         {% assign sellable_online_quantity = 0 %}
-        {% assign variants_cursor = nil %}
 
-        {% for n in (1..8) %}
-          {% capture query %}
-            query {
-              product(id: {{ product.id | json }}) {
-                variants(
-                  first: 250
-                  after: {{ variants_cursor | json }}
-                ) {
-                  pageInfo {
-                    hasNextPage
-                    endCursor
-                  }
-                  nodes {
-                    sellableOnlineQuantity
+        {% capture query %}
+          query {
+            product(id: {{ product.id | json }}) {
+              variants(
+                first: 2048
+                after: {{ variants_cursor | json }}
+              ) {
+                nodes {
+                  sellableOnlineQuantity
+                }
+              }
+            }
+          }
+        {% endcapture %}
+
+        {% assign variants_result = query | shopify %}
+
+        {% if event.preview %}
+          {% capture variants_result_json %}
+            {
+              "data": {
+                "product": {
+                  "variants": {
+                    "nodes": [
+                      {
+                        "sellableOnlineQuantity": 1
+                      }
+                    ]
                   }
                 }
               }
             }
           {% endcapture %}
 
-          {% assign variants_result = query | shopify %}
+          {% assign variants_result = variants_result_json | parse_json %}
+        {% endif %}
 
-          {% if event.preview %}
-            {% capture variants_result_json %}
-              {
-                "data": {
-                  "product": {
-                    "variants": {
-                      "nodes": [
-                        {
-                          "sellableOnlineQuantity": 1
-                        }
-                      ]
-                    }
-                  }
-                }
-              }
-            {% endcapture %}
-
-            {% assign variants_result = variants_result_json | parse_json %}
-          {% endif %}
-
-          {% assign sellable_online_quantity
-            = variants_result.data.product.variants.nodes
-            | map: "sellableOnlineQuantity"
-            | sum
-            | plus: sellable_online_quantity
-          %}
-
-          {% if variants_result.data.product.variants.pageInfo.hasNextPage %}
-            {% assign variants_cursor = variants_result.data.product.variants.pageInfo.endCursor %}
-          {% else %}
-            {% break %}
-          {% endif %}
-        {% endfor %}
+        {% assign sellable_online_quantity
+          = variants_result.data.product.variants.nodes
+          | map: "sellableOnlineQuantity"
+          | sum
+        %}
 
         {% if sellable_online_quantity > 0 %}
           {% assign product_and_quantity["quantity"] = sellable_online_quantity %}

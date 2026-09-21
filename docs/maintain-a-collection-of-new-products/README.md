@@ -12,9 +12,9 @@ Use this task to maintain a "New Products" collection, specifying either a numbe
 
 ```json
 {
+  "collection__picker_collection_required": null,
   "number_of_days_to_keep_a_product_in_this_collection__number": null,
-  "number_of_products_to_keep_in_this_collection__number": null,
-  "collection_id__number_required": null
+  "number_of_products_to_keep_in_this_collection__number": null
 }
 ```
 
@@ -33,9 +33,13 @@ mechanic/scheduler/daily
 
 Use this task to maintain a "New Products" collection, specifying either a number of products to include or the number of days to keep each product around. Easy! :)
 
-To use this task, create a manual collection, and add the collection ID to the task options. (See [finding a resource ID](https://learn.mechanic.dev/techniques/finding-a-resource-id) for help locating the collection ID.)
+To use this task, create a manual collection, and pick the collection in the task options.
 
 Use the "Run task" button to populate your collection for the first time. After that, this task will run daily, at midnight in your local timezone. During each run, the task will update the collection, adding new products and removing old ones as appropriate.
+
+**IMPORTANT**:
+- This task must use the 2026-07 API or newer
+- Do not add additional sources or conditions to the configured collection as that may prevent this task from being able to maintain it
 
 ## Installing this task
 
