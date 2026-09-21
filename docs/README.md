@@ -173,6 +173,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Copy order and/or product tags to customers](./copy-order-tags-to-customers)
 * [Copy prefixed tags to metafields](./copy-prefixed-tags-to-metafields)
 * [Copy product metafields to each product's tags](./copy-product-metafields-to-each-products-tags)
+* [Create a draft order from a storefront form](./create-a-draft-order-from-a-storefront-form)
 * [Create a draft order from the cart](./create-a-draft-order-from-the-cart)
 * [Create a product inventory CSV feed](./create-a-product-inventory-feed)
 * [Delete all products](./delete-all-products)
@@ -617,6 +618,7 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Cart
 
 * [Auto-tag orders with a cart attribute](./auto-tag-orders-with-a-cart-attribute)
+* [Create a draft order from a storefront form](./create-a-draft-order-from-a-storefront-form)
 * [Create a draft order from the cart](./create-a-draft-order-from-the-cart)
 
 ### Cart Attributes
@@ -836,6 +838,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag new draft orders](./auto-tag-new-draft-orders)
 * [Auto-tag orders created from drafts](./auto-tag-orders-created-from-drafts)
 * [Clean up draft orders](./clean-up-draft-orders)
+* [Create a draft order from a storefront form](./create-a-draft-order-from-a-storefront-form)
 * [Create a draft order from the cart](./create-a-draft-order-from-the-cart)
 * [Delete draft orders older than 30 days](./delete-draft-orders-older-than-30-days)
 * [Delete draft orders](./delete-draft-orders)

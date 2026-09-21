@@ -2,19 +2,21 @@
 
 Tags: Cart, Draft Orders
 
-Turn a storefront cart into a Shopify draft order, using a Mechanic storefront form. Signed-in customers are linked to their verified Shopify customer account. Shopify supplies current variant prices; review the draft before sending an invoice.
+Use this task as a starting point, for allowing visitors to submit their carts to be transformed into draft orders, associated with their customer account. Installing and customizing this task requires some level of comfort with Liquid, HTML, and JavaScript.
 
 * View in the task library: [tasks.mechanic.dev/create-a-draft-order-from-the-cart](https://tasks.mechanic.dev/create-a-draft-order-from-the-cart)
 * Task JSON, for direct import: [task.json](../../tasks/create-a-draft-order-from-the-cart.json)
-* Preview task code: [script.liquid](./script.liquid)
+* Preview task code:
+  * [script.liquid](./script.liquid)
+  * [online_store_javascript.js.liquid](./online_store_javascript.js.liquid)
 
 ## Default options
 
 ```json
 {
+  "shared_secret__required": null,
   "mechanic_webhook_event_topic__required": null,
-  "form__storefrontform_required": "",
-  "email_field_key": "email"
+  "mechanic_webhook_url__required": null
 }
 ```
 
@@ -30,26 +32,36 @@ Turn a storefront cart into a Shopify draft order, using a Mechanic storefront f
 
 ## Documentation
 
-Turn a storefront cart into a Shopify draft order, using a Mechanic storefront form. Signed-in customers are linked to their verified Shopify customer account. Shopify supplies current variant prices; review the draft before sending an invoice.
+Use this task as a starting point, for allowing visitors to submit their carts to be transformed into draft orders, associated with their customer account. Installing and customizing this task requires some level of comfort with Liquid, HTML, and JavaScript.
 
-### Set up a storefront form
+For a new setup without custom theme code, use [Create a draft order from a storefront form](https://tasks.mechanic.dev/create-a-draft-order-from-a-storefront-form). It connects a Mechanic storefront form to this workflow. This task remains available for existing custom-button integrations.
 
-1. In **Storefront forms**, use **Request a quote from your cart**. The template includes the current cart when submitted and opens from a button. Keep the email field, or set this task’s **Email field key** to your field’s key.
-2. Create a custom webhook and select it in the form’s **Submission settings**, then save and publish the form.
-3. Enter that webhook’s event topic in this task and choose the published form in **Form**. Save and enable the task, completing Mechanic’s normal permission update if requested.
-4. Use **Add to cart page** on the form’s Theme tab. In the theme editor, choose the form in the Mechanic form block. The cart page must support app blocks or an Apps section; cart drawers require separate customization.
+### Enable Mechanic in your theme
 
-Shopify signs the customer context when rendering the form, and this task verifies it before linking the customer. Form submissions use the ordinary webhook. Guests supply their contact email; entering an email is not verification of a customer account.
+This task needs to run JavaScript in your online store. If Mechanic shows a theme setup prompt, click **Enable Mechanic in your theme**, make sure Mechanic's **Online store JavaScript** is turned on under **App embeds**, and click **Save** in the theme editor. Then return to Mechanic to confirm setup.
 
-The form acknowledges that the request was received. Draft order creation happens asynchronously; the task does not send an invoice or change/clear the cart. Notes include the form answers and uploaded file names, not the file contents. Use the email or Google Sheets/Drive task on the same webhook if you also want those files.
+You only need to do this once for your current theme; the same setting serves all your enabled tasks that use storefront JavaScript. You can leave it enabled if you disable this task. If your store doesn't already have Mechanic loading JavaScript, this task's storefront functionality won't work until setup is complete. [Learn about theme setup and existing tasks](https://learn.mechanic.dev/core/tasks/advanced-settings/javascript#enable-mechanic-in-your-theme).
 
-Supports 1–100 ordinary variant lines, quantities, and line item properties. Subscription and bundle items are rejected for separate review. Cart discounts, shipping rates, and displayed prices are not copied. This is a request for a quote, not a promise to preserve checkout pricing. Submitted cart data is visitor input, not proof of a previous purchase. An explicit retry after an uncertain response can create another draft order.
+This loads the task's JavaScript. You still need to create the webhook and add the cart button described below.
 
-Form signing is configured automatically when you publish. A stale page refreshes its signed customer context through Shopify. If the task cannot verify that context, it stops without creating a draft order; it does not silently switch a signed-in customer to a guest.
+### Installation
 
-### Updating an older installation
+1.  Create a Mechanic webhook ([learn how](https://help.usemechanic.com/en/articles/2637727-getting-started-with-webhooks)), and update this task's options to reflect the webhook's configuration. Use whatever event topic you like - "user/carts/draft_order", for example. :)
+2.  In an appropriate place in your cart template, add a button to send the cart data to Mechanic. Use the following code to get started:
 
-This version replaces the custom-button setup with a Mechanic storefront form. Before enabling the updated task, create and publish the form, connect its webhook topic, and select it in **Form**. The old custom button and its customer-signature payload are not supported by this version. Remove that button from your theme after the form is working.
+    ```
+    <input
+      type="button"
+      id="mechanic_cart_submit"
+      value="Send to Mechanic"
+      data-cart="{{ cart | json | escape }}"
+      data-customer-id="{{ customer.id | json | escape }}"
+      data-customer-id-signature="{{ customer.id | hmac_sha256: "secret!" | json | escape }}"
+    >
+    ```
+
+    Note the `"secret!"` - this must match the "Shared secret" option you choose in the task's configuration. It can be any value you like, as long as it's exactly equal between your task configuration and your theme code.
+3.  Adjust to taste. :) The code in the task script and in the online storefront JavaScript are meant to be a beginning point, as you build out the experience you're looking for. If you have any questions about the Mechanic side of this, get in touch!
 
 ## Installing this task
 
