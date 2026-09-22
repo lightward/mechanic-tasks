@@ -34,6 +34,8 @@ Use this task as a starting point, for allowing visitors to submit their carts t
 
 Use this task as a starting point, for allowing visitors to submit their carts to be transformed into draft orders, associated with their customer account. Installing and customizing this task requires some level of comfort with Liquid, HTML, and JavaScript.
 
+For a new setup without custom theme code, use [Create a draft order from a storefront form](https://tasks.mechanic.dev/create-a-draft-order-from-a-storefront-form). It connects a Mechanic storefront form to this workflow. This task remains available for existing custom-button integrations.
+
 ### Enable Mechanic in your theme
 
 This task needs to run JavaScript in your online store. If Mechanic shows a theme setup prompt, click **Enable Mechanic in your theme**, make sure Mechanic's **Online store JavaScript** is turned on under **App embeds**, and click **Save** in the theme editor. Then return to Mechanic to confirm setup.

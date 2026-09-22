@@ -173,6 +173,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Copy order and/or product tags to customers](./copy-order-tags-to-customers)
 * [Copy prefixed tags to metafields](./copy-prefixed-tags-to-metafields)
 * [Copy product metafields to each product's tags](./copy-product-metafields-to-each-products-tags)
+* [Create a draft order from a storefront form](./create-a-draft-order-from-a-storefront-form)
 * [Create a draft order from the cart](./create-a-draft-order-from-the-cart)
 * [Create a product inventory CSV feed](./create-a-product-inventory-feed)
 * [Delete all products](./delete-all-products)
@@ -206,6 +207,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Demonstration: Web fonts in PDFs](./demonstration-web-fonts-in-pdfs)
 * [Demonstration: Write to a customer metafield](./demonstration-write-to-a-customer-metafield)
 * [Download and email a file to a customer, when purchased](./download-and-email-a-file-to-a-customer-when-purchased)
+* [Email Mechanic form submissions](./email-mechanic-form-submissions)
 * [Email a CSV export of orders](./email-a-csv-export-of-orders)
 * [Email a CSV export of products](./email-a-csv-export-of-products)
 * [Email a report of customers who haven't ordered in X days](./email-a-report-of-customers-who-havent-ordered-in-x-days)
@@ -279,6 +281,8 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Reset inventory levels daily](./reset-inventory-levels-daily)
 * [Reset inventory levels when they get too low](./reset-inventory-levels-when-they-get-too-low)
 * [Reset negative inventory levels to zero in bulk](./reset-negative-inventory-levels-to-zero-in-bulk)
+* [Save Mechanic form submissions to Shopify metaobjects](./save-mechanic-form-submissions-to-shopify-metaobjects)
+* [Save Mechanic form submissions to a Google Sheet](./save-mechanic-form-submissions-to-a-google-sheet)
 * [Schedule a storefront banner](./schedule-a-storefront-banner)
 * [Schedule product tags by date](./schedule-product-tags-by-date)
 * [Scheduled inventory adjustment](./scheduled-inventory-adjustment)
@@ -614,6 +618,7 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Cart
 
 * [Auto-tag orders with a cart attribute](./auto-tag-orders-with-a-cart-attribute)
+* [Create a draft order from a storefront form](./create-a-draft-order-from-a-storefront-form)
 * [Create a draft order from the cart](./create-a-draft-order-from-the-cart)
 
 ### Cart Attributes
@@ -669,7 +674,10 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Custom Webhook
 
+* [Email Mechanic form submissions](./email-mechanic-form-submissions)
 * [Monitor for variants with zero price](./monitor-for-variants-with-zero-price)
+* [Save Mechanic form submissions to Shopify metaobjects](./save-mechanic-form-submissions-to-shopify-metaobjects)
+* [Save Mechanic form submissions to a Google Sheet](./save-mechanic-form-submissions-to-a-google-sheet)
 
 ### Customer Notes
 
@@ -830,6 +838,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-tag new draft orders](./auto-tag-new-draft-orders)
 * [Auto-tag orders created from drafts](./auto-tag-orders-created-from-drafts)
 * [Clean up draft orders](./clean-up-draft-orders)
+* [Create a draft order from a storefront form](./create-a-draft-order-from-a-storefront-form)
 * [Create a draft order from the cart](./create-a-draft-order-from-the-cart)
 * [Delete draft orders older than 30 days](./delete-draft-orders-older-than-30-days)
 * [Delete draft orders](./delete-draft-orders)
@@ -847,6 +856,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Automatically send account invite to new customers](./automatically-send-account-invite-to-new-customers)
 * [Catalog update email](./catalog-update-email)
 * [Download and email a file to a customer, when purchased](./download-and-email-a-file-to-a-customer-when-purchased)
+* [Email Mechanic form submissions](./email-mechanic-form-submissions)
 * [Email a CSV export of orders](./email-a-csv-export-of-orders)
 * [Email a CSV export of products](./email-a-csv-export-of-products)
 * [Email a report of customers who haven't ordered in X days](./email-a-report-of-customers-who-havent-ordered-in-x-days)
@@ -977,12 +987,14 @@ This directory is built automatically. Each task's documentation is generated fr
 
 * [Demonstration: Create sheets and list and create files in Google Drive](./demonstration-create-sheets-and-list-and-create-files-in-google-drive)
 * [Demonstration: Upload files to Google Drive](./demonstration-upload-files-to-google-drive)
+* [Save Mechanic form submissions to a Google Sheet](./save-mechanic-form-submissions-to-a-google-sheet)
 
 ### Google Sheets
 
 * [Add new Shopify Forms submissions to a Google Sheet](./add-new-shopify-forms-submissions-to-a-google-sheet)
 * [Demonstration: Add new orders to a Google Sheet](./demonstration-add-new-orders-to-google-sheet)
 * [Demonstration: Create sheets and list and create files in Google Drive](./demonstration-create-sheets-and-list-and-create-files-in-google-drive)
+* [Save Mechanic form submissions to a Google Sheet](./save-mechanic-form-submissions-to-a-google-sheet)
 
 ### HTTP
 
@@ -1148,6 +1160,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Demonstration: Write to a customer metafield](./demonstration-write-to-a-customer-metafield)
 * [Maintain discount percentage filters in variant metafields](./maintain-discount-percentage-filters-in-variant-metafields)
 * [Make products unavailable, after the date/time stored in product metafields](./make-products-unavailable-after-the-date-time-stored-in-product-metafields)
+* [Save Mechanic form submissions to Shopify metaobjects](./save-mechanic-form-submissions-to-shopify-metaobjects)
 * [Send an email when a product's price goes below its cost](./send-an-email-when-a-products-price-goes-below-its-cost)
 * [Set product or variant metafields values in bulk](./set-product-or-variant-metafields-in-bulk)
 * [Sync a Product List Metafield Of Products That Share Another Common Metafield Value](./sync-a-product-list-metafield-of-products-that-share-another-common-metafield-value)
