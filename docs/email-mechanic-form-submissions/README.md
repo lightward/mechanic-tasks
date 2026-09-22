@@ -57,7 +57,7 @@ This task sends a notification to the configured team. It does not automatically
 
 ## Replays and stopping
 
-Replaying an event or retrying an email after an uncertain response can send another notification. The IDs help correlate messages; they do not guarantee delivery exactly once. Disabling this task stops future notifications and leaves the shared webhook and other subscribed tasks intact. Moving shops requires configuring recipients, email approval, the new webhook topic and the imported form's new code again.
+Replaying an event or retrying an email after an uncertain response can send another notification. The IDs help correlate messages; they do not guarantee delivery exactly once. Disabling this task stops future notifications and leaves the shared webhook and other subscribed tasks intact. When moving shops, configure recipients, email approval, and the new webhook topic again. If this task filters to one form, publish the imported form and select it in the **Form** dropdown.
 
 See [Mechanic's Email action](https://learn.mechanic.dev/core/actions/email).
 

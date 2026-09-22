@@ -64,7 +64,7 @@ Files saved to Drive may total at most **3 MB (3,145,728 bytes) per submission**
 
 ## Moving shops or stopping
 
-Set up the destination and reconnect the new shop's webhook when moving this task or importing a form. Imported forms have new form codes; update **Form ID** accordingly. Disabling the task stops future saves and leaves existing records and the shared webhook intact. Other subscribed tasks can still run.
+Set up the destination and reconnect the new shop's webhook when moving this task or importing a form. Imported forms have new IDs. Publish the imported form, then select it again in the **Form** dropdown if this task filters to one form. Disabling the task stops future saves and leaves existing records and the shared webhook intact. Other subscribed tasks can still run.
 
 ## Google Sheets setup
 
