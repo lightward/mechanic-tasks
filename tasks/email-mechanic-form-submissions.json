@@ -21,6 +21,7 @@
   "subscriptions_template": "{{ options.webhook_event_topic__required }}",
   "tags": [
     "Custom Webhook",
-    "Email"
+    "Email",
+    "Storefront Forms"
   ]
 }

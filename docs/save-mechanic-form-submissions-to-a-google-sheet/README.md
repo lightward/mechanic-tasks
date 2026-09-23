@@ -1,6 +1,6 @@
 # Save Mechanic form submissions to a Google Sheet
 
-Tags: Custom Webhook, Google Drive, Google Sheets
+Tags: Custom Webhook, Google Drive, Google Sheets, Storefront Forms
 
 Save selected answers from Mechanic form submissions as rows in a Google Sheet, with optional Google Drive uploads and file links.
 

@@ -6,6 +6,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Accept a maximum number of orders per day](./accept-a-maximum-number-of-orders-per-day)
 * [Accept a maximum number of orders per hour](./accept-a-maximum-number-of-orders-per-hour)
 * [Add Option Name as a Variant Metafield for In Stock Variants](./add-option-names-as-variant-metafields-for-in-stock-variants)
+* [Add a gift message form to your Shopify theme and email recipients after fulfillment](./add-a-gift-message-form-to-your-shopify-theme-and-email-recipients-after-fulfillment)
 * [Add all products to a certain sales channel](./add-all-products-to-a-certain-sales-channel)
 * [Add fulfillment tracking when an order is tagged](./add-fulfillment-tracking-when-an-order-is-tagged)
 * [Add new Shopify Forms submissions to a Google Sheet](./add-new-shopify-forms-submissions-to-a-google-sheet)
@@ -220,7 +221,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Email customers when created](./email-customers-when-created)
 * [Email customers when tagged](./email-customers-when-tagged)
 * [Email customers when their order is tagged](./email-customer-when-order-tagged)
-* [Email gift recipients when orders are fulfilled](./email-gift-recipients-when-orders-are-fulfilled)
 * [Email someone specific based on a new order's customer tags](./email-someone-specific-based-on-a-new-orders-customer-tags)
 * [Email someone when a certain product is purchased](./email-someone-when-certain-product-purchased)
 * [Email someone when a certain variant is purchased](./email-when-variant-purchased)
@@ -849,6 +849,7 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Email
 
 * [Abandoned checkout emails](./abandoned-checkout-emails)
+* [Add a gift message form to your Shopify theme and email recipients after fulfillment](./add-a-gift-message-form-to-your-shopify-theme-and-email-recipients-after-fulfillment)
 * [Alert when daily order limit is reached](./alert-when-daily-order-limit-is-reached)
 * [Ask for reviews a week after order fulfillment](./ask-for-reviews-a-week-after-order-fulfillment)
 * [Auto-invite customers after an order](./auto-invite-customers-after-an-order)
@@ -869,7 +870,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Email customers when created](./email-customers-when-created)
 * [Email customers when tagged](./email-customers-when-tagged)
 * [Email customers when their order is tagged](./email-customer-when-order-tagged)
-* [Email gift recipients when orders are fulfilled](./email-gift-recipients-when-orders-are-fulfilled)
 * [Email someone specific based on a new order's customer tags](./email-someone-specific-based-on-a-new-orders-customer-tags)
 * [Email someone when a certain product is purchased](./email-someone-when-certain-product-purchased)
 * [Email someone when a certain variant is purchased](./email-when-variant-purchased)
@@ -961,6 +961,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Fulfillment
 
+* [Add a gift message form to your Shopify theme and email recipients after fulfillment](./add-a-gift-message-form-to-your-shopify-theme-and-email-recipients-after-fulfillment)
 * [Add fulfillment tracking when an order is tagged](./add-fulfillment-tracking-when-an-order-is-tagged)
 * [Add note to new orders with their fulfillment locations](./note-new-orders-with-their-fulfillment-locations)
 * [Ask for reviews a week after order fulfillment](./ask-for-reviews-a-week-after-order-fulfillment)
@@ -977,7 +978,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Cancel fulfillments when an order is fully refunded](./cancel-fulfillments-when-an-order-is-fully-refunded)
 * [Capture order payment upon fulfillment](./capture-order-payment-upon-fulfillment)
 * [Demonstration: Fulfillment order move](./demonstration-fulfillment-order-move)
-* [Email gift recipients when orders are fulfilled](./email-gift-recipients-when-orders-are-fulfilled)
 * [Flag orders that aren't fulfilled after several days](./flag-orders-that-arent-fulfilled-after-two-days)
 * [Manage fulfillment shipment status using order tags](./manage-fulfillment-status-using-order-tags)
 * [Partially auto-capture payments as orders are fulfilled](./partially-auto-capture-payments-as-orders-are-fulfilled)
@@ -1212,6 +1212,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 * [Accept a maximum number of orders per day](./accept-a-maximum-number-of-orders-per-day)
 * [Accept a maximum number of orders per hour](./accept-a-maximum-number-of-orders-per-hour)
+* [Add a gift message form to your Shopify theme and email recipients after fulfillment](./add-a-gift-message-form-to-your-shopify-theme-and-email-recipients-after-fulfillment)
 * [Add note to new orders with their fulfillment locations](./note-new-orders-with-their-fulfillment-locations)
 * [Alert when daily order limit is reached](./alert-when-daily-order-limit-is-reached)
 * [Archive free orders on fulfillment](./archive-free-orders-on-fulfillment)
@@ -1304,7 +1305,6 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Email customer when their order is paid](./email-customer-when-order-paid)
 * [Email customers after purchasing a certain product](./product-order-email)
 * [Email customers when their order is tagged](./email-customer-when-order-tagged)
-* [Email gift recipients when orders are fulfilled](./email-gift-recipients-when-orders-are-fulfilled)
 * [Email someone when a certain product is purchased](./email-someone-when-certain-product-purchased)
 * [Email someone when a certain variant is purchased](./email-when-variant-purchased)
 * [Email the customer when tracking numbers are added to their order](./email-the-customer-when-tracking-numbers-are-added-to-their-order)
@@ -1711,6 +1711,14 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Storefront
 
 * [Schedule a storefront banner](./schedule-a-storefront-banner)
+
+### Storefront Forms
+
+* [Add a gift message form to your Shopify theme and email recipients after fulfillment](./add-a-gift-message-form-to-your-shopify-theme-and-email-recipients-after-fulfillment)
+* [Create a draft order from a storefront form](./create-a-draft-order-from-a-storefront-form)
+* [Email Mechanic form submissions](./email-mechanic-form-submissions)
+* [Save Mechanic form submissions to Shopify metaobjects](./save-mechanic-form-submissions-to-shopify-metaobjects)
+* [Save Mechanic form submissions to a Google Sheet](./save-mechanic-form-submissions-to-a-google-sheet)
 
 ### Subscriptions
 

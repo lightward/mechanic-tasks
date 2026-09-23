@@ -19,6 +19,7 @@
   "subscriptions_template": "mechanic/user/trigger\n{{ options.webhook_event_topic__required }}",
   "tags": [
     "Custom Webhook",
-    "Metafields"
+    "Metafields",
+    "Storefront Forms"
   ]
 }

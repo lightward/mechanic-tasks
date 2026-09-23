@@ -15,6 +15,7 @@
   "subscriptions_template": "{{ options.mechanic_webhook_event_topic__required }}",
   "tags": [
     "Cart",
-    "Draft Orders"
+    "Draft Orders",
+    "Storefront Forms"
   ]
 }

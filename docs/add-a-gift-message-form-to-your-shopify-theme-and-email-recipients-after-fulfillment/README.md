@@ -1,11 +1,11 @@
-# Email gift recipients when orders are fulfilled
+# Add a gift message form to your Shopify theme and email recipients after fulfillment
 
-Tags: Email, Fulfillment, Orders
+Tags: Email, Fulfillment, Orders, Storefront Forms
 
-Email a gift recipient their personal message when the whole order has been fulfilled, using answers saved by a Mechanic form on the cart page.
+Use a Mechanic form in your Shopify theme to collect gift details on the cart page, then email the recipient when the whole order has been fulfilled.
 
-* View in the task library: [tasks.mechanic.dev/email-gift-recipients-when-orders-are-fulfilled](https://tasks.mechanic.dev/email-gift-recipients-when-orders-are-fulfilled)
-* Task JSON, for direct import: [task.json](../../tasks/email-gift-recipients-when-orders-are-fulfilled.json)
+* View in the task library: [tasks.mechanic.dev/add-a-gift-message-form-to-your-shopify-theme-and-email-recipients-after-fulfillment](https://tasks.mechanic.dev/add-a-gift-message-form-to-your-shopify-theme-and-email-recipients-after-fulfillment)
+* Task JSON, for direct import: [task.json](../../tasks/add-a-gift-message-form-to-your-shopify-theme-and-email-recipients-after-fulfillment.json)
 * Preview task code: [script.liquid](./script.liquid)
 
 ## Default options
@@ -35,16 +35,18 @@ mechanic/actions/perform
 
 ## Documentation
 
-Email a gift recipient their personal message when the whole order has been fulfilled, using answers saved by a Mechanic form on the cart page.
+Use a Mechanic form in your Shopify theme to collect gift details on the cart page, then email the recipient when the whole order has been fulfilled.
+
+[Follow the illustrated setup tutorial](https://learn.mechanic.dev/resources/tutorials/add-a-gift-message-form-to-your-shopify-theme) to add the form to your theme and connect this task. The form and task are set up separately.
 
 ## Setup
 
 1. In Mechanic **Forms**, choose the **Add a gift message** starter. It saves answers to the Shopify cart instead of sending a webhook. Keep its field data keys, or update this task's field key options to match. You can change the labels and wording.
-2. Publish the form, add its block to your theme's cart page, and save the theme. Customers must choose **Save gift message** and wait for confirmation before checkout. This does not work for checkout routes that bypass that form, such as Buy it now.
+2. Publish the form, add its block to your theme's cart page, and save the theme. Complete gift details save automatically. Normal cart checkout waits for pending saves and asks customers to fix incomplete details or retry a failed save. An untouched gift form stays optional. Accelerated checkout, Buy it now, and custom checkout buttons may bypass the form; test your theme’s cart checkout before going live. Cart drawers are not supported placements. If your theme uses a drawer, switch to its cart-page option or ask your theme developer to add an **Add a gift message** link to the cart page.
 3. Select the published form in this task's **Form** option. No webhook, shared secret, or Mechanic JavaScript embed is needed for saving answers to the cart.
 4. Customize the email subject and body. The placeholders `RECIPIENT_NAME`, `SENDER_NAME`, `GIFT_MESSAGE`, and `SHOP_NAME` are available in the body; all except `GIFT_MESSAGE` are available in the subject. The body is plain text and is safely escaped for email. Replies go to your shop's customer email address.
 5. Save and enable the task, approve its requested Shopify access, and make sure your Mechanic account is [approved to send email](https://learn.mechanic.dev/platform/email).
-6. Test with a test order and an inbox you control. Save the gift details in the cart, complete checkout, and fulfill the order. Check the Shopify claim action, email action, and recipient inbox. A form preview does not save cart answers or send email.
+6. Test with a test order and an inbox you control. Fill in the gift details in the cart, confirm they save automatically, complete checkout, and fulfill the order. Check the Shopify claim action, email action, and recipient inbox. A form preview does not save cart answers or send email.
 
 ## Timing and saved details
 
@@ -65,7 +67,7 @@ Disable this task to stop future gift notifications. Do not delete its order met
 
 ## Installing this task
 
-Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/email-gift-recipients-when-orders-are-fulfilled), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-gift-recipients-when-orders-are-fulfilled.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
+Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/add-a-gift-message-form-to-your-shopify-theme-and-email-recipients-after-fulfillment), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/add-a-gift-message-form-to-your-shopify-theme-and-email-recipients-after-fulfillment.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
 
 ## Contributions
 

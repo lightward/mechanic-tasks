@@ -123,7 +123,7 @@
     {% endunless %}
     {% assign marker = action.meta.marker %}
     {% assign marker["status"] = "sent" %}
-    {% assign marker["sent_at"] = "now" | date: "%FT%TZ" %}
+    {% assign marker["sent_at"] = "now" | date: "%FT%TZ", tz: "UTC" %}
     {% action "shopify", __perform_event: false %}
       mutation {
         metafieldsSet(metafields: [{
