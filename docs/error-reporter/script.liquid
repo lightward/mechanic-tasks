@@ -14,9 +14,6 @@
 {%- capture event_url -%}
   {{ shop.admin_url }}apps/mechanic/events/{{ error.event.id }}
 {%- endcapture -%}
-{%- capture task_url -%}
-  {{ shop.admin_url }}apps/mechanic/tasks/{{ error.task.id }}
-{%- endcapture -%}
 
 {% comment %}
   -- optionally skip task or action errors when the original task is subscribed to the incoming error topic
@@ -95,7 +92,7 @@
     {% endif %}
     <p><strong>Error topic:</strong> {{ event.topic }}</p>
     {% if error.task -%}
-      <p><strong>Task:</strong> <a href="{{ task_url }}">{{ error.task.name }}</a></p>
+      <p><strong>Task:</strong> {{ error.task.name }}</p>
     {% endif %}
     {% if error.action -%}
       <p><strong>Action type:</strong> {{ error.action.type }}</p>
