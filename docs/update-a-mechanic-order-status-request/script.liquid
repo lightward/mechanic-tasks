@@ -1,15 +1,22 @@
 {% comment %}
 Option order:
 {{ options.form__orderstatusform_required }}
+{{ options.send_customer_email__boolean }}
 {{ options.status__userform_required }}
 {{ options.customer_message__multiline_userform }}
 {% endcomment %}
 {% if event.topic == "mechanic/actions/perform" %}
-  {% if action.type == "shopify" %}
-    {% if action.run.result.errors != blank %}{% error action.run.result.errors %}{% endif %}
-    {% for result in action.run.result.data %}
-      {% if result[1].userErrors != blank %}{% error result[1].userErrors %}{% endif %}
-    {% endfor %}
+  {% if event.preview and options.send_customer_email__boolean %}
+    {% capture preview_action %}{"type":"shopify","meta":{"stage":"update_request","email":"customer@example.com","order_name":"#1001","status":"In progress","message":"Our team is reviewing your request.","url":"https://example.myshopify.com/account/orders/123"},"run":{"ok":true,"result":{"data":{"metafieldsSet":{"metafields":[{"id":"gid://shopify/Metafield/123"}],"userErrors":[]}}}}}{% endcapture %}
+    {% assign action = preview_action | parse_json %}
+  {% endif %}
+  {% if action.type != "shopify" or action.meta.stage != "update_request" %}{% break %}{% endif %}
+  {% unless action.run.ok %}{% log "The status update failed; no customer email was sent." %}{% break %}{% endunless %}
+  {% if action.run.result.errors != blank or action.run.result.data.metafieldsSet.userErrors != blank %}{% error "Shopify did not confirm the status update. No customer email was sent." %}{% break %}{% endif %}
+  {% unless action.run.result.data.metafieldsSet.metafields.first.id %}{% error "Shopify did not return the saved status. No customer email was sent." %}{% break %}{% endunless %}
+  {% if action.meta.email != blank %}
+    {% capture body %}<p>Your request for order {{ action.meta.order_name | escape }} has been updated.</p><p><strong>{{ action.meta.status | escape }}</strong></p>{% if action.meta.message != blank %}<p>{{ action.meta.message | escape | newline_to_br }}</p>{% endif %}{% if action.meta.url != blank %}<p><a href="{{ action.meta.url | escape }}">View your order</a></p>{% endif %}{% endcapture %}
+    {% action "email", __perform_event: false %}{"to":{{ action.meta.email | json }},"subject":{{ "An update on your request for order " | append: action.meta.order_name | json }},"body":{{ body | strip | json }}}{% endaction %}
   {% endif %}
   {% break %}
 {% endif %}
@@ -25,17 +32,28 @@ Option order:
 {% assign valid_order = order_id | match: '\Agid://shopify/Order/[1-9][0-9]*\z' %}
 {% unless valid_order %}{% error "Run this task from one order in Shopify." %}{% break %}{% endunless %}
 {% if new_status == blank or new_status.size > 200 or message.size > 2000 %}{% error "Enter a status from 1–200 characters and a customer message up to 2000 characters." %}{% break %}{% endif %}
-{% capture query %}query { order(id: {{ order_id | json }}) { id metafield(namespace: "mechanic_order_requests", key: {{ status_key | json }}) { type jsonValue compareDigest } } }{% endcapture %}
+{% capture query %}query { order(id: {{ order_id | json }}) { id name {% if options.send_customer_email__boolean %}statusPageUrl customer { id defaultEmailAddress { emailAddress } }{% endif %} metafield(namespace: "mechanic_order_requests", key: {{ status_key | json }}) { type jsonValue compareDigest } } }{% endcapture %}
 {% assign result = query | shopify %}
-{% if event.preview %}{% capture preview %}{"data":{"order":{"id":{{ order_id | json }},"metafield":{"type":"json","compareDigest":"preview-digest","jsonValue":{"form_id":{{ form_id | json }},"request_id":"a807b3c1-bbae-423d-99f8-8e6d5f0bdaf5","status":"Received","fields":{"details":"Could you help with my order?"}}}}}}{% endcapture %}{% assign result = preview | parse_json %}{% endif %}
+{% if event.preview %}{% capture preview %}{"data":{"order":{"id":{{ order_id | json }},"name":"#1001","statusPageUrl":"https://example.myshopify.com/account/orders/123","customer":{"id":"gid://shopify/Customer/1234567890","defaultEmailAddress":{"emailAddress":"customer@example.com"}},"metafield":{"type":"json","compareDigest":"preview-digest","jsonValue":{"form_id":{{ form_id | json }},"request_id":"a807b3c1-bbae-423d-99f8-8e6d5f0bdaf5","customer_id":"gid://shopify/Customer/1234567890","status":"Received","fields":{"details":"Could you help with my order?"}}}}}}{% endcapture %}{% assign result = preview | parse_json %}{% endif %}
 {% if result.errors != blank %}{% error result.errors %}{% break %}{% endif %}
 {% assign metafield = result.data.order.metafield %}
 {% assign value = metafield.jsonValue %}
 {% unless metafield.type == "json" and value.form_id == form_id and value.request_id != blank %}{% error "This order has no saved request for the selected form. Save a request before updating its status." %}{% break %}{% endunless %}
+{% assign meta = hash %}
+{% assign meta["stage"] = "update_request" %}
+{% if options.send_customer_email__boolean %}
+  {% assign customer = result.data.order.customer %}
+  {% unless customer.id == value.customer_id and customer.defaultEmailAddress.emailAddress != blank %}{% error "The saved request customer must still own this order and have an email address. Nothing was updated; turn off customer email to update the status without sending." %}{% break %}{% endunless %}
+  {% assign meta["email"] = customer.defaultEmailAddress.emailAddress %}
+  {% assign meta["order_name"] = result.data.order.name %}
+  {% assign meta["url"] = result.data.order.statusPageUrl %}
+  {% assign meta["status"] = new_status %}
+  {% assign meta["message"] = message %}
+{% endif %}
 {% assign value["status"] = new_status %}
 {% assign value["message"] = message %}
 {% assign value["updated_at"] = "now" | date: "%Y-%m-%dT%H:%M:%SZ" %}
 {% assign value_json = value | json %}
 {% assign encoded_size = value_json | base64 | size %}
 {% if encoded_size > 120000 %}{% error "The order request is too large to store." %}{% break %}{% endif %}
-{% action "shopify" %}mutation { metafieldsSet(metafields: [{ownerId: {{ order_id | json }}, namespace: "mechanic_order_requests", key: {{ status_key | json }}, type: "json", value: {{ value_json | json }}, compareDigest: {{ metafield.compareDigest | json }} }]) { metafields { id } userErrors { field message code } } }{% endaction %}
+{% action "shopify", __meta: meta %}mutation { metafieldsSet(metafields: [{ownerId: {{ order_id | json }}, namespace: "mechanic_order_requests", key: {{ status_key | json }}, type: "json", value: {{ value_json | json }}, compareDigest: {{ metafield.compareDigest | json }} }]) { metafields { id } userErrors { field message code } } }{% endaction %}

@@ -19,6 +19,7 @@ Option order:
 {% if request.form.id != form_id %}{% break %}{% endif %}
 {% capture body %}<h2>New order request</h2>
 <p>Order {{ request.order.name | escape }} · {{ request.form.title | escape }}</p>
+<ul>{% for item in request.line_items %}<li>{{ item.title | escape }}{% if item.variant_title != blank %} — {{ item.variant_title | escape }}{% endif %} · Quantity {{ item.quantity | escape }}</li>{% endfor %}</ul>
 <table>{% for answer in request.fields %}{% assign text = answer[1] %}{% assign kind = text | json | slice: 0, 1 %}{% if kind == "[" or kind == "{" %}{% assign text = text | json %}{% endif %}<tr><th align="left" valign="top">{{ answer[0] | escape }}</th><td>{{ text | escape | newline_to_br }}</td></tr>{% else %}<tr><td>No additional answers.</td></tr>{% endfor %}</table>
 <p><a href="https://{{ shop.myshopify_domain | escape }}/admin/orders/{{ request.order.id | split: '/' | last | escape }}">Open order in Shopify</a></p>
 <p>Request ID: {{ request.request_id | escape }}<br>Received by Mechanic: {{ event.created_at | escape }}</p>

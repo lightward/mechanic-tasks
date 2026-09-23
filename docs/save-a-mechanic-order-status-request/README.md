@@ -55,6 +55,12 @@ Repeated delivery of the same signed request does not reset its saved status. Ol
 
 Orders must be accessible to Mechanic. Older orders can require all-orders access. Files are not supported by Order status forms in this pilot.
 
+## Repeat requests and purchased items
+
+The form’s **Availability** setting controls another request for the same form and order: after resolution (the default), anytime, or once per order. With the default, use **Resolved** or **Declined** as the status in the update task to reopen requests. The API checks the saved status before authorization and this task checks it again before saving. Concurrent writes use compare-and-set. These controls rely on this save task; they do not deduplicate independent email tasks or guarantee exactly-once processing.
+
+An **Items from the order** question includes selected line-item IDs in the answers and verified item details in `event.order_status_request.line_items`. These details are stored alongside the answers. Item selection requests review; it does not change quantities, return items, or issue refunds.
+
 
 ## Installing this task
 

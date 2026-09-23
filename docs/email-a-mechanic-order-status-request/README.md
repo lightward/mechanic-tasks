@@ -46,6 +46,8 @@ This task reads only `event.order_status_request`, which verifies the signed ord
 
 Emails can repeat if a webhook is delivered again or the task is rerun. Check the request ID when handling duplicates. No email is sent from task previews. Files are not supported in this pilot.
 
+If the form includes an order item picker, the email includes verified purchased-item names, variants, and quantities as well as the selected IDs.
+
 
 ## Installing this task
 

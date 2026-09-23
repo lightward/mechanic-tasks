@@ -50,6 +50,11 @@ Option order:
 {% if previous and previous.form_id != form_id %}{% error "The saved request belongs to a different form. Nothing was overwritten." %}{% break %}{% endif %}
 {% if previous.request_id == request.request_id %}{% log "This request was already saved; its current status was preserved." %}{% break %}{% endif %}
 {% if previous.issued_at >= request.issued_at %}{% log "A request at least this recent is already saved. Nothing was overwritten." %}{% break %}{% endif %}
+{% if previous %}
+  {% assign repeat_requests = request.repeat_requests | default: "after_resolution" %}
+  {% if repeat_requests == "never" %}{% log "This form allows one request per order. The saved request was preserved." %}{% break %}{% endif %}
+  {% if repeat_requests != "always" and previous.status != "Resolved" and previous.status != "Declined" %}{% log "The previous request is still open. Resolve or decline it before accepting another." %}{% break %}{% endif %}
+{% endif %}
 {% assign initial_status = options.initial_status__required | strip %}
 {% assign initial_message = options.initial_message__multiline | strip %}
 {% if initial_status == blank or initial_status.size > 200 or initial_message.size > 2000 %}{% error "Use a status from 1–200 characters and a customer message up to 2000 characters." %}{% break %}{% endif %}
@@ -59,6 +64,7 @@ Option order:
 {% assign value["customer_id"] = request.customer.id %}
 {% assign value["issued_at"] = request.issued_at %}
 {% assign value["fields"] = request.fields %}
+{% assign value["line_items"] = request.line_items %}
 {% assign value["status"] = initial_status %}
 {% assign value["message"] = initial_message %}
 {% assign value["updated_at"] = "now" | date: "%Y-%m-%dT%H:%M:%SZ" %}
