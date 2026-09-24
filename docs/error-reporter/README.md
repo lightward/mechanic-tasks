@@ -15,7 +15,8 @@ Use this task to get email or Slack notifications when errors occur with any eve
   "notification_methods__multiselect_o1_email_o2_slack_required": null,
   "email_recipients__array": null,
   "slack_account": null,
-  "slack_channel_id_": null
+  "slack_channel_id_": null,
+  "skip_errors_when_the_original_task_handles_them__boolean": null
 }
 ```
 
@@ -38,6 +39,8 @@ Use this task to get email or Slack notifications when errors occur with any eve
 [Read more about error events](https://learn.mechanic.dev/platform/error-handling).
 
 **IMPORTANT**: To use Slack notifications, you must install the Mechanic Slack app in your Slack workspace (Settings → Authentication → Slack) and confiure a Slack account and Slack channel ID in this task. If the configured channel is private, then you will need to add the Mechanic bot to the channel before it can post messages (`/invite @mechanic`).
+
+**Optional**: You can have this task skip task/action errors when the original task is subscribed to those error topics. This allows you to implement custom error reporting for individual tasks without receiving duplicate notifications.
 
 ## Installing this task
 

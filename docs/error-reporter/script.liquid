@@ -11,6 +11,22 @@
   {% error "Configure a slack account and channel ID when choosing the slack notification method" %}
 {% endif %}
 
+{%- capture event_url -%}
+  {{ shop.admin_url }}apps/mechanic/events/{{ error.event.id }}
+{%- endcapture -%}
+
+{% comment %}
+  -- optionally skip task or action errors when the original task is subscribed to the incoming error topic
+{% endcomment %}
+{% if options.skip_errors_when_the_original_task_handles_them__boolean and error.task.subscriptions contains event.topic %}
+  {% log
+    message: "Original task is subscribed to this error topic, skipping notification.",
+    task_name: error.task.name,
+    error_details: event_url
+  %}
+  {% break %}
+{% endif %}
+
 {% comment %}
   -- define thresholds for repeat error sending
 {% endcomment %}
@@ -64,10 +80,6 @@
   {% break %}
 {% endunless %}
 
-{%- capture event_url -%}
-  {{ shop.admin_url }}apps/mechanic/events/{{ error.event.id }}
-{%- endcapture -%}
-
 {% if notification_methods contains "email" %}
   {% capture email_subject -%}
     Mechanic error on {{ shop.name }}
@@ -79,6 +91,9 @@
       <p><em>There have been {{ recent_error_count }} errors of this type in the last 10 minutes.</em></p>
     {% endif %}
     <p><strong>Error topic:</strong> {{ event.topic }}</p>
+    {% if error.task -%}
+      <p><strong>Task:</strong> {{ error.task.name }}</p>
+    {% endif %}
     {% if error.action -%}
       <p><strong>Action type:</strong> {{ error.action.type }}</p>
     {% endif %}
