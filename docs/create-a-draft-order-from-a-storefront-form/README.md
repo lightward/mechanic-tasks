@@ -1,6 +1,6 @@
 # Create a draft order from a storefront form
 
-Tags: Cart, Draft Orders
+Tags: Cart, Draft Orders, Storefront Forms
 
 Create a Shopify draft order from the cart submitted with a Mechanic storefront form. Signed-in customers are linked to their verified Shopify customer account. Shopify supplies current variant prices; review the draft before sending an invoice.
 

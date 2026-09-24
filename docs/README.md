@@ -6,6 +6,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Accept a maximum number of orders per day](./accept-a-maximum-number-of-orders-per-day)
 * [Accept a maximum number of orders per hour](./accept-a-maximum-number-of-orders-per-hour)
 * [Add Option Name as a Variant Metafield for In Stock Variants](./add-option-names-as-variant-metafields-for-in-stock-variants)
+* [Add a gift message form to your Shopify theme and email recipients after fulfillment](./add-a-gift-message-form-to-your-shopify-theme-and-email-recipients-after-fulfillment)
 * [Add all products to a certain sales channel](./add-all-products-to-a-certain-sales-channel)
 * [Add fulfillment tracking when an order is tagged](./add-fulfillment-tracking-when-an-order-is-tagged)
 * [Add new Shopify Forms submissions to a Google Sheet](./add-new-shopify-forms-submissions-to-a-google-sheet)
@@ -848,6 +849,7 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Email
 
 * [Abandoned checkout emails](./abandoned-checkout-emails)
+* [Add a gift message form to your Shopify theme and email recipients after fulfillment](./add-a-gift-message-form-to-your-shopify-theme-and-email-recipients-after-fulfillment)
 * [Alert when daily order limit is reached](./alert-when-daily-order-limit-is-reached)
 * [Ask for reviews a week after order fulfillment](./ask-for-reviews-a-week-after-order-fulfillment)
 * [Auto-invite customers after an order](./auto-invite-customers-after-an-order)
@@ -959,6 +961,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Fulfillment
 
+* [Add a gift message form to your Shopify theme and email recipients after fulfillment](./add-a-gift-message-form-to-your-shopify-theme-and-email-recipients-after-fulfillment)
 * [Add fulfillment tracking when an order is tagged](./add-fulfillment-tracking-when-an-order-is-tagged)
 * [Add note to new orders with their fulfillment locations](./note-new-orders-with-their-fulfillment-locations)
 * [Ask for reviews a week after order fulfillment](./ask-for-reviews-a-week-after-order-fulfillment)
@@ -1209,6 +1212,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 * [Accept a maximum number of orders per day](./accept-a-maximum-number-of-orders-per-day)
 * [Accept a maximum number of orders per hour](./accept-a-maximum-number-of-orders-per-hour)
+* [Add a gift message form to your Shopify theme and email recipients after fulfillment](./add-a-gift-message-form-to-your-shopify-theme-and-email-recipients-after-fulfillment)
 * [Add note to new orders with their fulfillment locations](./note-new-orders-with-their-fulfillment-locations)
 * [Alert when daily order limit is reached](./alert-when-daily-order-limit-is-reached)
 * [Archive free orders on fulfillment](./archive-free-orders-on-fulfillment)
@@ -1707,6 +1711,14 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Storefront
 
 * [Schedule a storefront banner](./schedule-a-storefront-banner)
+
+### Storefront Forms
+
+* [Add a gift message form to your Shopify theme and email recipients after fulfillment](./add-a-gift-message-form-to-your-shopify-theme-and-email-recipients-after-fulfillment)
+* [Create a draft order from a storefront form](./create-a-draft-order-from-a-storefront-form)
+* [Email Mechanic form submissions](./email-mechanic-form-submissions)
+* [Save Mechanic form submissions to Shopify metaobjects](./save-mechanic-form-submissions-to-shopify-metaobjects)
+* [Save Mechanic form submissions to a Google Sheet](./save-mechanic-form-submissions-to-a-google-sheet)
 
 ### Subscriptions
 

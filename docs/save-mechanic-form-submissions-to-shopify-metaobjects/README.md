@@ -1,6 +1,6 @@
 # Save Mechanic form submissions to Shopify metaobjects
 
-Tags: Custom Webhook, Metafields
+Tags: Custom Webhook, Metafields, Storefront Forms
 
 Save answers from Mechanic form submissions as Shopify metaobject entries, with storefront access disabled and attachment details for reference.
 

@@ -1,0 +1,139 @@
+{% comment %}
+  {{ options.form__storefrontform_required }}
+  {{ options.recipient_email_field_key__required }}
+  {{ options.recipient_name_field_key__required }}
+  {{ options.sender_name_field_key__required }}
+  {{ options.gift_message_field_key__required }}
+  {{ options.email_subject__required }}
+  {{ options.email_body__multiline_required }}
+{% endcomment %}
+
+{% if event.topic == "shopify/orders/fulfilled" %}
+  {% assign form_id = options.form__storefrontform_required %}
+  {% if event.preview %}{% assign form_id = form_id | default: "11111111-1111-4111-8111-111111111111" %}{% endif %}
+  {% assign valid_form_id = form_id | match: '\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z' %}
+  {% unless valid_form_id %}{% error "Choose your published gift form in the Form option." %}{% break %}{% endunless %}
+  {% assign prefix = "mechanic_form_" | append: form_id | append: "_" %}
+  {% assign marker_key = form_id | remove: "-" | prepend: "gift_" %}
+  {% assign order_id = order.admin_graphql_api_id %}
+  {% if event.preview %}{% assign order_id = "gid://shopify/Order/1234567890" %}{% endif %}
+  {% capture query %}
+    query {
+      order(id: {{ order_id | json }}) {
+        id
+        cancelledAt
+        displayFulfillmentStatus
+        customAttributes { key value }
+        giftDelivery: metafield(namespace: "mechanic_gifts", key: {{ marker_key | json }}) { value }
+      }
+    }
+  {% endcapture %}
+  {% assign result = query | shopify %}
+  {% assign current_order = result.data.order %}
+  {% if event.preview %}
+    {% capture sample %}
+      {"id":{{ order_id | json }},"cancelledAt":null,"displayFulfillmentStatus":"FULFILLED","giftDelivery":null,"customAttributes":[
+        {"key":{{ prefix | append: options.recipient_email_field_key__required | json }},"value":"recipient@example.com"},
+        {"key":{{ prefix | append: options.recipient_name_field_key__required | json }},"value":"Jordan"},
+        {"key":{{ prefix | append: options.sender_name_field_key__required | json }},"value":"Alex"},
+        {"key":{{ prefix | append: options.gift_message_field_key__required | json }},"value":"Happy birthday! Hope you love your gift."}
+      ]}
+    {% endcapture %}
+    {% assign current_order = sample | parse_json %}
+  {% endif %}
+  {% if current_order == nil %}{% error "Could not read the order. No gift email was queued." %}{% break %}{% endif %}
+  {% if current_order.cancelledAt != nil or current_order.displayFulfillmentStatus != "FULFILLED" %}
+    {% log "The order is cancelled or not completely fulfilled. No gift email was queued." %}{% break %}
+  {% endif %}
+  {% if current_order.giftDelivery != nil %}
+    {% log "A gift email has already been claimed or sent for this order and form. Inspect the original email action if delivery needs attention.", gift_delivery: current_order.giftDelivery.value %}{% break %}
+  {% endif %}
+  {% assign answers = hash %}
+  {% for attribute in current_order.customAttributes %}{% assign answers[attribute.key] = attribute.value %}{% endfor %}
+  {% assign email_key = prefix | append: options.recipient_email_field_key__required %}
+  {% assign name_key = prefix | append: options.recipient_name_field_key__required %}
+  {% assign sender_key = prefix | append: options.sender_name_field_key__required %}
+  {% assign message_key = prefix | append: options.gift_message_field_key__required %}
+  {% assign recipient = answers[email_key] | strip %}
+  {% assign recipient_name = answers[name_key] | strip %}
+  {% assign sender_name = answers[sender_key] | strip %}
+  {% assign gift_message = answers[message_key] | strip %}
+  {% if recipient == blank and gift_message == blank %}
+    {% log "This order has no saved gift message for the selected form." %}{% break %}
+  {% endif %}
+  {% assign valid_email = recipient | match: '\A[A-Za-z0-9.!#$%&\x27*+\-/=?^_`{|}~]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+\z' %}
+  {% unless valid_email and recipient.size <= 254 and recipient_name != blank and recipient_name.size <= 200 and sender_name != blank and sender_name.size <= 200 and gift_message != blank and gift_message.size <= 4000 %}
+    {% error "Saved gift details are incomplete or invalid. Check the selected form, field keys, recipient address, names (up to 200 characters), and message (up to 4000 characters). No email was queued." %}{% break %}
+  {% endunless %}
+  {% assign subject = options.email_subject__required | replace: "SENDER_NAME", sender_name | replace: "RECIPIENT_NAME", recipient_name | replace: "SHOP_NAME", shop.name | strip_newlines | truncate: 200, "" %}
+  {% assign body = options.email_body__multiline_required | replace: "SENDER_NAME", sender_name | replace: "RECIPIENT_NAME", recipient_name | replace: "SHOP_NAME", shop.name | replace: "GIFT_MESSAGE", gift_message | escape | newline_to_br %}
+  {% assign email_options = hash %}
+  {% assign email_options["to"] = recipient %}
+  {% assign email_options["subject"] = subject %}
+  {% assign email_options["body"] = body %}
+  {% assign email_options["from_display_name"] = shop.name %}
+  {% assign email_options["reply_to"] = shop.customer_email %}
+  {% assign marker = hash %}
+  {% assign marker["status"] = "pending" %}
+  {% assign marker["event_id"] = event.id %}
+  {% assign meta = hash %}
+  {% assign meta["stage"] = "claim_gift_email" %}
+  {% assign meta["order_id"] = current_order.id %}
+  {% assign meta["marker_key"] = marker_key %}
+  {% assign meta["marker"] = marker %}
+  {% assign meta["email_options"] = email_options %}
+  {% action "shopify", __meta: meta %}
+    mutation {
+      metafieldsSet(metafields: [{
+        ownerId: {{ current_order.id | json }}, namespace: "mechanic_gifts", key: {{ marker_key | json }},
+        type: "json", value: {{ marker | json | json }}, compareDigest: null
+      }]) {
+        metafields { id compareDigest }
+        userErrors { field message code }
+      }
+    }
+  {% endaction %}
+{% elsif event.topic == "mechanic/actions/perform" %}
+  {% if event.preview %}
+    {% assign stage = action.meta.stage | default: "claim_gift_email" %}
+    {% capture sample %}
+      {"type":{% if stage == "send_gift_email" %}"email"{% else %}"shopify"{% endif %},
+       "meta":{"stage":{{ stage | json }},"order_id":"gid://shopify/Order/1234567890","marker_key":"gift_11111111111141118111111111111111","marker":{"status":"pending","event_id":"preview"},"digest":"preview-digest","email_options":{"to":"recipient@example.com","subject":"A gift for you from Alex","body":"Happy birthday!","from_display_name":{{ shop.name | json }},"reply_to":{{ shop.customer_email | json }}}},
+       "run":{"ok":true,"result":{"data":{"metafieldsSet":{"metafields":[{"id":"gid://shopify/Metafield/1234567890","compareDigest":"preview-digest"}],"userErrors":[]}}}}}
+    {% endcapture %}
+    {% assign action = sample | parse_json %}
+  {% endif %}
+  {% if action.meta.stage == "claim_gift_email" and action.type == "shopify" %}
+    {% unless action.run.ok %}
+      {% log "Gift email was not queued because the order claim did not succeed. Another event may already have claimed it; inspect the Shopify action before retrying." %}{% break %}
+    {% endunless %}
+    {% assign claimed = action.run.result.data.metafieldsSet.metafields.first %}
+    {% if claimed.id == blank or claimed.compareDigest == blank %}
+      {% error "Shopify did not return the gift email claim. No email was queued." %}{% break %}
+    {% endif %}
+    {% assign meta = action.meta %}
+    {% assign meta["stage"] = "send_gift_email" %}
+    {% assign meta["digest"] = claimed.compareDigest %}
+    {% action "email", __meta: meta %}
+      {{ action.meta.email_options | json }}
+    {% endaction %}
+  {% elsif action.meta.stage == "send_gift_email" and action.type == "email" %}
+    {% unless action.run.ok %}
+      {% error "The gift email action failed. The order claim is being kept to prevent automatic repeat emails. Inspect the email action and confirm whether it was delivered before retrying it." %}{% break %}
+    {% endunless %}
+    {% assign marker = action.meta.marker %}
+    {% assign marker["status"] = "sent" %}
+    {% assign marker["sent_at"] = "now" | date: "%FT%TZ", tz: "UTC" %}
+    {% action "shopify", __perform_event: false %}
+      mutation {
+        metafieldsSet(metafields: [{
+          ownerId: {{ action.meta.order_id | json }}, namespace: "mechanic_gifts", key: {{ action.meta.marker_key | json }},
+          type: "json", value: {{ marker | json | json }}, compareDigest: {{ action.meta.digest | json }}
+        }]) {
+          metafields { id }
+          userErrors { field message code }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+{% endif %}

@@ -1,6 +1,6 @@
 # Email Mechanic form submissions
 
-Tags: Custom Webhook, Email
+Tags: Custom Webhook, Email, Storefront Forms
 
 Email the answers from a Mechanic form submission to your team, optionally including uploaded files as attachments.
 
