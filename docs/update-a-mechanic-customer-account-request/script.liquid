@@ -1,0 +1,61 @@
+{% comment %}
+Option order:
+{{ options.form__customeraccountform_required }}
+{{ options.send_customer_email__boolean }}
+{{ options.status__userform_required }}
+{{ options.customer_message__multiline_userform }}
+{% endcomment %}
+{% if event.topic == "mechanic/actions/perform" %}
+  {% if event.preview and options.send_customer_email__boolean %}
+    {% capture preview_action %}{"type":"shopify","meta":{"stage":"update_request","email":"customer@example.com","status":"In progress","message":"Our team is reviewing your request."},"run":{"ok":true,"result":{"data":{"metafieldsSet":{"metafields":[{"id":"gid://shopify/Metafield/123"}],"userErrors":[]}}}}}{% endcapture %}
+    {% assign action = preview_action | parse_json %}
+  {% endif %}
+  {% if action.type != "shopify" or action.meta.stage != "update_request" %}{% break %}{% endif %}
+  {% unless action.run.ok %}{% log "The status update failed; no customer email was sent." %}{% break %}{% endunless %}
+  {% if action.run.result.errors != blank or action.run.result.data.metafieldsSet.userErrors != blank %}{% error "Shopify did not confirm the status update. No customer email was sent." %}{% break %}{% endif %}
+  {% unless action.run.result.data.metafieldsSet.metafields.first.id %}{% error "Shopify did not return the saved status. No customer email was sent." %}{% break %}{% endunless %}
+  {% if action.meta.email != blank %}
+    {% capture body %}<p>Your account request has been updated. Sign in to your customer account to view it.</p><p><strong>{{ action.meta.status | escape }}</strong></p>{% if action.meta.message != blank %}<p>{{ action.meta.message | escape | newline_to_br }}</p>{% endif %}{% endcapture %}
+    {% action "email", __perform_event: false %}{"to":{{ action.meta.email | json }},"subject":"An update on your request","body":{{ body | strip | json }}}{% endaction %}
+  {% endif %}
+  {% break %}
+{% endif %}
+{% assign form_id = options.form__customeraccountform_required %}
+{% if event.preview and form_id == blank %}{% assign form_id = "dcdbe314-23fa-4afd-875b-9d52c6bd7110" %}{% endif %}
+{% assign valid_form = form_id | match: '\A[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\z' %}
+{% unless valid_form %}{% error "Choose a Customer accounts request in the task's Form option." %}{% break %}{% endunless %}
+{% assign status_key = form_id | remove: "-" | prepend: "extension_" %}
+{% assign customer_id = customer.admin_graphql_api_id %}
+{% assign new_status = input.status | strip %}
+{% assign message = input.customer_message | strip %}
+{% if event.preview %}{% assign customer_id = "gid://shopify/Customer/1234567890" %}{% assign new_status = "In progress" %}{% assign message = "Our team is reviewing your request." %}{% endif %}
+{% assign valid_customer = customer_id | match: '\Agid://shopify/Customer/[1-9][0-9]*\z' %}
+{% unless valid_customer %}{% error "Run this task from one customer in Shopify." %}{% break %}{% endunless %}
+{% if new_status == blank or new_status.size > 200 or message.size > 2000 %}{% error "Enter a status from 1–200 characters and a customer message up to 2000 characters." %}{% break %}{% endif %}
+{% capture query %}query { metafieldDefinitions(first: 1, ownerType: CUSTOMER, namespace: "mechanic_customer_accounts", key: {{ status_key | json }}) { nodes { type { name } access { storefront customerAccount } } } customer(id: {{ customer_id | json }}) { id {% if options.send_customer_email__boolean %}defaultEmailAddress { emailAddress }{% endif %} metafield(namespace: "mechanic_customer_accounts", key: {{ status_key | json }}) { type jsonValue compareDigest } } }{% endcapture %}
+{% assign result = query | shopify %}
+{% unless event.preview %}
+  {% assign definition = result.data.metafieldDefinitions.nodes.first %}
+  {% unless definition.type.name == "json" and definition.access.storefront == "NONE" and definition.access.customerAccount == "NONE" %}{% error "Set up this extension’s JSON metafield with no Storefront or Customer Account API access before saving customer data. Run the setup task from Mechanic, then retry." %}{% break %}{% endunless %}
+{% endunless %}
+{% if event.preview %}{% capture preview %}{"data":{"customer":{"id":{{ customer_id | json }},"defaultEmailAddress":{"emailAddress":"customer@example.com"},"metafield":{"type":"json","compareDigest":"preview-digest","jsonValue":{"extension_id":{{ form_id | json }},"request_id":"a807b3c1-bbae-423d-99f8-8e6d5f0bdaf5","customer_id":{{ customer_id | json }},"status":"Received","fields":{"issue":"Could you help with a repair?"}}}}}}{% endcapture %}{% assign result = preview | parse_json %}{% endif %}
+{% if result.errors != blank %}{% error result.errors %}{% break %}{% endif %}
+{% assign metafield = result.data.customer.metafield %}
+{% assign value = metafield.jsonValue %}
+{% unless metafield.type == "json" and value.extension_id == form_id and value.request_id != blank and value.customer_id == customer_id %}{% error "This customer has no saved request for the selected form. Save a request before updating its status." %}{% break %}{% endunless %}
+{% assign meta = hash %}
+{% assign meta["stage"] = "update_request" %}
+{% if options.send_customer_email__boolean %}
+  {% assign customer = result.data.customer %}
+  {% unless customer.id == value.customer_id and customer.defaultEmailAddress.emailAddress != blank %}{% error "The customer must have a current email address in Shopify. Nothing was updated; turn off customer email to update the status without sending." %}{% break %}{% endunless %}
+  {% assign meta["email"] = customer.defaultEmailAddress.emailAddress %}
+  {% assign meta["status"] = new_status %}
+  {% assign meta["message"] = message %}
+{% endif %}
+{% assign value["status"] = new_status %}
+{% assign value["message"] = message %}
+{% assign value["updated_at"] = "now" | date: "%Y-%m-%dT%H:%M:%SZ" %}
+{% assign value_json = value | json %}
+{% assign encoded_size = value_json | base64 | size %}
+{% if encoded_size > 120000 %}{% error "The account request is too large to store." %}{% break %}{% endif %}
+{% action "shopify", __meta: meta %}mutation { metafieldsSet(metafields: [{ownerId: {{ customer_id | json }}, namespace: "mechanic_customer_accounts", key: {{ status_key | json }}, type: "json", value: {{ value_json | json }}, compareDigest: {{ metafield.compareDigest | json }} }]) { metafields { id } userErrors { field message code } } }{% endaction %}

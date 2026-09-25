@@ -1,0 +1,95 @@
+{% comment %}
+Option order:
+{{ options.webhook_event_topic__required }}
+{{ options.form__customeraccountform_required }}
+{{ options.initial_status__required }}
+{{ options.initial_message__multiline }}
+{{ options.notify_team__boolean }}
+{{ options.team_email_recipients__email_array }}
+{% endcomment %}
+{% if event.topic == "mechanic/actions/perform" %}
+  {% if event.preview and options.notify_team__boolean %}
+    {% capture preview_action %}{"type":"shopify","meta":{"stage":"save_account_request","recipients":{{ options.team_email_recipients__email_array | json }},"title":"Service request","request_id":"a807b3c1-bbae-423d-99f8-8e6d5f0bdaf5","customer_id":"gid://shopify/Customer/1234567890","fields":{"issue":"Could you help with a repair?"}},"run":{"ok":true,"result":{"data":{"metafieldsSet":{"metafields":[{"id":"gid://shopify/Metafield/123"}],"userErrors":[]}}}}}{% endcapture %}
+    {% assign action = preview_action | parse_json %}
+  {% endif %}
+  {% if action.type != "shopify" or action.meta.stage != "save_account_request" %}{% break %}{% endif %}
+  {% unless action.run.ok and action.run.result.data.metafieldsSet.metafields.first.id %}{% log "The request was not saved; no team email was sent." %}{% break %}{% endunless %}
+  {% if action.run.result.errors != blank or action.run.result.data.metafieldsSet.userErrors != blank %}{% error "Shopify did not confirm the saved request. No team email was sent." %}{% break %}{% endif %}
+  {% if action.meta.recipients != blank %}
+    {% capture body %}<h2>{{ action.meta.title | escape }}</h2><p>Customer: {{ action.meta.customer_id | escape }}</p><p>Request: {{ action.meta.request_id | escape }}</p>{% for answer in action.meta.fields %}<p><strong>{{ answer[0] | escape }}</strong>: {{ answer[1] | json | escape }}</p>{% endfor %}{% endcapture %}
+    {% action "email", __perform_event: false %}{"to":{{ action.meta.recipients | json }},"subject":{{ "New customer request: " | append: action.meta.title | json }},"body":{{ body | json }}}{% endaction %}
+  {% endif %}
+  {% break %}
+{% endif %}
+{% assign form_id = options.form__customeraccountform_required %}
+{% if event.preview and form_id == blank %}{% assign form_id = "dcdbe314-23fa-4afd-875b-9d52c6bd7110" %}{% endif %}
+{% assign valid_form = form_id | match: '\A[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\z' %}
+{% unless valid_form %}{% error "Choose a Customer accounts form in the task's Form option." %}{% break %}{% endunless %}
+{% assign status_key = form_id | remove: "-" | prepend: "extension_" %}
+{% if event.topic == "mechanic/user/trigger" %}
+  {% capture query %}query { metafieldDefinitions(first: 1, ownerType: CUSTOMER, namespace: "mechanic_customer_accounts", key: {{ status_key | json }}) { nodes { id type { name } access { storefront customerAccount } } } }{% endcapture %}
+  {% assign result = query | shopify %}
+  {% if result.errors != blank %}{% error result.errors %}{% break %}{% endif %}
+  {% assign definition = result.data.metafieldDefinitions.nodes.first %}
+  {% if definition %}
+    {% if definition.type.name != "json" or definition.access.storefront != "NONE" or definition.access.customerAccount != "NONE" %}{% error "This customer account request metafield must use JSON with no Storefront or Customer Account API access. Resolve that definition before using this task." %}{% else %}{% log "The customer account request definition is ready." %}{% endif %}
+  {% else %}
+    {% action "shopify" %}mutation { metafieldDefinitionCreate(definition: { name: "Mechanic customer account request", namespace: "mechanic_customer_accounts", key: {{ status_key | json }}, type: "json", ownerType: CUSTOMER, access: {storefront: NONE, customerAccount: NONE} }) { createdDefinition { id } userErrors { field message code } } }{% endaction %}
+  {% endif %}
+  {% break %}
+{% endif %}
+{% assign request = event.customer_account_request %}
+{% if event.preview %}
+  {% capture preview %}{"version":1,"request_id":"a807b3c1-bbae-423d-99f8-8e6d5f0bdaf5","issued_at":{{ "now" | date: "%s" | plus: 0 }},"extension":{"id":{{ form_id | json }},"title":"Order assistance","revision":1},"customer":{"id":"gid://shopify/Customer/1234567890"},"fields":{"request_type":"Service request","details":"Could you help me with my order?"}}{% endcapture %}
+  {% assign request = preview | parse_json %}
+{% endif %}
+{% unless request %}{% log "No verified Customer accounts request was supplied. Nothing was changed or sent." %}{% break %}{% endunless %}
+{% if request.extension.id != form_id %}{% break %}{% endif %}
+{% capture query %}query { metafieldDefinitions(first: 1, ownerType: CUSTOMER, namespace: "mechanic_customer_accounts", key: {{ status_key | json }}) { nodes { type { name } access { storefront customerAccount } } } customer(id: {{ request.customer.id | json }}) { id metafield(namespace: "mechanic_customer_accounts", key: {{ status_key | json }}) { type jsonValue compareDigest } } }{% endcapture %}
+{% assign result = query | shopify %}
+{% unless event.preview %}
+  {% assign definition = result.data.metafieldDefinitions.nodes.first %}
+  {% unless definition.type.name == "json" and definition.access.storefront == "NONE" and definition.access.customerAccount == "NONE" %}{% error "Set up this extension’s JSON metafield with no Storefront or Customer Account API access before saving customer data. Run the setup task from Mechanic, then retry." %}{% break %}{% endunless %}
+{% endunless %}
+{% if event.preview %}{% capture preview %}{"data":{"customer":{"id":{{ request.customer.id | json }},"metafield":null}}}{% endcapture %}{% assign result = preview | parse_json %}{% endif %}
+{% if result.errors != blank %}{% error result.errors %}{% break %}{% endif %}
+{% assign current_customer = result.data.customer %}
+{% unless current_customer.id == request.customer.id %}{% error "This customer is no longer accessible. No request was saved." %}{% break %}{% endunless %}
+{% assign metafield = current_customer.metafield %}
+{% if metafield and metafield.type != "json" %}{% error "The customer account request metafield must be JSON." %}{% break %}{% endif %}
+{% assign previous = metafield.jsonValue %}
+{% if previous and previous.extension_id != form_id %}{% error "The saved request belongs to a different form. Nothing was overwritten." %}{% break %}{% endif %}
+{% if previous.request_id == request.request_id %}{% log "This request was already saved; its current status was preserved." %}{% break %}{% endif %}
+{% if previous.issued_at >= request.issued_at %}{% log "A request at least this recent is already saved. Nothing was overwritten." %}{% break %}{% endif %}
+{% if previous %}
+  {% assign repeat_requests = request.repeat_requests | default: "after_resolution" %}
+  {% if repeat_requests == "never" %}{% log "This form allows one request per customer. The saved request was preserved." %}{% break %}{% endif %}
+  {% if repeat_requests != "always" and previous.status != "Resolved" and previous.status != "Declined" %}{% log "The previous request is still open. Resolve or decline it before accepting another." %}{% break %}{% endif %}
+{% endif %}
+{% assign initial_status = options.initial_status__required | strip %}
+{% assign initial_message = options.initial_message__multiline | strip %}
+{% if initial_status == blank or initial_status.size > 200 or initial_message.size > 2000 %}{% error "Use a status from 1–200 characters and a customer message up to 2000 characters." %}{% break %}{% endif %}
+{% assign value = hash %}
+{% assign value["extension_id"] = form_id %}
+{% assign value["request_id"] = request.request_id %}
+{% assign value["customer_id"] = request.customer.id %}
+{% assign value["issued_at"] = request.issued_at %}
+{% assign value["fields"] = request.fields %}
+{% assign value["status"] = initial_status %}
+{% assign value["message"] = initial_message %}
+{% assign value["updated_at"] = "now" | date: "%Y-%m-%dT%H:%M:%SZ" %}
+{% assign customer_id = request.customer.id %}
+{% assign value_json = value | json %}
+{% assign encoded_size = value_json | base64 | size %}
+{% if encoded_size > 120000 %}{% error "The customer account request is too large to store." %}{% break %}{% endif %}
+{% assign meta = hash %}
+{% assign meta["stage"] = "save_account_request" %}
+{% if options.notify_team__boolean %}
+  {% if options.team_email_recipients__email_array == blank %}{% error "Choose team email recipients or turn off team notifications." %}{% break %}{% endif %}
+  {% assign meta["recipients"] = options.team_email_recipients__email_array %}
+  {% assign meta["title"] = request.extension.title %}
+  {% assign meta["request_id"] = request.request_id %}
+  {% assign meta["customer_id"] = request.customer.id %}
+  {% assign meta["fields"] = request.fields %}
+{% endif %}
+{% action "shopify", __meta: meta %}mutation { metafieldsSet(metafields: [{ownerId: {{ customer_id | json }}, namespace: "mechanic_customer_accounts", key: {{ status_key | json }}, type: "json", value: {{ value_json | json }}, compareDigest: {{ metafield.compareDigest | json }} }]) { metafields { id } userErrors { field message code } } }{% endaction %}

@@ -1,0 +1,65 @@
+{% comment %}
+{{ options.card__customeraccountcard_required }}
+{{ options.membership_tag__required }}
+{{ options.active_status__required }}
+{{ options.active_message__multiline }}
+{{ options.inactive_status__required }}
+{{ options.inactive_message__multiline }}
+{% endcomment %}
+{% if event.topic == "mechanic/actions/perform" %}{% break %}{% endif %}
+{% assign form_id = options.card__customeraccountcard_required %}
+{% if event.preview and form_id == blank %}{% assign form_id = "dcdbe314-23fa-4afd-875b-9d52c6bd7110" %}{% endif %}
+{% assign valid_form = form_id | match: '\A[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\z' %}
+{% unless valid_form %}{% error "Choose a Customer accounts information card." %}{% break %}{% endunless %}
+{% assign status_key = form_id | remove: "-" | prepend: "extension_" %}
+{% if event.topic == "mechanic/user/trigger" %}
+  {% capture query %}query { metafieldDefinitions(first: 1, ownerType: CUSTOMER, namespace: "mechanic_customer_accounts", key: {{ status_key | json }}) { nodes { id type { name } access { storefront customerAccount } } } }{% endcapture %}
+  {% assign result = query | shopify %}
+  {% if result.errors != blank %}{% error result.errors %}{% break %}{% endif %}
+  {% assign definition = result.data.metafieldDefinitions.nodes.first %}
+  {% if definition %}
+    {% if definition.type.name != "json" or definition.access.storefront != "NONE" or definition.access.customerAccount != "NONE" %}{% error "This customer account information metafield must use JSON with no Storefront or Customer Account API access. Resolve that definition before using this task." %}{% else %}{% log "The customer account information definition is ready." %}{% endif %}
+  {% else %}
+    {% action "shopify" %}mutation { metafieldDefinitionCreate(definition: { name: "Mechanic customer account information", namespace: "mechanic_customer_accounts", key: {{ status_key | json }}, type: "json", ownerType: CUSTOMER, access: {storefront: NONE, customerAccount: NONE} }) { createdDefinition { id } userErrors { field message code } } }{% endaction %}
+  {% endif %}
+  {% break %}
+{% endif %}
+{% assign customer_id = customer.admin_graphql_api_id %}
+{% if event.preview %}{% assign customer_id = "gid://shopify/Customer/1234567890" %}{% endif %}
+{% assign valid_customer = customer_id | match: '\Agid://shopify/Customer/[1-9][0-9]*\z' %}
+{% unless valid_customer %}{% log "No customer was supplied." %}{% break %}{% endunless %}
+{% capture query %}query { metafieldDefinitions(first: 1, ownerType: CUSTOMER, namespace: "mechanic_customer_accounts", key: {{ status_key | json }}) { nodes { type { name } access { storefront customerAccount } } } customer(id: {{ customer_id | json }}) { id tags metafield(namespace: "mechanic_customer_accounts", key: {{ status_key | json }}) { type jsonValue compareDigest } } }{% endcapture %}
+{% assign result = query | shopify %}
+{% unless event.preview %}
+  {% assign definition = result.data.metafieldDefinitions.nodes.first %}
+  {% unless definition.type.name == "json" and definition.access.storefront == "NONE" and definition.access.customerAccount == "NONE" %}{% error "Set up this extension’s JSON metafield with no Storefront or Customer Account API access before saving customer data. Run the setup task from Mechanic, then retry." %}{% break %}{% endunless %}
+{% endunless %}
+{% if event.preview %}{% capture preview %}{"data":{"customer":{"id":{{ customer_id | json }},"tags":[{{ options.membership_tag__required | json }}],"metafield":null}}}{% endcapture %}{% assign result = preview | parse_json %}{% endif %}
+{% if result.errors != blank %}{% error result.errors %}{% break %}{% endif %}
+{% assign current_customer = result.data.customer %}
+{% unless current_customer.id == customer_id %}{% log "The customer is no longer available." %}{% break %}{% endunless %}
+{% assign metafield = current_customer.metafield %}
+{% if metafield and metafield.type != "json" %}{% error "The information metafield must be JSON." %}{% break %}{% endif %}
+{% assign previous = metafield.jsonValue %}
+{% if previous.request_id != blank or previous.fields != nil %}{% error "This metafield contains a customer request. Select an information card instead; nothing was overwritten." %}{% break %}{% endif %}
+{% if previous and previous.extension_id != form_id %}{% error "The saved information belongs to a different extension. Nothing was overwritten." %}{% break %}{% endif %}
+{% assign wanted_tag = options.membership_tag__required | strip | downcase %}
+{% assign member = false %}
+{% for tag in current_customer.tags %}{% assign normalized_tag = tag | downcase %}{% if normalized_tag == wanted_tag %}{% assign member = true %}{% endif %}{% endfor %}
+{% if member %}
+  {% assign status = options.active_status__required | strip %}
+  {% assign message = options.active_message__multiline | strip %}
+{% else %}
+  {% assign status = options.inactive_status__required | strip %}
+  {% assign message = options.inactive_message__multiline | strip %}
+{% endif %}
+{% if status == blank or status.size > 200 or message.size > 2000 %}{% error "Use a status from 1–200 characters and a message up to 2000 characters." %}{% break %}{% endif %}
+{% if previous.customer_id == customer_id and previous.status == status and previous.message == message %}{% log "Membership information is already current." %}{% break %}{% endif %}
+{% assign value = hash %}
+{% assign value["extension_id"] = form_id %}
+{% assign value["customer_id"] = customer_id %}
+{% assign value["status"] = status %}
+{% assign value["message"] = message %}
+{% assign value["updated_at"] = "now" | date: "%Y-%m-%dT%H:%M:%SZ" %}
+{% assign value_json = value | json %}
+{% action "shopify", __perform_event: false %}mutation { metafieldsSet(metafields: [{ownerId: {{ customer_id | json }}, namespace: "mechanic_customer_accounts", key: {{ status_key | json }}, type: "json", value: {{ value_json | json }}, compareDigest: {{ metafield.compareDigest | json }} }]) { metafields { id } userErrors { field message code } } }{% endaction %}
