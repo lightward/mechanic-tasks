@@ -1,0 +1,184 @@
+{
+  "kind": "mechanic_recipe",
+  "version": 1,
+  "name": "Create a draft order from a storefront form",
+  "description": "Let customers send their cart with a storefront form. Mechanic connects the form and webhook to a task that creates a draft order for your team to review. Place the form on your cart page. This does not send an invoice or reproduce checkout pricing.",
+  "resources": [
+    {
+      "key": "submissions",
+      "type": "webhook",
+      "config": {
+        "name": "Cart form submissions"
+      }
+    },
+    {
+      "key": "form",
+      "type": "form",
+      "config": {
+        "version": 2,
+        "name": "Request a quote from your cart",
+        "title": "Request a quote from your cart",
+        "description": "Send us your current cart and tell us what you need. We’ll review your request and get back to you.",
+        "submitLabel": "Request a quote",
+        "confirmation": "Thanks! We received your quote request. We’ll review your cart and get back to you.",
+        "steps": [
+          {
+            "id": "requirements",
+            "title": "What you need"
+          },
+          {
+            "id": "contact",
+            "title": "Your details"
+          }
+        ],
+        "fields": [
+          {
+            "id": "requirements",
+            "type": "textarea",
+            "key": "requirements",
+            "label": "Anything else we should know?",
+            "helpText": "Optional. Tell us about your project, delivery needs, or other requirements.",
+            "placeholder": "",
+            "required": false,
+            "choices": [],
+            "stepId": "requirements"
+          },
+          {
+            "id": "attachment",
+            "type": "file",
+            "key": "attachment",
+            "label": "Reference file",
+            "helpText": "Optional. Add a drawing, photo, or specification.",
+            "placeholder": "",
+            "required": false,
+            "choices": [],
+            "stepId": "requirements",
+            "acceptedExtensions": ".jpg, .jpeg, .png, .pdf",
+            "maxFileSizeMb": 3
+          },
+          {
+            "id": "name",
+            "type": "text",
+            "key": "name",
+            "label": "Your name",
+            "helpText": "",
+            "placeholder": "",
+            "required": true,
+            "choices": [],
+            "stepId": "contact"
+          },
+          {
+            "id": "email",
+            "type": "email",
+            "key": "email",
+            "label": "Email address",
+            "helpText": "",
+            "placeholder": "",
+            "required": true,
+            "choices": [],
+            "stepId": "contact"
+          },
+          {
+            "id": "phone",
+            "type": "tel",
+            "key": "phone",
+            "label": "Phone number",
+            "helpText": "Optional. Include this if you would prefer a call.",
+            "placeholder": "",
+            "required": false,
+            "choices": [],
+            "stepId": "contact"
+          },
+          {
+            "id": "needed_by",
+            "type": "date",
+            "key": "needed_by",
+            "label": "When do you need it?",
+            "helpText": "Optional. Share your preferred date.",
+            "placeholder": "",
+            "required": false,
+            "choices": [],
+            "stepId": "contact"
+          }
+        ],
+        "visibility": {
+          "enabled": true,
+          "match": "all",
+          "rules": [
+            {
+              "type": "cart_quantity",
+              "operator": "at_least",
+              "value": 1
+            }
+          ]
+        },
+        "captureCart": true,
+        "presentation": {
+          "mode": "button",
+          "buttonLabel": "Request a quote"
+        }
+      }
+    },
+    {
+      "key": "draft_order",
+      "type": "task",
+      "task_slug": "create-a-draft-order-from-a-storefront-form",
+      "config": {
+        "docs": "Create a Shopify draft order from the cart submitted with a Mechanic storefront form. Signed-in customers are linked to their verified Shopify customer account. Shopify supplies current variant prices; review the draft before sending an invoice.\n\n### Set up a storefront form\n\n1. In **Storefront forms**, use **Request a quote from your cart**. The template includes the current cart when submitted and opens from a button. Keep the email field, or set this task’s **Email field key** to your field’s key.\n2. Create a custom webhook and select it in the form’s **Submission settings**, then save and publish the form.\n3. Enter that webhook’s event topic in this task and choose the published form in **Form**. Save and enable the task, completing Mechanic’s normal permission update if requested.\n4. Use **Add to cart page** on the form’s Theme tab. In the theme editor, choose the form in the Mechanic form block. The cart page must support app blocks or an Apps section; cart drawers require separate customization.\n\nShopify signs the customer context when rendering the form, and this task verifies it before linking the customer. Form submissions use the ordinary webhook. Guests supply their contact email; entering an email is not verification of a customer account.\n\nThe form acknowledges that the request was received. Draft order creation happens asynchronously; the task does not send an invoice or change/clear the cart. Notes include the form answers and uploaded file names, not the file contents. Use the email or Google Sheets/Drive task on the same webhook if you also want those files.\n\nSupports 1–100 ordinary variant lines, quantities, and line item properties. Subscription and bundle items are rejected for separate review. Cart discounts, shipping rates, and displayed prices are not copied. Submitted cart data is visitor input, not proof of a previous purchase. An explicit retry after an uncertain response can create another draft order.\n\nForm signing is configured automatically when you publish. A stale page refreshes its signed customer context through Shopify. If the task cannot verify that context, it stops without creating a draft order; it does not silently switch a signed-in customer to a guest.",
+        "halt_action_run_sequence_on_error": false,
+        "name": "Create a draft order from a storefront form",
+        "online_store_javascript": null,
+        "options": {
+          "mechanic_webhook_event_topic__required": null,
+          "form__storefrontform_required": "",
+          "email_field_key": "email"
+        },
+        "order_status_javascript": null,
+        "perform_action_runs_in_sequence": false,
+        "script": "{% comment %}\n  {{ options.mechanic_webhook_event_topic__required }}\n  {{ options.form__storefrontform_required }}\n  {{ options.email_field_key }}\n{% endcomment %}\n{% if event.topic != options.mechanic_webhook_event_topic__required %}{% break %}{% endif %}\n{% assign payload = event.data %}\n{% if payload.body != nil %}{% assign payload = payload.body %}{% endif %}\n{% if event.preview %}\n  {% capture sample %}{\"form\":{\"id\":{{ options.form__storefrontform_required | default: \"11111111-1111-4111-8111-111111111111\" | json }},\"revision\":\"1\"},\"submission_id\":\"22222222-2222-4222-8222-222222222222\",\"cart\":\"{\\\"items\\\":[{\\\"variant_id\\\":\\\"1234567890\\\",\\\"quantity\\\":2,\\\"properties\\\":{\\\"Engraving\\\":\\\"Welcome\\\"}}]}\",\"fields\":{\"name\":\"Pat Example\",\"email\":\"pat@example.com\",\"requirements\":\"Please quote for the items in my cart.\"}}{% endcapture %}\n  {% assign payload = sample | parse_json %}\n{% endif %}\n{% assign customer_id = nil %}\n{% assign draft = hash %}\n{% assign cart = payload.cart %}\n{% unless payload.form %}\n  {% error \"Expected a storefront form submission. Connect a published cart form to this task.\" %}{% break %}\n{% endunless %}\n{% if options.form__storefrontform_required == blank and event.preview != true %}\n  {% error \"Choose the published cart form in this task's Form option.\" %}{% break %}\n{% endif %}\n{% if options.form__storefrontform_required != blank and options.form__storefrontform_required != payload.form.id %}\n  {% log \"This submission belongs to another form; no draft order was created.\" %}{% break %}\n{% endif %}\n{% if event.preview %}\n  {% assign customer = hash %}\n  {% assign customer[\"id\"] = \"1234567890\" %}\n{% else %}\n  {% assign customer = event.storefront_form_customer %}\n{% endif %}\n{% unless customer %}{% assign invalid = true %}{% error \"The form customer context could not be verified. Check that this is a cart form and Mechanic supports customer verification.\" %}{% break %}{% endunless %}\n{% assign customer_id = customer.id %}\n{% assign cart_type = cart | json | slice: 0, 1 %}\n{% if cart_type != '\"' or cart.size > 65536 %}{% assign invalid = true %}{% error \"Expected the form's cart JSON, no larger than 64 KB. Enable cart contents in Submission settings.\" %}{% break %}{% endif %}\n{% assign cart = cart | parse_json %}\n{% assign fields = payload.fields | default: hash %}\n{% assign field_keys = fields | keys %}\n{% unless field_keys %}{% assign invalid = true %}{% error \"Expected form answers.\" %}{% break %}{% endunless %}\n{% if field_keys.size > 50 %}{% assign invalid = true %}{% error \"Too many form answers.\" %}{% break %}{% endif %}\n{% if customer_id == nil and options.email_field_key == blank %}\n  {% error \"Set Email field key so guest cart submissions include a contact email.\" %}{% break %}\n{% endif %}\n{% if options.email_field_key != blank %}\n  {% assign email = fields[options.email_field_key] %}\n  {% assign email_type = email | json | slice: 0, 1 %}\n  {% assign valid_email = email | append: \"\" | match: '\\A[^\\s@<>,;:]+@[^\\s@<>,;:]+\\.[^\\s@<>,;:]+\\z' %}\n  {% if email != blank %}\n    {% if email_type != '\"' or email.size > 254 or valid_email == nil %}{% assign invalid = true %}{% error \"The submitted contact email is invalid.\" %}{% break %}{% endif %}\n    {% assign draft[\"email\"] = email %}\n  {% elsif customer_id == nil %}\n    {% assign invalid = true %}{% error \"A guest cart submission needs a contact email.\" %}{% break %}\n  {% endif %}\n{% endif %}\n{% capture note %}Storefront cart submission\nForm: {{ payload.form.id }}\nSubmission: {{ payload.submission_id }}\n{% for field in fields %}{% assign type = field[1] | json | slice: 0, 1 %}{% if type == '\"' %}{{ field[0] }}: {{ field[1] }}\n{% elsif field[1].content_base64 != nil %}{{ field[0] }}: {{ field[1].name }} (file details only; use the email or Drive task for the file)\n{% else %}{{ field[0] }}: {{ field[1] | json }}\n{% endif %}{% endfor %}{% endcapture %}\n{% if note.size > 10000 %}{% assign invalid = true %}{% error \"The cart submission notes exceed 10,000 characters.\" %}{% break %}{% endif %}\n{% assign draft[\"note\"] = note | strip %}\n\n{% assign items_type = cart.items | json | slice: 0, 1 %}\n{% if items_type != '[' or cart.items.size == 0 or cart.items.size > 100 %}{% assign invalid = true %}{% error \"Expected a cart containing between 1 and 100 line items.\" %}{% break %}{% endif %}\n{% assign line_items = array %}\n{% for item in cart.items %}\n  {% assign variant_id = item.variant_id | append: \"\" %}\n  {% assign quantity = item.quantity | append: \"\" %}\n  {% assign valid_variant = variant_id | match: '\\A[1-9][0-9]{0,19}\\z' %}\n  {% assign valid_quantity = quantity | match: '\\A[1-9][0-9]{0,5}\\z' %}\n  {% unless valid_variant and valid_quantity %}{% assign invalid = true %}{% error \"A cart item has an invalid variant or quantity.\" %}{% break %}{% endunless %}\n  {% if item.selling_plan_id != blank or item.selling_plan_allocation != blank or item.has_components == true or item.item_components != blank or item.parent_relationship != blank or item.requires_components == true %}\n    {% assign invalid = true %}{% error \"This task supports ordinary product variants. Subscription and bundle items need a separate review; no draft order was created.\" %}{% break %}\n  {% endif %}\n  {% assign line = hash %}\n  {% assign line[\"variantId\"] = \"gid://shopify/ProductVariant/\" | append: variant_id %}\n  {% assign line[\"quantity\"] = item.quantity | plus: 0 %}\n  {% assign attributes = array %}\n  {% assign properties = item.properties | default: hash %}\n  {% assign property_keys = properties | keys %}\n  {% unless property_keys %}{% assign invalid = true %}{% error \"Invalid cart line properties.\" %}{% break %}{% endunless %}\n  {% if property_keys.size > 50 %}{% assign invalid = true %}{% error \"Too many cart line properties.\" %}{% break %}{% endif %}\n  {% for property in properties %}\n    {% assign property_type = property[1] | json | slice: 0, 1 %}\n    {% if property_type != '\"' or property[0].size > 255 or property[1].size > 4000 %}{% assign invalid = true %}{% error \"Invalid cart line property.\" %}{% break %}{% endif %}\n    {% assign attribute = hash %}\n    {% assign attribute[\"key\"] = property[0] %}\n    {% assign attribute[\"value\"] = property[1] %}\n    {% assign attributes[attributes.size] = attribute %}\n  {% endfor %}\n  {% assign line[\"customAttributes\"] = attributes %}\n  {% assign line_items[line_items.size] = line %}\n{% endfor %}\n{% if invalid %}{% break %}{% endif %}\n{% assign draft[\"lineItems\"] = line_items %}\n{% if customer_id != nil %}\n  {% assign valid_customer = customer_id | append: \"\" | match: '\\A[1-9][0-9]{0,19}\\z' %}\n  {% unless valid_customer %}{% assign invalid = true %}{% error \"Invalid customer ID.\" %}{% break %}{% endunless %}\n  {% assign draft[\"purchasingEntity\"] = hash %}\n  {% assign draft[\"purchasingEntity\"][\"customerId\"] = \"gid://shopify/Customer/\" | append: customer_id %}\n{% endif %}\n{% comment %}Shopify supplies current variant prices. Never accept submitted prices, discounts, tax exemptions or payment terms.{% endcomment %}\n{% action \"shopify\" %}\n  mutation {\n    draftOrderCreate(input: { {{ draft | graphql_arguments }} }) {\n      draftOrder { id name }\n      userErrors { field message }\n    }\n  }\n{% endaction %}\n",
+        "subscriptions": [],
+        "subscriptions_template": "{{ options.mechanic_webhook_event_topic__required }}",
+        "tags": [
+          "Cart",
+          "Draft Orders"
+        ]
+      }
+    }
+  ],
+  "inputs": [],
+  "bindings": [
+    {
+      "resource": "form",
+      "path": [
+        "webhookId"
+      ],
+      "source": {
+        "resource": "submissions",
+        "output": "id"
+      }
+    },
+    {
+      "resource": "draft_order",
+      "path": [
+        "options",
+        "mechanic_webhook_event_topic__required"
+      ],
+      "source": {
+        "resource": "submissions",
+        "output": "topic"
+      }
+    },
+    {
+      "resource": "draft_order",
+      "path": [
+        "options",
+        "form__storefrontform_required"
+      ],
+      "source": {
+        "resource": "form",
+        "output": "id"
+      }
+    }
+  ],
+  "revision": "57ce6df669dae752b6ec116d681826d08e863b800c64ffcb692752080165910d"
+}
