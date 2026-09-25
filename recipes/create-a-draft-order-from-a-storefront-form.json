@@ -1,0 +1,164 @@
+{
+  "kind": "mechanic_recipe",
+  "version": 1,
+  "name": "Create a draft order from a storefront form",
+  "description": "Let customers send their cart with a storefront form. Mechanic connects the form and webhook to a task that creates a draft order for your team to review. Place the form on your cart page. This does not send an invoice or reproduce checkout pricing.",
+  "resources": [
+    {
+      "key": "submissions",
+      "type": "webhook",
+      "config": {
+        "name": "Cart form submissions"
+      }
+    },
+    {
+      "key": "form",
+      "type": "form",
+      "config": {
+        "version": 2,
+        "name": "Request a quote from your cart",
+        "title": "Request a quote from your cart",
+        "description": "Send us your current cart and tell us what you need. We’ll review your request and get back to you.",
+        "submitLabel": "Request a quote",
+        "confirmation": "Thanks! We received your quote request. We’ll review your cart and get back to you.",
+        "steps": [
+          {
+            "id": "requirements",
+            "title": "What you need"
+          },
+          {
+            "id": "contact",
+            "title": "Your details"
+          }
+        ],
+        "fields": [
+          {
+            "id": "requirements",
+            "type": "textarea",
+            "key": "requirements",
+            "label": "Anything else we should know?",
+            "helpText": "Optional. Tell us about your project, delivery needs, or other requirements.",
+            "placeholder": "",
+            "required": false,
+            "choices": [],
+            "stepId": "requirements"
+          },
+          {
+            "id": "attachment",
+            "type": "file",
+            "key": "attachment",
+            "label": "Reference file",
+            "helpText": "Optional. Add a drawing, photo, or specification.",
+            "placeholder": "",
+            "required": false,
+            "choices": [],
+            "stepId": "requirements",
+            "acceptedExtensions": ".jpg, .jpeg, .png, .pdf",
+            "maxFileSizeMb": 3
+          },
+          {
+            "id": "name",
+            "type": "text",
+            "key": "name",
+            "label": "Your name",
+            "helpText": "",
+            "placeholder": "",
+            "required": true,
+            "choices": [],
+            "stepId": "contact"
+          },
+          {
+            "id": "email",
+            "type": "email",
+            "key": "email",
+            "label": "Email address",
+            "helpText": "",
+            "placeholder": "",
+            "required": true,
+            "choices": [],
+            "stepId": "contact"
+          },
+          {
+            "id": "phone",
+            "type": "tel",
+            "key": "phone",
+            "label": "Phone number",
+            "helpText": "Optional. Include this if you would prefer a call.",
+            "placeholder": "",
+            "required": false,
+            "choices": [],
+            "stepId": "contact"
+          },
+          {
+            "id": "needed_by",
+            "type": "date",
+            "key": "needed_by",
+            "label": "When do you need it?",
+            "helpText": "Optional. Share your preferred date.",
+            "placeholder": "",
+            "required": false,
+            "choices": [],
+            "stepId": "contact"
+          }
+        ],
+        "visibility": {
+          "enabled": true,
+          "match": "all",
+          "rules": [
+            {
+              "type": "cart_quantity",
+              "operator": "at_least",
+              "value": 1
+            }
+          ]
+        },
+        "captureCart": true,
+        "presentation": {
+          "mode": "button",
+          "buttonLabel": "Request a quote"
+        }
+      }
+    },
+    {
+      "key": "draft_order",
+      "type": "task",
+      "task_slug": "create-a-draft-order-from-a-storefront-form",
+      "config": {}
+    }
+  ],
+  "inputs": [],
+  "bindings": [
+    {
+      "resource": "form",
+      "path": [
+        "webhookId"
+      ],
+      "source": {
+        "resource": "submissions",
+        "output": "id"
+      }
+    },
+    {
+      "resource": "draft_order",
+      "path": [
+        "options",
+        "mechanic_webhook_event_topic__required"
+      ],
+      "source": {
+        "resource": "submissions",
+        "output": "topic"
+      }
+    },
+    {
+      "resource": "draft_order",
+      "path": [
+        "options",
+        "form__storefrontform_required"
+      ],
+      "source": {
+        "resource": "form",
+        "output": "id"
+      }
+    }
+  ]
+}
