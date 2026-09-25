@@ -30,7 +30,9 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-approve return requests](./auto-approve-return-requests)
 * [Auto-archive orders after fulfillment](./auto-archive-orders-after-fulfillment)
 * [Auto-associate products with a delivery profile, by product tag](./auto-associate-products-with-a-delivery-profile-by-product-tag)
+* [Auto-associate products with a shipping collection, by product tag](./auto-associate-products-with-a-shipping-collection-by-product-tag)
 * [Auto-associate variants with a delivery profile, by metafield value](./auto-associate-variants-with-a-delivery-profile-by-metafield-value)
+* [Auto-associate variants with a shipping collection, by metafield value](./auto-associate-variants-with-a-shipping-collection-by-metafield-value)
 * [Auto-cancel fulfillments when an order is tagged](./auto-cancel-fulfillments-when-an-order-is-tagged)
 * [Auto-cancel orders with too many of a certain SKU](./auto-cancel-orders-with-too-many-of-a-certain-sku)
 * [Auto-capture order payment after x days](./auto-capture-order-payment-after-x-days)
@@ -550,6 +552,7 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Auto-Update
 
 * [Auto-associate variants with a delivery profile, by metafield value](./auto-associate-variants-with-a-delivery-profile-by-metafield-value)
+* [Auto-associate variants with a shipping collection, by metafield value](./auto-associate-variants-with-a-shipping-collection-by-metafield-value)
 * [Auto-update inventory policy based on a "preorder" tag](./auto-update-inventory-policy-based-on-a-preorder-tag)
 * [Update product description when out of stock](./update-product-description-when-out-of-stock)
 
@@ -638,6 +641,8 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Collections
 
+* [Auto-associate products with a shipping collection, by product tag](./auto-associate-products-with-a-shipping-collection-by-product-tag)
+* [Auto-associate variants with a shipping collection, by metafield value](./auto-associate-variants-with-a-shipping-collection-by-metafield-value)
 * [Auto-create collections by product type or vendor](./auto-create-collections-by-product-type-or-vendor)
 * [Auto-sort collections by a product property](./auto-sort-collections-by-product-properties)
 * [Auto-sort collections by inventory levels](./auto-sort-collections-by-inventory-levels)
@@ -784,7 +789,9 @@ This directory is built automatically. Each task's documentation is generated fr
 
 * [Archive orders on delivery](./archive-orders-on-delivery)
 * [Auto-associate products with a delivery profile, by product tag](./auto-associate-products-with-a-delivery-profile-by-product-tag)
+* [Auto-associate products with a shipping collection, by product tag](./auto-associate-products-with-a-shipping-collection-by-product-tag)
 * [Auto-associate variants with a delivery profile, by metafield value](./auto-associate-variants-with-a-delivery-profile-by-metafield-value)
+* [Auto-associate variants with a shipping collection, by metafield value](./auto-associate-variants-with-a-shipping-collection-by-metafield-value)
 * [Send a staff notification email for each delivery](./send-a-staff-notification-email-for-each-delivery)
 * [Send an email alert when an incoming Canadian order has an unsupported FSA](./send-an-email-alert-when-an-incoming-canadian-order-has-an-unsupported-fsa)
 
@@ -1149,6 +1156,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 * [Add Option Name as a Variant Metafield for In Stock Variants](./add-option-names-as-variant-metafields-for-in-stock-variants)
 * [Auto-associate variants with a delivery profile, by metafield value](./auto-associate-variants-with-a-delivery-profile-by-metafield-value)
+* [Auto-associate variants with a shipping collection, by metafield value](./auto-associate-variants-with-a-shipping-collection-by-metafield-value)
 * [Auto-copy customer metafields to new orders](./auto-copy-customer-metafields-to-new-orders)
 * [Auto-delete customer metafields older than X days](./auto-delete-customer-metafields-older-than-x-days)
 * [Auto-delete product metafields older than X days](./auto-delete-product-metafields-older-than-x-days)
@@ -1398,6 +1406,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Advanced: Scheduled Price Changes](./advanced-scheduled-price-changes)
 * [Auto publish products by tag](./auto-publish-products-by-tag)
 * [Auto-associate products with a delivery profile, by product tag](./auto-associate-products-with-a-delivery-profile-by-product-tag)
+* [Auto-associate products with a shipping collection, by product tag](./auto-associate-products-with-a-shipping-collection-by-product-tag)
 * [Auto-connect new products to all locations](./auto-connect-new-products-to-all-locations)
 * [Auto-create collections by product type or vendor](./auto-create-collections-by-product-type-or-vendor)
 * [Auto-delete product metafields older than X days](./auto-delete-product-metafields-older-than-x-days)
@@ -1745,6 +1754,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Add fulfillment tracking when an order is tagged](./add-fulfillment-tracking-when-an-order-is-tagged)
 * [Archive orders when tagged](./archive-orders-when-tagged)
 * [Auto-associate products with a delivery profile, by product tag](./auto-associate-products-with-a-delivery-profile-by-product-tag)
+* [Auto-associate products with a shipping collection, by product tag](./auto-associate-products-with-a-shipping-collection-by-product-tag)
 * [Auto-cancel fulfillments when an order is tagged](./auto-cancel-fulfillments-when-an-order-is-tagged)
 * [Auto-fulfill orders when tagged](./auto-fulfill-orders-when-tagged)
 * [Auto-invite customers when tagged](./auto-invite-customers-when-tagged)
@@ -1861,6 +1871,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 * [Add Option Name as a Variant Metafield for In Stock Variants](./add-option-names-as-variant-metafields-for-in-stock-variants)
 * [Auto-associate variants with a delivery profile, by metafield value](./auto-associate-variants-with-a-delivery-profile-by-metafield-value)
+* [Auto-associate variants with a shipping collection, by metafield value](./auto-associate-variants-with-a-shipping-collection-by-metafield-value)
 * [Auto-tag products when their variants change](./auto-tag-products-when-their-skus-change)
 * [Delete product or product variant metafields in bulk](./delete-product-or-product-variant-metafields-in-bulk)
 * [Demonstration: Trigger a custom event for specific product or variant changes](./demonstration-trigger-a-custom-event-for-specific-product-or-variant-changes)

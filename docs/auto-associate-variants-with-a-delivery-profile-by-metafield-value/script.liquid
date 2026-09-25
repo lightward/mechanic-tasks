@@ -1,3 +1,28 @@
+{% capture query %}
+  query {
+    shop {
+      features {
+        marketDrivenShipping
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+{% assign market_driven_shipping = result.data.shop.features.marketDrivenShipping %}
+
+{% if event.preview %}
+  {% assign market_driven_shipping = false %}
+{% endif %}
+
+{% if market_driven_shipping == true %}
+  {% error "This shop uses market-driven shipping. Use the library task Auto-associate variants with a shipping collection, by metafield value and select the collection used by your shipping option in Shopify Markets. This task has not changed your shipping settings." %}
+  {% break %}
+{% elsif market_driven_shipping != false %}
+  {% error "Unable to check this shop's shipping settings. No delivery profile changes were made. Please try again." %}
+  {% break %}
+{% endif %}
+
 {% assign metafield_namespace_and_key = options.metafield_namespace_and_key__required %}
 {% assign metafield_value_to_match = options.metafield_value_to_match__required %}
 {% assign delivery_profile_id = options.delivery_profile_id__required_number %}
@@ -14,6 +39,11 @@
 {% assign result = query | shopify %}
 
 {% assign delivery_profile = result.data.deliveryProfile %}
+
+{% if event.preview %}
+  {% assign delivery_profile = hash %}
+  {% assign delivery_profile["id"] = "gid://shopify/DeliveryProfile/" | append: delivery_profile_id %}
+{% endif %}
 
 {% unless delivery_profile or event.preview %}
   {% error "Delivery profile not found! Please double-check the profile ID." %}
