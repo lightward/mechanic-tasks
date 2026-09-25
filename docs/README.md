@@ -211,6 +211,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Email Mechanic form submissions](./email-mechanic-form-submissions)
 * [Email a CSV export of orders](./email-a-csv-export-of-orders)
 * [Email a CSV export of products](./email-a-csv-export-of-products)
+* [Email a Mechanic Order status request](./email-a-mechanic-order-status-request)
 * [Email a report of customers who haven't ordered in X days](./email-a-report-of-customers-who-havent-ordered-in-x-days)
 * [Email a report of pick-up orders for the next x days](./email-a-report-of-pick-up-orders-for-the-next-x-days)
 * [Email a summary of all products and quantities ordered](./email-a-summary-of-all-products-and-quantities-ordered)
@@ -284,6 +285,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Reset negative inventory levels to zero in bulk](./reset-negative-inventory-levels-to-zero-in-bulk)
 * [Save Mechanic form submissions to Shopify metaobjects](./save-mechanic-form-submissions-to-shopify-metaobjects)
 * [Save Mechanic form submissions to a Google Sheet](./save-mechanic-form-submissions-to-a-google-sheet)
+* [Save a Mechanic Order status request](./save-a-mechanic-order-status-request)
 * [Schedule a storefront banner](./schedule-a-storefront-banner)
 * [Schedule product tags by date](./schedule-product-tags-by-date)
 * [Scheduled inventory adjustment](./scheduled-inventory-adjustment)
@@ -366,6 +368,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Unpublish products when tagged](./unpublish-products-when-tagged)
 * [Unpublish variants that have been out of stock for x days](./unpublish-variants-that-have-been-out-of-stock-for-x-days)
 * [Untag orders when paid](./untag-orders-when-paid)
+* [Update a Mechanic Order status request](./update-a-mechanic-order-status-request)
 * [Update empty customer data from addresses](./update-empty-customer-data-from-addresses)
 * [Update product description when out of stock](./update-product-description-when-out-of-stock)
 
@@ -676,9 +679,11 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Custom Webhook
 
 * [Email Mechanic form submissions](./email-mechanic-form-submissions)
+* [Email a Mechanic Order status request](./email-a-mechanic-order-status-request)
 * [Monitor for variants with zero price](./monitor-for-variants-with-zero-price)
 * [Save Mechanic form submissions to Shopify metaobjects](./save-mechanic-form-submissions-to-shopify-metaobjects)
 * [Save Mechanic form submissions to a Google Sheet](./save-mechanic-form-submissions-to-a-google-sheet)
+* [Save a Mechanic Order status request](./save-a-mechanic-order-status-request)
 
 ### Customer Notes
 
@@ -861,6 +866,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Email Mechanic form submissions](./email-mechanic-form-submissions)
 * [Email a CSV export of orders](./email-a-csv-export-of-orders)
 * [Email a CSV export of products](./email-a-csv-export-of-products)
+* [Email a Mechanic Order status request](./email-a-mechanic-order-status-request)
 * [Email a report of customers who haven't ordered in X days](./email-a-report-of-customers-who-havent-ordered-in-x-days)
 * [Email a report of pick-up orders for the next x days](./email-a-report-of-pick-up-orders-for-the-next-x-days)
 * [Email a summary of all products and quantities ordered](./email-a-summary-of-all-products-and-quantities-ordered)
@@ -1301,6 +1307,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Demonstration: Order editing](./demonstration-order-editing)
 * [Download and email a file to a customer, when purchased](./download-and-email-a-file-to-a-customer-when-purchased)
 * [Email a CSV export of orders](./email-a-csv-export-of-orders)
+* [Email a Mechanic Order status request](./email-a-mechanic-order-status-request)
 * [Email a report of pick-up orders for the next x days](./email-a-report-of-pick-up-orders-for-the-next-x-days)
 * [Email customer when their order is paid](./email-customer-when-order-paid)
 * [Email customers after purchasing a certain product](./product-order-email)
@@ -1319,6 +1326,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Partially auto-capture payments as orders are fulfilled](./partially-auto-capture-payments-as-orders-are-fulfilled)
 * [Reissue single-use discount codes after order cancellation](./reissue-single-use-discount-codes-after-order-cancellation)
 * [Remove an order tag when another tag is added](./remove-a-order-tag-when-another-tag-is-added)
+* [Save a Mechanic Order status request](./save-a-mechanic-order-status-request)
 * [Send a PDF invoice when an order is created](./send-a-pdf-invoice-when-an-order-is-created)
 * [Send a follow-up email after order cancellation](./send-a-follow-up-email-after-order-cancellation)
 * [Send a new-order email to someone based on a cart attribute](./send-a-new-order-email-to-someone-based-on-a-cart-attribute)
@@ -1336,6 +1344,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Tag orders that have at least x of a certain product](./tag-orders-that-have-at-least-x-of-a-certain-product)
 * [Trigger order emails with a tag](./trigger-order-emails-with-a-tag)
 * [Untag orders when paid](./untag-orders-when-paid)
+* [Update a Mechanic Order status request](./update-a-mechanic-order-status-request)
 
 ### Out of Stock
 
