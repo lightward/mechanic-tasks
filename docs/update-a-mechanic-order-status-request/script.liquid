@@ -23,7 +23,7 @@ Option order:
 {% assign form_id = options.form__orderstatusform_required %}
 {% if event.preview and form_id == blank %}{% assign form_id = "dcdbe314-23fa-4afd-875b-9d52c6bd7110" %}{% endif %}
 {% assign valid_form = form_id | match: '\A[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\z' %}
-{% unless valid_form %}{% error "Choose an Order status form in the task's Form option." %}{% break %}{% endunless %}
+{% unless valid_form %}{% error "Choose a Thank you or Order status form in the task's Form option." %}{% break %}{% endunless %}
 {% assign status_key = form_id | remove: "-" | prepend: "form_" %}
 {% assign order_id = order.admin_graphql_api_id %}
 {% assign new_status = input.status | strip %}

@@ -17,7 +17,7 @@ Option order:
 {% assign form_id = options.form__orderstatusform_required %}
 {% if event.preview and form_id == blank %}{% assign form_id = "dcdbe314-23fa-4afd-875b-9d52c6bd7110" %}{% endif %}
 {% assign valid_form = form_id | match: '\A[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\z' %}
-{% unless valid_form %}{% error "Choose an Order status form in the task's Form option." %}{% break %}{% endunless %}
+{% unless valid_form %}{% error "Choose a Thank you or Order status form in the task's Form option." %}{% break %}{% endunless %}
 {% assign status_key = form_id | remove: "-" | prepend: "form_" %}
 {% if event.topic == "mechanic/user/trigger" %}
   {% capture query %}query { metafieldDefinitions(first: 1, ownerType: ORDER, namespace: "mechanic_order_requests", key: {{ status_key | json }}) { nodes { id type { name } } } }{% endcapture %}
@@ -36,7 +36,7 @@ Option order:
   {% capture preview %}{"version":1,"request_id":"a807b3c1-bbae-423d-99f8-8e6d5f0bdaf5","issued_at":{{ "now" | date: "%s" | plus: 0 }},"form":{"id":{{ form_id | json }},"title":"Order assistance","revision":1},"customer":{"id":"gid://shopify/Customer/1234567890"},"order":{"id":"gid://shopify/Order/1234567890","name":"#1001"},"fields":{"request_type":"Service request","details":"Could you help me with my order?"}}{% endcapture %}
   {% assign request = preview | parse_json %}
 {% endif %}
-{% unless request %}{% log "No verified Order status request was supplied. Nothing was changed or sent." %}{% break %}{% endunless %}
+{% unless request %}{% log "No verified order form submission was supplied. Nothing was changed or sent." %}{% break %}{% endunless %}
 {% if request.form.id != form_id %}{% break %}{% endif %}
 {% capture query %}query { order(id: {{ request.order.id | json }}) { id customer { id } metafield(namespace: "mechanic_order_requests", key: {{ status_key | json }}) { type jsonValue compareDigest } } }{% endcapture %}
 {% assign result = query | shopify %}
@@ -62,6 +62,8 @@ Option order:
 {% assign value["form_id"] = form_id %}
 {% assign value["request_id"] = request.request_id %}
 {% assign value["customer_id"] = request.customer.id %}
+{% assign value["placement"] = request.placement | default: "order_status" %}
+{% assign value["verification"] = request.verification %}
 {% assign value["issued_at"] = request.issued_at %}
 {% assign value["fields"] = request.fields %}
 {% assign value["line_items"] = request.line_items %}

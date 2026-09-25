@@ -34,7 +34,7 @@ mechanic/actions/perform
 
 Let staff update the status and message a customer sees for their saved order request.
 
-This task is for Mechanic's **Order status forms** pilot. Customers sign in to Shopify, Mechanic verifies that the order belongs to them, and the submission then travels through the ordinary webhook/AWS/event queue. A submission confirmation means queued, not completed. This task does not edit, cancel, refund, or fulfill an order.
+This task supports Mechanic forms on **Thank you and Order status**. On Thank you, Mechanic matches the recent checkout to its order, including guest purchases. On Order status, customers sign in and Mechanic verifies ownership. Submissions travel through the ordinary webhook/AWS/event queue. A submission confirmation means queued, not completed. This task does not edit, cancel, refund, or fulfill an order.
 
 ## Setup
 
@@ -54,6 +54,15 @@ Enable **Send customer email** to email the customer after Shopify successfully 
 The email contains the new status, customer message, and a link to the order. A failed or conflicting Shopify write does not send a success email. Replaying a successful action callback can send another email; this is not an exactly-once notification service.
 
 For forms that allow another request after resolution, enter **Resolved** or **Declined** as the status. Other status labels keep that request open.
+
+
+## Thank you and guest checkout
+
+Thank you submissions have `event.order_status_request.placement` set to `thank_you`. Its `verification.method` is `checkout`; `verification.customer_authenticated` says whether Shopify also supplied a signed customer identity. The associated `customer.id` comes from the order and can be null. A guest checkout match is not proof that the buyer signed in. Never treat it as account access or authorization to change an order. Checkout tokens are not included in the event.
+
+Only signed-in owners can read customer-facing replies on Order status. The Thank you block can check delivery of its own response without exposing saved replies or answers. The same form and order share the repeat policy across both placements.
+
+For a guest submission, optional email still uses the current customer record on the order, never an email typed into the form. If the order has no customer record or that record changed, leave customer email off; staff can still update the saved record.
 
 
 ## Installing this task

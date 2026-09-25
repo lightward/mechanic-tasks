@@ -2,7 +2,7 @@
 
 Tags: Custom Webhook, Email, Orders
 
-Notify your team when a verified customer sends a request from Order status.
+Notify your team when a customer submits a Mechanic form on Thank you or Order status.
 
 * View in the task library: [tasks.mechanic.dev/email-a-mechanic-order-status-request](https://tasks.mechanic.dev/email-a-mechanic-order-status-request)
 * Task JSON, for direct import: [task.json](../../tasks/email-a-mechanic-order-status-request.json)
@@ -31,13 +31,13 @@ Notify your team when a verified customer sends a request from Order status.
 
 ## Documentation
 
-Notify your team when a verified customer sends a request from Order status.
+Notify your team when a customer submits a Mechanic form on Thank you or Order status.
 
-This task is for Mechanic's **Order status forms** pilot. Customers sign in to Shopify, Mechanic verifies that the order belongs to them, and the submission then travels through the ordinary webhook/AWS/event queue. A submission confirmation means queued, not completed. This task does not edit, cancel, refund, or fulfill an order.
+This task supports Mechanic forms on **Thank you and Order status**. On Thank you, Mechanic matches the recent checkout to its order, including guest purchases. On Order status, customers sign in and Mechanic verifies ownership. Submissions travel through the ordinary webhook/AWS/event queue. A submission confirmation means queued, not completed. This task does not edit, cancel, refund, or fulfill an order.
 
 ## Setup
 
-1. Publish an Order status form and choose a webhook in its **Submission settings**.
+1. Publish a form for Thank you, Order status, or both and choose a webhook in its **Submission settings**.
 2. Choose that published form in this task's **Form** picker and copy the webhook's exact topic into **Webhook event topic**.
 3. Configure **Email recipients** and **Email subject**. Recipients are controlled by your task settings, never by customer answers.
 4. Save and enable the task. Mechanic must be approved to send email. Submit a test request and check the email action.
@@ -47,6 +47,13 @@ This task reads only `event.order_status_request`, which verifies the signed ord
 Emails can repeat if a webhook is delivered again or the task is rerun. Check the request ID when handling duplicates. No email is sent from task previews. Files are not supported in this pilot.
 
 If the form includes an order item picker, the email includes verified purchased-item names, variants, and quantities as well as the selected IDs.
+
+
+## Thank you and guest checkout
+
+Thank you submissions have `event.order_status_request.placement` set to `thank_you`. Its `verification.method` is `checkout`; `verification.customer_authenticated` says whether Shopify also supplied a signed customer identity. The associated `customer.id` comes from the order and can be null. A guest checkout match is not proof that the buyer signed in. Never treat it as account access or authorization to change an order. Checkout tokens are not included in the event.
+
+Only signed-in owners can read customer-facing replies on Order status. The Thank you block can check delivery of its own response without exposing saved replies or answers. The same form and order share the repeat policy across both placements.
 
 
 ## Installing this task
