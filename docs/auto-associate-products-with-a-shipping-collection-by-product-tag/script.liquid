@@ -1,0 +1,207 @@
+{% assign collection_id = options.shipping_collection__picker_collection_required %}
+
+{% capture query %}
+  query {
+    collection(id: {{ collection_id | json }}) {
+      id
+      sources {
+        __typename
+        id
+        app { id }
+        ... on CollectionConditionsSource {
+          targetType
+          shareable
+          inclusion { conditions { __typename } }
+          exclusion {
+            conditions { __typename }
+            selections(first: 1) { nodes { __typename } }
+          }
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {
+      "data": {
+        "collection": {
+          "id": {{ collection_id | json }},
+          "sources": [{
+            "__typename": "CollectionConditionsSource",
+            "id": "gid://shopify/CollectionConditionsSource/1234567890",
+            "app": null,
+            "targetType": "PRODUCTS",
+            "shareable": false,
+            "inclusion": {"conditions": []},
+            "exclusion": null
+          }]
+        }
+      }
+    }
+  {% endcapture %}
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% assign collection = result.data.collection %}
+{% assign source = collection.sources.first %}
+
+{% unless collection.id == collection_id and collection.sources.size == 1 and source.__typename == "CollectionConditionsSource" %}
+  {% error "Select a shipping collection with exactly one manual source. Collections with multiple sources or sub-collections aren't supported by this task." %}
+  {% break %}
+{% endunless %}
+
+{% if source.app != nil or source.shareable != false or source.inclusion.conditions != empty or source.exclusion.conditions != blank or source.exclusion.selections.nodes != blank %}
+  {% error "This task needs a manual collection source without conditions, exclusions, or an app owner. No collection changes were made." %}
+  {% break %}
+{% endif %}
+
+{% unless source.targetType == "PRODUCTS" or source.targetType == "VARIANTS" %}
+  {% error "This collection source has an unsupported target type. No collection changes were made." %}
+  {% break %}
+{% endunless %}
+
+{% capture query %}
+  query {
+    product(id: {{ product.admin_graphql_api_id | json }}) {
+      id
+      tags
+    }
+  }
+{% endcapture %}
+{% assign result = query | shopify %}
+
+{% if event.preview %}
+  {% capture result_json %}
+    {"data": {"product": {
+      "id": "gid://shopify/Product/1234567890",
+      "tags": [{{ options.required_product_tag__required | json }}]
+    }}}
+  {% endcapture %}
+  {% assign result = result_json | parse_json %}
+{% endif %}
+
+{% assign product = result.data.product %}
+{% unless product.id %}
+  {% log "The product is no longer available. No collection changes were made." %}
+  {% break %}
+{% endunless %}
+
+{% assign matches = false %}
+{% if product.tags contains options.required_product_tag__required %}
+  {% assign matches = true %}
+{% endif %}
+
+{% assign variants = array %}
+{% if source.targetType == "VARIANTS" and matches %}
+  {% assign cursor = nil %}
+  {% assign pagination_complete = false %}
+  {% for n in (1..100) %}
+    {% capture query %}
+      query {
+        product(id: {{ product.id | json }}) {
+          variants(first: 250, after: {{ cursor | json }}) {
+            nodes { id }
+            pageInfo { hasNextPage endCursor }
+          }
+        }
+      }
+    {% endcapture %}
+    {% assign result = query | shopify %}
+    {% if event.preview %}
+      {% capture result_json %}
+        {"data": {"product": {"variants": {
+          "nodes": [{"id": "gid://shopify/ProductVariant/1234567890"}],
+          "pageInfo": {"hasNextPage": false, "endCursor": null}
+        }}}}
+      {% endcapture %}
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+    {% assign connection = result.data.product.variants %}
+    {% unless connection.nodes and connection.pageInfo.hasNextPage != nil %}
+      {% error "Unable to read all product variants. No collection changes were made." %}
+      {% break %}
+    {% endunless %}
+    {% assign variants = variants | concat: connection.nodes %}
+    {% if connection.pageInfo.hasNextPage == false %}
+      {% assign pagination_complete = true %}
+      {% break %}
+    {% elsif connection.pageInfo.endCursor == blank or connection.pageInfo.endCursor == cursor or forloop.last %}
+      {% error "Unable to finish reading product variants. No collection changes were made." %}
+      {% break %}
+    {% endif %}
+    {% assign cursor = connection.pageInfo.endCursor %}
+  {% endfor %}
+  {% unless pagination_complete %}
+    {% break %}
+  {% endunless %}
+{% endif %}
+
+{% assign selections_to_add = array %}
+{% assign selections_to_remove = array %}
+{% assign selection = hash %}
+{% assign selection["productId"] = product.id %}
+
+{% if source.targetType == "PRODUCTS" or matches == false %}
+  {% if matches %}
+    {% assign selections_to_add = selections_to_add | push: selection %}
+  {% else %}
+    {% comment %} Omitting variantIds removes all of this product's manual selections. {% endcomment %}
+    {% assign selections_to_remove = selections_to_remove | push: selection %}
+  {% endif %}
+{% if selections_to_add != empty or selections_to_remove != empty %}
+  {% action "shopify" %}
+    mutation {
+      collectionUpdate(
+        collection: {
+          id: {{ collection_id | json }}
+          sourcesToUpdate: [{
+            condition: {
+              id: {{ source.id | json }}
+              inclusion: {
+                selectionsToAdd: {{ selections_to_add | graphql_arguments }}
+                selectionsToRemove: {{ selections_to_remove | graphql_arguments }}
+              }
+            }
+          }]
+        }
+      ) {
+        userErrors { field message }
+      }
+    }
+  {% endaction %}
+{% endif %}
+
+{% else %}
+  {% assign groups = variants | in_groups_of: 250, fill_with: false %}
+  {% for group in groups %}
+    {% assign selection["variantIds"] = group | map: "id" %}
+    {% assign selections_to_add = array | push: selection %}
+{% if selections_to_add != empty or selections_to_remove != empty %}
+  {% action "shopify" %}
+    mutation {
+      collectionUpdate(
+        collection: {
+          id: {{ collection_id | json }}
+          sourcesToUpdate: [{
+            condition: {
+              id: {{ source.id | json }}
+              inclusion: {
+                selectionsToAdd: {{ selections_to_add | graphql_arguments }}
+                selectionsToRemove: {{ selections_to_remove | graphql_arguments }}
+              }
+            }
+          }]
+        }
+      ) {
+        userErrors { field message }
+      }
+    }
+  {% endaction %}
+{% endif %}
+
+  {% endfor %}
+{% endif %}

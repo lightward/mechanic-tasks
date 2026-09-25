@@ -37,6 +37,8 @@ Configure this task with a variant metafield namespace and key separated by a pe
 
 As an initial setup, you can run the task manually to have it review all of the variants in your shop.
 
+**Market-driven shipping:** This task is for stores using shipping profiles. After your store moves to market-driven shipping, it stops before reading or changing delivery profiles. Use [Auto-associate variants with a shipping collection, by metafield value](https://tasks.mechanic.dev/auto-associate-variants-with-a-shipping-collection-by-metafield-value) instead, selecting the collection used by the corresponding shipping option in Shopify Markets. The replacement is a separate task; updating this task does not configure or enable it. App-owned delivery profiles still exist in Shopify, but this task does not distinguish them from migrated merchant profiles.
+
 ## Installing this task
 
 Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-associate-variants-with-a-delivery-profile-by-metafield-value), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-associate-variants-with-a-delivery-profile-by-metafield-value.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
