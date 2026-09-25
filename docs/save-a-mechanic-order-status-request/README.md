@@ -68,7 +68,7 @@ Thank you submissions have `event.order_status_request.placement` set to `thank_
 
 Only signed-in owners can read customer-facing replies on Order status. The Thank you block can check delivery of its own response without exposing saved replies or answers. The same form and order share the repeat policy across both placements.
 
-For the **Post-purchase survey** template, choose the survey in this task’s Form option and use its webhook topic. The template allows one response per order. This task stores the answers on that order; the update and email tasks are optional. You can also connect a Sheets task to keep a response history.
+For the **Post-purchase survey** template, choose the survey in this task’s Form option and use its webhook topic. The template defaults to a simple sent confirmation without saved request progress. A dedicated-webhook Sheets task can work alone; leave its optional Form filter blank and map the survey field keys. If you want one saved response per order, choose that repeat setting and use this save task. Enable Show saved request progress only when customers should check progress. The update and email tasks are optional.
 
 
 ## Installing this task
