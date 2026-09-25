@@ -1,0 +1,231 @@
+{
+  "type": "object",
+  "properties": {
+    "kind": {
+      "const": "mechanic_recipe"
+    },
+    "version": {
+      "const": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 10000
+    },
+    "revision": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "resources": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{0,63}$",
+            "not": {
+              "enum": [
+                "__proto__",
+                "constructor",
+                "prototype"
+              ]
+            }
+          },
+          "type": {
+            "enum": [
+              "task",
+              "webhook",
+              "shopify_webhook",
+              "form"
+            ]
+          },
+          "task_slug": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+          },
+          "config": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "key",
+          "type",
+          "config"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "inputs": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{0,63}$",
+            "not": {
+              "enum": [
+                "__proto__",
+                "constructor",
+                "prototype"
+              ]
+            }
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          },
+          "type": {
+            "enum": [
+              "text",
+              "email",
+              "number",
+              "boolean",
+              "json",
+              "product",
+              "variant",
+              "collection",
+              "secret",
+              "global"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "type",
+          "required"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "bindings": {
+      "type": "array",
+      "maxItems": 200,
+      "items": {
+        "type": "object",
+        "properties": {
+          "resource": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{0,63}$",
+            "not": {
+              "enum": [
+                "__proto__",
+                "constructor",
+                "prototype"
+              ]
+            }
+          },
+          "path": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "maxLength": 100,
+                  "not": {
+                    "enum": [
+                      "__proto__",
+                      "constructor",
+                      "prototype"
+                    ]
+                  }
+                },
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100
+                }
+              ]
+            }
+          },
+          "source": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]{0,63}$",
+                    "not": {
+                      "enum": [
+                        "__proto__",
+                        "constructor",
+                        "prototype"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "input"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "resource": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]{0,63}$",
+                    "not": {
+                      "enum": [
+                        "__proto__",
+                        "constructor",
+                        "prototype"
+                      ]
+                    }
+                  },
+                  "output": {
+                    "enum": [
+                      "id",
+                      "topic"
+                    ]
+                  }
+                },
+                "required": [
+                  "resource",
+                  "output"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "required": [
+          "resource",
+          "path",
+          "source"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "kind",
+    "version",
+    "name",
+    "description",
+    "resources",
+    "inputs",
+    "bindings"
+  ],
+  "additionalProperties": false
+}
