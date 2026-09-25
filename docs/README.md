@@ -266,6 +266,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Publish a certain collection, daily](./publish-a-certain-collection-daily)
 * [Publish back-in-stock products](./publish-back-in-stock-products)
 * [Publish back-in-stock variants](./publish-back-in-stock-variants)
+* [Publish customer membership information](./publish-customer-membership-information)
 * [Receive a nightly out-of-stock report](./receive-a-nightly-out-of-stock-report)
 * [Receive email alerts when inventory levels change](./receive-email-alerts-when-inventory-levels-change)
 * [Record Judge.me customer review counts](./record-judge-me-customer-review-counts)
@@ -286,6 +287,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Save Mechanic form submissions to Shopify metaobjects](./save-mechanic-form-submissions-to-shopify-metaobjects)
 * [Save Mechanic form submissions to a Google Sheet](./save-mechanic-form-submissions-to-a-google-sheet)
 * [Save a Mechanic Order status request](./save-a-mechanic-order-status-request)
+* [Save a Mechanic customer account request](./save-a-mechanic-customer-account-request)
 * [Schedule a storefront banner](./schedule-a-storefront-banner)
 * [Schedule product tags by date](./schedule-product-tags-by-date)
 * [Scheduled inventory adjustment](./scheduled-inventory-adjustment)
@@ -369,6 +371,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Unpublish variants that have been out of stock for x days](./unpublish-variants-that-have-been-out-of-stock-for-x-days)
 * [Untag orders when paid](./untag-orders-when-paid)
 * [Update a Mechanic Order status request](./update-a-mechanic-order-status-request)
+* [Update a Mechanic customer account request](./update-a-mechanic-customer-account-request)
 * [Update empty customer data from addresses](./update-empty-customer-data-from-addresses)
 * [Update product description when out of stock](./update-product-description-when-out-of-stock)
 
@@ -684,6 +687,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Save Mechanic form submissions to Shopify metaobjects](./save-mechanic-form-submissions-to-shopify-metaobjects)
 * [Save Mechanic form submissions to a Google Sheet](./save-mechanic-form-submissions-to-a-google-sheet)
 * [Save a Mechanic Order status request](./save-a-mechanic-order-status-request)
+* [Save a Mechanic customer account request](./save-a-mechanic-customer-account-request)
 
 ### Customer Notes
 
@@ -747,9 +751,11 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Email someone specific based on a new order's customer tags](./email-someone-specific-based-on-a-new-orders-customer-tags)
 * [Email the customer when tracking numbers are added to their order](./email-the-customer-when-tracking-numbers-are-added-to-their-order)
 * [Monitor customer note for certain information](./monitor-customer-note-for-certain-information)
+* [Publish customer membership information](./publish-customer-membership-information)
 * [Record Judge.me customer review counts](./record-judge-me-customer-review-counts)
 * [Remind customers after x days about unpaid orders](./remind-customers-after-x-days-about-unpaid-orders)
 * [Remove a customer tag when another tag is added](./remove-a-customer-tag-when-another-tag-is-added)
+* [Save a Mechanic customer account request](./save-a-mechanic-customer-account-request)
 * [Send a customer signup email](./customer-signup-email)
 * [Send a follow-up email to customers after purchasing from a certain vendor](./send-a-follow-up-email-to-customers-after-purchasing-from-a-certain-vendor)
 * [Send a welcome email to new customers, in their language](./send-a-welcome-email-to-new-customers-in-their-language)
@@ -767,6 +773,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Tag customers who reach a certain threshold of refunded orders](./tag-customers-who-reach-a-certain-threshold-of-refunded-orders)
 * [Tag customers with open draft orders](./tag-customers-with-open-draft-orders)
 * [Temporarily enable tax-exempt status when a customer is tagged](./temporarily-enable-tax-exempt-status-when-a-customer-is-tagged)
+* [Update a Mechanic customer account request](./update-a-mechanic-customer-account-request)
 * [Update empty customer data from addresses](./update-empty-customer-data-from-addresses)
 
 ### Delete
