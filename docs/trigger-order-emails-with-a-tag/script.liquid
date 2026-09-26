@@ -41,6 +41,9 @@
       "to": {{ email_recipient | json }},
       "subject": {{ options.email_subject__required | json }},
       "body": {{ options.email_body_html__required_multiline_code | strip | json }},
+      {% if options.email_template__emailtemplate != nil %}
+        "template": {{ options.email_template__emailtemplate | json }},
+      {% endif %}
       "reply_to": {{ shop.customer_email | json }},
       "from_display_name": {{ shop.name | json }}
     }

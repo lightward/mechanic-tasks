@@ -15,7 +15,8 @@ This task monitors order tags, and sends out an email that you configure wheneve
   "email_trigger_tag__required": "email",
   "email_sent_tag__required": "sent",
   "email_subject__required": "About your order: {{ order.name }}",
-  "email_body_html__required_multiline_code": null
+  "email_body_html__required_multiline_code": null,
+  "email_template__emailtemplate": null
 }
 ```
 
@@ -43,7 +44,7 @@ Feel free to tag the order with multiple trigger tags at once, e.g. "email", "em
 
 Please note: Shopify restricts order tags to 40 characters in length.
 
-To re-use your store's confirmation email template, or to use any other email template, [configure your email template with Mechanic](https://help.usemechanic.com/en/articles/2722264-add-an-email-template), and add the Mechanic email template name to your task.
+Choose an **Email template** to wrap this task’s message in one of your saved Mechanic email templates. Create or import a template in Settings → Email templates, then select it here. Keep writing your subject and message in this task’s existing email options. Leave the template unset to keep the current behavior (including your default template, if configured).
 
 ## Installing this task
 

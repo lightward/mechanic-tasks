@@ -23,6 +23,9 @@
         "from_display_name": {{ shop.name | json }},
         "subject": {{ options.email_subject__required | json }},
         "body": {{ options.email_body__multiline_required | strip | newline_to_br | json }}
+        {% if options.email_template__emailtemplate != nil %}
+          ,"template": {{ options.email_template__emailtemplate | json }}
+        {% endif %}
       }
     }
   }
