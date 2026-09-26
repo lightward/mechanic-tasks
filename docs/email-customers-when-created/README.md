@@ -14,7 +14,8 @@ Use this task to send a quick welcome email to customers, when they sign up or a
 {
   "required_customer_tag": null,
   "email_subject__required": null,
-  "email_body__multiline_required": null
+  "email_body__multiline_required": null,
+  "email_template__emailtemplate": null
 }
 ```
 
@@ -33,6 +34,8 @@ shopify/customers/create
 Use this task to send a quick welcome email to customers, when they sign up or are otherwise created in your shop. Optionally, filter by customer tag to only send welcome emails to certain customers.
 
 This task will send out your email to any customer when their account is created. This can happen when a customer signs themselves up, when you create their customer record within the store, when a new customer places an order, or for any other reason that a customer record is created.
+
+Choose an **Email template** to wrap this task’s message in one of your saved Mechanic email templates. Create or import a template in Settings → Email templates, then select it here. Keep writing your subject and message in this task’s existing email options. Leave the template unset to keep the current behavior (including your default template, if configured).
 
 ## Installing this task
 

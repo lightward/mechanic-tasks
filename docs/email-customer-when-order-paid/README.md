@@ -14,7 +14,8 @@ Quickly send a thank-you email (or any other sort of follow-up email) to your cu
 {
   "required_order_tags_at_the_time_of_payment__array": null,
   "email_subject__required": "Order #{{ order.order_number }} is paid - thank you!",
-  "email_body__multiline_required": null
+  "email_body__multiline_required": null,
+  "email_template__emailtemplate": null
 }
 ```
 
@@ -31,6 +32,8 @@ shopify/orders/paid
 ## Documentation
 
 Quickly send a thank-you email (or any other sort of follow-up email) to your customers, as soon as their order is paid. (Optionally, require one or more order tags to be present, in order for the email to be sent.) And it's super easy to add a delay – set the task to subscribe "shopify/orders/paid+2.days" or "shopify/orders/paid+1.week" instead to create a thoughtful just-checking-back-in-with-you message. :)
+
+Choose an **Email template** to wrap this task’s message in one of your saved Mechanic email templates. Create or import a template in Settings → Email templates, then select it here. Keep writing your subject and message in this task’s existing email options. Leave the template unset to keep the current behavior (including your default template, if configured).
 
 ## Installing this task
 
