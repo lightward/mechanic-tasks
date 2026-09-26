@@ -202,6 +202,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Demonstration: Performing action runs in sequence](./demonstration-performing-action-runs-in-sequence)
 * [Demonstration: Post to a Slack channel](./demonstration-post-to-a-slack-channel)
 * [Demonstration: Query external paginated API](./demonstration-query-external-paginated-api)
+* [Demonstration: Send an email using a saved template](./demonstration-send-an-email-using-a-saved-template)
 * [Demonstration: Shopify Flow integration](./demonstration-shopify-flow-integration)
 * [Demonstration: Trigger a custom event for specific product or variant changes](./demonstration-trigger-a-custom-event-for-specific-product-or-variant-changes)
 * [Demonstration: Upload files to Google Drive](./demonstration-upload-files-to-google-drive)
@@ -805,6 +806,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Demonstration: Performing action runs in sequence](./demonstration-performing-action-runs-in-sequence)
 * [Demonstration: Post to a Slack channel](./demonstration-post-to-a-slack-channel)
 * [Demonstration: Query external paginated API](./demonstration-query-external-paginated-api)
+* [Demonstration: Send an email using a saved template](./demonstration-send-an-email-using-a-saved-template)
 * [Demonstration: Shopify Flow integration](./demonstration-shopify-flow-integration)
 * [Demonstration: Trigger a custom event for specific product or variant changes](./demonstration-trigger-a-custom-event-for-specific-product-or-variant-changes)
 * [Demonstration: Upload files to Google Drive](./demonstration-upload-files-to-google-drive)
@@ -857,6 +859,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-verify customer email addresses](./auto-verify-customer-email-addresses)
 * [Automatically send account invite to new customers](./automatically-send-account-invite-to-new-customers)
 * [Catalog update email](./catalog-update-email)
+* [Demonstration: Send an email using a saved template](./demonstration-send-an-email-using-a-saved-template)
 * [Download and email a file to a customer, when purchased](./download-and-email-a-file-to-a-customer-when-purchased)
 * [Email Mechanic form submissions](./email-mechanic-form-submissions)
 * [Email a CSV export of orders](./email-a-csv-export-of-orders)
@@ -1787,6 +1790,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 ### Template
 
+* [Demonstration: Send an email using a saved template](./demonstration-send-an-email-using-a-saved-template)
 * [Set product templates based on product tags](./set-product-templates-based-on-product-tags)
 
 ### Time-Limited

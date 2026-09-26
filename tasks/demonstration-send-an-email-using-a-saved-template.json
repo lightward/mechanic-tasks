@@ -1,0 +1,33 @@
+{
+  "docs": "Send a message using one of your shop's saved email templates. This example runs only when you choose **Run task**, showing how a task's message fits inside a reusable layout.\n\n## Setup\n\n1. Open **Settings → Email templates**. Create a visual layout, or choose **Use an existing email** to borrow the look of a forwarded email or saved `.eml`/`.html` file. Review the result and save it with a name you recognize.\n2. Set **Email recipient** to your own address for your first run. Enter a subject and message, then choose the saved **Email template**. If you created it from the picker in a separate tab, use **Refresh templates** when you return.\n3. Review the task's email preview, save the task, then choose **Run task** to send the message. Each run sends one email to the configured recipient.\n\nThe message is plain text: line breaks are preserved, and HTML is displayed as text. In a visual template it appears in the **Task message** section; the template provides the logo, colors, buttons, and footer. A saved HTML/Liquid template also works if it renders `{{ body }}` and does not require additional custom values.\n\nTo check only the visual layout, use **Send test email** on the template page. That sends fixed sample content from the current draft without saving it or running this task. This example sends your configured task message through the normal Email action. Neither flow adds attachments.\n\n## Adapting this example\n\nThe `__emailtemplate_required` option makes the saved-template picker available. The script passes its selected name to the Email action's `template` option. Other tasks can calculate order or product content in their message, share one template option across several email actions, or use a separate option for each action. Selecting a template does not supply order/customer data by itself.\n\nThis is a separate example: you do not need to update existing library tasks to try it. Use it for transactional messages, not marketing or bulk email. See [Email templates](https://learn.mechanic.dev/platform/email/templates) for importing a look, images, and HTML/Liquid compatibility.\n",
+  "halt_action_run_sequence_on_error": false,
+  "name": "Demonstration: Send an email using a saved template",
+  "online_store_javascript": null,
+  "options": {
+    "email_recipient__email_required": null,
+    "email_subject__required": "A message from {{ shop.name }}",
+    "email_body__multiline_required": "This message comes from your task.\n\nYour saved email template supplies the layout around it.",
+    "email_template__emailtemplate_required": null
+  },
+  "order_status_javascript": null,
+  "perform_action_runs_in_sequence": false,
+  "preview_event_definitions": [
+    {
+      "description": "Send the configured message using the selected template",
+      "event_attributes": {
+        "topic": "mechanic/user/trigger",
+        "data": {}
+      }
+    }
+  ],
+  "script": "{% comment %}\n  {{ options.email_recipient__email_required }}\n  {{ options.email_subject__required }}\n  {{ options.email_body__multiline_required }}\n  {{ options.email_template__emailtemplate_required }}\n{% endcomment %}\n\n{% unless event.topic == \"mechanic/user/trigger\" %}\n  {% break %}\n{% endunless %}\n\n{% assign recipient = options.email_recipient__email_required | strip %}\n{% assign subject = options.email_subject__required | strip %}\n{% assign message = options.email_body__multiline_required | strip %}\n{% assign email_template = options.email_template__emailtemplate_required %}\n\n{% if event.preview %}\n  {% assign recipient = recipient | default: \"preview@example.com\" %}\n{% endif %}\n\n{% if email_template == blank or email_template == false %}\n  {% error \"Choose a saved email template before running this task. Create or import one in Settings > Email templates.\" %}\n  {% break %}\n{% endif %}\n\n{% if recipient == blank or subject == blank or message == blank %}\n  {% error \"Enter an email recipient, subject, and message before running this task.\" %}\n  {% break %}\n{% endif %}\n\n{% action \"email\" %}\n  {\n    \"to\": {{ recipient | json }},\n    \"subject\": {{ subject | json }},\n    \"body\": {{ message | escape | newline_to_br | json }},\n    \"template\": {{ email_template | json }},\n    \"reply_to\": {{ shop.customer_email | json }},\n    \"from_display_name\": {{ shop.name | json }}\n  }\n{% endaction %}\n",
+  "subscriptions": [
+    "mechanic/user/trigger"
+  ],
+  "subscriptions_template": "mechanic/user/trigger",
+  "tags": [
+    "Demonstration",
+    "Email",
+    "Template"
+  ]
+}

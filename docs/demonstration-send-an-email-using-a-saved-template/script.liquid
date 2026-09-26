@@ -1,0 +1,40 @@
+{% comment %}
+  {{ options.email_recipient__email_required }}
+  {{ options.email_subject__required }}
+  {{ options.email_body__multiline_required }}
+  {{ options.email_template__emailtemplate_required }}
+{% endcomment %}
+
+{% unless event.topic == "mechanic/user/trigger" %}
+  {% break %}
+{% endunless %}
+
+{% assign recipient = options.email_recipient__email_required | strip %}
+{% assign subject = options.email_subject__required | strip %}
+{% assign message = options.email_body__multiline_required | strip %}
+{% assign email_template = options.email_template__emailtemplate_required %}
+
+{% if event.preview %}
+  {% assign recipient = recipient | default: "preview@example.com" %}
+{% endif %}
+
+{% if email_template == blank or email_template == false %}
+  {% error "Choose a saved email template before running this task. Create or import one in Settings > Email templates." %}
+  {% break %}
+{% endif %}
+
+{% if recipient == blank or subject == blank or message == blank %}
+  {% error "Enter an email recipient, subject, and message before running this task." %}
+  {% break %}
+{% endif %}
+
+{% action "email" %}
+  {
+    "to": {{ recipient | json }},
+    "subject": {{ subject | json }},
+    "body": {{ message | escape | newline_to_br | json }},
+    "template": {{ email_template | json }},
+    "reply_to": {{ shop.customer_email | json }},
+    "from_display_name": {{ shop.name | json }}
+  }
+{% endaction %}
