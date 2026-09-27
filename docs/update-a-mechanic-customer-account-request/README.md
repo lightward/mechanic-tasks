@@ -13,7 +13,7 @@ Update the status and message a customer sees for their latest account request.
 ```json
 {
   "form__customeraccountform_required": null,
-  "status__userform_required": null,
+  "status__select_o1_received_o2_in_progress_o3_approved_o4_resolved_o5_declined__userform_required": null,
   "customer_message__multiline_userform": null,
   "send_customer_email__boolean": false,
   "customer_email_template__emailtemplate": null
@@ -35,13 +35,13 @@ mechanic/actions/perform
 
 Update the status and message a customer sees for their latest account request.
 
-Install **Save a Mechanic customer account request**, select the same request in this task’s **Form** picker, and enable this task. Open a customer in Shopify, use Mechanic’s customer action, and enter a status and customer message. For an application, you might use “Approved” or “Declined”; for a service request, use “In progress” and then “Resolved”. An approval label alone does not grant discounts, B2B access, or membership: configure those business changes in a task.
+Install **Save a Mechanic customer account request**, select the same request in this task’s **Form** picker, and enable this task. Open a customer in Shopify, use Mechanic’s customer action, and choose a status and enter a customer message. For an application, you might use “Approved” or “Declined”; for a service request, use “In progress” and then “Resolved”. An approval label alone does not grant discounts, B2B access, or membership: configure those business changes in a task.
 
 The task updates the latest saved request for this customer and form while preserving its answers and request ID. A competing write fails instead of overwriting another update. With the default repeat policy, only “Resolved” or “Declined” allows another request; once-per-customer applications stay closed. Unpublishing the component removes its response from the customer page and blocks.
 
 The customer sees the saved result after the action succeeds and they refresh. Status and message are customer-facing. Do not put private staff notes here.
 
-**Send customer email** is optional and off by default. If enabled, the task reads this customer’s current email from Shopify, never an address typed into a form. The email runs only after Shopify confirms the saved update. A failed or conflicting write does not send success. Replaying a successful callback can resend the email.
+**Send customer email** is optional and off by default. If enabled, the task reads this customer’s current email from Shopify, never an address typed into a form. The email links back to the customer account. It runs only after Shopify confirms the saved update. A failed or conflicting write does not send success. Replaying a successful callback can resend the email.
 
 Choose an optional **Customer email template** from your saved email templates in Mechanic settings. The selected template supplies the email layout around this task’s message through `{{ body }}`. Leave it blank to use the shop’s default email template. Selecting a template does not enable notifications; keep the email checkbox off if you only want to save the request or response. The template selected when the Shopify write is queued is retained for its confirmation email.
 

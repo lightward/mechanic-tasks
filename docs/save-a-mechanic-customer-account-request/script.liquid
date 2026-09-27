@@ -17,7 +17,7 @@ Option order:
   {% unless action.run.ok and action.run.result.data.metafieldsSet.metafields.first.id %}{% log "The request was not saved; no team email was sent." %}{% break %}{% endunless %}
   {% if action.run.result.errors != blank or action.run.result.data.metafieldsSet.userErrors != blank %}{% error "Shopify did not confirm the saved request. No team email was sent." %}{% break %}{% endif %}
   {% if action.meta.recipients != blank %}
-    {% capture body %}<h2>{{ action.meta.title | escape }}</h2><p>Customer: {{ action.meta.customer_id | escape }}</p><p>Request: {{ action.meta.request_id | escape }}</p>{% for answer in action.meta.fields %}<p><strong>{{ answer[0] | escape }}</strong>: {{ answer[1] | json | escape }}</p>{% endfor %}{% endcapture %}
+    {% capture body %}<h2>{{ action.meta.title | escape }}</h2><p>Customer: {{ action.meta.customer_id | escape }}</p>{% if action.meta.customer_id != blank %}<p><a href="https://{{ shop.myshopify_domain | escape }}/admin/customers/{{ action.meta.customer_id | remove: "gid://shopify/Customer/" | url_encode }}">Open customer in Shopify</a></p>{% endif %}<p>Request: {{ action.meta.request_id | escape }}</p>{% for answer in action.meta.fields %}<p><strong>{{ answer[0] | escape }}</strong>: {{ answer[1] | json | escape }}</p>{% endfor %}{% endcapture %}
     {% action "email", __perform_event: false %}{"to":{{ action.meta.recipients | json }},"subject":{{ "New customer request: " | append: action.meta.title | json }},{% if action.meta.email_template != blank %}"template":{{ action.meta.email_template | json }},{% endif %}"body":{{ body | json }}}{% endaction %}
   {% endif %}
   {% break %}
