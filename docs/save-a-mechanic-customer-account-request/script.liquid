@@ -6,10 +6,11 @@ Option order:
 {{ options.initial_message__multiline }}
 {{ options.notify_team__boolean }}
 {{ options.team_email_recipients__email_array }}
+{{ options.team_email_template__emailtemplate }}
 {% endcomment %}
 {% if event.topic == "mechanic/actions/perform" %}
   {% if event.preview and options.notify_team__boolean %}
-    {% capture preview_action %}{"type":"shopify","meta":{"stage":"save_account_request","recipients":{{ options.team_email_recipients__email_array | json }},"title":"Service request","request_id":"a807b3c1-bbae-423d-99f8-8e6d5f0bdaf5","customer_id":"gid://shopify/Customer/1234567890","fields":{"issue":"Could you help with a repair?"}},"run":{"ok":true,"result":{"data":{"metafieldsSet":{"metafields":[{"id":"gid://shopify/Metafield/123"}],"userErrors":[]}}}}}{% endcapture %}
+    {% capture preview_action %}{"type":"shopify","meta":{"stage":"save_account_request","email_template":{{ options.team_email_template__emailtemplate | json }},"recipients":{{ options.team_email_recipients__email_array | json }},"title":"Service request","request_id":"a807b3c1-bbae-423d-99f8-8e6d5f0bdaf5","customer_id":"gid://shopify/Customer/1234567890","fields":{"issue":"Could you help with a repair?"}},"run":{"ok":true,"result":{"data":{"metafieldsSet":{"metafields":[{"id":"gid://shopify/Metafield/123"}],"userErrors":[]}}}}}{% endcapture %}
     {% assign action = preview_action | parse_json %}
   {% endif %}
   {% if action.type != "shopify" or action.meta.stage != "save_account_request" %}{% break %}{% endif %}
@@ -17,7 +18,7 @@ Option order:
   {% if action.run.result.errors != blank or action.run.result.data.metafieldsSet.userErrors != blank %}{% error "Shopify did not confirm the saved request. No team email was sent." %}{% break %}{% endif %}
   {% if action.meta.recipients != blank %}
     {% capture body %}<h2>{{ action.meta.title | escape }}</h2><p>Customer: {{ action.meta.customer_id | escape }}</p><p>Request: {{ action.meta.request_id | escape }}</p>{% for answer in action.meta.fields %}<p><strong>{{ answer[0] | escape }}</strong>: {{ answer[1] | json | escape }}</p>{% endfor %}{% endcapture %}
-    {% action "email", __perform_event: false %}{"to":{{ action.meta.recipients | json }},"subject":{{ "New customer request: " | append: action.meta.title | json }},"body":{{ body | json }}}{% endaction %}
+    {% action "email", __perform_event: false %}{"to":{{ action.meta.recipients | json }},"subject":{{ "New customer request: " | append: action.meta.title | json }},{% if action.meta.email_template != blank %}"template":{{ action.meta.email_template | json }},{% endif %}"body":{{ body | json }}}{% endaction %}
   {% endif %}
   {% break %}
 {% endif %}
@@ -84,6 +85,7 @@ Option order:
 {% if encoded_size > 120000 %}{% error "The customer account request is too large to store." %}{% break %}{% endif %}
 {% assign meta = hash %}
 {% assign meta["stage"] = "save_account_request" %}
+{% assign meta["email_template"] = options.team_email_template__emailtemplate %}
 {% if options.notify_team__boolean %}
   {% if options.team_email_recipients__email_array == blank %}{% error "Choose team email recipients or turn off team notifications." %}{% break %}{% endif %}
   {% assign meta["recipients"] = options.team_email_recipients__email_array %}

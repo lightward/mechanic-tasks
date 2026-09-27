@@ -15,7 +15,8 @@ Update the status and message a customer sees for their latest account request.
   "form__customeraccountform_required": null,
   "status__userform_required": null,
   "customer_message__multiline_userform": null,
-  "send_customer_email__boolean": false
+  "send_customer_email__boolean": false,
+  "customer_email_template__emailtemplate": null
 }
 ```
 
@@ -41,6 +42,8 @@ The task updates the latest saved request for this customer and form while prese
 The customer sees the saved result after the action succeeds and they refresh. Status and message are customer-facing. Do not put private staff notes here.
 
 **Send customer email** is optional and off by default. If enabled, the task reads this customer’s current email from Shopify, never an address typed into a form. The email runs only after Shopify confirms the saved update. A failed or conflicting write does not send success. Replaying a successful callback can resend the email.
+
+Choose an optional **Customer email template** from your saved email templates in Mechanic settings. The selected template supplies the email layout around this task’s message through `{{ body }}`. Leave it blank to use the shop’s default email template. Selecting a template does not enable notifications; keep the email checkbox off if you only want to save the request or response. The template selected when the Shopify write is queued is retained for its confirmation email.
 
 
 ## Installing this task

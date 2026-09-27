@@ -17,7 +17,8 @@ Save a verified customer account request, show its initial status, and optionall
   "initial_status__required": "Received",
   "initial_message__multiline": "We have received your request. Our team will review it.",
   "notify_team__boolean": false,
-  "team_email_recipients__email_array": null
+  "team_email_recipients__email_array": null,
+  "team_email_template__emailtemplate": null
 }
 ```
 
@@ -46,6 +47,8 @@ The task stores the latest request per customer and extension in `mechanic_custo
 Repeated delivery preserves saved responses. Older requests cannot overwrite newer ones, and compare-and-set rejects competing writes. Resolve or decline a request with the update task before accepting another, unless the form allows repeats anytime. Once-per-customer applications remain closed after a response. These controls do not guarantee exactly-once side effects across tasks.
 
 Team notification is optional and off by default. It runs only after a confirmed save; a failed or conflicting write does not email success. Replaying a successful action callback can resend a notification. Status and message text is customer-facing; never put staff notes in it. Business rules, approval, tagging, and other effects belong in tasks and should recheck current conditions before acting.
+
+Choose an optional **Team email template** from your saved email templates in Mechanic settings. The selected template supplies the email layout around this task’s message through `{{ body }}`. Leave it blank to use the shop’s default email template. Selecting a template does not enable notifications; keep the email checkbox off if you only want to save the request or response. The template selected when the Shopify write is queued is retained for its confirmation email.
 
 
 ## Installing this task
