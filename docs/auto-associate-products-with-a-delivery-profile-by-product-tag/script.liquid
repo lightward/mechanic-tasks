@@ -1,3 +1,25 @@
+{% comment %}
+  -- September 2026: check if this shop has been converted to market-based shipping; if so, then raise error
+{% endcomment %}
+
+{% capture query %}
+  query {
+    shop {
+      features {
+        marketDrivenShipping
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if result.data.shop.features.marketDrivenShipping %}
+  {% log result.data %}
+  {% error "Shopify has migrated this shop to market-based shipping, which this task does not support. See the task docs for more info." %}
+  {% break %}
+{% endif %}
+
 {% capture query %}
   query {
     deliveryProfile(id: {{ "gid://shopify/DeliveryProfile/" | append: options.delivery_profile_id__required_number | json }}) {

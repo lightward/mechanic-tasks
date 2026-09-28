@@ -2,6 +2,27 @@
 {% assign metafield_value_to_match = options.metafield_value_to_match__required %}
 {% assign delivery_profile_id = options.delivery_profile_id__required_number %}
 
+{% comment %}
+  -- September 2026: check if this shop has been converted to market-based shipping; if so, then raise error
+{% endcomment %}
+
+{% capture query %}
+  query {
+    shop {
+      features {
+        marketDrivenShipping
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
+
+{% if result.shop.features.marketDrivenShipping %}
+  {% error "Shopify has migrated this shop to market-based shipping, which this task does not support. See the task docs for more info." %}
+  {% break %}
+{% endif %}
+
 {% capture query %}
   query {
     deliveryProfile(id: {{ "gid://shopify/DeliveryProfile/" | append: delivery_profile_id | json }}) {
@@ -46,9 +67,9 @@
   {% assign variants = result.data.product.variants.nodes %}
 
 {% elsif event.topic == "mechanic/user/trigger" %}
-  {% assign cursor = nil %}  
+  {% assign cursor = nil %}
   {% assign variants = array %}
-  
+
   {% for n in (1..200) %}
     {% capture query %}
       query {
@@ -74,15 +95,15 @@
         }
       }
     {% endcapture %}
-  
+
     {% assign result = query | shopify %}
-    
+
     {% assign variants
       = result.data.productVariants.nodes
       | default: array
       | concat: variants
     %}
-  
+
     {% if result.data.productVariants.pageInfo.hasNextPage %}
       {% assign cursor = result.data.productVariants.pageInfo.endCursor %}
     {% else %}
@@ -167,7 +188,7 @@
   {% endaction %}
 
 {% else %}
-  {% log 
+  {% log
     message: "No variants qualified to be added or removed from the configured delivery profile in this task run.",
     task_options_for_this_run: task.options
   %}

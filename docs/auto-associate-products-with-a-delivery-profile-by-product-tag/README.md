@@ -34,6 +34,12 @@ Use this task to automatically add products, as they're tagged, to a specific de
 
 Configure this task using a product tag to watch for, and a delivery profile ID. Find the delivery profile ID by navigating to the "Shipping and delivery" section of your Shopify admin area, and clicking on the "Manage rates" link of the delivery profile you want to use. The delivery profile ID is the series of numbers at the very end of the URL – if the URL is example.myshopify.com/admin/settings/shipping/profiles/12345, then the delivery profile ID is 123545.
 
+**IMPORTANT**:
+
+If Shopify has migrated this shop to market-based shipping, this task will no longer be able to update the old shipping profiles. Shopify should have [created new shipping collections during the migration](https://help.shopify.com/en/manual/fulfillment/setup/shipping-options/whats-changing-with-shipping#collections-created-during-the-upgrade). Whether you choose to use the auto-created shipping collections or configure your own is up to you. One suggestion would be to use a product tag condition using the tag configured in this task as the collection source instead of the individually added products.
+
+Migration of all shops is expected to complete by July 2027. You can safely delete this task after your shop has been migrated by Shopify.
+
 ## Installing this task
 
 Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-associate-products-with-a-delivery-profile-by-product-tag), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-associate-products-with-a-delivery-profile-by-product-tag.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
