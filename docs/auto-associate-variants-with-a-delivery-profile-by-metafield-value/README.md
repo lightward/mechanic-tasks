@@ -37,6 +37,12 @@ Configure this task with a variant metafield namespace and key separated by a pe
 
 As an initial setup, you can run the task manually to have it review all of the variants in your shop.
 
+**IMPORTANT**:
+
+If Shopify has migrated this shop to market-based shipping, this task will no longer be able to update the old shipping profiles. Shopify should have [created new shipping collections during the migration](https://help.shopify.com/en/manual/fulfillment/setup/shipping-options/whats-changing-with-shipping#collections-created-during-the-upgrade). Whether you choose to use the auto-created shipping collections or configure your own is up to you. One suggestion would be to use a [variant metafield condition](https://help.shopify.com/en/manual/custom-data/metafields/collections) using the metafield and value configured in this task as the collection source instead of the individually added variants.
+
+Migration of all shops is expected to complete by July 2027. You can safely delete this task after your shop has been migrated by Shopify.
+
 ## Installing this task
 
 Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/auto-associate-variants-with-a-delivery-profile-by-metafield-value), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/auto-associate-variants-with-a-delivery-profile-by-metafield-value.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.
