@@ -1,54 +1,144 @@
+{% assign pickup_locations = options.pickup_locations__array_required %}
+{% assign order_id = order.admin_graphql_api_id %}
+{% assign fulfillment_orders = array %}
+{% assign cursor = nil %}
+{% assign fulfillment_orders_loaded = false %}
+
 {% if event.preview %}
-  {% capture order %}
-    {
-      "fulfillment_orders": [
-        {
-          "id": 1,
-          "assigned_location": {
-            "name": {{ options.pickup_locations__array_required.first | json}}
+  {% assign order_id = "gid://shopify/Order/1234567890" %}
+{% endif %}
+
+{% for n in (1..100) %}
+  {% capture query %}
+    query {
+      order(id: {{ order_id | json }}) {
+        fulfillmentOrders(first: 100, after: {{ cursor | json }}) {
+          nodes {
+            id
+            assignedLocation {
+              name
+            }
+            deliveryMethod {
+              methodType
+            }
           }
-        },
-        {
-          "id": 2,
-          "assigned_location": {
-            "name": "Third Party Service"
+          pageInfo {
+            hasNextPage
+            endCursor
           }
         }
-      ]
+      }
     }
   {% endcapture %}
 
-  {% assign order = order | parse_json %}
-{% endif %}
+  {% assign result = query | shopify %}
 
-{% assign pickup_locations = options.pickup_locations__array_required %}
-
-{% for fulfillment_order in order.fulfillment_orders %}
-  {% if pickup_locations contains fulfillment_order.assigned_location.name %}
-    {% assign fulfillment_order_id = fulfillment_order.id %}
-    {% assign fulfillment_order_graphql_id = "gid://shopify/FulfillmentOrder/" | append: fulfillment_order_id %}
-
-    {% capture query %}
-      mutation {
-        fulfillmentOrderLineItemsPreparedForPickup(
-          input: {
-            lineItemsByFulfillmentOrder: [
-              {
-                fulfillmentOrderId: {{ fulfillment_order_graphql_id | json }}
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "order": {
+            "fulfillmentOrders": {
+              "nodes": [
+                {
+                  "id": "gid://shopify/FulfillmentOrder/1",
+                  "assignedLocation": {
+                    "name": {{ pickup_locations.first | json }}
+                  },
+                  "deliveryMethod": {
+                    "methodType": "PICK_UP"
+                  }
+                },
+                {
+                  "id": "gid://shopify/FulfillmentOrder/2",
+                  "assignedLocation": {
+                    "name": {{ pickup_locations.first | json }}
+                  },
+                  "deliveryMethod": {
+                    "methodType": "SHIPPING"
+                  }
+                },
+                {
+                  "id": "gid://shopify/FulfillmentOrder/3",
+                  "assignedLocation": {
+                    "name": "Third Party Service"
+                  },
+                  "deliveryMethod": {
+                    "methodType": "PICK_UP"
+                  }
+                }
+              ],
+              "pageInfo": {
+                "hasNextPage": false,
+                "endCursor": null
               }
-            ]
-          }
-        ) {
-          userErrors {
-            field
-            message
+            }
           }
         }
       }
     {% endcapture %}
 
-    {% action "shopify" %}
-      {{ query | json }}
-    {% endaction %}
+    {% assign result = result_json | parse_json %}
   {% endif %}
+
+  {% assign connection = result.data.order.fulfillmentOrders %}
+
+  {% if result.errors != blank or connection == nil %}
+    {% error "Unable to load fulfillment orders. No items were marked ready for pickup." %}
+    {% break %}
+  {% endif %}
+
+  {% assign fulfillment_orders = fulfillment_orders | concat: connection.nodes %}
+
+  {% unless connection.pageInfo.hasNextPage %}
+    {% assign fulfillment_orders_loaded = true %}
+    {% break %}
+  {% endunless %}
+
+  {% assign next_cursor = connection.pageInfo.endCursor %}
+  {% if next_cursor == blank or next_cursor == cursor %}
+    {% error "Fulfillment order pagination did not advance. No items were marked ready for pickup." %}
+    {% break %}
+  {% endif %}
+
+  {% if forloop.last %}
+    {% error "Fulfillment order pagination limit reached. No items were marked ready for pickup." %}
+    {% break %}
+  {% endif %}
+
+  {% assign cursor = next_cursor %}
+{% endfor %}
+
+{% unless fulfillment_orders_loaded %}
+  {% break %}
+{% endunless %}
+
+{% comment %} A location can handle shipping and pickup for the same order. {% endcomment %}
+{% for fulfillment_order in fulfillment_orders %}
+  {% unless fulfillment_order.deliveryMethod.methodType == "PICK_UP" %}
+    {% continue %}
+  {% endunless %}
+
+  {% unless pickup_locations contains fulfillment_order.assignedLocation.name %}
+    {% continue %}
+  {% endunless %}
+
+  {% action "shopify" %}
+    mutation {
+      fulfillmentOrderLineItemsPreparedForPickup(
+        input: {
+          lineItemsByFulfillmentOrder: [
+            {
+              fulfillmentOrderId: {{ fulfillment_order.id | json }}
+            }
+          ]
+        }
+      ) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
 {% endfor %}
