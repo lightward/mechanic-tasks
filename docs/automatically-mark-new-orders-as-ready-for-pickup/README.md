@@ -2,7 +2,7 @@
 
 Tags: Fulfillment, Orders, Pick-up
 
-This task makes it easy for you to automatically mark new orders as 'Ready For Pickup' as soon as they come in. Ideal for stores that always have products in stock and want to speed up the pickup process.
+Automatically mark pickup items in new orders as ready for pickup at your configured locations. Ideal for stores that always have these items in stock and want to speed up the pickup process.
 
 * View in the task library: [tasks.mechanic.dev/automatically-mark-new-orders-as-ready-for-pickup](https://tasks.mechanic.dev/automatically-mark-new-orders-as-ready-for-pickup)
 * Task JSON, for direct import: [task.json](../../tasks/automatically-mark-new-orders-as-ready-for-pickup.json)
@@ -30,11 +30,11 @@ shopify/orders/create
 
 ## Documentation
 
-This task makes it easy for you to automatically mark new orders as 'Ready For Pickup' as soon as they come in. Ideal for stores that always have products in stock and want to speed up the pickup process.
+Automatically mark pickup items in new orders as ready for pickup at your configured locations. Ideal for stores that always have these items in stock and want to speed up the pickup process.
 
-This makes use of the [fulfillmentOrderLineItemsPreparedForPickup GraphQL mutation.](https://shopify.dev/docs/api/admin-graphql/2023-07/mutations/fulfillmentOrderLineItemsPreparedForPickup)
+Enter the exact names of your pickup locations in the task options. For orders containing both shipping and pickup, the task only marks pickup items as ready. It works with both existing shipping settings and market-driven shipping.
 
-This task was written with the help of ChatGPT-4, check out the [conversation here](https://chat.openai.com/share/e42b5476-6ec0-4ac8-8738-263858150ec4).
+This task uses Shopify's [fulfillmentOrderLineItemsPreparedForPickup mutation](https://shopify.dev/docs/api/admin-graphql/latest/mutations/fulfillmentOrderLineItemsPreparedForPickup).
 
 ## Installing this task
 
