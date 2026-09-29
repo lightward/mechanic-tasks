@@ -8,20 +8,27 @@
       id
       name
       displayFinancialStatus
+      currencyCode
       currentTotalPriceSet {
         presentmentMoney {
           amount
         }
       }
-      totalReceivedSet {
-        presentmentMoney {
-          amount
-          currencyCode
-        }
-      }
-      transactions(capturable: true) {
+      transactions {
         id
         kind
+        status
+        parentTransaction {
+          id
+          kind
+          status
+        }
+        amountSet {
+          presentmentMoney {
+            amount
+            currencyCode
+          }
+        }
         totalUnsettledSet {
           presentmentMoney {
             amount
@@ -43,6 +50,7 @@
           "id": "gid://shopify/Order/1234567890",
           "name": "#SAMPLE",
           "displayFinancialStatus": "AUTHORIZED",
+          "currencyCode": "USD",
           "currentTotalPriceSet": {
             "presentmentMoney": {
               "amount": "23.45"
@@ -52,6 +60,7 @@
             {
               "id": "gid://shopify/OrderTransaction/1234567890",
               "kind": "AUTHORIZATION",
+              "status": "SUCCESS",
               "totalUnsettledSet": {
                 "presentmentMoney": {
                   "amount": "20.00",
@@ -62,6 +71,7 @@
             {
               "id": "gid://shopify/OrderTransaction/2345678901",
               "kind": "AUTHORIZATION",
+              "status": "SUCCESS",
               "totalUnsettledSet": {
                 "presentmentMoney": {
                   "amount": "10.00",
@@ -80,78 +90,111 @@
 
 {% assign order = result.data.order %}
 
+{% unless event.preview %}
+  {% log order_data: order %}
+{% endunless %}
+
+{% unless order.displayFinancialStatus == "AUTHORIZED" or order.displayFinancialStatus == "PARTIALLY_PAID" %}
+  {% log
+    message: "Order financial status is not AUTHORIZED or PARTIALLY_PAID on this order",
+    order: order
+  %}
+  {% break %}
+{% endunless %}
+
 {% comment %}
   -- the current total price will reflect changes made after the initial sale: discounts, shipping changes, item adjustments
-  -- reducing by total received (i.e. partially paid orders) is for payment gateways that support multiple captures (e.g. Shopify Payments)
 {% endcomment %}
 
 {% assign current_total_price = order.currentTotalPriceSet.presentmentMoney.amount | times: 1.0 %}
-{% assign total_received = order.totalReceivedSet.presentmentMoney.amount | times: 1.0 %}
-{% assign left_to_capture = current_total_price | minus: total_received %}
+
+{% comment %}
+  -- loop through transactions to see what the actual balance received is (SALE + CAPTURED - REFUND)
+{% endcomment %}
+
+{% assign net_received = 0.0 %}
+
+{% for transaction in order.transactions %}
+  {% unless transaction.status == "SUCCESS" %}
+    {% continue %}
+  {% endunless %}
+
+  {% if transaction.kind == "SALE" or transaction.kind == "CAPTURE" %}
+    {% assign net_received = net_received | plus: transaction.amountSet.presentmentMoney.amount %}
+
+  {% elsif transaction.kind == "REFUND" %}
+    {% assign net_received = net_received | minus: transaction.amountSet.presentmentMoney.amount %}
+  {% endif %}
+{% endfor %}
+
+{% assign left_to_capture = current_total_price | minus: net_received | at_least: 0.0 %}
 
 {% unless event.preview %}
   {% log
     current_total_price: current_total_price,
-    total_received: total_received,
+    net_received: net_received,
     left_to_capture: left_to_capture
   %}
 {% endunless %}
 
-{% if order.displayFinancialStatus == "AUTHORIZED" or order.displayFinancialStatus == "PARTIALLY_PAID" %}
-  {% assign authorized_transactions = order.transactions | where: "kind", "AUTHORIZATION" %}
+{% comment %}
+  -- multiple authorizations could be on the order due to upsells or item additions
+  -- capture authorizations up to the amount left to capture
+{% endcomment %}
+
+{% assign authorized_transactions = order.transactions | where: "kind", "AUTHORIZATION" %}
+
+{% for transaction in authorized_transactions %}
+  {% unless transaction.status == "SUCCESS" %}
+    {% continue %}
+  {% endunless %}
 
   {% comment %}
-    -- multiple authorizations could be on the order due to upsells or item additions
+    -- capture the unsettled amount of this transaction without exceeding the amount left to capture
   {% endcomment %}
 
-  {% for transaction in authorized_transactions %}
+  {% assign unsettled_amount = transaction.totalUnsettledSet.presentmentMoney.amount | times: 1.0 %}
+  {% assign amount_to_capture = unsettled_amount | at_most: left_to_capture %}
+
+  {% unless event.preview %}
+    {% log
+      transaction_id: transaction.id,
+      unsettled_amount: unsettled_amount,
+      amount_to_capture: amount_to_capture
+    %}
+  {% endunless %}
+
+  {% if amount_to_capture > 0 %}
     {% comment %}
-      -- capture the unsettled amount of this transaction without exceeding the amount left to capture
+      -- reduce the amount left to capture by the amount captured for this transaction
     {% endcomment %}
 
-    {% assign unsettled_amount = transaction.totalUnsettledSet.presentmentMoney.amount | times: 1.0 %}
-    {% assign amount_to_capture = unsettled_amount | at_most: left_to_capture %}
+    {% assign left_to_capture = left_to_capture | minus: amount_to_capture %}
 
-    {% unless event.preview %}
-      {% log
-        transaction_id: transaction.id,
-        unsettled_amount: unsettled_amount,
-        amount_to_capture: amount_to_capture
-      %}
-    {% endunless %}
-
-    {% if amount_to_capture > 0 %}
-      {% comment %}
-        -- reduce the amount left to capture by the amount captured for this transaction
-      {% endcomment %}
-
-      {% assign left_to_capture = left_to_capture | minus: amount_to_capture %}
-
-      {% action "shopify" %}
-        mutation {
-          orderCapture(
-            input: {
-              id: {{ order.id | json }}
-              parentTransactionId: {{ transaction.id | json }}
-              amount: {{ amount_to_capture | json }}
-              currency: {{ transaction.totalUnsettledSet.presentmentMoney.currencyCode }}
-            }
-          ) {
-            transaction {
+    {% action "shopify" %}
+      mutation {
+        orderCapture(
+          input: {
+            id: {{ order.id | json }}
+            parentTransactionId: {{ transaction.id | json }}
+            amount: {{ amount_to_capture | json }}
+            currency: {{ transaction.totalUnsettledSet.presentmentMoney.currencyCode }}
+          }
+        ) {
+          transaction {
+            id
+            status
+            parentTransaction {
               id
-              status
-              parentTransaction {
-                id
-                kind
-              }
-            }
-            userErrors {
-              field
-              message
+              kind
             }
           }
+          userErrors {
+            field
+            message
+          }
         }
-      {% endaction %}
-    {% endif %}
-  {% endfor %}
-{% endif %}
+      }
+    {% endaction %}
+  {% endif %}
+{% endfor %}

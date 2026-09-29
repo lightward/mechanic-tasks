@@ -35,7 +35,7 @@ mechanic/user/trigger
 
 This task will scan for all orders that have a financial status of "authorized" or optionally "partially paid", and will attempt to capture all open authorized payments for them. This task can be scheduled to run daily, and can be run on demand.
 
-If an order is modified after creation but before capturing, due to applying discounts, changing shipping fees, and/or making item adjustments, then this task will only capture up to a maximum of the current order total. Refunds that are not associated with an item adjustment are not supported by this task.
+If an order is modified after creation but before capturing, due to applying discounts, changing shipping fees, and/or making item adjustments, then this task will only capture up to a maximum of the current order total.
 
 ## Installing this task
 
