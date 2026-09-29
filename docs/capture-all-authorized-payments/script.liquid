@@ -29,20 +29,27 @@
           id
           name
           displayFinancialStatus
+          currencyCode
           currentTotalPriceSet {
             presentmentMoney {
               amount
             }
           }
-          totalReceivedSet {
-            presentmentMoney {
-              amount
-              currencyCode
-            }
-          }
-          transactions(capturable: true) {
+          transactions {
             id
             kind
+            status
+            parentTransaction {
+              id
+              kind
+              status
+            }
+            amountSet {
+              presentmentMoney {
+                amount
+                currencyCode
+              }
+            }
             totalUnsettledSet {
               presentmentMoney {
                 amount
@@ -67,6 +74,7 @@
                 "id": "gid://shopify/Order/1234567890",
                 "name": "#SAMPLE",
                 "displayFinancialStatus": "AUTHORIZED",
+                "currencyCode": "USD",
                 "currentTotalPriceSet": {
                   "presentmentMoney": {
                     "amount": "23.45"
@@ -76,6 +84,7 @@
                   {
                     "id": "gid://shopify/OrderTransaction/1234567890",
                     "kind": "AUTHORIZATION",
+                    "status": "SUCCESS",
                     "totalUnsettledSet": {
                       "presentmentMoney": {
                         "amount": "20.00",
@@ -86,6 +95,7 @@
                   {
                     "id": "gid://shopify/OrderTransaction/2345678901",
                     "kind": "AUTHORIZATION",
+                    "status": "SUCCESS",
                     "totalUnsettledSet": {
                       "presentmentMoney": {
                         "amount": "10.00",
@@ -123,32 +133,62 @@
 {% endunless %}
 
 {% for order in orders %}
+  {% unless order.displayFinancialStatus == "AUTHORIZED" or order.displayFinancialStatus == "PARTIALLY_PAID" %}
+    {% log
+      message: "Order finanical status is not AUTHORIZED or PARTIALLY_PAID on this order",
+      order: order
+    %}
+    {% continue %}
+  {% endunless %}
+
   {% comment %}
     -- the current total price will reflect changes made after the initial sale: discounts, shipping changes, item adjustments
-    -- reducing by total received (i.e. partially paid orders) is for payment gateways that support multiple captures (e.g. Shopify Payments)
   {% endcomment %}
 
   {% assign current_total_price = order.currentTotalPriceSet.presentmentMoney.amount | times: 1.0 %}
-  {% assign total_received = order.totalReceivedSet.presentmentMoney.amount | times: 1.0 %}
-  {% assign left_to_capture = current_total_price | minus: total_received %}
   {% assign authorized_transactions = order.transactions | where: "kind", "AUTHORIZATION" %}
+
+
+  {% comment %}
+    -- loop through transactions to see what the actual balance received is (SALE + CAPTURED - REFUND)
+  {% endcomment %}
+
+  {% assign net_received = 0.0 %}
+
+  {% for transaction in order.transactions %}
+    {% unless transaction.status == "SUCCESS" %}
+      {% continue %}
+    {% endunless %}
+
+    {% if transaction.kind == "SALE" or transaction.kind == "CAPTURE" %}
+      {% assign net_received = net_received | plus: transaction.amountSet.presentmentMoney.amount %}
+
+    {% elsif transaction.kind == "REFUND" %}
+      {% assign net_received = net_received | minus: transaction.amountSet.presentmentMoney.amount %}
+    {% endif %}
+  {% endfor %}
+
+  {% assign left_to_capture = current_total_price | minus: net_received | at_least: 0.0 %}
 
   {% unless event.preview %}
     {% log
       order_name: order.name,
       current_total_price: current_total_price,
-      total_received: total_received,
-      left_to_capture: left_to_capture,
-      count_authorized_transactions: authorized_transactions.size
+      net_received: net_received,
+      left_to_capture: left_to_capture
     %}
   {% endunless %}
 
-
   {% comment %}
     -- multiple authorizations could be on the order due to upsells or item additions
+    -- capture authorizations up to the amount left to capture
   {% endcomment %}
 
   {% for transaction in authorized_transactions %}
+    {% unless transaction.status == "SUCCESS" %}
+      {% continue %}
+    {% endunless %}
+
     {% comment %}
       -- capture the unsettled amount of this transaction without exceeding the amount left to capture
     {% endcomment %}

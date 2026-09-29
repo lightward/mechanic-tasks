@@ -30,7 +30,7 @@ shopify/orders/create+{{ options.days_to_wait_before_capturing__number_required 
 
 After waiting 7 days (or another timespan of your choice), this task attempts to capture all open authorized payments for an order. (Multiple authorizations can exist on edited orders or with post-purchase upsells.)
 
-If the order is modified before capturing, due to applying discounts, changing shipping fees, and/or making item adjustments, then this task will only capture up to a maximum of the current order total. Refunds that are not associated with an item adjustment are not supported by this task.
+If the order is modified before capturing, due to applying discounts, changing shipping fees, and/or making item adjustments, then this task will only capture up to a maximum of the current order total.
 
 ## Installing this task
 
