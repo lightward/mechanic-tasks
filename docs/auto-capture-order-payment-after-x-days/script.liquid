@@ -96,7 +96,7 @@
 
 {% unless order.displayFinancialStatus == "AUTHORIZED" or order.displayFinancialStatus == "PARTIALLY_PAID" %}
   {% log
-    message: "Order finanical status is not AUTHORIZED or PARTIALLY_PAID on this order",
+    message: "Order financial status is not AUTHORIZED or PARTIALLY_PAID on this order",
     order: order
   %}
   {% break %}
