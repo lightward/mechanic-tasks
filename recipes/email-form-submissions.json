@@ -1,0 +1,143 @@
+{
+  "kind": "mechanic_recipe",
+  "version": 1,
+  "name": "Email form submissions to your team",
+  "description": "Collect requests with a storefront form and email the answers to your team. Setup connects the form, incoming webhook and email task for you.",
+  "resources": [
+    {
+      "key": "submissions",
+      "type": "webhook",
+      "config": {
+        "name": "Form submissions"
+      }
+    },
+    {
+      "key": "form",
+      "type": "form",
+      "config": {
+        "version": 2,
+        "name": "Basic form",
+        "title": "Send us a message",
+        "description": "Tell us how we can help.",
+        "submitLabel": "Send message",
+        "confirmation": "Thanks! Your message has been submitted.",
+        "steps": [
+          {
+            "id": "details",
+            "title": "Your details"
+          }
+        ],
+        "fields": [
+          {
+            "id": "name",
+            "type": "text",
+            "key": "name",
+            "label": "Your name",
+            "helpText": "",
+            "placeholder": "",
+            "required": true,
+            "choices": [],
+            "stepId": "details"
+          },
+          {
+            "id": "email",
+            "type": "email",
+            "key": "email",
+            "label": "Email address",
+            "helpText": "",
+            "placeholder": "",
+            "required": true,
+            "choices": [],
+            "stepId": "details"
+          },
+          {
+            "id": "message",
+            "type": "textarea",
+            "key": "message",
+            "label": "Your message",
+            "helpText": "",
+            "placeholder": "",
+            "required": true,
+            "choices": [],
+            "stepId": "details"
+          }
+        ]
+      }
+    },
+    {
+      "key": "email",
+      "type": "task",
+      "task_slug": "email-mechanic-form-submissions",
+      "config": {}
+    }
+  ],
+  "inputs": [
+    {
+      "key": "recipients",
+      "label": "Send requests to",
+      "type": "email_list",
+      "required": true,
+      "description": "Enter one or more email addresses, separated by commas."
+    },
+    {
+      "key": "subject",
+      "label": "Email subject",
+      "type": "text",
+      "required": true
+    }
+  ],
+  "bindings": [
+    {
+      "resource": "form",
+      "path": [
+        "webhookId"
+      ],
+      "source": {
+        "resource": "submissions",
+        "output": "id"
+      }
+    },
+    {
+      "resource": "email",
+      "path": [
+        "options",
+        "webhook_event_topic__required"
+      ],
+      "source": {
+        "resource": "submissions",
+        "output": "topic"
+      }
+    },
+    {
+      "resource": "email",
+      "path": [
+        "options",
+        "form__storefrontform"
+      ],
+      "source": {
+        "resource": "form",
+        "output": "id"
+      }
+    },
+    {
+      "resource": "email",
+      "path": [
+        "options",
+        "email_recipients__email_array_required"
+      ],
+      "source": {
+        "input": "recipients"
+      }
+    },
+    {
+      "resource": "email",
+      "path": [
+        "options",
+        "email_subject__required"
+      ],
+      "source": {
+        "input": "subject"
+      }
+    }
+  ]
+}

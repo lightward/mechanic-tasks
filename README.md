@@ -5,6 +5,7 @@ The community task library for [Mechanic](https://mechanic.dev/), a development 
 ## What's in this repo
 
 * **[tasks/](./tasks/)** — JSON exports of Mechanic tasks. Each file is a complete, importable task containing a Liquid script, event subscriptions, configuration options, and documentation. This is the primary content of the repository.
+* **[recipes/](./recipes/)** — Portable setups that connect tasks, forms, and webhooks. The builder resolves references to the existing task files and generates installable bundles and documentation.
 * **[docs/](./docs/)** — Auto-generated documentation for each task. **Do not edit these files directly** — they are rebuilt from the task JSON by `npm run build`.
 * **[lib/](./lib/)** — Build tools and the task JSON schema. These are infrastructure for validating and documenting tasks — they are not part of the Mechanic platform.
 
@@ -28,7 +29,7 @@ Tasks can be imported into a Mechanic account using their JSON export. See [Impo
 
 ## Contributing
 
-New and updated tasks are accepted via pull request. See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+New and updated tasks and recipes are accepted via pull request. Both use the same build, checks, review, and contributor agreement. See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
 ### Building the docs
 

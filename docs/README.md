@@ -1920,3 +1920,7 @@ This directory is built automatically. Each task's documentation is generated fr
 ### Web Browser
 
 * [Auto-tag new online orders by web browser](./auto-tag-new-online-orders-by-web-browser)
+
+## Complete templates
+
+[Browse complete templates](./recipes/) to install connected tasks, forms, and webhooks together.
