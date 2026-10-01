@@ -126,7 +126,14 @@
       "config": {}
     }
   ],
-  "inputs": [],
+  "inputs": [
+    {
+      "key": "email_field",
+      "label": "Customer email field key",
+      "type": "text",
+      "required": true
+    }
+  ],
   "bindings": [
     {
       "resource": "form",
@@ -158,6 +165,16 @@
       "source": {
         "resource": "form",
         "output": "id"
+      }
+    },
+    {
+      "resource": "draft_order",
+      "path": [
+        "options",
+        "email_field_key"
+      ],
+      "source": {
+        "input": "email_field"
       }
     }
   ]

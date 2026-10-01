@@ -146,7 +146,14 @@
       }
     }
   ],
-  "inputs": [],
+  "inputs": [
+    {
+      "key": "email_field",
+      "label": "Customer email field key",
+      "type": "text",
+      "required": true
+    }
+  ],
   "bindings": [
     {
       "resource": "form",
@@ -179,7 +186,17 @@
         "resource": "form",
         "output": "id"
       }
+    },
+    {
+      "resource": "draft_order",
+      "path": [
+        "options",
+        "email_field_key"
+      ],
+      "source": {
+        "input": "email_field"
+      }
     }
   ],
-  "revision": "a3053e017a62b45d9a04eea673240cf326d137e852262d9c183291c2d34b8085"
+  "revision": "bb4359c5acea07c3786934e25d1fe2ff685309a55df963a03abc200182036abb"
 }

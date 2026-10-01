@@ -1921,6 +1921,6 @@ This directory is built automatically. Each task's documentation is generated fr
 
 * [Auto-tag new online orders by web browser](./auto-tag-new-online-orders-by-web-browser)
 
-## Recipes
+## Complete templates
 
-[Browse recipes](./recipes/) to install connected tasks, forms, and webhooks together.
+[Browse complete templates](./recipes/) to install connected tasks, forms, and webhooks together.

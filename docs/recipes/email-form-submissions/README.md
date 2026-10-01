@@ -1,14 +1,14 @@
-# Create a draft order from a storefront form
+# Email form submissions to your team
 
-Let customers send their cart with a storefront form. Mechanic connects the form and webhook to a task that creates a draft order for your team to review. Place the form on your cart page. This does not send an invoice or reproduce checkout pricing.
+Collect requests with a storefront form and email the answers to your team. Setup connects the form, incoming webhook and email task for you.
 
 This template sets up connected forms and tasks together. Individual tasks remain available separately.
 
 ## Included resources
 
-- Cart form submissions (webhook)
-- Request a quote from your cart (form)
-- [Create a draft order from a storefront form](https://tasks.mechanic.dev/create-a-draft-order-from-a-storefront-form) (task)
+- Form submissions (webhook)
+- Basic form (form)
+- [Email Mechanic form submissions](https://tasks.mechanic.dev/email-mechanic-form-submissions) (task)
 
 ## Installation
 

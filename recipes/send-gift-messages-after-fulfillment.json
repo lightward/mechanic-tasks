@@ -1,0 +1,206 @@
+{
+  "kind": "mechanic_recipe",
+  "version": 1,
+  "name": "Send gift messages after fulfillment",
+  "description": "Save a recipient and gift message with the cart, then email the recipient when the whole order is fulfilled. Includes the form and a customizable email task; no incoming webhook is needed.",
+  "resources": [
+    {
+      "key": "form",
+      "type": "form",
+      "config": {
+        "version": 2,
+        "name": "Add a gift message",
+        "title": "Add a gift message",
+        "description": "We’ll email your message to the recipient once your order has shipped.",
+        "submitLabel": "Save gift message",
+        "confirmation": "Your gift message is saved to your cart. You can now continue to checkout.",
+        "destination": "cart",
+        "presentation": {
+          "mode": "button",
+          "openerStyle": "link",
+          "buttonLabel": "Add a gift message"
+        },
+        "visibility": {
+          "enabled": true,
+          "match": "all",
+          "rules": [
+            {
+              "type": "cart_quantity",
+              "operator": "at_least",
+              "value": 1
+            }
+          ]
+        },
+        "steps": [
+          {
+            "id": "gift",
+            "title": "Your gift"
+          }
+        ],
+        "fields": [
+          {
+            "id": "sender_name",
+            "key": "sender_name",
+            "type": "text",
+            "label": "Your name",
+            "helpText": "The name your recipient will see.",
+            "placeholder": "",
+            "required": true,
+            "choices": [],
+            "stepId": "gift"
+          },
+          {
+            "id": "recipient_name",
+            "key": "recipient_name",
+            "type": "text",
+            "label": "Recipient’s name",
+            "helpText": "",
+            "placeholder": "",
+            "required": true,
+            "choices": [],
+            "stepId": "gift"
+          },
+          {
+            "id": "recipient_email",
+            "key": "recipient_email",
+            "type": "email",
+            "label": "Recipient’s email address",
+            "helpText": "Where we’ll send your gift message.",
+            "placeholder": "",
+            "required": true,
+            "choices": [],
+            "stepId": "gift"
+          },
+          {
+            "id": "gift_message",
+            "key": "gift_message",
+            "type": "textarea",
+            "label": "Gift message",
+            "helpText": "Leave a personal note for your recipient.",
+            "placeholder": "",
+            "required": true,
+            "choices": [],
+            "stepId": "gift"
+          }
+        ]
+      }
+    },
+    {
+      "key": "email",
+      "type": "task",
+      "task_slug": "add-a-gift-message-form-to-your-shopify-theme-and-email-recipients-after-fulfillment",
+      "config": {}
+    }
+  ],
+  "inputs": [
+    {
+      "key": "recipient_email_field",
+      "label": "Recipient email field key",
+      "type": "text",
+      "required": true
+    },
+    {
+      "key": "recipient_name_field",
+      "label": "Recipient name field key",
+      "type": "text",
+      "required": true
+    },
+    {
+      "key": "sender_name_field",
+      "label": "Sender name field key",
+      "type": "text",
+      "required": true
+    },
+    {
+      "key": "message_field",
+      "label": "Gift message field key",
+      "type": "text",
+      "required": true
+    },
+    {
+      "key": "subject",
+      "label": "Email subject",
+      "type": "text",
+      "required": true
+    },
+    {
+      "key": "body",
+      "label": "Email message",
+      "type": "text",
+      "required": true
+    }
+  ],
+  "bindings": [
+    {
+      "resource": "email",
+      "path": [
+        "options",
+        "form__storefrontform_required"
+      ],
+      "source": {
+        "resource": "form",
+        "output": "id"
+      }
+    },
+    {
+      "resource": "email",
+      "path": [
+        "options",
+        "recipient_email_field_key__required"
+      ],
+      "source": {
+        "input": "recipient_email_field"
+      }
+    },
+    {
+      "resource": "email",
+      "path": [
+        "options",
+        "recipient_name_field_key__required"
+      ],
+      "source": {
+        "input": "recipient_name_field"
+      }
+    },
+    {
+      "resource": "email",
+      "path": [
+        "options",
+        "sender_name_field_key__required"
+      ],
+      "source": {
+        "input": "sender_name_field"
+      }
+    },
+    {
+      "resource": "email",
+      "path": [
+        "options",
+        "gift_message_field_key__required"
+      ],
+      "source": {
+        "input": "message_field"
+      }
+    },
+    {
+      "resource": "email",
+      "path": [
+        "options",
+        "email_subject__required"
+      ],
+      "source": {
+        "input": "subject"
+      }
+    },
+    {
+      "resource": "email",
+      "path": [
+        "options",
+        "email_body__multiline_required"
+      ],
+      "source": {
+        "input": "body"
+      }
+    }
+  ]
+}

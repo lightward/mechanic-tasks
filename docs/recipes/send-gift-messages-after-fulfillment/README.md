@@ -1,14 +1,13 @@
-# Create a draft order from a storefront form
+# Send gift messages after fulfillment
 
-Let customers send their cart with a storefront form. Mechanic connects the form and webhook to a task that creates a draft order for your team to review. Place the form on your cart page. This does not send an invoice or reproduce checkout pricing.
+Save a recipient and gift message with the cart, then email the recipient when the whole order is fulfilled. Includes the form and a customizable email task; no incoming webhook is needed.
 
 This template sets up connected forms and tasks together. Individual tasks remain available separately.
 
 ## Included resources
 
-- Cart form submissions (webhook)
-- Request a quote from your cart (form)
-- [Create a draft order from a storefront form](https://tasks.mechanic.dev/create-a-draft-order-from-a-storefront-form) (task)
+- Add a gift message (form)
+- [Add a gift message form to your Shopify theme and email recipients after fulfillment](https://tasks.mechanic.dev/add-a-gift-message-form-to-your-shopify-theme-and-email-recipients-after-fulfillment) (task)
 
 ## Installation
 
