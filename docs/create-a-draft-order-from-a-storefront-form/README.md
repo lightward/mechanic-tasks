@@ -32,7 +32,13 @@ Create a Shopify draft order from the cart submitted with a Mechanic storefront 
 
 Create a Shopify draft order from the cart submitted with a Mechanic storefront form. Signed-in customers are linked to their verified Shopify customer account. Shopify supplies current variant prices; review the draft before sending an invoice.
 
-### Set up a storefront form
+### Guided setup
+
+In **Forms**, use **Request a quote from your cart**. Review the questions and draft-order outcome, then choose **Continue to placement**. Choose **Publish form** to connect the required webhook and this task, enable it, and publish when access is approved. If Shopify access is requested, approve it, return, and click Publish again. Add a Mechanic form block to your cart page in the theme editor, select the form, and save the theme.
+
+Guided setup reuses the form you started with and configures the webhook topic, form filter, and email field for you. Do not install another task or create a second webhook. Reopening **Setup** keeps the same connection; **Task settings** edits its configuration. The manual path below remains available for custom setups.
+
+### Manual setup
 
 1. In **Forms**, use **Request a quote from your cart**. The template includes the current cart when submitted and opens from a button. Keep the email field, or set this task’s **Email field key** to your field’s key.
 2. Create a custom webhook and select it in the form’s **Submission settings**, then save and publish the form.

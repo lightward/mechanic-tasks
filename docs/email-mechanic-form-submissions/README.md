@@ -37,7 +37,15 @@ Email the answers from a Mechanic form submission to your team, optionally inclu
 
 This task is for **Mechanic's form builder**. It uses the form's ordinary webhook and runs in the background alongside any Google Sheets, metaobject or other tasks subscribed to that topic. It does not create or publish a form, change its webhook, or send a message synchronously to the visitor.
 
-## Setup
+## Guided setup
+
+In **Forms**, choose **Create form** and use a warranty, service, quote, wholesale, customization, feedback, or basic template. Review the questions and enter **Send requests to**. **Continue to placement** makes no connections. **Publish form** creates the required webhook and connects and enables this task for the existing form, then publishes when access and email approval are already satisfied. If approval is needed, complete it, return, and click Publish again. Add the form to your theme and save the theme.
+
+You do not need to create a webhook or install another copy of this task when using guided setup. To edit recipients or the subject later, open the form’s **Setup** and choose **Edit email**. It updates the existing task. Under **How Mechanic handles this**, **Edit task** opens the task’s full settings, including **Include uploaded files** and **Reply to email field key**. Attachments remain off by default; notification emails contain file names and sizes unless you enable them.
+
+The guide uses this same task for all seven templates. It does not automatically approve applications, book appointments, or reply to customers. The instructions below are for connecting the task manually or using your own workflow.
+
+## Manual setup
 
 1. In the form's **Submission settings**, choose a webhook. Copy its exact event topic into **Webhook event topic**; the example `user/forms/submission` is not automatically connected.
 2. Optionally choose a published form in **Form** to receive only that form. Leave it blank to handle any Mechanic form on the selected webhook.
