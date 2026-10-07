@@ -11,7 +11,7 @@ This template sets up connected forms and tasks together. Individual tasks remai
 
 ## Installation
 
-Choose Use template in the Mechanic library. Built-in form templates open the same Review → Add to store guide as the Forms picker. Opening creates only an unpublished form draft. Review the questions and outcome, then choose Publish to connect and enable the matching task and publish. If approval is requested, complete it and click Publish again. Place the form in your theme and test it. Private files and other custom templates use the configure/review/connect importer, which creates drafts and disabled tasks.
+For a supported form workflow, choose Use this form in Forms or preview its task in the Mechanic library and choose Install this task. Both paths create an unpublished form draft and open one task setup screen. Set the task name, Enabled state, options, and form questions, then choose Save task and publish form. If approval is requested, complete it, return, and choose Save again. Place the published form in your theme and test it. Reopen the same task to edit its setup; do not install another copy. Private files and other custom templates use the configure/review/connect importer, which creates drafts and disabled tasks.
 
 ## Updates
 

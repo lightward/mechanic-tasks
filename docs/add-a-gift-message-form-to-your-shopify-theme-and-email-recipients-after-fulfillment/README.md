@@ -41,9 +41,9 @@ Use a Mechanic form in your Shopify theme to collect gift details on the cart pa
 
 ## Guided setup
 
-In **Forms**, choose **Create form → Add a gift message → Use template**. Review the questions and example email. Use **Edit questions** or **Edit email** to customize them, then **Continue to placement**. **Publish form** connects and enables this task for the existing form, then publishes when access and email approval are already satisfied. If approval is needed, complete it, return, and click Publish again. Add the form block to your cart page and save the theme.
+In **Forms**, choose **Create form → Add a gift message → Use this form**, or preview this task in the task library and choose **Install this task**. Both paths open one task setup screen. Set the task name and **Enabled** state, customize the email subject and body, and use **Edit questions** if needed. Choose **Save task and publish form** to connect this task to the existing form, save its settings, and publish the form. If Shopify access or email approval is needed, complete it, return, and choose Save again. Add the form block to your cart page and save the theme.
 
-No webhook or separate task installation is needed for this path. Reopening **Setup** and choosing **Edit email** updates the existing task; it does not create another form or task. Keep the configured field keys or repair the mapping in setup after changing them. The manual instructions below remain available for existing forms and custom setups.
+No webhook or second task is needed. Reopen the task to change its email options or use **Advanced mode** for the full editor; the same form and task IDs remain. Publishing the form and enabling the task remain separate settings after installation. Keep the configured field keys or update their mappings in task setup after changing them. The manual instructions below remain available for existing forms and custom setups.
 
 ## Manual setup
 

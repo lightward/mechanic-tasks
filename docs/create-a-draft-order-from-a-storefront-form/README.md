@@ -34,9 +34,9 @@ Create a Shopify draft order from the cart submitted with a Mechanic storefront 
 
 ### Guided setup
 
-In **Forms**, use **Request a quote from your cart**. Review the questions and draft-order outcome, then choose **Continue to placement**. Choose **Publish form** to connect the required webhook and this task, enable it, and publish when access is approved. If Shopify access is requested, approve it, return, and click Publish again. Add a Mechanic form block to your cart page in the theme editor, select the form, and save the theme.
+In **Forms**, choose **Request a quote from your cart → Use this form**, or preview this task in the task library and choose **Install this task**. Both paths open one task setup screen. Set the task name and **Enabled** state, select the required email question, and use **Edit questions** if needed. Choose **Save task and publish form** to connect the webhook and this task, save its settings, and publish the form. If Shopify access is requested, approve it, return, and choose Save again. Add a Mechanic form block to your cart page in the theme editor, select the form, and save the theme.
 
-Guided setup reuses the form you started with and configures the webhook topic, form filter, and email field for you. Do not install another task or create a second webhook. Reopening **Setup** keeps the same connection; **Task settings** edits its configuration. The manual path below remains available for custom setups.
+Setup reuses the same form and task, including their IDs, and configures the webhook topic and form filter. Do not install another task or create a second webhook. Reopen the task to change its options or use **Advanced mode** for the full editor. Publishing the form and enabling the task remain separate settings after installation. The manual path below remains available for custom setups.
 
 ### Manual setup
 

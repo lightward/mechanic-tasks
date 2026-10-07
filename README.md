@@ -29,7 +29,7 @@ Tasks can be imported into a Mechanic account using their JSON export. See [Impo
 
 ## Contributing
 
-New and updated tasks and recipes are accepted via pull request. Both use the same build, checks, review, and contributor agreement. See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+New and updated tasks and connected setup sources are accepted via pull request. Both use the same build, checks, review, and contributor agreement. See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
 ### Building the docs
 
