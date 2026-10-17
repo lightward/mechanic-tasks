@@ -36,8 +36,6 @@ This task works by monitoring created and updated fulfillments. It scans for and
 
 Use "TRACKING_NUMBERS" in your email body to insert a list of tracking numbers for the customer's order. Or, use "{{ fulfillment.tracking_number }}", to insert the single tracking number of the fulfillment that has just been created or updated.
 
-[YouTube: Watch the development video!](https://youtu.be/W9VztafUY84)
-
 ## Installing this task
 
 Find this task [in the library at tasks.mechanic.dev](https://tasks.mechanic.dev/email-the-customer-when-tracking-numbers-are-added-to-their-order), and use the "Try this task" button. Or, import [this task's JSON export](../../tasks/email-the-customer-when-tracking-numbers-are-added-to-their-order.json) – see [Importing and exporting tasks](https://learn.mechanic.dev/core/tasks/import-and-export) to learn how imports work.

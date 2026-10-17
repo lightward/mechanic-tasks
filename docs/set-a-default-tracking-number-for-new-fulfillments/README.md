@@ -12,7 +12,8 @@ This task is here to illustrate managing tracking numbers. If a default tracking
 
 ```json
 {
-  "default_tracking_number__required": null
+  "default_tracking_number__required": null,
+  "notify_customer__boolean": false
 }
 ```
 
@@ -29,6 +30,8 @@ shopify/fulfillments/create
 ## Documentation
 
 This task is here to illustrate managing tracking numbers. If a default tracking number is right for your orders, you can use this task to make sure that one is added the instant a fulfillment is created.
+
+Optionally, you can notify the customer when the tracking number is set.
 
 ## Installing this task
 
