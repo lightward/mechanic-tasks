@@ -1,81 +1,131 @@
-{% assign existing_metafield = fulfillment.order.metafields.mechanic | where: "key", "known_tracking_numbers" | first %}
+{% assign email_subject = options.email_subject__required %}
+{% assign email_body = options.email_body__required_multiline %}
+
+{% comment %}
+  -- get order fulfillment data and any previously recorded tracking numbers
+{% endcomment %}
+
+{% capture query %}
+  query {
+    order(id: {{ fulfillment.order.admin_graphql_api_id | json }}) {
+      id
+      email
+      metafield(key: "mechanic.known_tracking_numbers") {
+        jsonValue
+      }
+      fulfillments {
+        id
+        trackingInfo {
+          number
+          url
+        }
+      }
+    }
+  }
+{% endcapture %}
+
+{% assign result = query | shopify %}
 
 {% if event.preview %}
-  {% capture fulfillment_json %}
+  {% capture result_json %}
     {
-      "order": {
-        "email": "customer@example.com",
-        "metafields": {
-          "mechanic": {
-            "known_tracking_numbers": []
-          }
-        },
-        "fulfillments": [
-          {
-            "tracking_numbers": ["ABC123"]
-          }
-        ]
+      "data": {
+        "order": {
+          "id": "gid://shopify/Order/1234567890",
+          "email": "sample@example.com",
+          "fulfillments": [
+            {
+              "trackingInfo": [
+                {
+                  "number": "1234567890",
+                  "url": null
+                }
+              ]
+            }
+          ]
+        }
       }
     }
   {% endcapture %}
 
-  {% assign fulfillment = fulfillment_json | parse_json %}
-            
-  {% assign existing_metafield = hash %}
-  {% assign existing_metafield["id"] = 1234567890 %}
+  {% assign result = result_json | parse_json %}
 {% endif %}
-            
-{% assign already_known_tracking_numbers = fulfillment.order.metafields.mechanic.known_tracking_numbers | default: array %}
+
+{% assign order = result.data.order %}
+{% assign already_known_tracking_numbers = order.metafield.jsonValue | default: array %}
 
 {% assign currently_known_tracking_numbers = array %}
-{% for some_fulfillment in fulfillment.order.fulfillments %}
-  {% assign currently_known_tracking_numbers = currently_known_tracking_numbers | concat: some_fulfillment.tracking_numbers %}
-{% endfor %}
+{% assign tracking_numbers_changed = nil %}
 
-{% assign tracking_numbers_changed = false %}
-{% for tracking_number in currently_known_tracking_numbers %}
-  {% unless already_known_tracking_numbers contains tracking_number %}
-    {% assign tracking_numbers_changed = true %}
-    {% break %}
-  {% endunless %}
-{% endfor %}
+{% comment %}
+  -- check to see if any of the tracking numbers are new
+{% endcomment %}
 
-{% if tracking_numbers_changed or existing_metafield == nil %}
-  {% if existing_metafield %}
-    {% if fulfillment.order.email == blank %}
-      {% log "No email on file for this order." %}
-    {% else %}
-      {% assign tracking_numbers_string = currently_known_tracking_numbers | join: ", " %}
-      {% action "email" %}
-        {
-          "to": {{ fulfillment.order.email | json }},
-          "subject": {{ options.email_subject__required | json }},
-          "body": {{ options.email_body__required_multiline | replace: "TRACKING_NUMBERS", tracking_numbers_string | strip | newline_to_br | json }},
-          "reply_to": {{ shop.customer_email | json }},
-          "from_display_name": {{ shop.name | json }}
-        }
-      {% endaction %}
+{% for fulfillment in order.fulfillments %}
+  {% for tracking in fulfillment.trackingInfo %}
+    {% if tracking.number != blank %}
+      {% assign currently_known_tracking_numbers = currently_known_tracking_numbers | push: tracking.number %}
+
+      {% unless already_known_tracking_numbers contains tracking.number %}
+        {% assign tracking_numbers_changed = true %}
+      {% endunless %}
     {% endif %}
+  {% endfor %}
+{% endfor %}
+
+{% comment %}
+  -- if there are changed tracking numnbers, then update known metafield and send customer email
+{% endcomment %}
+
+{% if tracking_numbers_changed %}
+  {% if order.email == blank %}
+    {% log "No email on file for this order." %}
+
+  {% else %}
+    {% assign tracking_numbers_string = currently_known_tracking_numbers | join: ", " %}
+
+    {% action "email" %}
+      {
+        "to": {{ order.email | json }},
+        "subject": {{ email_subject | json }},
+        "body": {{ email_body | replace: "TRACKING_NUMBERS", tracking_numbers_string | strip | newline_to_br | json }},
+        "reply_to": {{ shop.customer_email | json }},
+        "from_display_name": {{ shop.name | json }}
+      }
+    {% endaction %}
   {% endif %}
 
   {% action "shopify" %}
-    [
-      "update",
-      [
-        "order",
-        {{ fulfillment.order.id | json }}
-      ],
-      {
-        "metafields": [
+    mutation {
+      metafieldsSet(
+        metafields: [
           {
-            {% if existing_metafield %}"id": {{ existing_metafield.id | json }},{% endif %}
-            "namespace": "mechanic",
-            "key": "known_tracking_numbers",
-            "value": {{ currently_known_tracking_numbers | json | json }},
-            "type": "json"
+            ownerId: {{ order.id | json }}
+            namespace: "mechanic"
+            key: "known_tracking_numbers"
+            type: "json"
+            value: {{ currently_known_tracking_numbers | json | json }}
           }
         ]
+      ) {
+        metafields {
+          namespace
+          key
+          type
+          jsonValue
+          owner {
+            ... on Order {
+              id
+              name
+            }
+          }
+        }
+        userErrors {
+          code
+          field
+          message
+        }
       }
-    ]
+    }
   {% endaction %}
 {% endif %}
