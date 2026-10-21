@@ -37,7 +37,15 @@ Email the answers from a Mechanic form submission to your team, optionally inclu
 
 This task is for **Mechanic's form builder**. It uses the form's ordinary webhook and runs in the background alongside any Google Sheets, metaobject or other tasks subscribed to that topic. It does not create or publish a form, change its webhook, or send a message synchronously to the visitor.
 
-## Setup
+## Guided setup
+
+In **Forms**, choose **Create form**, pick a warranty, service, quote, wholesale, customization, feedback, or basic template, and choose **Use this form**. You can also preview this task in the task library and choose **Install this task**. Both paths open one task setup screen. Set the task name and **Enabled** state, enter the team recipients and email subject, and use **Edit questions** if needed. Choose **Save task and publish form** to connect the webhook and this task, save its settings, and publish the form. If Shopify access or email approval is needed, complete it, return, and choose Save again. Add the published form to your theme and save the theme.
+
+This setup keeps one form and one task; do not create another webhook or install another copy. Reopen the task to edit recipients, subject, and other options, including **Include uploaded files** and **Reply to email field key**. **Advanced mode** opens the full task editor. Attachments remain off by default; notification emails contain file names and sizes unless you enable them. Choose **Use form only** in the picker if you want to build the form without this task. Publishing the form and enabling the task remain separate settings after installation.
+
+The guide uses this same task for all seven templates. It does not automatically approve applications, book appointments, or reply to customers. The instructions below are for connecting the task manually or using your own workflow.
+
+## Manual setup
 
 1. In the form's **Submission settings**, choose a webhook. Copy its exact event topic into **Webhook event topic**; the example `user/forms/submission` is not automatically connected.
 2. Optionally choose a published form in **Form** to receive only that form. Leave it blank to handle any Mechanic form on the selected webhook.
