@@ -4,7 +4,7 @@
   "repository": "git@github.com:lightward/mechanic-tasks.git",
   "homepage": "https://tasks.mechanic.dev/",
   "engines": {
-    "node": ">=24 <25",
+    "node": ">=24 <27",
     "npm": ">=11 <12"
   },
   "dependencies": {
