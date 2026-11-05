@@ -11,7 +11,7 @@
     "@shopify/prettier-config": "1.1.4",
     "ajv": "8.20.0",
     "dir-compare": "5.0.0",
-    "glob": "13.0.6",
+    "glob": "14.0.3",
     "husky": "^9.0.7",
     "lint-staged": "17.6.0",
     "prettier": "3.9.9",
