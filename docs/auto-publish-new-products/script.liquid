@@ -78,26 +78,27 @@
   -- make sure the configured sales channel names match what is in the shop
 {% endcomment %}
 
-{% if publication_ids == blank  %}
-  {% error
-    message: "None of the sales channel configured in this task exist in the shop. Check the list of available channels and verify each configured channel exists.",
-    configured_sales_channel_names: sales_channel_names,
-    available_sales_channel_names: available_sales_channel_names
-  %}
+{% unless event.preview %}
+  {% if publication_ids == blank %}
+    {% error
+      message: "None of the sales channel configured in this task exist in the shop. Check the list of available channels and verify each configured channel exists.",
+      configured_sales_channel_names: sales_channel_names,
+      available_sales_channel_names: available_sales_channel_names
+    %}
+    {% break %}
 
-  {% break %}
+  {% elsif publication_ids.size != sales_channel_names.size %}
+    {% comment %}
+      -- using action error here so the task will continue with any other configured and matched sales channels
+    {% endcomment %}
 
-{% elsif publication_ids.size != sales_channel_names.size %}
-  {% comment %}
-    -- using action error here so the task will continue with any other configured and matched sales channels
-  {% endcomment %}
-
-  {% action "echo"
-    __error: "One or more configured sales channel names do not match any of the publication names available in this shop.",
-    configured_sales_channel_names: sales_channel_names,
-    available_sales_channel_names: available_sales_channel_names
-  %}
-{% endif %}
+    {% action "echo"
+      __error: "One or more configured sales channel names do not match any of the publication names available in this shop.",
+      configured_sales_channel_names: sales_channel_names,
+      available_sales_channel_names: available_sales_channel_names
+    %}
+  {% endif %}
+{% endunless %}
 
 {% comment %}
   -- check which publications the product is published on
