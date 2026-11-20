@@ -1,0 +1,91 @@
+{% comment %}
+  {{ options.pos_form_id__required }}
+  {{ options.email_recipients__email_array_required }}
+{% endcomment %}
+
+{% assign form_id = options.pos_form_id__required | strip | downcase %}
+{% assign recipients = options.email_recipients__email_array_required %}
+{% if event.preview %}
+  {% assign form_id = form_id | default: "11111111-1111-4111-8111-111111111111" %}
+  {% if recipients == blank %}{% assign recipients = "workshop@example.com" | split: "," %}{% endif %}
+  {% capture sample_answers %}{"version":1,"formRevision":1,"savedWithCustomerId":null,"answers":{"item":"Silver bracelet, one","engraving_text":"Love, Alex"}}{% endcapture %}
+  {% capture sample %}
+    {"id":1234567890,"name":"#1001","source_name":"pos","financial_status":"paid","cancelled_at":null,"note_attributes":[{"name":{{ form_id | prepend: "_mechanic_pos_" | json }},"value":{{ sample_answers | json }}}]}
+  {% endcapture %}
+  {% assign order = sample | parse_json %}
+{% endif %}
+{% assign valid_form_id = form_id | match: '\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z' %}
+{% unless valid_form_id %}
+  {% error "Copy the POS form ID from Forms > Submission settings into the POS form ID option." %}{% break %}
+{% endunless %}
+{% unless event.topic == "shopify/orders/paid" and order.source_name == "pos" and order.financial_status == "paid" and order.cancelled_at == nil %}
+  {% log "This is not a paid, uncancelled POS sale. No email was queued." %}{% break %}
+{% endunless %}
+{% assign property_name = form_id | prepend: "_mechanic_pos_" %}
+{% assign matches = order.note_attributes | where: "name", property_name %}
+{% if matches.size == 0 %}
+  {% log "This sale has no saved answers for the selected POS form. No email was queued." %}{% break %}
+{% endif %}
+{% if matches.size != 1 %}
+  {% error "More than one saved property matches this POS form. Review the order's additional details. No email was queued." %}{% break %}
+{% endif %}
+{% assign raw = matches.first.value %}
+{% assign raw_type = raw | json | slice: 0, 1 %}
+{% unless raw_type == '"' and raw.size <= 4096 %}
+  {% error "The saved POS form data is invalid or too long. No email was queued." %}{% break %}
+{% endunless %}
+{% assign saved = raw | parse_json: silent: true %}
+{% assign saved_type = saved | json | slice: 0, 1 %}
+{% unless saved_type == '{' %}
+  {% error "The saved POS form data is not a JSON object. No email was queued." %}{% break %}
+{% endunless %}
+{% assign answers_type = saved.answers | json | slice: 0, 1 %}
+{% assign answers_size = saved.answers | size %}
+{% unless saved.version == 1 and answers_type == '{' and answers_size <= 50 %}
+  {% error "The saved POS form format is unsupported. No email was queued." %}{% break %}
+{% endunless %}
+{% assign answer_count = 0 %}
+{% assign invalid_answers = false %}
+{% capture details %}
+  {% for pair in saved.answers %}
+    {% assign key = pair.first %}
+    {% assign value = pair.last %}
+    {% assign valid_key = key | match: '\A[a-z][a-z0-9_]{0,63}\z' %}
+    {% assign serialized = value | json %}
+    {% assign value_type = serialized | slice: 0, 1 %}
+    {% unless valid_key %}{% assign invalid_answers = true %}{% break %}{% endunless %}
+    {% unless value_type == '"' or serialized == 'true' or serialized == 'false' %}
+      {% assign invalid_answers = true %}{% break %}
+    {% endunless %}
+    {% if value_type == '"' and value == blank %}{% continue %}{% endif %}
+    {% assign answer_count = answer_count | plus: 1 %}
+    <p><strong>{{ key | replace: "_", " " | capitalize | escape }}</strong><br>
+    {% if serialized == 'true' %}Yes{% elsif serialized == 'false' %}No{% else %}{{ value | escape | newline_to_br }}{% endif %}</p>
+  {% endfor %}
+{% endcapture %}
+{% if invalid_answers %}
+  {% error "The saved POS form contains unsupported answer values. No email was queued." %}{% break %}
+{% endif %}
+{% if answer_count == 0 %}
+  {% log "The selected POS form has no completed answers. No email was queued." %}{% break %}
+{% endif %}
+{% if recipients == blank %}
+  {% error "Enter the email recipients for these POS instructions. No email was queued." %}{% break %}
+{% endif %}
+{% capture subject %}POS instructions for {{ order.name | strip_newlines }}{% endcapture %}
+{% capture body %}
+  <p>A paid POS sale has instructions for your team.</p>
+  <p><strong>Order {{ order.name | escape }}</strong></p>
+  {{ details }}
+  <p>These answers describe the sale. Item descriptions are entered by staff, not automatically linked to an order line.</p>
+  <p><a href="https://{{ shop.myshopify_domain | escape }}/admin/orders/{{ order.id | escape }}">View order in Shopify</a></p>
+{% endcapture %}
+{% action "email" %}
+  {
+    "to": {{ recipients | json }},
+    "subject": {{ subject | strip | truncate: 200, "" | json }},
+    "body": {{ body | strip | json }},
+    "from_display_name": {{ shop.name | json }},
+    "reply_to": {{ shop.customer_email | json }}
+  }
+{% endaction %}
