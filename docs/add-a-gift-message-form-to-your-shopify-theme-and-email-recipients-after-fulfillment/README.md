@@ -37,9 +37,15 @@ mechanic/actions/perform
 
 Use a Mechanic form in your Shopify theme to collect gift details on the cart page, then email the recipient when the whole order has been fulfilled.
 
-[Follow the illustrated setup tutorial](https://learn.mechanic.dev/resources/tutorials/add-a-gift-message-form-to-your-shopify-theme) to add the form to your theme and connect this task. The form and task are set up separately.
+[Follow the illustrated setup tutorial](https://learn.mechanic.dev/resources/tutorials/add-a-gift-message-form-to-your-shopify-theme) to add the form to your theme and connect this task. Guided setup connects the form and task for you.
 
-## Setup
+## Guided setup
+
+In **Forms**, choose **Create form → Add a gift message → Use this form**, or preview this task in the task library and choose **Install this task**. Both paths open one task setup screen. Set the task name and **Enabled** state, customize the email subject and body, and use **Edit questions** if needed. Choose **Save task and publish form** to connect this task to the existing form, save its settings, and publish the form. If Shopify access or email approval is needed, complete it, return, and choose Save again. Add the form block to your cart page and save the theme.
+
+No webhook or second task is needed. Reopen the task to change its email options or use **Advanced mode** for the full editor; the same form and task IDs remain. Publishing the form and enabling the task remain separate settings after installation. Keep the configured field keys or update their mappings in task setup after changing them. The manual instructions below remain available for existing forms and custom setups.
+
+## Manual setup
 
 1. In Mechanic **Forms**, choose the **Add a gift message** starter. It saves answers to the Shopify cart instead of sending a webhook. Keep its field data keys, or update this task's field key options to match. You can change the labels and wording.
 2. Publish the form, add its block to your theme's cart page, and save the theme. Complete gift details save automatically. Normal cart checkout waits for pending saves and asks customers to fix incomplete details or retry a failed save. An untouched gift form stays optional. Accelerated checkout, Buy it now, and custom checkout buttons may bypass the form; test your theme’s cart checkout before going live. Cart drawers are not supported placements. If your theme uses a drawer, switch to its cart-page option or ask your theme developer to add an **Add a gift message** link to the cart page.
