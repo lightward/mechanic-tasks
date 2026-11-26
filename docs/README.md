@@ -211,6 +211,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Email Mechanic form submissions](./email-mechanic-form-submissions)
 * [Email a CSV export of orders](./email-a-csv-export-of-orders)
 * [Email a CSV export of products](./email-a-csv-export-of-products)
+* [Email a CSV of yesterday's orders when Shopify Flow sends a request](./email-a-csv-of-yesterdays-orders-when-shopify-flow-sends-a-request)
 * [Email a report of customers who haven't ordered in X days](./email-a-report-of-customers-who-havent-ordered-in-x-days)
 * [Email a report of pick-up orders for the next x days](./email-a-report-of-pick-up-orders-for-the-next-x-days)
 * [Email a summary of all products and quantities ordered](./email-a-summary-of-all-products-and-quantities-ordered)
@@ -224,6 +225,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Email someone specific based on a new order's customer tags](./email-someone-specific-based-on-a-new-orders-customer-tags)
 * [Email someone when a certain product is purchased](./email-someone-when-certain-product-purchased)
 * [Email someone when a certain variant is purchased](./email-when-variant-purchased)
+* [Email the customer when Shopify Flow sends an order](./email-the-customer-when-shopify-flow-sends-an-order)
 * [Email the customer when tracking numbers are added to their order](./email-the-customer-when-tracking-numbers-are-added-to-their-order)
 * [Email vendors when an order is tagged](./email-vendors-when-an-order-is-tagged)
 * [Email vendors when an order shipping address changes](./email-vendors-when-an-order-shipping-address-changes)
@@ -260,6 +262,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Monitor customer note for certain information](./monitor-customer-note-for-certain-information)
 * [Monitor for variants with zero price](./monitor-for-variants-with-zero-price)
 * [Move out-of-stock products to the end of a collection](./move-out-of-stock-products-to-the-end-of-a-collection)
+* [Move sold-out products to the end of collections when Shopify Flow sends a product](./move-sold-out-products-to-the-end-of-collections-when-shopify-flow-sends-a-product)
 * [Notify a team when a tagged product is ordered](./notify-a-team-when-a-tagged-product-is-ordered)
 * [Partially auto-capture payments as orders are fulfilled](./partially-auto-capture-payments-as-orders-are-fulfilled)
 * [Publish a certain collection, daily](./publish-a-certain-collection-daily)
@@ -368,6 +371,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Untag orders when paid](./untag-orders-when-paid)
 * [Update empty customer data from addresses](./update-empty-customer-data-from-addresses)
 * [Update product description when out of stock](./update-product-description-when-out-of-stock)
+* [Upload a CSV of yesterday's orders to SFTP when Shopify Flow sends a request](./upload-a-csv-of-yesterdays-orders-to-sftp-when-shopify-flow-sends-a-request)
 
 
 ## Tasks grouped by tags
@@ -600,9 +604,11 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Demonstration, Tutorial: Fetch data from a shared Google sheet](./demonstration-fetch-data-from-a-shared-google-sheet)
 * [Email a CSV export of orders](./email-a-csv-export-of-orders)
 * [Email a CSV export of products](./email-a-csv-export-of-products)
+* [Email a CSV of yesterday's orders when Shopify Flow sends a request](./email-a-csv-of-yesterdays-orders-when-shopify-flow-sends-a-request)
 * [Export a CSV of order shipping addresses](./export-a-csv-of-order-shipping-addresses)
 * [Export all products to SFTP, as a Shopify-friendly CSV](./export-all-products-to-sftp-as-a-shopify-friendly-csv)
 * [Generate a report of orders that still require payment](./generate-a-report-of-orders-that-still-require-payment)
+* [Upload a CSV of yesterday's orders to SFTP when Shopify Flow sends a request](./upload-a-csv-of-yesterdays-orders-to-sftp-when-shopify-flow-sends-a-request)
 
 ### Cancel
 
@@ -648,6 +654,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Maintain a collection of recently purchased products](./maintain-a-collection-of-recently-purchased-products)
 * [Manage collection templates by product inventory](./manage-collection-templates-by-product-inventory)
 * [Move out-of-stock products to the end of a collection](./move-out-of-stock-products-to-the-end-of-a-collection)
+* [Move sold-out products to the end of collections when Shopify Flow sends a product](./move-sold-out-products-to-the-end-of-collections-when-shopify-flow-sends-a-product)
 * [Publish a certain collection, daily](./publish-a-certain-collection-daily)
 * [Send an email alert if a new collection has no orders after x days](./send-an-email-alert-if-a-new-collection-has-no-orders-after-x-days)
 * [Send an email when a purchase is made from a certain collection](./send-an-email-when-a-purchase-is-made-from-a-certain-collection)
@@ -740,6 +747,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Email customers when tagged](./email-customers-when-tagged)
 * [Email customers when their order is tagged](./email-customer-when-order-tagged)
 * [Email someone specific based on a new order's customer tags](./email-someone-specific-based-on-a-new-orders-customer-tags)
+* [Email the customer when Shopify Flow sends an order](./email-the-customer-when-shopify-flow-sends-an-order)
 * [Email the customer when tracking numbers are added to their order](./email-the-customer-when-tracking-numbers-are-added-to-their-order)
 * [Monitor customer note for certain information](./monitor-customer-note-for-certain-information)
 * [Record Judge.me customer review counts](./record-judge-me-customer-review-counts)
@@ -861,6 +869,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Email Mechanic form submissions](./email-mechanic-form-submissions)
 * [Email a CSV export of orders](./email-a-csv-export-of-orders)
 * [Email a CSV export of products](./email-a-csv-export-of-products)
+* [Email a CSV of yesterday's orders when Shopify Flow sends a request](./email-a-csv-of-yesterdays-orders-when-shopify-flow-sends-a-request)
 * [Email a report of customers who haven't ordered in X days](./email-a-report-of-customers-who-havent-ordered-in-x-days)
 * [Email a report of pick-up orders for the next x days](./email-a-report-of-pick-up-orders-for-the-next-x-days)
 * [Email a summary of all products and quantities ordered](./email-a-summary-of-all-products-and-quantities-ordered)
@@ -873,6 +882,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Email someone specific based on a new order's customer tags](./email-someone-specific-based-on-a-new-orders-customer-tags)
 * [Email someone when a certain product is purchased](./email-someone-when-certain-product-purchased)
 * [Email someone when a certain variant is purchased](./email-when-variant-purchased)
+* [Email the customer when Shopify Flow sends an order](./email-the-customer-when-shopify-flow-sends-an-order)
 * [Email the customer when tracking numbers are added to their order](./email-the-customer-when-tracking-numbers-are-added-to-their-order)
 * [Email vendors when an order is tagged](./email-vendors-when-an-order-is-tagged)
 * [Email vendors when an order shipping address changes](./email-vendors-when-an-order-shipping-address-changes)
@@ -924,8 +934,10 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Backup inventory to SFTP in Shopify CSV format](./backup-scheduled-inventory-exports-in-shopifys-csv-format)
 * [Email a CSV export of orders](./email-a-csv-export-of-orders)
 * [Email a CSV export of products](./email-a-csv-export-of-products)
+* [Email a CSV of yesterday's orders when Shopify Flow sends a request](./email-a-csv-of-yesterdays-orders-when-shopify-flow-sends-a-request)
 * [Export a CSV of order shipping addresses](./export-a-csv-of-order-shipping-addresses)
 * [Export all products to SFTP, as a Shopify-friendly CSV](./export-all-products-to-sftp-as-a-shopify-friendly-csv)
+* [Upload a CSV of yesterday's orders to SFTP when Shopify Flow sends a request](./upload-a-csv-of-yesterdays-orders-to-sftp-when-shopify-flow-sends-a-request)
 
 ### External API
 
@@ -941,6 +953,7 @@ This directory is built automatically. Each task's documentation is generated fr
 
 * [Backup inventory to SFTP in Shopify CSV format](./backup-scheduled-inventory-exports-in-shopifys-csv-format)
 * [Export all products to SFTP, as a Shopify-friendly CSV](./export-all-products-to-sftp-as-a-shopify-friendly-csv)
+* [Upload a CSV of yesterday's orders to SFTP when Shopify Flow sends a request](./upload-a-csv-of-yesterdays-orders-to-sftp-when-shopify-flow-sends-a-request)
 
 ### Feeds
 
@@ -1016,6 +1029,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Add Option Name as a Variant Metafield for In Stock Variants](./add-option-names-as-variant-metafields-for-in-stock-variants)
 * [Auto-tag products by "back in stock" age](./auto-tag-new-products-by-back-in-stock-age)
 * [Manage product market access by location stock status](./manage-product-market-access-by-location-stock-status)
+* [Move sold-out products to the end of collections when Shopify Flow sends a product](./move-sold-out-products-to-the-end-of-collections-when-shopify-flow-sends-a-product)
 * [Publish back-in-stock products](./publish-back-in-stock-products)
 * [Publish back-in-stock variants](./publish-back-in-stock-variants)
 * [Tag products as in- or out-of-stock, by location ID](./tag-products-as-in-or-out-of-stock-by-location-id)
@@ -1301,12 +1315,14 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Demonstration: Order editing](./demonstration-order-editing)
 * [Download and email a file to a customer, when purchased](./download-and-email-a-file-to-a-customer-when-purchased)
 * [Email a CSV export of orders](./email-a-csv-export-of-orders)
+* [Email a CSV of yesterday's orders when Shopify Flow sends a request](./email-a-csv-of-yesterdays-orders-when-shopify-flow-sends-a-request)
 * [Email a report of pick-up orders for the next x days](./email-a-report-of-pick-up-orders-for-the-next-x-days)
 * [Email customer when their order is paid](./email-customer-when-order-paid)
 * [Email customers after purchasing a certain product](./product-order-email)
 * [Email customers when their order is tagged](./email-customer-when-order-tagged)
 * [Email someone when a certain product is purchased](./email-someone-when-certain-product-purchased)
 * [Email someone when a certain variant is purchased](./email-when-variant-purchased)
+* [Email the customer when Shopify Flow sends an order](./email-the-customer-when-shopify-flow-sends-an-order)
 * [Email the customer when tracking numbers are added to their order](./email-the-customer-when-tracking-numbers-are-added-to-their-order)
 * [Email vendors when an order is tagged](./email-vendors-when-an-order-is-tagged)
 * [Email vendors when their products are ordered](./email-vendors-when-their-products-are-ordered)
@@ -1336,6 +1352,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Tag orders that have at least x of a certain product](./tag-orders-that-have-at-least-x-of-a-certain-product)
 * [Trigger order emails with a tag](./trigger-order-emails-with-a-tag)
 * [Untag orders when paid](./untag-orders-when-paid)
+* [Upload a CSV of yesterday's orders to SFTP when Shopify Flow sends a request](./upload-a-csv-of-yesterdays-orders-to-sftp-when-shopify-flow-sends-a-request)
 
 ### Out of Stock
 
@@ -1345,6 +1362,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Hide out-of-stock products](./hide-out-of-stock-products)
 * [Manage product market access by location stock status](./manage-product-market-access-by-location-stock-status)
 * [Move out-of-stock products to the end of a collection](./move-out-of-stock-products-to-the-end-of-a-collection)
+* [Move sold-out products to the end of collections when Shopify Flow sends a product](./move-sold-out-products-to-the-end-of-collections-when-shopify-flow-sends-a-product)
 * [Send an email alert when a variant hits 0 total inventory](./send-an-email-alert-when-a-variant-hits-0-total-inventory)
 * [Tag products as in- or out-of-stock, by location ID](./tag-products-as-in-or-out-of-stock-by-location-id)
 * [Tag products as in- or out-of-stock](./tag-products-as-in-or-out-of-stock)
@@ -1666,7 +1684,11 @@ This directory is built automatically. Each task's documentation is generated fr
 
 * [Bulk trigger Shopify Flow with historical data](./bulk-trigger-shopify-flow-with-historical-data)
 * [Demonstration: Shopify Flow integration](./demonstration-shopify-flow-integration)
+* [Email a CSV of yesterday's orders when Shopify Flow sends a request](./email-a-csv-of-yesterdays-orders-when-shopify-flow-sends-a-request)
+* [Email the customer when Shopify Flow sends an order](./email-the-customer-when-shopify-flow-sends-an-order)
+* [Move sold-out products to the end of collections when Shopify Flow sends a product](./move-sold-out-products-to-the-end-of-collections-when-shopify-flow-sends-a-product)
 * [Trigger Shopify Flow with a time delay](./trigger-shopify-flow-with-a-time-delay)
+* [Upload a CSV of yesterday's orders to SFTP when Shopify Flow sends a request](./upload-a-csv-of-yesterdays-orders-to-sftp-when-shopify-flow-sends-a-request)
 
 ### Shopify Forms
 
@@ -1692,6 +1714,7 @@ This directory is built automatically. Each task's documentation is generated fr
 * [Auto-sort collections by a product property](./auto-sort-collections-by-product-properties)
 * [Auto-sort collections by inventory levels](./auto-sort-collections-by-inventory-levels)
 * [Move out-of-stock products to the end of a collection](./move-out-of-stock-products-to-the-end-of-a-collection)
+* [Move sold-out products to the end of collections when Shopify Flow sends a product](./move-sold-out-products-to-the-end-of-collections-when-shopify-flow-sends-a-product)
 * [Sort collections by recent sales performance](./sort-collections-by-recent-sales-performance)
 
 ### Spend

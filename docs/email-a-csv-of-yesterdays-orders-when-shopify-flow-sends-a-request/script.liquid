@@ -1,0 +1,314 @@
+{% comment %}
+  Option order:
+
+  {{ options.only_include_orders_matching_this_search_query }}
+  {{ options.csv_filename__required }}
+  {{ options.email_recipients__email_array_required }}
+  {{ options.email_subject__required }}
+  {{ options.email_body__required_multiline }}
+{% endcomment %}
+
+{% assign flow_topic = "user/flow/orders_csv_email" %}
+{% assign bulk_operation_topic = "mechanic/shopify/bulk_operation" %}
+
+{% comment %}
+  This task runs twice for each request from Shopify Flow.
+
+  1. When the request arrives, the task starts a Shopify bulk operation that collects
+     the orders.
+  2. When the bulk operation finishes, Mechanic runs this task again, and the task
+     builds the CSV and delivers it.
+
+  Mechanic sends a bulk operation event only to the task that started the operation,
+  and makes the event that started it available as event.parent. In the second run,
+  event.parent is therefore the request from Shopify Flow. Both runs read the request
+  (its topic, its data, and the time it arrived) from that one event, so both runs
+  work out the same date range and the same file name.
+{% endcomment %}
+
+{% if event.topic == bulk_operation_topic %}
+  {% assign request_topic = event.parent.topic %}
+  {% assign request_data = event.parent.data %}
+  {% assign request_time = event.parent.created_at %}
+{% else %}
+  {% assign request_topic = event.topic %}
+  {% assign request_data = event.data %}
+  {% assign request_time = event.created_at %}
+{% endif %}
+
+{% if event.preview %}
+  {% comment %}
+    A preview of the second run has no parent event, so it shows a default request:
+    no event data, arriving now.
+  {% endcomment %}
+  {% assign request_topic = flow_topic %}
+{% endif %}
+
+{% assign request_time = request_time | default: "now" %}
+
+{% if request_topic != flow_topic %}
+  {% log message: "This event did not come from a Shopify Flow request to this task, so there is nothing to do.", event_topic: event.topic, parent_event_topic: event.parent.topic %}
+  {% break %}
+{% endif %}
+
+{% comment %}
+  Read the optional event data from Shopify Flow. Empty event data means one day.
+  {"days_back": 7} means the range starts 7 days before today's midnight.
+{% endcomment %}
+
+{% assign days_back = 1 %}
+{% assign request_problem = nil %}
+
+{% if request_data != blank %}
+  {% assign request_data_first_character = request_data | json | slice: 0, 1 %}
+
+  {% if request_data_first_character != "{" %}
+    {% assign request_problem = "Shopify Flow sent event data that is not a JSON object." %}
+
+  {% elsif request_data.__error %}
+    {% assign request_problem = "Shopify Flow sent event data that is not valid JSON." %}
+
+  {% elsif request_data.days_back != nil %}
+    {% assign request_problem = "Shopify Flow sent a days_back value that is not a whole number from 1 to 31." %}
+    {% assign days_back_given = request_data.days_back | append: "" %}
+
+    {% for n in (1..31) %}
+      {% assign n_as_text = n | append: "" %}
+
+      {% if days_back_given == n_as_text %}
+        {% assign days_back = n %}
+        {% assign request_problem = nil %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+{% endif %}
+
+{% if request_problem and event.preview %}
+  {% comment %}
+    Mechanic may build a preview from the event data of an earlier request. If that
+    data is not usable, the preview shows the default request instead of an error.
+  {% endcomment %}
+  {% assign request_problem = nil %}
+{% endif %}
+
+{% if request_problem %}
+  {% capture request_error %}{{ request_problem }} Nothing was exported. Check the "Send event to Mechanic" step in your Shopify Flow workflow: leave "Event data" empty to export yesterday's orders, or set it to {"days_back": 7} to go back more days, using a whole number from 1 to 31.{% endcapture %}
+  {% error request_error %}
+  {% break %}
+{% endif %}
+
+{% comment %}
+  Work out the date range in the store's time zone. Mechanic runs Liquid in the store's
+  time zone, so beginning_of_day gives the store's midnight on the day the request
+  arrived. The range ends there (that midnight is not included), and starts the chosen
+  number of calendar days earlier. The search query uses the same two moments in UTC.
+{% endcomment %}
+
+{% assign range_start_offset = days_back | prepend: "-" | append: " days" %}
+{% assign range_start = request_time | date: "%Y-%m-%dT%H:%M:%S%z", beginning_of_day: true, advance: range_start_offset %}
+{% assign range_end = request_time | date: "%Y-%m-%dT%H:%M:%S%z", beginning_of_day: true %}
+{% assign range_start_utc = range_start | date: "%Y-%m-%dT%H:%M:%SZ", tz: "UTC" %}
+{% assign range_end_utc = range_end | date: "%Y-%m-%dT%H:%M:%SZ", tz: "UTC" %}
+{% assign range_start_date = range_start | slice: 0, 10 %}
+
+{% assign csv_filename = options.csv_filename__required | replace: "DATE", range_start_date | strip %}
+{% assign csv_filename_ending = csv_filename | slice: -4, 4 | downcase %}
+
+{% if csv_filename_ending != ".csv" %}
+  {% assign csv_filename = csv_filename | append: ".csv" %}
+{% endif %}
+
+{% if event.topic == flow_topic %}
+  {% assign order_search_query = "created_at:>='" | append: range_start_utc | append: "' AND created_at:<'" | append: range_end_utc | append: "'" %}
+  {% assign extra_search_query = options.only_include_orders_matching_this_search_query | strip %}
+
+  {% if extra_search_query != blank %}
+    {% assign order_search_query = order_search_query | append: " AND (" | append: extra_search_query | append: ")" %}
+  {% endif %}
+
+  {% capture bulk_operation_query %}
+    query {
+      orders(
+        query: {{ order_search_query | json }}
+      ) {
+        edges {
+          node {
+            __typename
+            id
+            name
+            createdAt
+            displayFinancialStatus
+            displayFulfillmentStatus
+            email
+            tags
+            currencyCode
+            totalPriceSet {
+              shopMoney {
+                amount
+              }
+            }
+            shippingAddress {
+              name
+              address1
+              address2
+              city
+              province
+              country
+              zip
+            }
+            lineItems {
+              edges {
+                node {
+                  __typename
+                  id
+                  title
+                  variantTitle
+                  sku
+                  quantity
+                  originalUnitPriceSet {
+                    shopMoney {
+                      amount
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% log message: "Starting a Shopify bulk operation to collect the orders.", days_back: days_back, range_start: range_start, range_end: range_end, order_search_query: order_search_query %}
+
+  {% action "shopify" %}
+    mutation {
+      bulkOperationRunQuery(
+        query: {{ bulk_operation_query | json }}
+      ) {
+        bulkOperation {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  {% endaction %}
+
+{% elsif event.topic == bulk_operation_topic %}
+  {% if event.preview %}
+    {% assign preview_created_at = range_start_utc | date: "%Y-%m-%dT%H:%M:%SZ", tz: "UTC", advance: "10 hours" %}
+
+    {% capture bulk_operation_objects_jsonl %}
+      {"__typename":"Order","id":"gid://shopify/Order/1234567890","name":"#1001","createdAt":{{ preview_created_at | json }},"displayFinancialStatus":"PAID","displayFulfillmentStatus":"UNFULFILLED","email":"riley@example.com","tags":["wholesale"],"currencyCode":"USD","totalPriceSet":{"shopMoney":{"amount":"83.0"}},"shippingAddress":{"name":"Riley Example","address1":"123 Main Street","address2":"Unit 4","city":"Chicago","province":"Illinois","country":"United States","zip":"60601"}}
+      {"__typename":"LineItem","id":"gid://shopify/LineItem/12345678901","title":"Short sleeve t-shirt","variantTitle":"Medium / Blue","sku":"TEE-M-BLUE","quantity":2,"originalUnitPriceSet":{"shopMoney":{"amount":"24.0"}},"__parentId":"gid://shopify/Order/1234567890"}
+      {"__typename":"LineItem","id":"gid://shopify/LineItem/12345678902","title":"Canvas tote bag","variantTitle":null,"sku":"TOTE-01","quantity":1,"originalUnitPriceSet":{"shopMoney":{"amount":"25.0"}},"__parentId":"gid://shopify/Order/1234567890"}
+      {"__typename":"Order","id":"gid://shopify/Order/1234567891","name":"#1002","createdAt":{{ preview_created_at | json }},"displayFinancialStatus":"PAID","displayFulfillmentStatus":"FULFILLED","email":"sam@example.com","tags":[],"currencyCode":"USD","totalPriceSet":{"shopMoney":{"amount":"50.0"}},"shippingAddress":null}
+      {"__typename":"LineItem","id":"gid://shopify/LineItem/12345678903","title":"Gift card","variantTitle":"$50","sku":null,"quantity":1,"originalUnitPriceSet":{"shopMoney":{"amount":"50.0"}},"__parentId":"gid://shopify/Order/1234567891"}
+    {% endcapture %}
+
+    {% assign bulkOperation = hash %}
+    {% assign bulkOperation["type"] = "QUERY" %}
+    {% assign bulkOperation["status"] = "COMPLETED" %}
+    {% assign bulkOperation["objects"] = bulk_operation_objects_jsonl | parse_jsonl %}
+  {% endif %}
+
+  {% if bulkOperation.status != "COMPLETED" %}
+    {% capture bulk_operation_error %}Shopify did not finish collecting the orders (bulk operation status: {{ bulkOperation.status | default: "unknown" }}{% if bulkOperation.errorCode != blank %}, error code: {{ bulkOperation.errorCode }}{% endif %}). No file was delivered.{% endcapture %}
+    {% error bulk_operation_error %}
+    {% break %}
+  {% endif %}
+
+  {% comment %}
+    Build the CSV: a header row, then one row for each line item. The bulk operation
+    returns orders and line items as separate objects. Each line item names its order
+    in __parentId. An order with no line items adds no rows.
+  {% endcomment %}
+
+  {% assign csv_rows = array %}
+  {% assign csv_rows[0] = "Order name,Created at,Financial status,Fulfillment status,Customer email,Shipping name,Shipping address 1,Shipping address 2,Shipping city,Shipping province,Shipping country,Shipping zip,Line item title,Variant title,SKU,Quantity,Line item price,Order total,Currency,Order tags" | split: "," %}
+
+  {% assign orders_by_id = hash %}
+  {% assign exported_order_ids = hash %}
+
+  {% for object in bulkOperation.objects %}
+    {% case object.__typename %}
+      {% when "Order" %}
+        {% assign orders_by_id[object.id] = object %}
+
+      {% when "LineItem" %}
+        {% assign line_item = object %}
+        {% assign order = orders_by_id[line_item.__parentId] %}
+
+        {% if order == nil %}
+          {% continue %}
+        {% endif %}
+
+        {% assign exported_order_ids[order.id] = true %}
+
+        {% assign order_created_at = order.createdAt | date: "%Y-%m-%d %H:%M:%S %z" %}
+        {% assign order_financial_status = order.displayFinancialStatus | downcase | default: nil %}
+        {% assign order_fulfillment_status = order.displayFulfillmentStatus | downcase | default: nil %}
+        {% assign order_tags = order.tags | join: ", " | default: nil %}
+
+        {% comment %}
+          One value per column, in the same order as the header row.
+        {% endcomment %}
+
+        {% assign csv_row = array
+          | push: order.name
+          | push: order_created_at
+          | push: order_financial_status
+          | push: order_fulfillment_status
+          | push: order.email
+          | push: order.shippingAddress.name
+          | push: order.shippingAddress.address1
+          | push: order.shippingAddress.address2
+          | push: order.shippingAddress.city
+          | push: order.shippingAddress.province
+          | push: order.shippingAddress.country
+          | push: order.shippingAddress.zip
+          | push: line_item.title
+          | push: line_item.variantTitle
+          | push: line_item.sku
+          | push: line_item.quantity
+          | push: line_item.originalUnitPriceSet.shopMoney.amount
+          | push: order.totalPriceSet.shopMoney.amount
+          | push: order.currencyCode
+          | push: order_tags
+        %}
+
+        {% assign csv_rows[csv_rows.size] = csv_row %}
+    {% endcase %}
+  {% endfor %}
+
+  {% assign order_count = exported_order_ids.size %}
+  {% assign line_item_count = csv_rows.size | minus: 1 %}
+
+  {% if order_count == 0 %}
+    {% log message: "No orders were found for this date range. The CSV contains only the header row.", range_start: range_start, range_end: range_end, csv_filename: csv_filename %}
+  {% else %}
+    {% log message: "Built the CSV.", range_start: range_start, range_end: range_end, csv_filename: csv_filename, order_count: order_count, line_item_count: line_item_count %}
+  {% endif %}
+
+  {% assign order_count_as_text = order_count | append: "" %}
+  {% assign email_subject = options.email_subject__required | replace: "DATE", range_start_date | replace: "ORDER_COUNT", order_count_as_text %}
+  {% assign email_body = options.email_body__required_multiline | replace: "DATE", range_start_date | replace: "ORDER_COUNT", order_count_as_text %}
+
+  {% action "email" %}
+    {
+      "to": {{ options.email_recipients__email_array_required | json }},
+      "subject": {{ email_subject | strip | json }},
+      "body": {{ email_body | strip | newline_to_br | json }},
+      "reply_to": {{ shop.customer_email | json }},
+      "from_display_name": {{ shop.name | json }},
+      "attachments": {
+        {{ csv_filename | json }}: {{ csv_rows | csv | json }}
+      }
+    }
+  {% endaction %}
+{% endif %}

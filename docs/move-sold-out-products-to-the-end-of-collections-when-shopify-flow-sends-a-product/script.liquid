@@ -1,0 +1,320 @@
+{% comment %}
+  Option order:
+
+  {{ options.only_these_collection_handles_or_ids__array }}
+  {{ options.ignore_these_collection_handles_or_ids__array }}
+  {{ options.test_mode__boolean }}
+{% endcomment %}
+
+{% assign only_these_collections = options.only_these_collection_handles_or_ids__array %}
+{% assign ignore_these_collections = options.ignore_these_collection_handles_or_ids__array %}
+{% assign test_mode = options.test_mode__boolean %}
+
+{% assign flow_data = event.data %}
+
+{% if event.preview and flow_data == blank %}
+  {% assign flow_data = hash %}
+  {% assign flow_data["product_id"] = "gid://shopify/Product/1234567890" %}
+  {% assign flow_data["variant_id"] = "gid://shopify/ProductVariant/1234567890" %}
+{% endif %}
+
+{% comment %}
+  -- Flow sends the product ID, and optionally the ID of the variant whose stock changed; either may be a full GID or a plain numeric ID
+{% endcomment %}
+
+{% assign product_id = flow_data["product_id"] | append: "" %}
+{% assign variant_id = flow_data["variant_id"] | append: "" %}
+
+{% if flow_data["__error"] != blank or product_id == "" %}
+  {% error "This task did not receive a product ID from Shopify Flow. Check the Event data field of the Send event to Mechanic step in your workflow; this task's documentation shows the value to use." %}
+
+{% else %}
+  {% unless product_id contains "gid://" %}
+    {% assign product_id = product_id | prepend: "gid://shopify/Product/" %}
+  {% endunless %}
+
+  {% if variant_id != "" %}
+    {% unless variant_id contains "gid://" %}
+      {% assign variant_id = variant_id | prepend: "gid://shopify/ProductVariant/" %}
+    {% endunless %}
+  {% endif %}
+
+  {% comment %}
+    -- read the product and every variant's availability; up to 2,000 variants
+  {% endcomment %}
+
+  {% assign product = nil %}
+  {% assign variants = array %}
+  {% assign cursor = nil %}
+
+  {% for n in (1..8) %}
+    {% capture query %}
+      query {
+        product(id: {{ product_id | json }}) {
+          id
+          title
+          variants(
+            first: 250
+            after: {{ cursor | json }}
+          ) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              id
+              availableForSale
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = query | shopify %}
+
+    {% if event.preview %}
+      {% assign preview_first_variant_available = false %}
+
+      {% if event.topic contains "restocked" %}
+        {% assign preview_first_variant_available = true %}
+      {% endif %}
+
+      {% capture result_json %}
+        {
+          "data": {
+            "product": {
+              "id": {{ product_id | json }},
+              "title": "Sample product",
+              "variants": {
+                "pageInfo": {
+                  "hasNextPage": false,
+                  "endCursor": null
+                },
+                "nodes": [
+                  {
+                    "id": "gid://shopify/ProductVariant/1234567890",
+                    "availableForSale": {{ preview_first_variant_available | json }}
+                  },
+                  {
+                    "id": "gid://shopify/ProductVariant/2345678901",
+                    "availableForSale": false
+                  }
+                ]
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = result_json | parse_json %}
+    {% endif %}
+
+    {% assign product = result.data.product %}
+
+    {% if product == nil %}
+      {% break %}
+    {% endif %}
+
+    {% assign variants = variants | concat: product.variants.nodes %}
+
+    {% if product.variants.pageInfo.hasNextPage %}
+      {% assign cursor = product.variants.pageInfo.endCursor %}
+    {% else %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% comment %}
+    -- decide whether the product moves, and where
+  {% endcomment %}
+
+  {% assign any_variant_available = false %}
+  {% assign any_other_variant_available = false %}
+
+  {% for variant in variants %}
+    {% if variant.availableForSale %}
+      {% assign any_variant_available = true %}
+
+      {% if variant.id != variant_id %}
+        {% assign any_other_variant_available = true %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+
+  {% assign move_to = nil %}
+
+  {% if product == nil %}
+    {% log message: "Shopify did not return a product for this ID; nothing to move.", product_id: product_id %}
+
+  {% elsif event.topic contains "restocked" %}
+    {% if any_variant_available == false %}
+      {% log message: "This product has no variant available for sale; leaving its position as it is.", product: product.title %}
+
+    {% elsif variant_id != "" and any_other_variant_available %}
+      {% log message: "Another variant of this product was already available for sale, so the product was not sold out; leaving its position as it is.", product: product.title %}
+
+    {% else %}
+      {% assign move_to = "top" %}
+    {% endif %}
+
+  {% else %}
+    {% if any_variant_available %}
+      {% log message: "This product still has a variant available for sale; leaving its position as it is.", product: product.title %}
+
+    {% else %}
+      {% assign move_to = "end" %}
+    {% endif %}
+  {% endif %}
+
+  {% if move_to != nil %}
+    {% comment %}
+      -- a position at or beyond the number of products in a collection places the product last
+    {% endcomment %}
+
+    {% assign new_position = "0" %}
+
+    {% if move_to == "end" %}
+      {% assign new_position = "1000000" %}
+    {% endif %}
+
+    {% comment %}
+      -- find the collections this product is in; up to 1,000
+    {% endcomment %}
+
+    {% assign collections = array %}
+    {% assign cursor = nil %}
+
+    {% for n in (1..4) %}
+      {% capture query %}
+        query {
+          product(id: {{ product.id | json }}) {
+            collections(
+              first: 250
+              after: {{ cursor | json }}
+            ) {
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+              nodes {
+                id
+                legacyResourceId
+                handle
+                title
+                sortOrder
+              }
+            }
+          }
+        }
+      {% endcapture %}
+
+      {% assign result = query | shopify %}
+
+      {% if event.preview %}
+        {% capture result_json %}
+          {
+            "data": {
+              "product": {
+                "collections": {
+                  "pageInfo": {
+                    "hasNextPage": false,
+                    "endCursor": null
+                  },
+                  "nodes": [
+                    {
+                      "id": "gid://shopify/Collection/1234567890",
+                      "legacyResourceId": {{ only_these_collections.first | default: "1234567890" | json }},
+                      "handle": {{ only_these_collections.first | default: "sample-collection" | json }},
+                      "title": "Sample collection",
+                      "sortOrder": "MANUAL"
+                    },
+                    {
+                      "id": "gid://shopify/Collection/2345678901",
+                      "legacyResourceId": "2345678901",
+                      "handle": "best-sellers",
+                      "title": "Best sellers",
+                      "sortOrder": "BEST_SELLING"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        {% endcapture %}
+
+        {% assign result = result_json | parse_json %}
+      {% endif %}
+
+      {% assign collections = collections | concat: result.data.product.collections.nodes %}
+
+      {% if result.data.product.collections.pageInfo.hasNextPage %}
+        {% assign cursor = result.data.product.collections.pageInfo.endCursor %}
+      {% else %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+
+    {% assign moved_in = array %}
+    {% assign skipped_not_manual = array %}
+
+    {% for collection in collections %}
+      {% if only_these_collections != blank %}
+        {% unless only_these_collections contains collection.legacyResourceId or only_these_collections contains collection.handle %}
+          {% continue %}
+        {% endunless %}
+
+      {% elsif ignore_these_collections != blank %}
+        {% if ignore_these_collections contains collection.legacyResourceId or ignore_these_collections contains collection.handle %}
+          {% continue %}
+        {% endif %}
+      {% endif %}
+
+      {% comment %}
+        -- Shopify only allows reordering in collections that are sorted manually
+      {% endcomment %}
+
+      {% if collection.sortOrder != "MANUAL" %}
+        {% assign skipped_not_manual = skipped_not_manual | push: collection.title %}
+        {% continue %}
+      {% endif %}
+
+      {% assign moved_in = moved_in | push: collection.title %}
+
+      {% if test_mode and event.preview != true %}
+        {% action "echo", product: product.title, collection: collection.title, would_move_to: move_to %}
+
+      {% else %}
+        {% action "shopify" %}
+          mutation {
+            collectionReorderProducts(
+              id: {{ collection.id | json }}
+              moves: [
+                {
+                  id: {{ product.id | json }}
+                  newPosition: {{ new_position | json }}
+                }
+              ]
+            ) {
+              job {
+                id
+              }
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        {% endaction %}
+      {% endif %}
+    {% endfor %}
+
+    {% log
+      message: "Finished checking this product's collections.",
+      product: product.title,
+      moving_to: move_to,
+      test_mode: test_mode,
+      collections_reordered: moved_in,
+      collections_skipped_because_they_are_not_sorted_manually: skipped_not_manual
+    %}
+  {% endif %}
+{% endif %}
