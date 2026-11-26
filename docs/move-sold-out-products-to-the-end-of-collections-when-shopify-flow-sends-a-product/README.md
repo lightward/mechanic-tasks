@@ -33,7 +33,7 @@ user/flow/restocked_product
 
 Use this task with Shopify Flow to move a product to the end of its collections when it sells out, and back to the top when it is restocked.
 
-Shopify Flow knows when a variant goes out of stock or comes back in stock, but it has no action for reordering the products in a collection. This task does the reordering. It pairs with two Shopify Flow templates: "Move sold-out products to the end of collections when a variant goes out of stock" and "Move restocked products to the top of collections when a variant is back in stock". Any workflow can call it.
+Shopify Flow knows when a variant goes out of stock or comes back in stock, but it has no action for reordering the products in a collection. This task does the reordering in one step, for any workflow that sends it a product.
 
 ### How it works
 
