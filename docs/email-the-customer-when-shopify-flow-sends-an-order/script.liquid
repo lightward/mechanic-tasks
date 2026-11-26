@@ -1,0 +1,189 @@
+{% comment %}
+  Option order:
+
+  {{ options.email_subject__required }}
+  {{ options.email_body__required_multiline }}
+  {{ options.reply_to_email_address__email }}
+  {{ options.from_display_name }}
+  {{ options.bcc_email_addresses__email_array }}
+  {{ options.test_mode__boolean }}
+{% endcomment %}
+
+{% assign reply_to = options.reply_to_email_address__email | default: shop.customer_email %}
+{% assign from_display_name = options.from_display_name | default: shop.name %}
+{% assign bcc = options.bcc_email_addresses__email_array %}
+{% assign test_mode = options.test_mode__boolean %}
+
+{% assign flow_data = event.data %}
+
+{% if event.preview and flow_data == blank %}
+  {% assign flow_data = hash %}
+  {% assign flow_data["order_id"] = "gid://shopify/Order/1234567890" %}
+{% endif %}
+
+{% comment %}
+  -- Flow sends the order ID as event data; it may be a full GID or a plain numeric ID
+{% endcomment %}
+
+{% assign flow_data_keys = flow_data | keys %}
+{% assign order_id_match = nil %}
+{% assign data_problem = nil %}
+
+{% if flow_data == nil %}
+  {% assign data_problem = "Shopify Flow sent this event without any event data." %}
+
+{% elsif flow_data_keys == nil %}
+  {% assign data_problem = "The event data that Shopify Flow sent is not a JSON object." %}
+
+{% elsif flow_data_keys contains "__error" %}
+  {% assign data_problem = "The event data that Shopify Flow sent is not valid JSON." %}
+
+{% else %}
+  {% assign order_id_match = flow_data["order_id"] | append: "" | strip | match: "\A(gid://shopify/Order/)?([0-9]+)\z" %}
+
+  {% if order_id_match == nil %}
+    {% assign data_problem = "The event data that Shopify Flow sent does not include a usable order_id." %}
+  {% endif %}
+{% endif %}
+
+{% if data_problem != nil %}
+  {% capture error_message %}{{ data_problem }} No email was sent. Check the "Send event to Mechanic" step in your Shopify Flow workflow. Its event data should be {% raw %}{"order_id": "{{order.id}}"}{% endraw %}{% endcapture %}
+
+  {% error error_message %}
+
+{% else %}
+  {% assign order_gid = order_id_match.captures.last | prepend: "gid://shopify/Order/" %}
+
+  {% capture query %}
+    query {
+      order(id: {{ order_gid | json }}) {
+        id
+        name
+        email
+        displayFulfillmentStatus
+        displayFinancialStatus
+        statusPageUrl
+        customer {
+          firstName
+          lastName
+          defaultEmailAddress {
+            emailAddress
+          }
+        }
+        displayAddress {
+          firstName
+          lastName
+        }
+      }
+    }
+  {% endcapture %}
+
+  {% assign result = query | shopify %}
+
+  {% if event.preview %}
+    {% capture result_json %}
+      {
+        "data": {
+          "order": {
+            "id": {{ order_gid | json }},
+            "name": "#1234",
+            "email": "customer@example.com",
+            "displayFulfillmentStatus": "UNFULFILLED",
+            "displayFinancialStatus": "PAID",
+            "statusPageUrl": "https://example.myshopify.com/12345678/orders/0a1b2c3d4e5f6a7b8c9d/authenticate?key=0a1b2c3d4e5f6a7b8c9d",
+            "customer": {
+              "firstName": "Jordan",
+              "lastName": "Lee",
+              "defaultEmailAddress": {
+                "emailAddress": "customer@example.com"
+              }
+            },
+            "displayAddress": {
+              "firstName": "Jordan",
+              "lastName": "Lee"
+            }
+          }
+        }
+      }
+    {% endcapture %}
+
+    {% assign result = result_json | parse_json %}
+  {% endif %}
+
+  {% assign order = result.data.order %}
+  {% assign recipient = order.email | default: order.customer.defaultEmailAddress.emailAddress %}
+
+  {% if order == nil %}
+    {% log message: "Shopify did not return an order for this ID, so no email was sent.", order_id: order_gid %}
+
+  {% elsif recipient == blank %}
+    {% log message: "This order has no email address, and neither does its customer, so no email was sent.", order: order.name %}
+
+  {% else %}
+    {% comment %}
+      -- fill in the placeholders, using a fallback wherever a value is missing
+    {% endcomment %}
+
+    {% assign customer_first_name = order.customer.firstName | default: order.displayAddress.firstName | default: "there" %}
+    {% assign customer_last_name = order.customer.lastName | default: order.displayAddress.lastName | default: "" %}
+
+    {% assign email_subject = options.email_subject__required
+      | replace: "ORDER_NAME", order.name
+      | replace: "ORDER_STATUS_URL", order.statusPageUrl
+      | replace: "SHOP_NAME", shop.name
+      | replace: "CUSTOMER_FIRST_NAME", customer_first_name
+      | replace: "CUSTOMER_LAST_NAME", customer_last_name
+      | strip %}
+
+    {% comment %}
+      -- the body is sent as HTML, so the values going into it are escaped first
+    {% endcomment %}
+
+    {% assign order_name_html = order.name | escape %}
+    {% assign order_status_url_html = order.statusPageUrl | escape %}
+    {% assign shop_name_html = shop.name | escape %}
+    {% assign customer_first_name_html = customer_first_name | escape %}
+    {% assign customer_last_name_html = customer_last_name | escape %}
+
+    {% assign email_body = options.email_body__required_multiline
+      | replace: "ORDER_NAME", order_name_html
+      | replace: "ORDER_STATUS_URL", order_status_url_html
+      | replace: "SHOP_NAME", shop_name_html
+      | replace: "CUSTOMER_FIRST_NAME", customer_first_name_html
+      | replace: "CUSTOMER_LAST_NAME", customer_last_name_html
+      | strip
+      | newline_to_br %}
+
+    {% log
+      message: "Order found, and its email is ready.",
+      order: order.name,
+      fulfillment_status: order.displayFulfillmentStatus,
+      financial_status: order.displayFinancialStatus,
+      test_mode: test_mode
+    %}
+
+    {% if test_mode and event.preview != true %}
+      {% action "echo"
+        test_mode: "Test mode is on, so this email was not sent.",
+        to: recipient,
+        subject: email_subject,
+        body: email_body,
+        reply_to: reply_to,
+        from_display_name: from_display_name,
+        bcc: bcc
+      %}
+
+    {% else %}
+      {% action "email" %}
+        {
+          "to": {{ recipient | json }},
+          "subject": {{ email_subject | json }},
+          "body": {{ email_body | json }},
+          "reply_to": {{ reply_to | json }},
+          "from_display_name": {{ from_display_name | json }},
+          "bcc": {{ bcc | json }}
+        }
+      {% endaction %}
+    {% endif %}
+  {% endif %}
+{% endif %}
