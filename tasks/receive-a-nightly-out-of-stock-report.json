@@ -1,12 +1,13 @@
 {
-  "docs": "Based on an out-of-stock threshold you define, this task sends you an email summary (with CSV attachment) of all variants that are out of stock in any location. Run this task manually to receive the report on demand.",
+  "docs": "Based on an out-of-stock threshold you define, this task sends you an email summary (with CSV attachment) of all variants that are out of stock in any location. Run this task manually to receive the report on demand.\n\nTo schedule this report with Shopify Flow, select “Use Shopify Flow schedule” and enable the Flow workflow that sends user/flow/low_stock_report. Flow then controls when the report runs. You can still run it manually. Only tracked variants at or below the threshold at a location are included. If none qualify, the task skips the email.",
   "halt_action_run_sequence_on_error": false,
   "name": "Receive a nightly out-of-stock report",
   "online_store_javascript": null,
   "options": {
     "out_of_stock_quantity__number_required": 0,
     "report_recipient_email__email_required": null,
-    "report_subject__required": "Out of stock report ({{ \"now\" | date: \"%Y-%m-%d\" }})"
+    "report_subject__required": "Out of stock report ({{ \"now\" | date: \"%Y-%m-%d\" }})",
+    "use_shopify_flow_schedule__boolean": false
   },
   "order_status_javascript": null,
   "perform_action_runs_in_sequence": false,
@@ -15,7 +16,7 @@
     "mechanic/user/trigger",
     "mechanic/scheduler/daily"
   ],
-  "subscriptions_template": "mechanic/user/trigger\nmechanic/scheduler/daily",
+  "subscriptions_template": "mechanic/user/trigger\n{% if options.use_shopify_flow_schedule__boolean %}\n  user/flow/low_stock_report\n{% else %}\n  mechanic/scheduler/daily\n{% endif %}",
   "tags": [
     "Email",
     "Inventory",

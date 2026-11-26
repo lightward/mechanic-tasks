@@ -14,7 +14,8 @@ Based on an out-of-stock threshold you define, this task sends you an email summ
 {
   "out_of_stock_quantity__number_required": 0,
   "report_recipient_email__email_required": null,
-  "report_subject__required": "Out of stock report ({{ \"now\" | date: \"%Y-%m-%d\" }})"
+  "report_subject__required": "Out of stock report ({{ \"now\" | date: \"%Y-%m-%d\" }})",
+  "use_shopify_flow_schedule__boolean": false
 }
 ```
 
@@ -24,7 +25,11 @@ Based on an out-of-stock threshold you define, this task sends you an email summ
 
 ```liquid
 mechanic/user/trigger
-mechanic/scheduler/daily
+{% if options.use_shopify_flow_schedule__boolean %}
+  user/flow/low_stock_report
+{% else %}
+  mechanic/scheduler/daily
+{% endif %}
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
@@ -32,6 +37,8 @@ mechanic/scheduler/daily
 ## Documentation
 
 Based on an out-of-stock threshold you define, this task sends you an email summary (with CSV attachment) of all variants that are out of stock in any location. Run this task manually to receive the report on demand.
+
+To schedule this report with Shopify Flow, select “Use Shopify Flow schedule” and enable the Flow workflow that sends user/flow/low_stock_report. Flow then controls when the report runs. You can still run it manually. Only tracked variants at or below the threshold at a location are included. If none qualify, the task skips the email.
 
 ## Installing this task
 
