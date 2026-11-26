@@ -27,6 +27,7 @@ Use this task with Shopify Flow to email a customer about their order, using a s
 
 ```liquid
 user/flow/email_customer
+mechanic/actions/perform
 ```
 
 [Learn about event subscriptions in Mechanic](https://learn.mechanic.dev/core/tasks/subscriptions)
@@ -40,6 +41,10 @@ Shopify Flow decides which orders qualify, and this task sends the email. It pai
 ### How it works
 
 When Shopify Flow sends an order with the event topic `user/flow/email_customer`, this task looks up that order and sends your email to the email address on the order. If the order has no email address, the task uses the customer's email address instead. If neither exists, or if Shopify can't find the order, the task sends nothing and says why in its log.
+
+Mechanic adds the `customer-emailed` order tag after its mail provider accepts the message. A per-order metafield (`mechanic.flow_customer_email_claim`) prevents a second request from sending again, including while the first email is pending. Removing the tag does not reset the task. Test mode and missing recipients leave the order untouched.
+
+If the email action fails, check its delivery result before retrying that action in Mechanic. If only the final tagging action fails, retry the tagging action. The order claim stays in place so further tag edits cannot send a second message.
 
 ### Setting up the workflow
 

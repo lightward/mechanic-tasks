@@ -9,6 +9,43 @@
   {{ options.test_mode__boolean }}
 {% endcomment %}
 
+{% if event.topic == "mechanic/actions/perform" %}
+  {% if event.preview %}
+    {% assign action = event.data %}
+  {% endif %}
+
+  {% if action.type == "shopify" and action.meta.stage == "claim_order" %}
+    {% unless action.run.ok and action.run.result.data.metafieldsSet.metafields.first.id %}
+      {% log "The order was not claimed. No email was queued. Check the Shopify action for details." %}
+      {% break %}
+    {% endunless %}
+
+    {% assign meta = hash %}
+    {% assign meta["stage"] = "send_email" %}
+    {% assign meta["order_id"] = action.meta.order_id %}
+    {% action "email", __meta: meta %}
+      {{ action.meta.email_options | json }}
+    {% endaction %}
+
+  {% elsif action.type == "email" and action.meta.stage == "send_email" %}
+    {% unless action.run.ok %}
+      {% log "The email action did not succeed. The order has not been tagged." %}
+      {% break %}
+    {% endunless %}
+
+    {% action "shopify", __perform_event: false %}
+      mutation {
+        tagsAdd(id: {{ action.meta.order_id | json }}, tags: ["customer-emailed"]) {
+          node { id }
+          userErrors { field message }
+        }
+      }
+    {% endaction %}
+  {% endif %}
+
+  {% break %}
+{% endif %}
+
 {% assign reply_to = options.reply_to_email_address__email | default: shop.customer_email %}
 {% assign from_display_name = options.from_display_name | default: shop.name %}
 {% assign bcc = options.bcc_email_addresses__email_array %}
@@ -63,6 +100,8 @@
         displayFulfillmentStatus
         displayFinancialStatus
         statusPageUrl
+        tags
+        emailClaim: metafield(namespace: "mechanic", key: "flow_customer_email_claim") { id }
         customer {
           firstName
           lastName
@@ -115,6 +154,9 @@
 
   {% if order == nil %}
     {% log message: "Shopify did not return an order for this ID, so no email was sent.", order_id: order_gid %}
+
+  {% elsif order.tags contains "customer-emailed" or order.emailClaim %}
+    {% log message: "This order has already been claimed or emailed. Skipping the request.", order: order.name %}
 
   {% elsif recipient == blank %}
     {% log message: "This order has no email address, and neither does its customer, so no email was sent.", order: order.name %}
@@ -174,14 +216,28 @@
       %}
 
     {% else %}
-      {% action "email" %}
-        {
-          "to": {{ recipient | json }},
-          "subject": {{ email_subject | json }},
-          "body": {{ email_body | json }},
-          "reply_to": {{ reply_to | json }},
-          "from_display_name": {{ from_display_name | json }},
-          "bcc": {{ bcc | json }}
+      {% assign email_options = hash %}
+      {% assign email_options["to"] = recipient %}
+      {% assign email_options["subject"] = email_subject | strip %}
+      {% assign email_options["body"] = email_body | strip | newline_to_br %}
+      {% assign email_options["reply_to"] = reply_to %}
+      {% assign email_options["from_display_name"] = from_display_name %}
+      {% assign email_options["bcc"] = bcc %}
+
+      {% assign meta = hash %}
+      {% assign meta["stage"] = "claim_order" %}
+      {% assign meta["order_id"] = order_gid %}
+      {% assign meta["email_options"] = email_options %}
+      {% comment %}Only the first request can create this metafield, even if two tag edits arrive together.{% endcomment %}
+      {% action "shopify", __meta: meta %}
+        mutation {
+          metafieldsSet(metafields: [{
+            ownerId: {{ order_gid | json }}, namespace: "mechanic", key: "flow_customer_email_claim",
+            type: "single_line_text_field", value: {{ event.id | append: "" | json }}, compareDigest: null
+          }]) {
+            metafields { id }
+            userErrors { field message code }
+          }
         }
       {% endaction %}
     {% endif %}
